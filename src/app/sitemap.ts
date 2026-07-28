@@ -1,8 +1,10 @@
 import type { MetadataRoute } from "next";
 import { orderedProjects } from "@/content";
+import { publishedPosts } from "@/lib/writing";
 import { absoluteUrl } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const posts = publishedPosts();
   const newest = orderedProjects
     .map((project) => project.sortDate)
     .sort()
@@ -26,6 +28,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(project.sortDate),
       changeFrequency: "yearly" as const,
       priority: project.featured ? 0.7 : 0.5,
+    })),
+    ...(posts.length > 0
+      ? [
+          {
+            url: absoluteUrl("/writing"),
+            lastModified: new Date(posts[0].date),
+            changeFrequency: "weekly" as const,
+            priority: 0.8,
+          },
+        ]
+      : []),
+    ...posts.map((post) => ({
+      url: absoluteUrl(`/writing/${post.slug}`),
+      lastModified: new Date(post.date),
+      changeFrequency: "yearly" as const,
+      priority: 0.6,
     })),
   ];
 }

@@ -6,11 +6,13 @@ import { navItems, orderedProjects, profile, socials } from "@/content";
 import { fuzzyMatch } from "@/lib/fuzzy";
 import { toggleTheme } from "./theme-toggle";
 
+export type PalettePost = { slug: string; title: string; summary: string };
+
 type Command = {
   id: string;
   label: string;
   hint: string;
-  group: "Sections" | "Work" | "Elsewhere" | "Actions";
+  group: "Sections" | "Work" | "Writing" | "Elsewhere" | "Actions";
   /** Extra text folded into matching but never displayed. */
   haystack?: string;
   run: (ctx: CommandContext) => void;
@@ -103,9 +105,16 @@ const commands: Command[] = [
   },
 ];
 
-const GROUP_ORDER: Command["group"][] = ["Sections", "Work", "Elsewhere", "Actions"];
+const GROUP_ORDER: Command["group"][] = [
+  "Sections",
+  "Work",
+  "Writing",
+  "Elsewhere",
+  "Actions",
+];
 
-export function CommandPalette() {
+/** Posts are read through a server-only module, so they arrive as a prop. */
+export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -159,9 +168,24 @@ export function CommandPalette() {
     };
   }, [open, close]);
 
+  const allCommands = useMemo<Command[]>(() => {
+    if (posts.length === 0) return commands;
+    const postCommands = posts.map<Command>((post) => ({
+      id: `post:${post.slug}`,
+      label: post.title,
+      hint: "Post",
+      group: "Writing",
+      haystack: post.summary,
+      run: (ctx) => ctx.navigate(`/writing/${post.slug}`),
+    }));
+    // Writing sits after Work, matching the header order.
+    const cut = commands.findIndex((c) => c.group === "Elsewhere");
+    return [...commands.slice(0, cut), ...postCommands, ...commands.slice(cut)];
+  }, [posts]);
+
   const results = useMemo(() => {
-    if (!query.trim()) return commands;
-    return commands
+    if (!query.trim()) return allCommands;
+    return allCommands
       .map((command) => {
         const primary = fuzzyMatch(query, command.label);
         const secondary = command.haystack ? fuzzyMatch(query, command.haystack) : null;
@@ -173,7 +197,7 @@ export function CommandPalette() {
       .filter((x): x is { command: Command; score: number } => x !== null)
       .sort((a, b) => b.score - a.score)
       .map((x) => x.command);
-  }, [query]);
+  }, [query, allCommands]);
 
   useEffect(() => {
     if (!dialogRef.current?.open) return;

@@ -1,0 +1,77 @@
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { formatPostDate, publishedPosts, recentPosts } from "@/lib/writing";
+import { ordinal } from "@/lib/utils";
+
+export function Writing() {
+  const posts = recentPosts(3);
+  if (posts.length === 0) return null;
+
+  const total = publishedPosts().length;
+
+  return (
+    <section id="writing" aria-labelledby="writing-title" className="shell section-y">
+      <SectionHeading
+        index="04"
+        eyebrow="Writing"
+        title="Notes on building things that have to work."
+        id="writing-title"
+      />
+
+      {/* Reuses .index-row verbatim, so this costs no new CSS and reads as
+          part of the same system as the work index. */}
+      <ul className="mt-12">
+        {posts.map((post, index) => (
+          <li key={post.slug} className="index-row border-t border-rule last:border-b">
+            <div className="grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-x-4 py-6 md:grid-cols-[3rem_minmax(0,1fr)_9rem_1.5rem] md:gap-x-6 md:py-7">
+              <span aria-hidden className="row-num meta">
+                {ordinal(index)}
+              </span>
+
+              <div className="min-w-0">
+                <h3 className="text-display-s font-display">
+                  <Link href={`/writing/${post.slug}`} className="stretch-link">
+                    {post.title}
+                  </Link>
+                </h3>
+                {post.summary && (
+                  <p className="mt-1.5 max-w-lg text-pretty text-sm leading-6 text-muted">
+                    {post.summary}
+                  </p>
+                )}
+              </div>
+
+              <div className="hidden md:block">
+                <time dateTime={post.date} className="meta block text-faint">
+                  {formatPostDate(post.date)}
+                </time>
+                <span className="meta mt-1.5 block text-faint">
+                  {post.readingMinutes} min read
+                </span>
+              </div>
+
+              <ArrowUpRight
+                aria-hidden
+                className="row-arrow size-4 shrink-0 justify-self-end text-faint"
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {total > posts.length && (
+        <Link
+          href="/writing"
+          className="group mt-8 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
+        >
+          <span className="link-underline">All writing ({total} posts)</span>
+          <ArrowRight
+            aria-hidden
+            className="size-4 transition-transform group-hover:translate-x-0.5"
+          />
+        </Link>
+      )}
+    </section>
+  );
+}

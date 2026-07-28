@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
+// Next aliases `react$` to its bundled copy, which exports ViewTransition.
+// The type comes from @types/react's canary.d.ts, pulled in by src/types.
+import { ViewTransition, type ReactNode } from "react";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
 import { profile, socials } from "@/content";
+import { publishedPosts } from "@/lib/writing";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
 import { PAPER_DARK, PAPER_LIGHT, THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
@@ -120,10 +123,16 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <SkipLink />
         <SiteHeader />
         <main id="main" tabIndex={-1}>
-          {children}
+          <ViewTransition>{children}</ViewTransition>
         </main>
         <SiteFooter />
-        <CommandPalette />
+        <CommandPalette
+          posts={publishedPosts().map(({ slug, title, summary }) => ({
+            slug,
+            title,
+            summary,
+          }))}
+        />
       </body>
     </html>
   );

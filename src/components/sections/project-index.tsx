@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ProjectRow } from "@/components/project/project-row";
+import { WorkPreview } from "@/components/interactive/work-preview";
 import { featuredProjects, projects } from "@/content";
 
 export function ProjectIndex() {
@@ -19,11 +20,13 @@ export function ProjectIndex() {
         it did or didn&rsquo;t prove.
       </SectionHeading>
 
-      <ul className="mt-12">
-        {featuredProjects.map((project, index) => (
-          <ProjectRow key={project.slug} project={project} index={index} />
-        ))}
-      </ul>
+      <WorkPreview>
+        <ul className="mt-12">
+          {featuredProjects.map((project, index) => (
+            <ProjectRow key={project.slug} project={project} index={index} />
+          ))}
+        </ul>
+      </WorkPreview>
 
       {remaining > 0 && (
         <Link

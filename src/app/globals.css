@@ -560,6 +560,283 @@
   }
 }
 
+/* ── Cursor-following work preview ────────────────────────────
+   The card is a sibling of the row list, positioned with transforms only.
+   It is decorative and aria-hidden: everything it shows is already in the
+   row markup, so a screen reader loses nothing.
+   ───────────────────────────────────────────────────────────── */
+.work-preview-root {
+  position: relative;
+}
+
+.work-preview-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20; /* below the z-40 sticky subheader and the z-50 header */
+  width: 300px;
+  height: 190px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  box-shadow: var(--raise);
+  transition:
+    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 220ms;
+}
+
+.work-preview-card[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s;
+}
+
+.work-preview-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: var(--media-grade);
+}
+
+.work-preview-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.875rem 1rem;
+}
+
+/* With a cover behind it the caption needs its own ground to stay legible. */
+.work-preview-card[data-has-image="true"] .work-preview-body {
+  background: linear-gradient(to top, var(--paper-raised) 62%, transparent);
+}
+
+/* Without one, the card is purely typographic and fills the frame. */
+.work-preview-card[data-has-image="false"] .work-preview-body {
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.25rem;
+}
+
+/* Touch and reduced-motion never see it, so it must never take up space. */
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .work-preview-card {
+    display: none;
+  }
+}
+
+/* ── Prose ────────────────────────────────────────────────────
+   Hand-rolled rather than @tailwindcss/typography, which would fight the
+   fluid type scale and the token system for no gain over this.
+   ───────────────────────────────────────────────────────────── */
+.prose {
+  max-width: var(--container-measure);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+
+.prose > * + * {
+  margin-top: 1.35em;
+}
+
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+.prose h2 {
+  margin-top: 2.6em;
+  font-size: 1.85rem;
+  line-height: 1.2;
+}
+.prose h3 {
+  margin-top: 2.1em;
+  font-size: 1.4rem;
+  line-height: 1.25;
+}
+.prose h4 {
+  margin-top: 1.9em;
+  font-size: 1.15rem;
+}
+
+.prose strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.prose a {
+  color: var(--ink);
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+  transition: background-size 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.prose a:hover {
+  background-size: 0% 1px;
+}
+
+/* The autolink wrapper must not inherit the underline treatment. */
+.prose .heading-anchor {
+  background-image: none;
+  color: inherit;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.4em;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose li + li {
+  margin-top: 0.5em;
+}
+.prose li::marker {
+  color: var(--ink-3);
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--ink);
+  padding-left: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin-block: 2.5em;
+}
+
+.prose figure figcaption {
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.prose th,
+.prose td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.6rem 0.75rem 0.6rem 0;
+  text-align: left;
+  vertical-align: top;
+}
+.prose th {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Wide content must scroll inside itself, never widen the page. */
+.prose .table-scroll,
+.prose pre {
+  overflow-x: auto;
+}
+
+/* ── Code ─────────────────────────────────────────────────────
+   rehype-pretty-code emits inline --shiki-light / --shiki-dark custom
+   properties per token, so one payload serves both themes and the swap is
+   a CSS variable read. No JavaScript, no second request.
+   ───────────────────────────────────────────────────────────── */
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* Inline code, not inside a block. */
+.prose :not(pre) > code {
+  border: 1px solid var(--rule);
+  background: var(--paper-inset);
+  border-radius: 2px;
+  padding: 0.15em 0.35em;
+  color: var(--ink);
+}
+
+.prose pre {
+  border: 1px solid var(--rule);
+  background: var(--paper-inset);
+  padding: 1rem 1.15rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+.prose pre > code {
+  display: grid; /* one row per line, so line highlighting can span full width */
+  font-size: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.prose [data-line] {
+  padding-inline: 0.15rem;
+}
+
+.prose code[data-theme] span,
+.prose code[data-theme] {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+}
+
+.dark .prose code[data-theme] span,
+.dark .prose code[data-theme] {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+}
+
+.dark .prose pre,
+.dark .prose :not(pre) > code {
+  background: var(--paper-raised);
+}
+
+.prose [data-highlighted-line] {
+  background: var(--accent-wash);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.prose [data-rehype-pretty-code-title] {
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+  background: var(--paper-inset);
+  padding: 0.5rem 1.15rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.prose [data-rehype-pretty-code-title] + pre {
+  margin-top: 0;
+}
+
 .highlight-mark {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
@@ -659,6 +936,55 @@
     transition:
       opacity 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms),
       transform 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms);
+  }
+}
+
+/* ── View transitions ─────────────────────────────────────────
+   Unsupported browsers render children and simply do not animate, which is
+   why this needs no fallback.
+   ───────────────────────────────────────────────────────────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* Capped well under half a second so scroll restoration never becomes
+     visible as a jump mid-transition. */
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The header is fixed and must not travel with the page. */
+::view-transition-group(site-header) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* ── Scroll-driven decoration ─────────────────────────────────
+   Strictly an enhancement. Firefox has no support for animation-timeline at
+   all, so nothing here may carry meaning: Reveal remains the universal
+   baseline and layout is identical either way.
+   ───────────────────────────────────────────────────────────── */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .type-track {
+      animation: type-track linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 38%;
+    }
+    @keyframes type-track {
+      from {
+        opacity: 0.68;
+        letter-spacing: 0.008em;
+      }
+      to {
+        opacity: 1;
+        letter-spacing: -0.02em;
+      }
+    }
   }
 }
 

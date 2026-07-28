@@ -26,7 +26,7 @@ export function SectionHeading({ index, eyebrow, title, id, children }: SectionH
       </div>
 
       <div className="col-span-full mt-4 md:col-span-5 md:mt-0 lg:col-span-8">
-        <h2 id={id} className="text-display-m text-balance">
+        <h2 id={id} className="type-track text-balance text-display-m">
           {title}
         </h2>
         {children && (

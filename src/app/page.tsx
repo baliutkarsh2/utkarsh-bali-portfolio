@@ -3,6 +3,7 @@ import { MetricsMarquee } from "@/components/sections/metrics-marquee";
 import { About } from "@/components/sections/about";
 import { Now } from "@/components/sections/now";
 import { ProjectIndex } from "@/components/sections/project-index";
+import { Writing } from "@/components/sections/writing";
 import { Experience } from "@/components/sections/experience";
 import { Skills } from "@/components/sections/skills";
 import { Recognition } from "@/components/sections/recognition";
@@ -25,6 +26,9 @@ export default function HomePage() {
         <ProjectIndex />
       </Reveal>
       <Reveal>
+        <Writing />
+      </Reveal>
+      <Reveal>
         <Experience />
       </Reveal>
       <Reveal>
@@ -37,7 +41,7 @@ export default function HomePage() {
         <OffHours />
       </Reveal>
       <Reveal>
-        <Contact index="08" />
+        <Contact index="09" />
       </Reveal>
     </>
   );

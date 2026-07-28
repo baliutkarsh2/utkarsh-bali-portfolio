@@ -6,7 +6,7 @@ export function Experience() {
   return (
     <section id="experience" aria-labelledby="experience-title" className="shell section-y">
       <SectionHeading
-        index="04"
+        index="05"
         eyebrow="Experience"
         title="Where I've worked."
         id="experience-title"

@@ -92,6 +92,34 @@ on the command-palette entry. Nothing 404s in the meantime.
 
 ---
 
+## Writing a blog post
+
+Posts are MDX files in `src/content/writing/`. Create one, commit, deploy. That
+is the whole workflow.
+
+```mdx
+---
+title: "Your title"
+summary: "One or two sentences. Used on the index, in RSS, and on the OG card."
+date: "2026-08-14"
+tags: ["agents", "testing"]
+draft: false
+---
+
+Body copy here. Standard markdown, plus any React component you import.
+```
+
+- **The filename is the URL.** `my-post.mdx` becomes `/writing/my-post`.
+- `title` and `date` are required; the build fails loudly if either is missing.
+- `draft: true` renders in `npm run dev` and is excluded from production, the
+  sitemap, and RSS.
+- Reading time is computed from the body, not stored.
+- Code blocks get syntax highlighting from a custom theme in
+  `src/lib/code-theme.json` that matches the paper palette. Highlight lines with
+  ` ```ts {2,5-7} ` and add a filename with ` ```ts title="server.ts" `.
+- Everything else is automatic: the index page, the homepage section, RSS at
+  `/writing/rss.xml`, the sitemap, the command palette, and a generated OG image.
+
 ## Things worth knowing before you change them
 
 - **`@theme inline` in `globals.css` must stay `inline`.** It inlines
@@ -107,8 +135,30 @@ on the command-palette entry. Nothing 404s in the meantime.
   benchmark", "research testing"). Keep them attached when the number moves.
 - **`now.updated` renders on the page.** Update it when the Now section changes
   so a stale entry is visible rather than misleading.
-- Six components are `"use client"`; everything else is a server component.
-  `<Reveal>` wraps server children without pulling them across the boundary.
+- Seven components are `"use client"`; everything else is a server component.
+  `<Reveal>` and `<WorkPreview>` wrap server children without pulling them
+  across the boundary.
+- **No em dashes anywhere**, including source comments. Check with a script, not
+  `grep`: a multibyte character class matches individual UTF-8 bytes and gives
+  false positives on the box-drawing characters used in the CSS section
+  separators.
+- **MDX plugin options must be plain JSON.** Turbopack passes loader options
+  across a Rust boundary, so functions are impossible. That rules out Shiki's
+  `getHighlighter` (the language set cannot be trimmed), `transformers`, and all
+  `onVisit*` callbacks.
+- **`pageExtensions` is deliberately unset.** Posts are imported, not routed, so
+  the Turbopack rule already matches them. Leaving it alone means a stray `.mdx`
+  file can never accidentally become a page.
+- The post route imports with a **relative** specifier, not `@/`. Path aliases
+  inside a template literal are the flakiest part of context-module building.
+- View transitions come from Next's **bundled** React, which exports
+  `ViewTransition` even though `react@19.2.5` does not. `src/types/react-canary.d.ts`
+  exists only to pull in the type. Kill switch is one line in `next.config.ts`.
+- Scroll-driven CSS (`animation-timeline`) has **no Firefox support at all**, so
+  nothing behind that `@supports` block may carry meaning. `Reveal` is the
+  universal baseline.
+- The paper grain is `position: fixed` at `z-index: -1` so it never repaints
+  during scroll. Do not make it a scrolling background.
 
 ## Deployment
 

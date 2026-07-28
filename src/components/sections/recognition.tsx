@@ -7,7 +7,7 @@ export function Recognition() {
   return (
     <section id="recognition" aria-labelledby="recognition-title" className="shell section-y">
       <SectionHeading
-        index="06"
+        index="07"
         eyebrow="Recognition"
         title="Awards, rankings, and a near miss."
         id="recognition-title"

@@ -5,7 +5,7 @@ export function Skills() {
   return (
     <section id="skills" aria-labelledby="skills-title" className="shell section-y">
       <SectionHeading
-        index="05"
+        index="06"
         eyebrow="Toolkit"
         title="What I reach for."
         id="skills-title"

@@ -32,6 +32,19 @@ export function SiteFooter() {
                 All work
               </Link>
             </li>
+            <li>
+              <Link href="/writing" className="link-underline text-muted hover:text-foreground">
+                Writing
+              </Link>
+            </li>
+            <li>
+              <a
+                href="/writing/rss.xml"
+                className="link-underline text-muted transition-colors hover:text-foreground"
+              >
+                RSS
+              </a>
+            </li>
             {profile.resume && (
               <li>
                 <a

@@ -2,7 +2,7 @@ import { projects } from "./projects";
 import type { Project } from "./types";
 
 export * from "./types";
-export { profile, socials, navItems } from "./profile";
+export { profile, socials, navItems, sectionNav, routeNav } from "./profile";
 export { now } from "./now";
 export { projects } from "./projects";
 export { experiences } from "./experience";

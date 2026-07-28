@@ -5,7 +5,7 @@ export function OffHours() {
   return (
     <section id="off-hours" aria-labelledby="off-hours-title" className="shell section-y">
       <SectionHeading
-        index="07"
+        index="08"
         eyebrow="Off hours"
         title="What I'm reading, listening to, and chasing."
         id="off-hours-title"

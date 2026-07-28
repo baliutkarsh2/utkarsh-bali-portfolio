@@ -9,7 +9,13 @@ import { ordinal } from "@/lib/utils";
  */
 export function ProjectRow({ project, index }: { project: Project; index: number }) {
   return (
-    <li className="index-row border-t border-rule last:border-b">
+    <li
+      className="index-row border-t border-rule last:border-b"
+      data-preview-row
+      data-preview-src={project.cover?.src ?? ""}
+      data-preview-name={project.name}
+      data-preview-meta={`${project.metric} ${project.metricLabel}`}
+    >
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-x-4 gap-y-1 py-6 md:grid-cols-[3rem_minmax(0,1fr)_7rem_10rem_1.5rem] md:gap-x-6 md:py-7">
         <span aria-hidden className="row-num meta">
           {ordinal(index)}

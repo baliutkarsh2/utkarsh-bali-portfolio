@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ProjectRow } from "@/components/project/project-row";
+import { WorkPreview } from "@/components/interactive/work-preview";
 import { Contact } from "@/components/sections/contact";
 import { Reveal } from "@/components/interactive/reveal";
 import { orderedProjects } from "@/content";
@@ -32,11 +33,13 @@ export default function ProjectsPage() {
       </header>
 
       <div className="shell">
-        <ul>
-          {orderedProjects.map((project, index) => (
-            <ProjectRow key={project.slug} project={project} index={index} />
-          ))}
-        </ul>
+        <WorkPreview>
+          <ul>
+            {orderedProjects.map((project, index) => (
+              <ProjectRow key={project.slug} project={project} index={index} />
+            ))}
+          </ul>
+        </WorkPreview>
       </div>
 
       <Reveal>

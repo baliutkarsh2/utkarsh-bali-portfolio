@@ -1,0 +1,17 @@
+import { publishedPosts } from "@/lib/writing";
+import { OG_CONTENT_TYPE, OG_SIZE, renderOgCard } from "@/lib/og";
+
+export const size = OG_SIZE;
+export const contentType = OG_CONTENT_TYPE;
+export const alt = "Writing by Utkarsh Bali";
+
+export default async function Image() {
+  const count = publishedPosts().length;
+  return renderOgCard({
+    eyebrow: "Writing",
+    title: "Notes on building",
+    description:
+      "Agent infrastructure, developer tools, and the parts of shipping software that turn out harder than they looked.",
+    meta: [`${count} ${count === 1 ? "post" : "posts"}`, "Utkarsh Bali"],
+  });
+}

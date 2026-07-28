@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { navItems, profile } from "@/content";
+import { navItems, profile, sectionNav } from "@/content";
 import { ThemeToggle } from "@/components/interactive/theme-toggle";
 
-const SECTION_IDS = navItems.map((item) => item.href.replace("/#", ""));
+/** Only real in-page sections, never route links. */
+const SECTION_IDS = sectionNav.map((item) => item.href.replace("/#", ""));
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -57,7 +58,13 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-rule bg-background/85 backdrop-blur-md">
+    // Named so it is captured as its own view-transition group. Without this
+    // a fixed header gets pulled into the root snapshot and appears to slide
+    // with the page on every navigation.
+    <header
+      style={{ viewTransitionName: "site-header" }}
+      className="fixed inset-x-0 top-0 z-50 border-b border-rule bg-background/85 backdrop-blur-md"
+    >
       <div className="shell flex h-14 items-center justify-between gap-4">
         <Link
           href="/"
@@ -75,13 +82,16 @@ export function SiteHeader() {
         <nav aria-label="Primary" className="hidden md:block">
           <ul className="flex items-center gap-1">
             {navItems.map((item) => {
+              const isRoute = !item.href.startsWith("/#");
               const id = item.href.replace("/#", "");
-              const isActive = isHome && activeId === id;
+              const isActive = isRoute
+                ? pathname.startsWith(item.href)
+                : isHome && activeId === id;
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    aria-current={isActive ? "location" : undefined}
+                    aria-current={isActive ? (isRoute ? "page" : "location") : undefined}
                     className={`px-2.5 py-1.5 text-sm transition-colors ${
                       isActive ? "text-foreground" : "text-muted hover:text-foreground"
                     }`}
