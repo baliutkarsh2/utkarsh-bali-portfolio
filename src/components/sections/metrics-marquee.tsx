@@ -24,7 +24,13 @@ function MetricList({ "aria-hidden": ariaHidden }: { "aria-hidden"?: boolean }) 
     <ul className="marquee-list" aria-hidden={ariaHidden}>
       {metrics.map((metric) => (
         <li key={metric.value + metric.label} className="marquee-item">
-          <span className="font-display text-2xl leading-none tabular">{metric.value}</span>
+          <span
+            className={`font-display text-2xl leading-none tabular ${
+              metric.accent ? "text-accent" : ""
+            }`}
+          >
+            {metric.value}
+          </span>
           <span className="meta text-faint">{metric.label}</span>
         </li>
       ))}

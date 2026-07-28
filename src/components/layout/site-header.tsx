@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { navItems, profile, sectionNav } from "@/content";
 import { ThemeToggle } from "@/components/interactive/theme-toggle";
+import { Magnetic } from "@/components/interactive/magnetic";
+import { SlideLabel } from "@/components/ui/slide-label";
 
 /** Only real in-page sections, never route links. */
 const SECTION_IDS = sectionNav.map((item) => item.href.replace("/#", ""));
@@ -92,11 +94,11 @@ export function SiteHeader() {
                   <Link
                     href={item.href}
                     aria-current={isActive ? (isRoute ? "page" : "location") : undefined}
-                    className={`px-2.5 py-1.5 text-sm transition-colors ${
-                      isActive ? "text-foreground" : "text-muted hover:text-foreground"
+                    className={`slide-trigger inline-block px-2.5 py-1.5 text-sm transition-colors ${
+                      isActive ? "nav-active text-foreground" : "text-muted hover:text-foreground"
                     }`}
                   >
-                    {item.label}
+                    <SlideLabel>{item.label}</SlideLabel>
                   </Link>
                 </li>
               );
@@ -105,28 +107,34 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-            aria-label="Open command palette"
-            className="hidden h-9 items-center gap-2 border border-rule px-2.5 text-muted transition-colors hover:border-rule-strong hover:text-foreground sm:flex"
-          >
-            <span className="meta">Search</span>
-            <kbd aria-hidden className="meta border border-rule px-1 py-0.5">
-              ⌘K
-            </kbd>
-          </button>
+          <Magnetic className="hidden sm:inline-block">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+              aria-label="Open command palette"
+              className="flex h-9 items-center gap-2 border border-rule px-2.5 text-muted transition-colors hover:border-rule-strong hover:text-foreground"
+            >
+              <span className="meta">Search</span>
+              <kbd aria-hidden className="meta border border-rule px-1 py-0.5">
+                ⌘K
+              </kbd>
+            </button>
+          </Magnetic>
 
-          <ThemeToggle />
+          <Magnetic>
+            <ThemeToggle />
+          </Magnetic>
 
-          <button
-            type="button"
-            onClick={openMenu}
-            aria-label="Open menu"
-            className="inline-flex size-9 items-center justify-center border border-rule text-muted transition-colors hover:border-rule-strong hover:text-foreground md:hidden"
-          >
-            <Menu className="size-4" aria-hidden />
-          </button>
+          <Magnetic className="md:hidden">
+            <button
+              type="button"
+              onClick={openMenu}
+              aria-label="Open menu"
+              className="inline-flex size-9 items-center justify-center border border-rule text-muted transition-colors hover:border-rule-strong hover:text-foreground"
+            >
+              <Menu className="size-4" aria-hidden />
+            </button>
+          </Magnetic>
         </div>
       </div>
 

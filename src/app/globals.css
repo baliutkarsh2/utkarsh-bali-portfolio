@@ -22,9 +22,13 @@
   --rule: rgba(20, 20, 15, 0.14); /* decorative hairlines */
   --rule-strong: rgba(20, 20, 15, 0.46); /* ~3:1, interactive borders */
 
-  --accent: #14140f; /* in light mode, ink is the accent */
+  /* Print red. 4.8:1 on paper, which clears AA even at small sizes, but the
+     discipline rule still holds: --accent for display type, rules, and marks;
+     --accent-ink for anything set small or on the inset background. */
+  --accent: #c33d1c;
+  --accent-ink: #a03015; /* 6.5:1 on paper, 6.0:1 on the inset hover fill */
   --spot: #eaff4d; /* background only, 1.1:1 as text */
-  --focus: #14140f;
+  --focus: #c33d1c;
 
   --grid-line: rgba(20, 20, 15, 0.075);
 
@@ -34,8 +38,20 @@
   --rule-hi: rgba(255, 255, 255, 0.7); /* top bevel on raised surfaces */
   --rule-lo: var(--rule);
   --media-grade: none; /* screenshots need no correction on paper */
-  --accent-wash: rgba(20, 20, 15, 0.04);
+  --accent-wash: rgba(195, 61, 28, 0.055);
   --portrait-grade: saturate(1.02) contrast(1.02);
+
+  /* Ink-band fill. Deliberately NOT in the .dark token block: the band element
+     carries the `dark` class itself, so a `.dark` declaration would override
+     this in both themes and the light/dark distinction would vanish. The dark
+     override lives on :root.dark, which only the <html> theme class matches. */
+  --band-bg: #191914;
+}
+
+:root.dark {
+  /* Deeper than the dark page paper (#10110f) so the spread stays visible
+     when the whole site is already dark. */
+  --band-bg: #0b0b09;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -55,9 +71,12 @@
   --rule: rgba(255, 253, 232, 0.13);
   --rule-strong: rgba(255, 253, 232, 0.4);
 
-  --accent: #8be7d5; /* 13.2:1 */
+  /* The warm red family survives the theme flip; mint would read as a second
+     brand. Both clear 4.5:1 on the dark paper. */
+  --accent: #ff6f4d; /* 6.9:1 */
+  --accent-ink: #ff8a6e; /* 8.2:1 */
   --spot: #eaff4d;
-  --focus: #8be7d5;
+  --focus: #ff6f4d;
 
   /* Dark needs a stronger grid or the structure disappears entirely. */
   --grid-line: rgba(255, 253, 232, 0.085);
@@ -70,7 +89,7 @@
   --rule-lo: rgba(0, 0, 0, 0.45);
   /* Product screenshots are mostly white and glare against near-black. */
   --media-grade: brightness(0.9) contrast(1.04);
-  --accent-wash: rgba(139, 231, 213, 0.06);
+  --accent-wash: rgba(255, 111, 77, 0.07);
   --portrait-grade: saturate(0.94) contrast(1.05) brightness(0.94);
 }
 
@@ -94,6 +113,7 @@
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --color-spot: var(--spot);
 
   /* Fluid editorial scale */
@@ -163,8 +183,8 @@
   }
 
   ::selection {
-    background: var(--spot);
-    color: #14140f;
+    background: var(--accent);
+    color: var(--paper);
   }
 
   :focus-visible {
@@ -330,6 +350,50 @@
   opacity: var(--grain-opacity);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 200px 200px;
+}
+
+/* ── Ink band ─────────────────────────────────────────────────
+   Full-bleed inverted spread: the section carries `dark ink-band`, and the
+   scoped `dark` class re-resolves every token inside (the custom variant
+   matches nested scopes), so children need no per-band variants. The band
+   paints its own fill because the page background lives on <body>.
+   ───────────────────────────────────────────────────────────── */
+.ink-band {
+  position: relative;
+  /* Forces a stacking context so the grain layer below can sit between the
+     band's own background and its content. */
+  isolation: isolate;
+  background: var(--band-bg);
+  /* Load-bearing: children without a colour utility (bare h2, dd) inherit
+     their COMPUTED colour from <body>, which was resolved in the light scope.
+     Re-declaring here re-resolves var(--ink) inside the band's dark scope,
+     and inheritance picks up the flipped value. */
+  color: var(--ink);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Texture continuity: the same turbulence tile as .paper-grain, scoped to the
+   band, because the fixed page grain is at z-index -1 behind this fill. */
+.ink-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* The closing email. Sized to span most of the container on one line rather
+   than reusing display-xl, which is tuned for a two-word name. */
+.contact-email {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5.4vw, 4.75rem);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
 }
 
 /* The old mask was an ellipse anchored at top centre, which cut off in a
@@ -515,7 +579,8 @@
 }
 
 .marquee-item + .marquee-item {
-  border-left: 1px solid var(--rule);
+  /* Red registration ticks between figures. Decorative, so alpha is fine. */
+  border-left: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -557,6 +622,69 @@
   }
   .marquee-item + .marquee-item {
     border-left: 0;
+  }
+}
+
+/* ── Feature spread ───────────────────────────────────────────
+   Magazine spread for the top three projects. Media and copy alternate
+   sides by index; below 64rem the grid collapses to source order and the
+   oversized numeral disappears (the copy keeps its own meta line).
+   ───────────────────────────────────────────────────────────── */
+.feature-spread {
+  display: grid;
+  row-gap: 1.75rem;
+}
+
+.spread-media {
+  position: relative;
+}
+
+/* The numeral exists only where there is room to overlap the plate. */
+.spread-num {
+  display: none;
+}
+
+@media (width >= 64rem) {
+  .feature-spread {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+    align-items: center;
+  }
+  .feature-spread .spread-media {
+    grid-column: 1 / 8;
+    grid-row: 1;
+  }
+  .feature-spread .spread-copy {
+    grid-column: 9 / 13;
+    grid-row: 1;
+  }
+  .feature-spread[data-flip] .spread-media {
+    grid-column: 6 / 13;
+  }
+  .feature-spread[data-flip] .spread-copy {
+    grid-column: 1 / 5;
+    grid-row: 1;
+  }
+
+  /* Oversized index numeral, overlapping the plate's top outer corner.
+     Two characters, so unlike the hero interlock the geometry always fits. */
+  .spread-num {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    top: -0.52em;
+    left: -0.06em;
+    font-family: var(--font-display);
+    font-size: clamp(4.5rem, 8vw, 7.5rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    pointer-events: none;
+  }
+  .feature-spread[data-flip] .spread-num {
+    left: auto;
+    right: -0.06em;
   }
 }
 
@@ -851,12 +979,101 @@
   color: #14140f;
 }
 
+/* Active header nav item: an accent underline instead of a colour change, so
+   the label keeps full ink contrast and the red stays a mark, not text. */
+.nav-active {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 50% calc(100% - 0.2rem);
+  background-size: calc(100% - 1.25rem) 2px;
+}
+
+/* ── Char-slide link hover ────────────────────────────────────
+   The label is stacked twice inside an overflow-clipped line; hovering the
+   `.slide-trigger` ancestor slides both copies up one line. The duplicate is
+   aria-hidden. No-hover devices and reduced motion never see it move.
+   ───────────────────────────────────────────────────────────── */
+.link-slide {
+  position: relative;
+  display: block;
+  overflow: clip;
+}
+.link-slide > span {
+  display: block;
+}
+.link-slide > span[aria-hidden] {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .slide-trigger .link-slide > span {
+    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  /* The duplicate trails by a frame's worth, which is what makes it read as
+     type moving rather than a block sliding. */
+  .slide-trigger .link-slide > span[aria-hidden] {
+    transition-delay: 45ms;
+  }
+  .slide-trigger:hover .link-slide > span,
+  .slide-trigger:focus-visible .link-slide > span {
+    transform: translateY(-100%);
+  }
+}
+
+/* ── Duotone media ────────────────────────────────────────────
+   Screenshots rest as an accent-washed monochrome plate and release to full
+   colour on hover, so mixed-palette UI shots sit inside the art direction
+   instead of on top of it. Hover-incapable and reduced-motion users always
+   get full colour.
+   ───────────────────────────────────────────────────────────── */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .duotone-frame img {
+    filter: grayscale(1) contrast(1.03) var(--media-grade);
+    transition: filter 340ms ease;
+  }
+  .duotone-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: var(--accent);
+    opacity: 0.14;
+    mix-blend-mode: multiply;
+    transition: opacity 340ms ease;
+  }
+  .duotone-frame:hover img {
+    filter: var(--media-grade);
+  }
+  .duotone-frame:hover::after {
+    opacity: 0;
+  }
+}
+
 /* Hairline index rows, the project list and recognition list. */
 .index-row {
   position: relative;
   transition:
     background-color 200ms ease,
     border-color 200ms ease;
+}
+/* Accent rule that draws in along the row's top edge on hover. */
+.index-row::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.index-row:hover::after {
+  transform: scaleX(1);
 }
 .index-row:hover {
   background-color: var(--paper-inset);
@@ -873,7 +1090,9 @@
   transition: color 200ms ease;
 }
 .index-row:hover .row-num {
-  color: var(--ink);
+  /* The inset hover fill is lighter than paper, so the small numeral needs
+     the darker accent variant to hold 4.5:1 there. */
+  color: var(--accent-ink);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -983,6 +1202,46 @@
       to {
         opacity: 1;
         letter-spacing: -0.02em;
+      }
+    }
+
+    /* Spread numerals drift against the scroll, slightly slower than the
+       page. Transform only, and the numeral is aria-hidden decoration. */
+    .spread-num {
+      animation: spread-num-drift linear both;
+      animation-timeline: view();
+      animation-range: entry 0% exit 100%;
+    }
+    @keyframes spread-num-drift {
+      from {
+        translate: 0 0.3em;
+      }
+      to {
+        translate: 0 -0.3em;
+      }
+    }
+
+    /* An accent hairline draws along the band's top edge as it enters.
+       Declared entirely inside @supports, so Firefox has no extra box. */
+    .ink-band::after {
+      content: "";
+      position: absolute;
+      top: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--accent);
+      transform-origin: left;
+      animation: rule-scale linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+    @keyframes rule-scale {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
       }
     }
   }

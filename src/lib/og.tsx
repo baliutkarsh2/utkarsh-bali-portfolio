@@ -9,6 +9,7 @@ const PAPER = "#f5f4ee";
 const INK = "#14140f";
 const INK_3 = "#82827a";
 const RULE = "rgba(20,20,15,0.16)";
+const ACCENT = "#c33d1c"; /* keep in sync with --accent in globals.css */
 
 /**
  * Fonts are read from disk at build time, no network dependency.
@@ -107,7 +108,7 @@ export async function renderOgCard({ eyebrow, title, description, meta }: OgCard
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", height: 1, background: RULE, marginBottom: 22 }} />
+          <div style={{ display: "flex", height: 3, background: ACCENT, marginBottom: 22 }} />
           <div style={{ display: "flex", alignItems: "center" }}>
             {meta.map((item, index) => (
               <div key={item} style={{ display: "flex", alignItems: "center" }}>

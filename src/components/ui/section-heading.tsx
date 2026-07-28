@@ -18,7 +18,7 @@ export function SectionHeading({ index, eyebrow, title, id, children }: SectionH
     <div className="grid-editorial !mx-0 !max-w-none !px-0 border-t border-rule pt-5">
       <div className="col-span-full flex items-baseline gap-4 md:col-span-3 lg:col-span-4">
         {index && (
-          <span aria-hidden className="meta text-faint">
+          <span aria-hidden className="meta text-accent-ink">
             {index}
           </span>
         )}

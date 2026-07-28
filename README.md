@@ -122,6 +122,18 @@ Body copy here. Standard markdown, plus any React component you import.
 
 ## Things worth knowing before you change them
 
+- **The accent is print red and it is rationed.** `--accent` may colour display
+  type, hairlines, numerals, marks, selection, active nav, and focus rings.
+  It must never colour body or meta text; small accent text uses the darker
+  `--accent-ink`, which clears 4.5:1 on paper and on the row-hover inset fill.
+  If a screenshot reads "red website" rather than "paper site with a red
+  pulse", something used it that shouldn't have.
+- **Ink bands work by scoping the `dark` class** (`<section class="dark ink-band">`).
+  Two traps: `--band-bg` must stay OUT of the `.dark` token block (the band
+  matches `.dark` itself and would self-override in both themes; the dark value
+  lives on `:root.dark`), and `.ink-band` must declare `color: var(--ink)`,
+  because children without a colour utility inherit the computed colour from
+  `<body>`, which was resolved in the light scope.
 - **`@theme inline` in `globals.css` must stay `inline`.** It inlines
   `var(--paper)` into each emitted utility so colours re-resolve under `.dark`.
   Drop the keyword and dark mode silently stops working.

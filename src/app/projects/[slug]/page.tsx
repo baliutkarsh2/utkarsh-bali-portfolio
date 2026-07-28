@@ -108,10 +108,12 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           </dl>
         </header>
 
-        {/* Cover, or the typographic stand-in */}
-        <div className="shell">
+        {/* Cover, or the typographic stand-in. The view-transition-name pairs
+            with the homepage feature spread, so arriving from one morphs the
+            plate into this masthead instead of cross-fading. */}
+        <div className="shell" style={{ viewTransitionName: `project-${project.slug}` }}>
           {project.cover ? (
-            <div className="relative aspect-[16/9] w-full overflow-hidden border border-rule bg-inset">
+            <div className="duotone-frame relative aspect-[16/9] w-full overflow-hidden border border-rule bg-inset">
               <Image
                 src={project.cover.src}
                 alt={project.cover.alt}
