@@ -2,296 +2,414 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ─────────────────────────────────────────────────────────────
+   1. Semantic tokens — light
+   Names describe role, not colour, so dark mode is a value swap.
+   ───────────────────────────────────────────────────────────── */
 :root {
-  --background: #f4f4ef;
-  --foreground: #161616;
-  --card: #fbfbf6;
-  --surface: #e9e8df;
-  --muted-foreground: #64645c;
-  --border: rgba(23, 23, 21, 0.16);
-  --accent: #111827;
-  --accent-2: #d8c4ff;
-  --accent-soft: rgba(105, 89, 255, 0.12);
-  --mint: #8edfd2;
-  --highlight: #f0ff5d;
-  --grid-line: rgba(23, 23, 21, 0.085);
+  color-scheme: light;
+
+  --paper: #f5f4ee;
+  --paper-inset: #ecebe3;
+  --paper-raised: #fbfaf5;
+
+  --ink: #14140f;
+  --ink-2: #57574e; /* 5.4:1 on paper — AA body text */
+  --ink-3: #82827a; /* 3.4:1 — large text or decorative only */
+
+  --rule: rgba(20, 20, 15, 0.14); /* decorative hairlines */
+  --rule-strong: rgba(20, 20, 15, 0.46); /* ~3:1 — interactive borders */
+
+  --accent: #14140f; /* in light mode, ink is the accent */
+  --spot: #eaff4d; /* background only — 1.1:1 as text */
+  --focus: #14140f;
+
+  --grid-line: rgba(20, 20, 15, 0.075);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   2. Semantic tokens — dark
+   ───────────────────────────────────────────────────────────── */
 .dark {
-  --background: #10110f;
-  --foreground: #fffde8;
-  --card: #171815;
-  --surface: #22241e;
-  --muted-foreground: #c1c0ad;
-  --border: rgba(255, 255, 255, 0.11);
-  --accent: #8be7d5;
-  --accent-2: #e4c6ff;
-  --accent-soft: rgba(139, 231, 213, 0.14);
-  --mint: #8be7d5;
-  --highlight: #efff63;
-  --grid-line: rgba(255, 255, 255, 0.065);
+  color-scheme: dark;
+
+  --paper: #10110f;
+  --paper-inset: #1a1c18;
+  --paper-raised: #171815;
+
+  --ink: #fffde8;
+  --ink-2: #c1c0ad; /* 10.4:1 */
+  --ink-3: #8b8a7c;
+
+  --rule: rgba(255, 253, 232, 0.13);
+  --rule-strong: rgba(255, 253, 232, 0.4);
+
+  --accent: #8be7d5; /* 13.2:1 */
+  --spot: #eaff4d;
+  --focus: #8be7d5;
+
+  --grid-line: rgba(255, 253, 232, 0.06);
 }
 
+/* ─────────────────────────────────────────────────────────────
+   3. Theme mapping
+   `inline` is load-bearing: it inlines var(--paper) into the emitted
+   utility so `bg-background` re-resolves under `.dark`. Without it,
+   dark mode silently stops working.
+   ───────────────────────────────────────────────────────────── */
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-surface: var(--surface);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
+  --font-display: var(--font-display-src), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-sans-src), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-src), ui-monospace, "SF Mono", monospace;
+
+  --color-background: var(--paper);
+  --color-inset: var(--paper-inset);
+  --color-raised: var(--paper-raised);
+  --color-foreground: var(--ink);
+  --color-muted: var(--ink-2);
+  --color-faint: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
   --color-accent: var(--accent);
-  --color-accent-2: var(--accent-2);
-  --color-highlight: var(--highlight);
-  --shadow-soft: 0 24px 70px rgba(23, 23, 21, 0.13);
+  --color-spot: var(--spot);
+
+  /* Fluid editorial scale */
+  --text-display-xl: clamp(3rem, 10.5vw, 8.5rem);
+  --text-display-xl--line-height: 0.86;
+  --text-display-xl--letter-spacing: -0.035em;
+
+  --text-display-l: clamp(2.25rem, 6vw, 4.5rem);
+  --text-display-l--line-height: 0.95;
+  --text-display-l--letter-spacing: -0.028em;
+
+  --text-display-m: clamp(1.75rem, 3.6vw, 2.75rem);
+  --text-display-m--line-height: 1.05;
+  --text-display-m--letter-spacing: -0.02em;
+
+  --text-display-s: clamp(1.375rem, 2.4vw, 1.75rem);
+  --text-display-s--line-height: 1.15;
+  --text-display-s--letter-spacing: -0.015em;
+
+  --text-lede: 1.1875rem;
+  --text-lede--line-height: 1.62;
+
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.4;
+
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.2;
+  --text-micro--letter-spacing: 0.18em;
+
+  --radius-none: 0px;
+  --radius-xs: 2px;
+
+  --container-measure: 68ch;
+  --container-content: 78rem;
 }
 
-* {
-  box-sizing: border-box;
-}
+/* ─────────────────────────────────────────────────────────────
+   4. Base
+   ───────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-padding-top: 96px;
-}
+  html {
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
 
-body {
-  min-height: 100vh;
-  overflow-x: hidden;
-  background:
-    radial-gradient(circle at 52% 0%, rgba(216, 196, 255, 0.45), transparent 30rem),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.68), transparent 38rem),
-    var(--background);
-}
+  /* Opt in per-element instead of globally, so programmatic scrolls and
+     reduced-motion users are not fighting a smooth-scroll default. */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
 
-::selection {
-  background: color-mix(in srgb, var(--accent) 32%, transparent);
-  color: var(--foreground);
-}
+  body {
+    min-height: 100svh;
+    /* Flat fill: the old layered gradients were two large non-composited
+       paints sitting directly behind the LCP element. */
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
 
-a,
-button {
-  -webkit-tap-highlight-color: transparent;
-}
+  ::selection {
+    background: var(--spot);
+    color: #14140f;
+  }
 
-button {
-  cursor: pointer;
-}
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
 
-.section-shell {
-  padding: 6.5rem 1rem;
-}
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
 
-@media (min-width: 640px) {
-  .section-shell {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+
+  /* Tabular figures everywhere numbers are compared vertically. */
+  time,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--rule-strong);
+    border: 3px solid var(--paper);
+    border-radius: 999px;
   }
 }
 
-.premium-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 1.6rem;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), color-mix(in srgb, var(--card) 88%, transparent)),
-    var(--card);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px);
+/* ─────────────────────────────────────────────────────────────
+   5. Utilities
+   ───────────────────────────────────────────────────────────── */
+
+/* 4 → 8 → 12 column editorial grid. Asymmetric placement inside this
+   is what separates the layout from a centred template. */
+@utility grid-editorial {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  width: 100%;
+  max-width: var(--container-content);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
 }
 
-.dark .premium-card {
-  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.25);
+@utility shell {
+  width: 100%;
+  max-width: var(--container-content);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
 }
 
-.premium-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, rgba(255, 255, 255, 0.4), transparent 26%),
-    radial-gradient(circle at top right, var(--accent-soft), transparent 40%);
-  opacity: 0.58;
+@utility section-y {
+  padding-block: clamp(4rem, 8vw, 7.5rem);
 }
 
-.premium-card > * {
-  position: relative;
-  z-index: 1;
+@utility measure {
+  max-width: var(--container-measure);
 }
 
-.tech-chip {
-  display: inline-flex;
-  min-height: 2rem;
-  align-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  padding: 0.4rem 0.7rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1;
-  color: color-mix(in srgb, var(--foreground) 82%, var(--muted-foreground));
+@utility meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
-.display-serif {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 500;
-  letter-spacing: -0.06em;
+@utility hairline {
+  border-top: 1px solid var(--rule);
+}
+
+/* Underline that grows from the left. The editorial link signature. */
+@utility link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 1px;
+  }
+}
+
+/* Row-wide click target without nesting <a> inside <a>. Interactive
+   children opt out with `relative z-10`. */
+@utility stretch-link {
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+}
+
+@media (width >= 48rem) {
+  .grid-editorial {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-gap: 1.5rem;
+    padding-inline: 2rem;
+  }
+  .shell {
+    padding-inline: 2rem;
+  }
+}
+
+@media (width >= 80rem) {
+  .grid-editorial {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+    padding-inline: 2.5rem;
+  }
+  .shell {
+    padding-inline: 2.5rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6. Component classes — keep this list short
+   ───────────────────────────────────────────────────────────── */
+
+.hero-grid {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 92px 92px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 78%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 78%);
 }
 
 .highlight-mark {
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  background: linear-gradient(180deg, transparent 18%, var(--highlight) 18%, var(--highlight) 86%, transparent 86%);
-  padding: 0 0.08em;
-}
-
-.site-grid {
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 92px 92px;
-}
-
-.hatch {
-  background-image: repeating-linear-gradient(
-    -35deg,
-    rgba(22, 22, 22, 0.055) 0,
-    rgba(22, 22, 22, 0.055) 1px,
-    transparent 1px,
-    transparent 7px
+  background: linear-gradient(
+    180deg,
+    transparent 16%,
+    var(--spot) 16%,
+    var(--spot) 88%,
+    transparent 88%
   );
+  padding-inline: 0.06em;
+  color: #14140f;
 }
 
-.product-panel {
-  border: 1px solid rgba(255, 253, 232, 0.13);
-  border-radius: 2.4rem;
-  background:
-    radial-gradient(circle at 75% 0%, rgba(220, 188, 255, 0.25), transparent 32rem),
-    #181917;
-  color: #fffde8;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
-}
-
-.langfuse-frame {
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--card) 92%, transparent);
-  box-shadow: 0 18px 70px rgba(22, 22, 22, 0.08);
-}
-
-.side-rail-card {
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 62%, var(--card));
-}
-
-.rail-shell {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent;
-}
-
-.rail-shell::-webkit-scrollbar {
-  width: 6px;
-}
-
-.rail-shell::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.rail-shell::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--foreground) 18%, transparent);
-}
-
-.mock-window {
-  border: 1px solid rgba(255, 253, 232, 0.16);
-  background: rgba(255, 253, 232, 0.055);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.wave-strip {
-  transform: rotate(-5deg);
-  border: 2px solid var(--foreground);
-  border-radius: 999px;
-  background: var(--foreground);
-  color: var(--background);
-  white-space: nowrap;
-  box-shadow: 0 18px 48px rgba(23, 23, 21, 0.18);
-}
-
-.social-link {
-  display: inline-flex;
-  min-height: 2.5rem;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--card) 78%, transparent);
-  padding: 0.55rem 0.85rem;
-  color: var(--muted-foreground);
+/* Hairline index rows — the project list and recognition list. */
+.index-row {
+  position: relative;
   transition:
-    color 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease,
-    background 180ms ease;
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+.index-row:hover {
+  background-color: var(--paper-inset);
+  border-color: var(--rule-strong);
+}
+.index-row .row-arrow {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.index-row:hover .row-arrow {
+  transform: translate(4px, -4px);
+}
+.index-row .row-num {
+  color: var(--ink-3);
+  transition: color 200ms ease;
+}
+.index-row:hover .row-num {
+  color: var(--ink);
 }
 
-.social-link:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  color: var(--foreground);
+/* ─────────────────────────────────────────────────────────────
+   7. Motion
+   ───────────────────────────────────────────────────────────── */
+
+/* Entrance. Note the LCP rule: the display headline uses `.enter-clip`,
+   which paints immediately, rather than fading in from opacity 0. */
+.enter > * {
+  animation: enter 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--stagger, 0) * 65ms);
 }
 
-.loop-card {
-  min-height: 16rem;
-  border-radius: 0;
-  border-right: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface) 68%, transparent), transparent),
-    var(--card);
-  padding: 1.4rem;
-  transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    background 180ms ease;
-}
-
-.loop-card:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--accent) 9%, transparent), transparent),
-    var(--card);
-}
-
-.animate-rise {
-  animation: rise 720ms ease both;
-}
-
-.animate-rise-delayed {
-  animation: rise 840ms 120ms ease both;
-}
-
-@keyframes rise {
+@keyframes enter {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
+.enter-clip {
+  animation: enter-clip 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes enter-clip {
+  from {
+    clip-path: inset(105% 0 0 0);
+  }
+  to {
+    clip-path: inset(-20% -10% -20% -10%);
+  }
+}
+
+.rule-draw {
+  animation: rule-draw 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: left;
+}
+
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Scroll reveal. Gated on `.js` so a visitor without JavaScript is never
+   served a page of permanently invisible content. */
+@media (prefers-reduced-motion: no-preference) {
+  .js .reveal:not([data-revealed]) {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  .js .reveal {
+    transition:
+      opacity 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms),
+      transform 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms);
+  }
+}
+
+/* Keep opacity fades (no vestibular risk); kill movement. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal,
+  .enter > *,
+  .enter-clip,
+  .rule-draw {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
   }
 }

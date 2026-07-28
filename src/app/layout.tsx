@@ -1,82 +1,128 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SkipLink } from "@/components/layout/skip-link";
+import { CommandPalette } from "@/components/interactive/command-palette";
+import { profile, socials } from "@/content";
+import { jsonLd, personId, siteConfig } from "@/lib/seo";
+import { PAPER_DARK, PAPER_LIGHT, THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const display = Fraunces({
+  variable: "--font-display-src",
+  subsets: ["latin"],
+  axes: ["opsz"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const sans = Geist({
+  variable: "--font-sans-src",
   subsets: ["latin"],
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mono = Geist_Mono({
+  variable: "--font-mono-src",
   subsets: ["latin"],
+  weight: ["500"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://utkarshbali.com"),
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: "Utkarsh Bali | AI Agent Infrastructure Builder",
-    template: "%s | Utkarsh Bali",
+    default: siteConfig.title,
+    template: "%s — Utkarsh Bali",
   },
-  description:
-    "Purdue CS + AI student building Checkpoint, AI agent tooling, developer tools, and startup projects.",
+  description: siteConfig.description,
   keywords: [
     "Utkarsh Bali",
+    "software engineer",
     "AI agents",
     "agent infrastructure",
-    "AI testing",
     "developer tools",
-    "Purdue Computer Science",
-    "YC startups",
     "LLM evaluation",
+    "Purdue Computer Science",
   ],
-  authors: [{ name: "Utkarsh Bali", url: "https://linkedin.com/in/ubali" }],
-  creator: "Utkarsh Bali",
-  icons: {
-    icon: "/icon.svg",
-  },
+  authors: [{ name: profile.name, url: profile.linkedin }],
+  creator: profile.name,
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Utkarsh Bali | AI Agent Infrastructure Builder",
-    description:
-      "Purdue CS + AI student building Checkpoint, agent testing tools, and startup projects.",
-    url: "https://utkarshbali.com",
-    siteName: "Utkarsh Bali",
     type: "website",
+    url: siteConfig.url,
+    siteName: profile.name,
+    title: siteConfig.title,
+    description: siteConfig.description,
+    locale: siteConfig.locale,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Utkarsh Bali",
-    description:
-      "Building Checkpoint and AI agent testing tools.",
+    title: siteConfig.title,
+    description: siteConfig.description,
+    creator: "@ubali07",
   },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  colorScheme: "dark light",
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#05070d" },
-    { media: "(prefers-color-scheme: light)", color: "#f7f8fb" },
+    { media: "(prefers-color-scheme: light)", color: PAPER_LIGHT },
+    { media: "(prefers-color-scheme: dark)", color: PAPER_DARK },
   ],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": personId,
+  name: profile.name,
+  url: siteConfig.url,
+  email: `mailto:${profile.email}`,
+  jobTitle: "Software Engineer",
+  description: siteConfig.description,
+  alumniOf: {
+    "@type": "CollegeOrUniversity",
+    name: "Purdue University",
+  },
+  knowsAbout: [
+    "AI agents",
+    "Agent infrastructure",
+    "Developer tools",
+    "LLM evaluation",
+    "Distributed systems",
+  ],
+  sameAs: socials.filter((s) => s.kind !== "email").map((s) => s.href),
+};
+
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
+      className={`${display.variable} ${sans.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <meta name="theme-color" content={PAPER_LIGHT} />
+        {/* Must run before first paint. React 19 hoists <script src> but not
+            inline scripts, so <head> is written explicitly here. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(personSchema) }}
+        />
+      </head>
       <body className="bg-background text-foreground antialiased">
-        {children}
+        <SkipLink />
+        <SiteHeader />
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
+        <SiteFooter />
+        <CommandPalette />
       </body>
     </html>
   );

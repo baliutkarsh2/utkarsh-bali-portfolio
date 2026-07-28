@@ -1,25 +1,38 @@
 import type { ReactNode } from "react";
 
 type SectionHeadingProps = {
+  /** Two-digit index, e.g. "01". Sets the editorial register. */
+  index?: string;
   eyebrow: string;
   title: string;
+  id?: string;
   children?: ReactNode;
 };
 
-export function SectionHeading({ eyebrow, title, children }: SectionHeadingProps) {
+/**
+ * Left-aligned, numbered, rule above. Deliberately not centred — a centred
+ * heading is the single strongest "template" tell.
+ */
+export function SectionHeading({ index, eyebrow, title, id, children }: SectionHeadingProps) {
   return (
-    <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-14">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-accent">
-        {eyebrow}
-      </p>
-      <h2 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-        {title}
-      </h2>
-      {children ? (
-        <p className="mx-auto mt-5 max-w-2xl text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
-          {children}
-        </p>
-      ) : null}
+    <div className="grid-editorial !mx-0 !max-w-none !px-0 border-t border-rule pt-5">
+      <div className="col-span-full flex items-baseline gap-4 md:col-span-3 lg:col-span-4">
+        {index && (
+          <span aria-hidden className="meta text-faint">
+            {index}
+          </span>
+        )}
+        <span className="meta text-faint">{eyebrow}</span>
+      </div>
+
+      <div className="col-span-full mt-4 md:col-span-5 md:mt-0 lg:col-span-8">
+        <h2 id={id} className="text-display-m text-balance">
+          {title}
+        </h2>
+        {children && (
+          <div className="measure mt-4 text-pretty text-lede text-muted">{children}</div>
+        )}
+      </div>
     </div>
   );
 }

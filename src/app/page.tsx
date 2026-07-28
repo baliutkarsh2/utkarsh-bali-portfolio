@@ -1,35 +1,42 @@
-import { Achievements } from "@/components/achievements";
-import { About } from "@/components/about";
-import { BuiltExpertise } from "@/components/built-expertise";
-import { Contact } from "@/components/contact";
-import { Experience } from "@/components/experience";
-import { Hero } from "@/components/hero";
-import { Navbar } from "@/components/navbar";
-import { NowSection } from "@/components/now-section";
-import { PersistentRails } from "@/components/persistent-rails";
-import { Projects } from "@/components/projects";
-import { SanFranciscoSection } from "@/components/sf-section";
-import { Skills } from "@/components/skills";
+import { Hero } from "@/components/sections/hero";
+import { About } from "@/components/sections/about";
+import { Now } from "@/components/sections/now";
+import { ProjectIndex } from "@/components/sections/project-index";
+import { Experience } from "@/components/sections/experience";
+import { Skills } from "@/components/sections/skills";
+import { Recognition } from "@/components/sections/recognition";
+import { OffHours } from "@/components/sections/off-hours";
+import { Contact } from "@/components/sections/contact";
+import { Reveal } from "@/components/interactive/reveal";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <>
-      <Navbar />
-      <PersistentRails />
-      <main className="site-grid">
-        <div className="mx-auto max-w-[58rem] border-x border-border bg-background/60">
-          <Hero />
-          <About />
-          <BuiltExpertise />
-          <NowSection />
-          <Projects />
-          <Skills />
-          <Experience />
-          <Achievements />
-          <SanFranciscoSection />
-          <Contact />
-        </div>
-      </main>
+      <Hero />
+      <Reveal>
+        <About />
+      </Reveal>
+      <Reveal>
+        <Now />
+      </Reveal>
+      <Reveal>
+        <ProjectIndex />
+      </Reveal>
+      <Reveal>
+        <Experience />
+      </Reveal>
+      <Reveal>
+        <Skills />
+      </Reveal>
+      <Reveal>
+        <Recognition />
+      </Reveal>
+      <Reveal>
+        <OffHours />
+      </Reveal>
+      <Reveal>
+        <Contact index="08" />
+      </Reveal>
     </>
   );
 }
