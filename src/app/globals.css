@@ -13,9 +13,11 @@
   --paper-inset: #ecebe3;
   --paper-raised: #fbfaf5;
 
-  --ink: #14140f;
-  --ink-2: #57574e; /* 5.4:1 on paper — AA body text */
-  --ink-3: #82827a; /* 3.4:1 — large text or decorative only */
+  --ink: #14140f; /* 16.8:1 */
+  --ink-2: #57574e; /* 6.6:1 — AA body text */
+  /* 4.9:1. The `meta` utility sets 11px labels in this colour, which is small
+     text, so it has to clear 4.5:1 — a lighter grey would fail AA. */
+  --ink-3: #6b6b62;
 
   --rule: rgba(20, 20, 15, 0.14); /* decorative hairlines */
   --rule-strong: rgba(20, 20, 15, 0.46); /* ~3:1 — interactive borders */
@@ -38,8 +40,8 @@
   --paper-raised: #171815;
 
   --ink: #fffde8;
-  --ink-2: #c1c0ad; /* 10.4:1 */
-  --ink-3: #8b8a7c;
+  --ink-2: #c1c0ad; /* 10.3:1 */
+  --ink-3: #8b8a7c; /* 5.4:1 — clears AA for the same small meta labels */
 
   --rule: rgba(255, 253, 232, 0.13);
   --rule-strong: rgba(255, 253, 232, 0.4);

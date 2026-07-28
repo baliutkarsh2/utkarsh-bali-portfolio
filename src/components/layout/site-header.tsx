@@ -143,16 +143,15 @@ export function SiteHeader() {
           </div>
           <nav aria-label="Mobile" className="shell pb-6">
             <ul>
-              {navItems.map((item, index) => (
+              {/* Deliberately unnumbered: the sections carry their own index,
+                  and a second, different numbering here would contradict it. */}
+              {navItems.map((item) => (
                 <li key={item.href} className="border-t border-rule">
                   <Link
                     href={item.href}
                     onClick={closeMenu}
-                    className="flex items-baseline gap-4 py-3.5 text-lg"
+                    className="block py-3.5 font-display text-2xl"
                   >
-                    <span className="meta text-faint">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
                     {item.label}
                   </Link>
                 </li>
