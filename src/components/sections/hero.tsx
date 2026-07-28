@@ -1,16 +1,17 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { now, profile, socials } from "@/content";
-import portrait from "@/assets/utkarsh.jpg";
+import { HeroPortrait } from "./hero-portrait";
 
 export function Hero() {
   return (
     <section id="home" className="relative overflow-hidden pt-14">
       <div aria-hidden className="hero-grid pointer-events-none absolute inset-0" />
 
-      <div className="shell relative pb-16 pt-12 sm:pb-20 sm:pt-20">
-        {/* Status line */}
+      <div className="shell relative pb-14 pt-12 sm:pt-16">
+        {/* `.enter` is applied to each block individually and never to a
+            wrapper containing the h1: `.enter > *` starts children at
+            opacity 0, which would fade the LCP element. */}
         <div className="enter flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="flex items-center gap-2">
             <span className="relative flex size-1.5">
@@ -25,15 +26,19 @@ export function Hero() {
           <span className="meta text-faint">{now.location}</span>
         </div>
 
-        {/* Name, LCP element. Clip-path reveal paints immediately; it is
-            never faded from opacity 0 and carries no animation-delay. */}
-        <h1 className="enter-clip mt-8 text-display-xl font-display">
-          <span className="block">Utkarsh</span>
-          <span className="block">Bali</span>
-        </h1>
+        <div className="hero-spread mt-8">
+          {/* LCP element. Clip-path reveal paints immediately: no opacity
+              animation, no animation-delay, no scroll-driven timeline. */}
+          <h1 className="hero-name enter-clip text-display-xl font-display">
+            <span className="block">Utkarsh</span>
+            <span className="block">Bali</span>
+          </h1>
 
-        <div className="enter mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-14">
-          <div style={{ "--stagger": 1 } as React.CSSProperties}>
+          <div className="hero-figure enter" style={{ "--stagger": 2 } as React.CSSProperties}>
+            <HeroPortrait />
+          </div>
+
+          <div className="hero-body enter" style={{ "--stagger": 1 } as React.CSSProperties}>
             <p className="measure text-pretty text-display-s font-display text-foreground">
               {profile.tagline}
             </p>
@@ -73,12 +78,30 @@ export function Hero() {
                   rel="noopener noreferrer"
                   className="inline-flex h-11 items-center border border-rule-strong px-5 text-sm font-medium transition-colors hover:bg-inset"
                 >
-                  Résumé
+                  R&eacute;sum&eacute;
                 </a>
               )}
             </div>
+          </div>
 
-            <ul className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2">
+          {/* The education line used to hang under the photo as an orphaned
+              caption. It reads as a record here instead. */}
+          <dl className="hero-meta enter" style={{ "--stagger": 3 } as React.CSSProperties}>
+            {[
+              { term: "Education", value: profile.education },
+              { term: "Graduating", value: profile.graduation },
+              { term: "Based in", value: profile.location },
+            ].map((row) => (
+              <div
+                key={row.term}
+                className="flex items-baseline justify-between gap-4 border-t border-rule py-2.5"
+              >
+                <dt className="meta text-faint">{row.term}</dt>
+                <dd className="text-right text-sm">{row.value}</dd>
+              </div>
+            ))}
+
+            <ul className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
               {socials
                 .filter((social) => social.kind !== "email")
                 .map((social) => (
@@ -94,40 +117,8 @@ export function Hero() {
                   </li>
                 ))}
             </ul>
-          </div>
-
-          <div
-            className="w-full max-w-[16rem] lg:mt-1"
-            style={{ "--stagger": 2 } as React.CSSProperties}
-          >
-            <div className="relative aspect-[3/4] overflow-hidden border border-rule bg-inset">
-              <Image
-                src={portrait}
-                alt={`Portrait of ${profile.name}`}
-                fill
-                priority
-                placeholder="blur"
-                sizes="(min-width: 1024px) 256px, (min-width: 640px) 40vw, 70vw"
-                className="object-cover object-center"
-              />
-            </div>
-            <p className="meta mt-3 text-faint">{profile.education}</p>
-          </div>
+          </dl>
         </div>
-      </div>
-
-      {/* Affiliations rule, type-set, no logos. */}
-      <div className="shell relative">
-        <div className="rule-draw h-px w-full bg-rule" />
-        <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 py-4">
-          {["Recurly", "QualGent · YC X25", "Microsoft Research collab", "Purdue University"].map(
-            (item) => (
-              <li key={item} className="meta text-faint">
-                {item}
-              </li>
-            ),
-          )}
-        </ul>
       </div>
     </section>
   );

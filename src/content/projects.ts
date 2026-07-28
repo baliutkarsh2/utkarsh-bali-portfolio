@@ -7,7 +7,7 @@ export const projects: Project[] = [
     eyebrow: "Agent reliability",
     tagline:
       "CI/CD for AI agents. Adversarial test suites that run before an agent ever meets a user.",
-    year: "2025 to present",
+    year: "2026",
     sortDate: "2026-02-01",
     status: "ongoing",
     featured: true,
@@ -107,7 +107,7 @@ export const projects: Project[] = [
     eyebrow: "Interpretability research",
     tagline:
       "Clinical hypothesis verification on MIMIC-IV using sparse autoencoders and an LLM ensemble.",
-    year: "2025 to 2026",
+    year: "2026",
     sortDate: "2026-01-01",
     status: "research",
     featured: true,
@@ -115,7 +115,7 @@ export const projects: Project[] = [
     metricLabel: "AUROC against a synthetic oracle",
     role: "Software Engineer, AI Research",
     org: "Purdue University",
-    highlight: "Top-K SAEs, GPT/Claude ensemble, AAAI submission",
+    highlight: "Top-K SAEs, GPT/Claude ensemble, NeurIPS submission planned",
     problem:
       "Language models will generate clinical hypotheses all day. The hard question is which ones survive contact with the data, and whether you can show your work well enough for a reviewer to check it.",
     story:
@@ -129,7 +129,7 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "PyTorch", "Sparse autoencoders", "MIMIC-IV", "GPT", "Claude"],
     impact:
-      "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses for an AAAI submission with Purdue and Harvard Business School faculty.",
+      "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses with Purdue and Harvard Business School faculty. The work is being prepared for a NeurIPS submission targeted for September 2026.",
     links: [
       {
         label: "Source",

@@ -116,6 +116,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         />
       </head>
       <body className="bg-background text-foreground antialiased">
+        <div aria-hidden className="paper-grain" />
         <SkipLink />
         <SiteHeader />
         <main id="main" tabIndex={-1}>

@@ -27,6 +27,15 @@
   --focus: #14140f;
 
   --grid-line: rgba(20, 20, 15, 0.075);
+
+  /* Art direction. Paper needs almost no help; dark needs a lot. */
+  --grain-opacity: 0.032;
+  --raise: 0 1px 2px rgba(20, 20, 15, 0.04), 0 8px 24px rgba(20, 20, 15, 0.05);
+  --rule-hi: rgba(255, 255, 255, 0.7); /* top bevel on raised surfaces */
+  --rule-lo: var(--rule);
+  --media-grade: none; /* screenshots need no correction on paper */
+  --accent-wash: rgba(20, 20, 15, 0.04);
+  --portrait-grade: saturate(1.02) contrast(1.02);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -50,7 +59,19 @@
   --spot: #eaff4d;
   --focus: #8be7d5;
 
-  --grid-line: rgba(255, 253, 232, 0.06);
+  /* Dark needs a stronger grid or the structure disappears entirely. */
+  --grid-line: rgba(255, 253, 232, 0.085);
+
+  /* Dark is not an inversion. Shadow cannot separate surfaces on a near-black
+     page, so separation comes from a lit top edge and a raised fill instead. */
+  --grain-opacity: 0.055;
+  --raise: 0 1px 0 rgba(255, 253, 232, 0.045) inset, 0 18px 40px rgba(0, 0, 0, 0.45);
+  --rule-hi: rgba(255, 253, 232, 0.16);
+  --rule-lo: rgba(0, 0, 0, 0.45);
+  /* Product screenshots are mostly white and glare against near-black. */
+  --media-grade: brightness(0.9) contrast(1.04);
+  --accent-wash: rgba(139, 231, 213, 0.06);
+  --portrait-grade: saturate(0.94) contrast(1.05) brightness(0.94);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -76,7 +97,7 @@
   --color-spot: var(--spot);
 
   /* Fluid editorial scale */
-  --text-display-xl: clamp(3rem, 10.5vw, 8.5rem);
+  --text-display-xl: clamp(3rem, 11.5vw, 10rem);
   --text-display-xl--line-height: 0.86;
   --text-display-xl--letter-spacing: -0.035em;
 
@@ -259,6 +280,19 @@
   }
 }
 
+/* Separates a surface from the page. On paper that is a soft shadow; in dark
+   it is a lit top edge, because shadow does nothing against near-black. */
+@utility raised {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  box-shadow: var(--raise);
+}
+
+/* Corrects screenshots that would otherwise glare in dark mode. */
+@utility graded {
+  filter: var(--media-grade);
+}
+
 @media (width >= 48rem) {
   .grid-editorial {
     grid-template-columns: repeat(8, minmax(0, 1fr));
@@ -285,13 +319,245 @@
    6. Component classes, keep this list short
    ───────────────────────────────────────────────────────────── */
 
+/* Paper grain. One fixed layer behind everything, so it never repaints while
+   the page scrolls. feTurbulence as a data URI is ~300 bytes and resolution
+   independent, which a tiled PNG is not. */
+.paper-grain {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* The old mask was an ellipse anchored at top centre, which cut off in a
+   visible hard rectangle. This one is anchored where the display type
+   actually sits and fades out over a much longer distance. */
 .hero-grid {
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 92px 92px;
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 78%);
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 20%, transparent 78%);
+  background-size: 96px 96px;
+  -webkit-mask-image: radial-gradient(
+    125% 105% at 18% -15%,
+    #000 0%,
+    rgba(0, 0, 0, 0.55) 34%,
+    rgba(0, 0, 0, 0.18) 58%,
+    transparent 82%
+  );
+  mask-image: radial-gradient(
+    125% 105% at 18% -15%,
+    #000 0%,
+    rgba(0, 0, 0, 0.55) 34%,
+    rgba(0, 0, 0, 0.18) 58%,
+    transparent 82%
+  );
+}
+
+/* ── Hero spread ──────────────────────────────────────────────
+   Name, portrait and body copy share ONE grid. The portrait is placed on
+   the same row as the name with an overlapping column range, which is the
+   only way to get the interlock: a sibling grid below the h1 can never
+   reach back up beside it.
+   ───────────────────────────────────────────────────────────── */
+.hero-spread {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 2.5rem;
+}
+
+/* Declared before the media queries: at >= 80rem the figure fills its column
+   span instead, and source order decides that at equal specificity. */
+.hero-figure {
+  width: 100%;
+  max-width: 18rem;
+}
+
+@media (width >= 48rem) {
+  .hero-spread {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    column-gap: 1.5rem;
+  }
+}
+
+/* The interlock only exists where there is room for it. Below 80rem the
+   placements simply do not apply and the grid flows in source order. */
+@media (width >= 80rem) {
+  .hero-spread {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 2rem;
+    row-gap: 0;
+    align-items: start;
+  }
+  /* Name and figure share row 1 and both start at its top edge. Bottom
+     aligning the name against the taller figure left a ~200px void in the
+     top left, which is dead space rather than composition. */
+  /* Two columns that each flow on their own, rather than rows that make the
+     short side wait for the tall side. The figure spans both text rows, so
+     the name and body copy sit directly on top of each other on the left. */
+  .hero-name {
+    grid-column: 1 / 9;
+    grid-row: 1;
+    position: relative;
+    z-index: 1;
+    margin-top: -0.08em; /* optical: lift cap height to the figure's top edge */
+  }
+  .hero-body {
+    grid-column: 1 / 8;
+    grid-row: 2;
+    margin-top: 2.5rem;
+  }
+  .hero-figure {
+    grid-column: 9 / 13;
+    grid-row: 1 / span 2;
+    z-index: 0;
+    max-width: none;
+  }
+  .hero-meta {
+    grid-column: 9 / 13;
+    grid-row: 3;
+    margin-top: 2rem;
+    align-self: start;
+  }
+}
+
+.portrait-frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--paper-inset);
+  border: 1px solid var(--rule);
+}
+
+.portrait-image {
+  object-fit: cover;
+  object-position: center 22%;
+  filter: var(--portrait-grade);
+}
+
+/* Grounds the photo into the page instead of letting it float as a
+   rectangle pasted on paper. */
+.portrait-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, var(--accent-wash), transparent 42%),
+    radial-gradient(120% 90% at 50% 100%, rgba(20, 20, 15, 0.14), transparent 62%);
+}
+
+.portrait-plate {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: var(--paper-inset);
+}
+
+/* Registration marks. Reads as a printed plate, costs nothing. */
+.portrait-mark {
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  pointer-events: none;
+  border-color: var(--rule-strong);
+}
+.portrait-mark-tl {
+  top: 0.5rem;
+  left: 0.5rem;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.portrait-mark-br {
+  right: 0.5rem;
+  bottom: 0.5rem;
+  border-right: 1px solid;
+  border-bottom: 1px solid;
+}
+
+/* ── Metrics marquee ──────────────────────────────────────────
+   The mask sits on this static outer element, never on the animated track,
+   so the compositor is not asked to re-rasterise a very wide layer.
+   ───────────────────────────────────────────────────────────── */
+.marquee {
+  position: relative;
+  overflow: hidden;
+  contain: content;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding-block: 1.25rem;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+}
+
+.marquee-list {
+  display: flex;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+
+.marquee-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  padding-inline: 1.75rem;
+  white-space: nowrap;
+}
+
+.marquee-item + .marquee-item {
+  border-left: 1px solid var(--rule);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .marquee-track {
+    animation: marquee 52s linear infinite;
+  }
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes marquee {
+  to {
+    /* Exactly one of the two identical tracks, so the loop is seamless. */
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion gets a real static row, not a paused animation: the track
+   stops being a single-line strip and wraps like ordinary content. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-track {
+    width: 100%;
+  }
+  .marquee-list {
+    flex-wrap: wrap;
+    gap: 0.75rem 0;
+  }
+  .marquee-list[aria-hidden="true"] {
+    display: none;
+  }
+  .marquee-item {
+    padding-inline: 0 1.75rem;
+  }
+  .marquee-item + .marquee-item {
+    border-left: 0;
+  }
 }
 
 .highlight-mark {

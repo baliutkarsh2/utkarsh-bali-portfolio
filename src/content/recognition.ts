@@ -10,9 +10,9 @@ export const achievements: Achievement[] = [
     href: "/projects/checkpoint",
   },
   {
-    label: "AAAI submission on clinical hypothesis verification",
+    label: "NeurIPS submission in preparation on clinical hypothesis verification",
     detail:
-      "Certified 14 hypotheses with CLIP-H at 0.844 AUROC, submitted with Purdue and Harvard Business School faculty.",
+      "Certified 14 hypotheses with CLIP-H at 0.844 AUROC. Being prepared for a NeurIPS submission targeted for September 2026, with Purdue and Harvard Business School faculty.",
     year: "2026",
     kind: "research",
     href: "/projects/clip-h",

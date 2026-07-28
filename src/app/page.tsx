@@ -1,4 +1,5 @@
 import { Hero } from "@/components/sections/hero";
+import { MetricsMarquee } from "@/components/sections/metrics-marquee";
 import { About } from "@/components/sections/about";
 import { Now } from "@/components/sections/now";
 import { ProjectIndex } from "@/components/sections/project-index";
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <MetricsMarquee />
       <Reveal>
         <About />
       </Reveal>
