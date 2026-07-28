@@ -11,7 +11,7 @@ export function Skills() {
         id="skills-title"
       />
 
-      <div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {skillGroups.map((group) => (
           <div key={group.name} className="border-t border-rule pt-5">
             <h3 className="meta text-faint">{group.name}</h3>

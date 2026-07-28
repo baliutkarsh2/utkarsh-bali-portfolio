@@ -1,11 +1,11 @@
 /**
  * Salvaged from the old fixed side rails, which were xl:-only and therefore
- * invisible to most visitors. This is content, not chrome — it renders in flow.
+ * invisible to most visitors. This is content, not chrome, it renders in flow.
  */
 
 export const aboutNote = {
   lead: 'I am a builder. As a kid I drew up quadcopter designs, sketched Iron Man suits with a friend, and built motor-powered cars I insisted on calling "Thrust SSC." In high school I built the mobile apps and games I wished existed. At Purdue and since, I have built AI agents, developer tools, healthcare prototypes, and research systems.',
-  body: "My work has crossed agents, LLM pipelines, healthcare tools, mobile apps, and research prototypes. I'm most interested in the projects where taste and systems thinking both matter — where the hard part isn't the model, it's deciding what the thing should actually do.",
+  body: "My work has crossed agents, LLM pipelines, healthcare tools, mobile apps, and research prototypes. I'm most interested in the projects where taste and systems thinking both matter, where the hard part isn't the model, it's deciding what the thing should actually do.",
 };
 
 export const beliefs = [
@@ -19,7 +19,7 @@ export const beliefs = [
   },
   {
     title: "Art as a survival trait",
-    body: "Making things and being creative is a core human survival trait — music, dance, film, or anything else.",
+    body: "Making things and being creative is a core human survival trait: music, dance, film, or anything else.",
   },
 ];
 

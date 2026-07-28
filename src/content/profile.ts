@@ -9,16 +9,17 @@ export const profile = {
     "I build agent infrastructure, developer tools, and products people actually use.",
   email: "baliutkarsh2@gmail.com",
   location: "West Lafayette, IN",
-  education: "Purdue University — CS + AI",
+  education: "Purdue University, CS + AI",
+  educationDetail: "B.S. Computer Science & Artificial Intelligence, minor in Psychology",
+  graduation: "Dec 2026",
+  gpa: "3.90 / 4.00",
   github: "https://github.com/baliutkarsh2",
   linkedin: "https://linkedin.com/in/ubali",
   x: "https://x.com/ubali07",
-  /**
-   * Null until a PDF is added to /public. Nav, contact, and the command palette
-   * all read this — a null keeps those entries from rendering at all rather
-   * than shipping a link that 404s.
-   */
-  resume: null as { href: string; updated: string } | null,
+  resume: { href: "/utkarsh-bali-resume.pdf", updated: "2026-07-28" } as {
+    href: string;
+    updated: string;
+  } | null,
 } as const;
 
 export const socials: Social[] = [

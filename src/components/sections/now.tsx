@@ -14,16 +14,16 @@ export function Now() {
           <ul className="mt-8">
             {now.points.map((point) => (
               <li key={point} className="flex gap-4 border-t border-rule py-4">
-                <span aria-hidden className="meta shrink-0 pt-1 text-faint">
-                  —
-                </span>
+                {/* Drawn rule rather than a dash character: it aligns to the
+                    grid and carries no punctuation semantics for a screen reader. */}
+                <span aria-hidden className="mt-3 h-px w-4 shrink-0 bg-rule-strong" />
                 <span className="text-sm leading-6 text-muted">{point}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Meta block — the register that makes it read as a record, not a blurb. */}
+        {/* Meta block, the register that makes it read as a record, not a blurb. */}
         <dl className="col-span-full mt-10 self-start border border-rule md:col-span-3 md:col-start-6 md:mt-0 lg:col-span-4 lg:col-start-9">
           {[
             { term: "Organisation", value: now.org },

@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 /**
  * One observer shared by every Reveal on the page, created lazily.
- * Targets are unobserved once shown — reveals never replay.
+ * Targets are unobserved once shown, reveals never replay.
  */
 let observer: IntersectionObserver | null = null;
 
@@ -29,7 +29,7 @@ type RevealProps = {
 };
 
 /**
- * Children stay server components — a client wrapper does not pull its
+ * Children stay server components, a client wrapper does not pull its
  * subtree across the boundary, so wrapping sections costs no extra JS.
  */
 export function Reveal({ children, delay = 0, className = "" }: RevealProps) {

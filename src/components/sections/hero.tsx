@@ -25,7 +25,7 @@ export function Hero() {
           <span className="meta text-faint">{now.location}</span>
         </div>
 
-        {/* Name — LCP element. Clip-path reveal paints immediately; it is
+        {/* Name, LCP element. Clip-path reveal paints immediately; it is
             never faded from opacity 0 and carries no animation-delay. */}
         <h1 className="enter-clip mt-8 text-display-xl font-display">
           <span className="block">Utkarsh</span>
@@ -66,6 +66,16 @@ export function Hero() {
               >
                 Get in touch
               </a>
+              {profile.resume && (
+                <a
+                  href={profile.resume.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center border border-rule-strong px-5 text-sm font-medium transition-colors hover:bg-inset"
+                >
+                  Résumé
+                </a>
+              )}
             </div>
 
             <ul className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -106,7 +116,7 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Affiliations rule — type-set, no logos. */}
+      {/* Affiliations rule, type-set, no logos. */}
       <div className="shell relative">
         <div className="rule-draw h-px w-full bg-rule" />
         <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 py-4">

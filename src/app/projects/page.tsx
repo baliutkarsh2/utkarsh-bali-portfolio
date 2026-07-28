@@ -7,7 +7,7 @@ import { orderedProjects } from "@/content";
 export const metadata: Metadata = {
   title: "Work",
   description:
-    "Every project — agent infrastructure, developer tools, consumer AI, and research prototypes, each with a full write-up.",
+    "Every project: agent infrastructure, developer tools, consumer AI, and research prototypes, each with a full write-up.",
   alternates: { canonical: "/projects" },
 };
 

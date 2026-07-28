@@ -5,16 +5,16 @@
  */
 export const now = {
   status: "Interning at Recurly",
-  headline: "Building internal automation for subscription infrastructure.",
+  headline: "Building the agent platform that ships Recurly's code.",
   org: "Recurly",
   role: "Software Engineer Intern",
   location: "Broomfield, CO",
-  period: "May – Aug 2026",
-  body: "I'm on Recurly's engineering team this summer, working on internal automation for the systems behind subscription management. It's the least glamorous and most instructive kind of work: real production surface area, real billing correctness constraints, and a codebase that predates me by years.",
+  period: "May 2026 to Aug 2026",
+  body: "I built Recurly's core PDLC automation platform: specialized Claude agents (planner, decomposer, a Sonnet/Opus coder pair, and a PR responder) deployed as isolated Kubernetes Jobs through the Agent SDK. It drives a PRD all the way to merged pull requests across five human checkpoints, and it has roughly tripled how fast that path moves.",
   points: [
-    "Writing internal automation for subscription management infrastructure.",
-    "Learning how a mature SaaS platform handles correctness, migrations, and on-call.",
-    "Still maintaining Checkpoint on the side — lower intensity, same thesis.",
+    "PDLC automation platform: PRD to merged PRs via specialized Claude agents running as isolated Kubernetes Jobs, with five human checkpoints. About 3x faster shipping.",
+    "AI SDR Slack bot in async Python with 3-tier Claude routing, querying BigQuery, 6sense, ZoomInfo, and SFDC. Returns source-cited briefs and outreach drafts in about 25 seconds.",
+    "Prospect Report Card pipeline (n8n to FastAPI on Cloud Run to Claude Opus) that turns an inbound form-fill into a personalized PDF analysis and emails it back.",
   ],
-  updated: "2026-07-27",
+  updated: "2026-07-28",
 } as const;

@@ -5,7 +5,7 @@ import type { Project } from "@/content";
  *
  * It renders at the same 16:9 box a screenshot would occupy, so dropping a real
  * image into `project.cover` later changes the picture without moving a single
- * pixel of surrounding layout. Typographic by design — it should read as an
+ * pixel of surrounding layout. Typographic by design, it should read as an
  * intentional spec panel, not as a missing asset.
  */
 export function SpecPlate({ project }: { project: Project }) {

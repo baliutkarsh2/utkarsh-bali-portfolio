@@ -8,7 +8,7 @@ export type ProjectLink = {
 
 /**
  * Slots for media the site does not have yet. Every consumer must handle these
- * being undefined — see `SpecPlate`, which renders a typographic panel at the
+ * being undefined, see `SpecPlate`, which renders a typographic panel at the
  * same aspect ratio so layout does not shift when a real image lands.
  */
 export type MediaSlot = {
@@ -29,7 +29,7 @@ export type Project = {
   /** One line for index rows. Distinct from `story` so cards never truncate prose. */
   tagline: string;
   year: string;
-  /** ISO date — deterministic ordering and sitemap lastModified. */
+  /** ISO date, deterministic ordering and sitemap lastModified. */
   sortDate: string;
   status: ProjectStatus;
   featured: boolean;
@@ -49,7 +49,7 @@ export type Project = {
   links: ProjectLink[];
   cover?: MediaSlot;
   media?: MediaSlot[];
-  /** Work under NDA — suppresses any "view source" affordance. */
+  /** Work under NDA, suppresses any "view source" affordance. */
   confidential?: boolean;
 };
 

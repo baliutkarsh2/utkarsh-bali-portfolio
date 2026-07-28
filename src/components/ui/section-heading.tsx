@@ -10,7 +10,7 @@ type SectionHeadingProps = {
 };
 
 /**
- * Left-aligned, numbered, rule above. Deliberately not centred — a centred
+ * Left-aligned, numbered, rule above. Deliberately not centred, a centred
  * heading is the single strongest "template" tell.
  */
 export function SectionHeading({ index, eyebrow, title, id, children }: SectionHeadingProps) {

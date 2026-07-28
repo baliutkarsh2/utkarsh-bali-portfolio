@@ -1,4 +1,4 @@
-# Utkarsh Bali — Portfolio
+# Utkarsh Bali, Portfolio
 
 Live at **https://ubali.dev**
 
@@ -37,7 +37,7 @@ components.
 | File | What's in it |
 |---|---|
 | `profile.ts` | Name, tagline, email, socials, nav, résumé slot |
-| `now.ts` | The "Now" section — current role and its `updated` date |
+| `now.ts` | The "Now" section: current role and its `updated` date |
 | `projects.ts` | All projects; each becomes `/projects/<slug>` automatically |
 | `experience.ts` | Work history |
 | `recognition.ts` | Awards and rankings |
@@ -50,8 +50,8 @@ components.
 
 ### Project screenshots
 
-Every project renders a `SpecPlate` — a typographic panel at the same 16:9 box a
-screenshot would occupy — until you give it a real image. Adding one changes the
+Every project renders a `SpecPlate`, a typographic panel at the same 16:9 box a
+screenshot would occupy, until you give it a real image. Adding one changes the
 picture without shifting any surrounding layout.
 
 1. Drop the file in `public/projects/`.
@@ -101,7 +101,7 @@ on the command-palette entry. Nothing 404s in the meantime.
   `clip-path` reveal specifically because that paints immediately; a fade or an
   `animation-delay` would push LCP by the full duration.
 - **OG fonts must be static, not variable.** Satori's parser crashes on variable
-  fonts. `src/app/_fonts/` holds static instances and is build-time only — those
+  fonts. `src/app/_fonts/` holds static instances and is build-time only, so those
   files are never sent to a browser.
 - **Metrics carry a `metricLabel`.** It's where the hedge lives ("internal
   benchmark", "research testing"). Keep them attached when the number moves.
@@ -113,5 +113,5 @@ on the command-palette entry. Nothing 404s in the meantime.
 ## Deployment
 
 Pushes to `master` deploy via Vercel. Set `NEXT_PUBLIC_SITE_URL` only if the
-canonical domain changes — `src/lib/seo.ts` is the single source of truth for
+canonical domain changes. `src/lib/seo.ts` is the single source of truth for
 every absolute URL (canonical tags, OG, sitemap, JSON-LD).

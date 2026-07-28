@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-/** 1px reading-progress rule. Writes a CSS variable from rAF — never state. */
+/** 1px reading-progress rule. Writes a CSS variable from rAF, never state. */
 export function ScrollProgress() {
   const ref = useRef<HTMLDivElement>(null);
 

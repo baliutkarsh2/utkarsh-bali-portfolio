@@ -231,7 +231,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
           </aside>
         </div>
 
-        {/* Gallery — renders only once media exists */}
+        {/* Gallery, renders only once media exists */}
         {project.media && project.media.length > 0 && (
           <div className="shell mt-20 space-y-10">
             {project.media.map((item) => (

@@ -11,7 +11,7 @@ const INK_3 = "#82827a";
 const RULE = "rgba(20,20,15,0.16)";
 
 /**
- * Fonts are read from disk at build time — no network dependency.
+ * Fonts are read from disk at build time, no network dependency.
  *
  * Both are static instances. Satori's parser cannot handle variable fonts
  * (it fails with an undefined glyph-table read), so do not swap either of

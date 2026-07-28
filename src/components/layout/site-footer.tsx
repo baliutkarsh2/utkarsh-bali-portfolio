@@ -32,6 +32,18 @@ export function SiteFooter() {
                 All work
               </Link>
             </li>
+            {profile.resume && (
+              <li>
+                <a
+                  href={profile.resume.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-underline text-muted transition-colors hover:text-foreground"
+                >
+                  Résumé
+                </a>
+              </li>
+            )}
           </ul>
         </nav>
       </div>

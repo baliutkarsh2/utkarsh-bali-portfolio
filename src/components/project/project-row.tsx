@@ -5,7 +5,7 @@ import { ordinal } from "@/lib/utils";
 
 /**
  * Hairline index row. The whole row is clickable via `stretch-link` on the
- * title anchor — never an <a> nested inside another <a>.
+ * title anchor, never an <a> nested inside another <a>.
  */
 export function ProjectRow({ project, index }: { project: Project; index: number }) {
   return (

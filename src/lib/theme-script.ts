@@ -5,7 +5,7 @@ export const PAPER_DARK = "#10110f";
 
 /**
  * Runs before first paint, so the correct theme is on <html> when the browser
- * paints — no flash. Rendered inline in <head>; keep it small and defensive.
+ * paints, no flash. Rendered inline in <head>; keep it small and defensive.
  *
  * It also adds `.js`, which the reveal-on-scroll CSS depends on: reveal targets
  * only start hidden under `.js`, so a visitor without JavaScript is never shown

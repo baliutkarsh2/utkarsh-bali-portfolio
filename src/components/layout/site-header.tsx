@@ -15,11 +15,11 @@ export function SiteHeader() {
   const [observedId, setObservedId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDialogElement>(null);
 
-  // Derived, not stored — avoids a state reset (and cascading render) on route change.
+  // Derived, not stored, avoids a state reset (and cascading render) on route change.
   const activeId = isHome ? observedId : null;
 
   /**
-   * Scrollspy is presentation only — the anchors navigate natively so focus
+   * Scrollspy is presentation only, the anchors navigate natively so focus
    * management stays with the browser. `scroll-padding-top` handles offset.
    */
   useEffect(() => {

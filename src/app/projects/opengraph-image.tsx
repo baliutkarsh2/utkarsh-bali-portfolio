@@ -10,7 +10,7 @@ export default async function Image() {
     eyebrow: "Work",
     title: "Selected work",
     description:
-      "Agent infrastructure, developer tools, consumer AI, and research prototypes — each with a full write-up.",
+      "Agent infrastructure, developer tools, consumer AI, and research prototypes, each with a full write-up.",
     meta: [`${orderedProjects.length} projects`, "Utkarsh Bali"],
   });
 }

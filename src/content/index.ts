@@ -10,7 +10,7 @@ export { achievements } from "./recognition";
 export { skillGroups } from "./skills";
 export * from "./personal";
 
-/** Featured first, then newest first. Stable — drives routing and sitemap order. */
+/** Featured first, then newest first. Stable, drives routing and sitemap order. */
 export const orderedProjects: Project[] = [...projects].sort((a, b) => {
   if (a.featured !== b.featured) return a.featured ? -1 : 1;
   return b.sortDate.localeCompare(a.sortDate);

@@ -22,7 +22,7 @@ type CommandContext = {
   close: () => void;
 };
 
-/** Built once at module scope — not rebuilt per render or per keystroke. */
+/** Built once at module scope, not rebuilt per render or per keystroke. */
 const commands: Command[] = [
   ...navItems.map<Command>((item) => ({
     id: `nav:${item.href}`,
@@ -72,7 +72,7 @@ const commands: Command[] = [
       navigator.clipboard
         ?.writeText(profile.email)
         .then(() => ctx.announce("Email address copied"))
-        .catch(() => ctx.announce("Could not copy — select it manually"));
+        .catch(() => ctx.announce("Could not copy. Select it manually."));
     },
   },
   ...(profile.resume

@@ -11,7 +11,7 @@ export function toggleTheme() {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, next);
   } catch {
-    /* private mode — the class swap still applies for this session */
+    /* private mode, the class swap still applies for this session */
   }
   document
     .querySelector('meta[name="theme-color"]')
@@ -20,7 +20,7 @@ export function toggleTheme() {
 
 /**
  * The icon swap is driven purely by CSS and the label never changes, so there
- * is no server/client mismatch and no `mounted` gate — and therefore no flash.
+ * is no server/client mismatch and no `mounted` gate, and therefore no flash.
  */
 export function ThemeToggle({ className = "" }: { className?: string }) {
   return (

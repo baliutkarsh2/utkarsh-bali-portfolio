@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ─────────────────────────────────────────────────────────────
-   1. Semantic tokens — light
+   1. Semantic tokens, light
    Names describe role, not colour, so dark mode is a value swap.
    ───────────────────────────────────────────────────────────── */
 :root {
@@ -14,23 +14,23 @@
   --paper-raised: #fbfaf5;
 
   --ink: #14140f; /* 16.8:1 */
-  --ink-2: #57574e; /* 6.6:1 — AA body text */
+  --ink-2: #57574e; /* 6.6:1, AA body text */
   /* 4.9:1. The `meta` utility sets 11px labels in this colour, which is small
-     text, so it has to clear 4.5:1 — a lighter grey would fail AA. */
+     text, so it has to clear 4.5:1, a lighter grey would fail AA. */
   --ink-3: #6b6b62;
 
   --rule: rgba(20, 20, 15, 0.14); /* decorative hairlines */
-  --rule-strong: rgba(20, 20, 15, 0.46); /* ~3:1 — interactive borders */
+  --rule-strong: rgba(20, 20, 15, 0.46); /* ~3:1, interactive borders */
 
   --accent: #14140f; /* in light mode, ink is the accent */
-  --spot: #eaff4d; /* background only — 1.1:1 as text */
+  --spot: #eaff4d; /* background only, 1.1:1 as text */
   --focus: #14140f;
 
   --grid-line: rgba(20, 20, 15, 0.075);
 }
 
 /* ─────────────────────────────────────────────────────────────
-   2. Semantic tokens — dark
+   2. Semantic tokens, dark
    ───────────────────────────────────────────────────────────── */
 .dark {
   color-scheme: dark;
@@ -41,7 +41,7 @@
 
   --ink: #fffde8;
   --ink-2: #c1c0ad; /* 10.3:1 */
-  --ink-3: #8b8a7c; /* 5.4:1 — clears AA for the same small meta labels */
+  --ink-3: #8b8a7c; /* 5.4:1, clears AA for the same small meta labels */
 
   --rule: rgba(255, 253, 232, 0.13);
   --rule-strong: rgba(255, 253, 232, 0.4);
@@ -282,7 +282,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   6. Component classes — keep this list short
+   6. Component classes, keep this list short
    ───────────────────────────────────────────────────────────── */
 
 .hero-grid {
@@ -308,7 +308,7 @@
   color: #14140f;
 }
 
-/* Hairline index rows — the project list and recognition list. */
+/* Hairline index rows, the project list and recognition list. */
 .index-row {
   position: relative;
   transition:
