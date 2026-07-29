@@ -42,14 +42,10 @@ export function SiteFooter() {
                 Writing
               </Link>
             </li>
-            <li>
-              <a
-                href="/writing/rss.xml"
-                className="link-underline text-muted transition-colors hover:text-foreground"
-              >
-                RSS
-              </a>
-            </li>
+            {/* No RSS link. The route still builds, so the day a post lives
+                on this site rather than elsewhere the feed is already real and
+                this comes back. Advertising a feed whose only item points at
+                Medium promises something the site does not yet deliver. */}
             {profile.resume && (
               <li>
                 <a
