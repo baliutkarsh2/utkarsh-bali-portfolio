@@ -6,11 +6,11 @@ import { formatDate } from "@/lib/utils";
  * Set as an ink band: the scoped `dark` class flips every token inside, so
  * the section reads as a stamped notice against the paper around it.
  */
-export function Now() {
+export function Now({ index = "01" }: { index?: string }) {
   return (
     <section id="now" aria-labelledby="now-title" className="dark ink-band">
       <div className="shell section-y">
-        <SectionHeading index="02" eyebrow="Now" title={now.headline} id="now-title" />
+        <SectionHeading index={index} eyebrow="Now" title={now.headline} id="now-title" />
 
         <div className="grid-editorial !mx-0 !max-w-none !px-0 mt-12">
           <div className="col-span-full md:col-span-5 lg:col-span-7">

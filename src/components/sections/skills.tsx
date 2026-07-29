@@ -1,11 +1,11 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 import { skillGroups } from "@/content";
 
-export function Skills() {
+export function Skills({ index = "02" }: { index?: string }) {
   return (
     <section id="skills" aria-labelledby="skills-title" className="shell section-y">
       <SectionHeading
-        index="06"
+        index={index}
         eyebrow="Toolkit"
         title="What I reach for."
         id="skills-title"

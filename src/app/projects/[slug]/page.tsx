@@ -66,7 +66,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
       <div className="sticky top-14 z-40 border-b border-rule bg-background/85 backdrop-blur-md">
         <div className="shell flex h-11 items-center">
           <Link
-            href="/#work"
+            href="/projects"
             className="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
           >
             <ArrowLeft
@@ -124,7 +124,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               />
             </div>
           ) : (
-            <SpecPlate project={project} />
+            <SpecPlate project={project} compact />
           )}
         </div>
 

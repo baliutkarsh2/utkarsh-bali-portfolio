@@ -18,11 +18,15 @@ npm run lint
 ```
 src/
   app/            routes, metadata, OG images, sitemap, robots
+    about/              About + toolkit + off-hours
+    experience/         work history + recognition
+    projects/           the full work index (spreads + rows)
     projects/[slug]/    case studies (static, one per project)
+    writing/            MDX blog
     _fonts/             static font files for OG rendering only
   components/
     layout/       header, footer, skip link
-    sections/     homepage sections
+    sections/     page sections, composed by the routes above
     project/      case-study pieces
     interactive/  the only "use client" components
     ui/           shared primitives
@@ -122,6 +126,15 @@ Body copy here. Standard markdown, plus any React component you import.
 
 ## Things worth knowing before you change them
 
+- **The site is multi-page.** The homepage is a landing (hero, marquee, Now,
+  top-three spreads, recent writing, outro); About, Work, and Experience are
+  routes. Section components take an `index` prop so numbering restarts per
+  page, and an `as="h1"` prop when a section opens its own page. The Contact
+  nav item is the one anchor (`/#contact`), it targets the shared outro.
+- **Photo-less projects use the compact plate.** `SpecPlate` accepts
+  `compact`, which renders 21:9 instead of 16:9. Spreads and case-study
+  mastheads pass it automatically when `cover` is missing, so adding a real
+  screenshot restores the full-height box by itself.
 - **The accent is print red and it is rationed.** `--accent` may colour display
   type, hairlines, numerals, marks, selection, active nav, and focus rings.
   It must never colour body or meta text; small accent text uses the darker

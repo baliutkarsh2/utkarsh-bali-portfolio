@@ -6,6 +6,8 @@ type SectionHeadingProps = {
   eyebrow: string;
   title: string;
   id?: string;
+  /** "h1" when the section opens its own page and owns the document title. */
+  as?: "h1" | "h2";
   children?: ReactNode;
 };
 
@@ -13,7 +15,8 @@ type SectionHeadingProps = {
  * Left-aligned, numbered, rule above. Deliberately not centred, a centred
  * heading is the single strongest "template" tell.
  */
-export function SectionHeading({ index, eyebrow, title, id, children }: SectionHeadingProps) {
+export function SectionHeading({ index, eyebrow, title, id, as, children }: SectionHeadingProps) {
+  const Heading = as ?? "h2";
   return (
     <div className="grid-editorial !mx-0 !max-w-none !px-0 border-t border-rule pt-5">
       <div className="col-span-full flex items-baseline gap-4 md:col-span-3 lg:col-span-4">
@@ -26,9 +29,9 @@ export function SectionHeading({ index, eyebrow, title, id, children }: SectionH
       </div>
 
       <div className="col-span-full mt-4 md:col-span-5 md:mt-0 lg:col-span-8">
-        <h2 id={id} className="type-track text-balance text-display-m">
+        <Heading id={id} className="type-track text-balance text-display-m">
           {title}
-        </h2>
+        </Heading>
         {children && (
           <div className="measure mt-4 text-pretty text-lede text-muted">{children}</div>
         )}

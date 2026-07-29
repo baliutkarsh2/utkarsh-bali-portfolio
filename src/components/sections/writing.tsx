@@ -4,7 +4,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { formatPostDate, publishedPosts, recentPosts } from "@/lib/writing";
 import { ordinal } from "@/lib/utils";
 
-export function Writing() {
+export function Writing({ index = "03" }: { index?: string }) {
   const posts = recentPosts(3);
   if (posts.length === 0) return null;
 
@@ -13,7 +13,7 @@ export function Writing() {
   return (
     <section id="writing" aria-labelledby="writing-title" className="shell section-y">
       <SectionHeading
-        index="04"
+        index={index}
         eyebrow="Writing"
         title="Notes on building things that have to work."
         id="writing-title"

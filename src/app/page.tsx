@@ -1,47 +1,32 @@
 import { Hero } from "@/components/sections/hero";
 import { MetricsMarquee } from "@/components/sections/metrics-marquee";
-import { About } from "@/components/sections/about";
 import { Now } from "@/components/sections/now";
 import { ProjectIndex } from "@/components/sections/project-index";
 import { Writing } from "@/components/sections/writing";
-import { Experience } from "@/components/sections/experience";
-import { Skills } from "@/components/sections/skills";
-import { Recognition } from "@/components/sections/recognition";
-import { OffHours } from "@/components/sections/off-hours";
 import { Contact } from "@/components/sections/contact";
 import { Reveal } from "@/components/interactive/reveal";
 
+/**
+ * A landing page, not the whole site: hero, proof (marquee), what I'm doing
+ * now, the top three projects, recent writing, and the outro. About, the full
+ * work index, and experience live on their own routes.
+ */
 export default function HomePage() {
   return (
     <>
       <Hero />
       <MetricsMarquee />
       <Reveal>
-        <About />
+        <Now index="01" />
       </Reveal>
       <Reveal>
-        <Now />
+        <ProjectIndex index="02" />
       </Reveal>
       <Reveal>
-        <ProjectIndex />
+        <Writing index="03" />
       </Reveal>
       <Reveal>
-        <Writing />
-      </Reveal>
-      <Reveal>
-        <Experience />
-      </Reveal>
-      <Reveal>
-        <Skills />
-      </Reveal>
-      <Reveal>
-        <Recognition />
-      </Reveal>
-      <Reveal>
-        <OffHours />
-      </Reveal>
-      <Reveal>
-        <Contact index="09" />
+        <Contact index="04" />
       </Reveal>
     </>
   );

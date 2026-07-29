@@ -36,7 +36,7 @@ export function FeatureSpread({ project, index }: { project: Project; index: num
             />
           </div>
         ) : (
-          <SpecPlate project={project} />
+          <SpecPlate project={project} compact />
         )}
       </div>
 

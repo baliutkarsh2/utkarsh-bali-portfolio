@@ -1,14 +1,15 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 import { aboutNote, beliefs } from "@/content";
 
-export function About() {
+export function About({ index = "01", as }: { index?: string; as?: "h1" | "h2" }) {
   return (
     <section id="about" aria-labelledby="about-title" className="shell section-y">
       <SectionHeading
-        index="01"
+        index={index}
         eyebrow="About"
         title="I build things that other people have to depend on."
         id="about-title"
+        as={as}
       />
 
       <div className="grid-editorial !mx-0 !max-w-none !px-0 mt-12">

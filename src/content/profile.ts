@@ -30,25 +30,14 @@ export const socials: Social[] = [
 ];
 
 /**
- * Two kinds of navigation with genuinely different semantics. Section anchors
- * are scrollspy targets and take aria-current="location"; route links take
- * aria-current="page". Keeping them in one list would also feed "/writing" to
- * getElementById, which returns null and silently drops it from the spy.
+ * The site is multi-page: every nav item is a route except Contact, which
+ * anchors to the shared ink outro on the homepage and therefore works from
+ * anywhere. Route links take aria-current="page".
  */
-export const sectionNav = [
-  { label: "About", href: "/#about" },
-  { label: "Now", href: "/#now" },
-  { label: "Work", href: "/#work" },
-  { label: "Experience", href: "/#experience" },
-  { label: "Recognition", href: "/#recognition" },
-  { label: "Contact", href: "/#contact" },
-] as const;
-
-export const routeNav = [{ label: "Writing", href: "/writing" }] as const;
-
-/** Header order: Writing sits directly after Work, where it belongs. */
 export const navItems: { label: string; href: string }[] = [
-  ...sectionNav.slice(0, 3),
-  ...routeNav,
-  ...sectionNav.slice(3),
+  { label: "About", href: "/about" },
+  { label: "Work", href: "/projects" },
+  { label: "Writing", href: "/writing" },
+  { label: "Experience", href: "/experience" },
+  { label: "Contact", href: "/#contact" },
 ];

@@ -3,11 +3,11 @@ import { ArrowUpRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { achievements } from "@/content";
 
-export function Recognition() {
+export function Recognition({ index = "02" }: { index?: string }) {
   return (
     <section id="recognition" aria-labelledby="recognition-title" className="shell section-y">
       <SectionHeading
-        index="07"
+        index={index}
         eyebrow="Recognition"
         title="Awards, rankings, and a near miss."
         id="recognition-title"

@@ -18,6 +18,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: absoluteUrl("/about"),
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: absoluteUrl("/experience"),
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: absoluteUrl("/projects"),
       lastModified: newest ? new Date(newest) : new Date(),
       changeFrequency: "monthly",

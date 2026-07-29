@@ -2,14 +2,15 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { TagRow } from "@/components/ui/tag";
 import { experiences } from "@/content";
 
-export function Experience() {
+export function Experience({ index = "01", as }: { index?: string; as?: "h1" | "h2" }) {
   return (
     <section id="experience" aria-labelledby="experience-title" className="shell section-y">
       <SectionHeading
-        index="05"
+        index={index}
         eyebrow="Experience"
         title="Where I've worked."
         id="experience-title"
+        as={as}
       />
 
       <ol className="mt-12">

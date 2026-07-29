@@ -2,54 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { Menu, X } from "lucide-react";
-import { navItems, profile, sectionNav } from "@/content";
+import { navItems, profile } from "@/content";
 import { ThemeToggle } from "@/components/interactive/theme-toggle";
 import { Magnetic } from "@/components/interactive/magnetic";
 import { SlideLabel } from "@/components/ui/slide-label";
 
-/** Only real in-page sections, never route links. */
-const SECTION_IDS = sectionNav.map((item) => item.href.replace("/#", ""));
-
 export function SiteHeader() {
   const pathname = usePathname();
-  const isHome = pathname === "/";
-  const [observedId, setObservedId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDialogElement>(null);
-
-  // Derived, not stored, avoids a state reset (and cascading render) on route change.
-  const activeId = isHome ? observedId : null;
-
-  /**
-   * Scrollspy is presentation only, the anchors navigate natively so focus
-   * management stays with the browser. `scroll-padding-top` handles offset.
-   */
-  useEffect(() => {
-    if (!isHome) return;
-
-    const sections = SECTION_IDS.map((id) => document.getElementById(id)).filter(
-      (el): el is HTMLElement => el !== null,
-    );
-    if (sections.length === 0) return;
-
-    const visible = new Set<string>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) visible.add(entry.target.id);
-          else visible.delete(entry.target.id);
-        }
-        // Topmost visible section wins, so the marker never jumps backwards.
-        const first = SECTION_IDS.find((id) => visible.has(id));
-        setObservedId(first ?? null);
-      },
-      { rootMargin: "-45% 0px -50% 0px" },
-    );
-
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, [isHome]);
 
   function openMenu() {
     menuRef.current?.showModal();
@@ -57,6 +19,12 @@ export function SiteHeader() {
 
   function closeMenu() {
     menuRef.current?.close();
+  }
+
+  /** Contact is an anchor into the shared outro and is never "active". */
+  function isActive(href: string): boolean {
+    if (href.includes("#")) return false;
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   return (
@@ -84,18 +52,14 @@ export function SiteHeader() {
         <nav aria-label="Primary" className="hidden md:block">
           <ul className="flex items-center gap-1">
             {navItems.map((item) => {
-              const isRoute = !item.href.startsWith("/#");
-              const id = item.href.replace("/#", "");
-              const isActive = isRoute
-                ? pathname.startsWith(item.href)
-                : isHome && activeId === id;
+              const active = isActive(item.href);
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    aria-current={isActive ? (isRoute ? "page" : "location") : undefined}
+                    aria-current={active ? "page" : undefined}
                     className={`slide-trigger inline-block px-2.5 py-1.5 text-sm transition-colors ${
-                      isActive ? "nav-active text-foreground" : "text-muted hover:text-foreground"
+                      active ? "nav-active text-foreground" : "text-muted hover:text-foreground"
                     }`}
                   >
                     <SlideLabel>{item.label}</SlideLabel>
@@ -161,8 +125,6 @@ export function SiteHeader() {
           </div>
           <nav aria-label="Mobile" className="shell pb-6">
             <ul>
-              {/* Deliberately unnumbered: the sections carry their own index,
-                  and a second, different numbering here would contradict it. */}
               {navItems.map((item) => (
                 <li key={item.href} className="border-t border-rule">
                   <Link

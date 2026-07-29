@@ -1,11 +1,11 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 import { interests, mission, music, reading } from "@/content";
 
-export function OffHours() {
+export function OffHours({ index = "03" }: { index?: string }) {
   return (
     <section id="off-hours" aria-labelledby="off-hours-title" className="shell section-y">
       <SectionHeading
-        index="08"
+        index={index}
         eyebrow="Off hours"
         title="What I'm reading, listening to, and chasing."
         id="off-hours-title"
