@@ -11,7 +11,7 @@ export default async function Image() {
     eyebrow: "Writing",
     title: "Worth thinking about twice",
     description:
-      "Occasional essays. Some about building software, some about the things that sit underneath it.",
+      "Occasional essays on software, life, art, and philosophy.",
     meta: [`${count} ${count === 1 ? "post" : "posts"}`, "Utkarsh Bali"],
   });
 }

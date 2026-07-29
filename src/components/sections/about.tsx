@@ -7,7 +7,7 @@ export function About({ index = "01", as }: { index?: string; as?: "h1" | "h2" }
       <SectionHeading
         index={index}
         eyebrow="About"
-        title="I build things that other people have to depend on."
+        title="I have always been building something."
         id="about-title"
         as={as}
       />

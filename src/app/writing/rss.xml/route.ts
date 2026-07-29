@@ -38,7 +38,7 @@ ${post.tags.map((tag) => `      <category>${escapeXml(tag)}</category>`).join("\
   <channel>
     <title>${escapeXml(siteConfig.name)}</title>
     <link>${absoluteUrl("/writing")}</link>
-    <description>Occasional essays. Some about building software, some about the things that sit underneath it.</description>
+    <description>Occasional essays on software, life, art, and philosophy.</description>
     <language>en-us</language>
     <atom:link href="${absoluteUrl("/writing/rss.xml")}" rel="self" type="application/rss+xml"/>
 ${updated ? `    <lastBuildDate>${new Date(`${updated}T00:00:00Z`).toUTCString()}</lastBuildDate>` : ""}

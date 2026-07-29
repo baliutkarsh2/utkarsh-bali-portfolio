@@ -9,7 +9,7 @@ import { ordinal } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Writing",
   description:
-    "Occasional essays by Utkarsh Bali. Some about building software, some about the things that sit underneath it.",
+    "Occasional essays by Utkarsh Bali on software, life, art, and philosophy.",
   alternates: { canonical: "/writing" },
 };
 
@@ -28,8 +28,8 @@ export default function WritingPage() {
             className="measure mt-6 text-pretty text-lede text-muted"
             style={{ "--stagger": 1 } as React.CSSProperties}
           >
-            Occasional essays. Some about building software, some about the things that
-            sit underneath it. Pieces published elsewhere are marked and link out.
+            Occasional essays on software, life, art, and philosophy. Pieces published
+            elsewhere are marked and link out.
           </p>
         </div>
       </header>
