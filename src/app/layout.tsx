@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
+import { PressCursor } from "@/components/interactive/press-cursor";
 import { profile, socials } from "@/content";
 import { publishedPosts } from "@/lib/writing";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
@@ -120,6 +121,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       </head>
       <body className="bg-background text-foreground antialiased">
         <div aria-hidden className="paper-grain" />
+        <PressCursor />
         <SkipLink />
         <SiteHeader />
         <main id="main" tabIndex={-1}>

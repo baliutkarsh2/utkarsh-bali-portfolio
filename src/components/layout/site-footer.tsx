@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { profile, socials } from "@/content";
+import { PressBar } from "@/components/ui/press-bar";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-rule">
+      <div className="shell border-b border-rule py-5">
+        <PressBar />
+      </div>
+
       <div className="shell flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="meta text-faint">{profile.name}</p>

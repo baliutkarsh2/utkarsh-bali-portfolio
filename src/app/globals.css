@@ -488,12 +488,145 @@
   }
 }
 
+/* ── Process plates ───────────────────────────────────────────
+   The display name is set four times, once per process ink. Only the K plate
+   is real text; C, M and Y are aria-hidden duplicates that land out of
+   register and pull in. They never reach true: a residual fraction of a pixel
+   is what separates "printed" from "rendered".
+   ───────────────────────────────────────────────────────────── */
+/* Deliberately NOT `isolation: isolate`. The inks have to multiply against
+   the paper behind the heading, and an isolated group would blend them
+   against transparent black instead. */
+.plate-word {
+  position: relative;
+  display: block;
+}
+
+.plate {
+  display: block;
+}
+
+/* K is the readable layer and the LCP paint. No animation, ever. */
+.plate-k {
+  position: relative;
+  z-index: 1;
+}
+
+.plate-c,
+.plate-m,
+.plate-y {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Overlapping inks darken on paper and lighten on an unlit press sheet. */
+  mix-blend-mode: multiply;
+}
+
+.dark .plate-c,
+.dark .plate-m,
+.dark .plate-y {
+  mix-blend-mode: screen;
+}
+
+.plate-c {
+  color: #00aeef;
+  --reg-x: -0.014em;
+  --reg-y: 0.008em;
+}
+.plate-m {
+  color: #ec008c;
+  --reg-x: 0.012em;
+  --reg-y: -0.007em;
+}
+.plate-y {
+  color: #ffd400;
+  --reg-x: 0.004em;
+  --reg-y: 0.013em;
+}
+
+.plate-c,
+.plate-m,
+.plate-y {
+  opacity: var(--plate-ink, 0.4);
+  translate: var(--reg-x) var(--reg-y);
+}
+
+/* Screen blend is additive, so the same density that reads as a delicate
+   fringe on paper reads as a glow on an unlit sheet. Dark carries roughly
+   half the ink. */
+.dark {
+  --plate-ink: 0.24;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .plate-c,
+  .js .plate-m,
+  .js .plate-y {
+    animation: plate-register 1150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .js .plate-m {
+    animation-delay: 90ms;
+  }
+  .js .plate-y {
+    animation-delay: 170ms;
+  }
+}
+
+@keyframes plate-register {
+  from {
+    /* Sixteen times the resting offset: visibly off the pin, then pulled in. */
+    translate: calc(var(--reg-x) * 16) calc(var(--reg-y) * 16);
+    opacity: calc(var(--plate-ink, 0.4) * 1.7);
+  }
+  to {
+    translate: var(--reg-x) var(--reg-y);
+    opacity: var(--plate-ink, 0.4);
+  }
+}
+
 .portrait-frame {
   position: relative;
   aspect-ratio: 3 / 4;
   overflow: hidden;
   background: var(--paper-inset);
   border: 1px solid var(--rule);
+}
+
+/* The live press. Sits over the photograph and only becomes visible once a
+   real frame has been drawn, so a WebGL failure is completely invisible. */
+.portrait-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 420ms ease;
+}
+.portrait-canvas[data-live] {
+  opacity: 1;
+}
+
+/* Sits below the plate, not on it: a caption printed over a photograph is
+   never reliably legible, whatever blend mode it uses. */
+.portrait-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.7rem;
+  color: var(--ink-3);
+}
+
+/* The loupe only exists for a fine pointer, so the hint only exists there. */
+.portrait-caption-hint {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .portrait-caption-hint {
+    display: inline;
+  }
 }
 
 .portrait-image {
@@ -507,6 +640,7 @@
 .portrait-scrim {
   position: absolute;
   inset: 0;
+  z-index: 2; /* above the press canvas */
   pointer-events: none;
   background:
     linear-gradient(to top, var(--accent-wash), transparent 42%),
@@ -526,6 +660,7 @@
 /* Registration marks. Reads as a printed plate, costs nothing. */
 .portrait-mark {
   position: absolute;
+  z-index: 2; /* above the press canvas */
   width: 0.75rem;
   height: 0.75rem;
   pointer-events: none;
@@ -623,6 +758,187 @@
   .marquee-item + .marquee-item {
     border-left: 0;
   }
+}
+
+/* ── Press cursor ─────────────────────────────────────────────
+   A registration target. The crosshair tracks the pointer exactly so that
+   aiming stays honest; only the ring trails. Mounted by JS for fine pointers
+   with motion allowed, so the native cursor is only ever hidden when a real
+   replacement is on screen.
+   ───────────────────────────────────────────────────────────── */
+.press-cursor,
+.press-cursor a,
+.press-cursor button,
+.press-cursor summary,
+.press-cursor [role="button"] {
+  cursor: none;
+}
+
+/* Text entry always keeps a real caret cursor: a crosshair over an input is
+   actively misleading about what the click will do. */
+.press-cursor input,
+.press-cursor textarea,
+.press-cursor [contenteditable="true"] {
+  cursor: text;
+}
+
+.cursor-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.cursor-root[data-on] {
+  opacity: 1;
+}
+.cursor-root[data-state="text"] {
+  opacity: 0;
+}
+
+.cursor-cross,
+.cursor-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.cursor-arm {
+  position: absolute;
+  background: var(--accent);
+  transition:
+    width 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms ease;
+}
+.cursor-arm-h {
+  left: -11px;
+  top: -0.5px;
+  width: 22px;
+  height: 1px;
+}
+.cursor-arm-v {
+  top: -11px;
+  left: -0.5px;
+  width: 1px;
+  height: 22px;
+}
+
+/* Over a live target the arms retract and the ring takes over. */
+.cursor-root[data-state="live"] .cursor-arm-h {
+  width: 8px;
+  left: -4px;
+}
+.cursor-root[data-state="live"] .cursor-arm-v {
+  height: 8px;
+  top: -4px;
+}
+
+.cursor-ring {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  transition:
+    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 220ms ease,
+    opacity 220ms ease;
+}
+.cursor-root[data-state="live"] .cursor-ring {
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-color: var(--accent);
+}
+/* The portrait draws its own glass, so the ring gets out of the way. */
+.cursor-root[data-state="loupe"] .cursor-ring {
+  opacity: 0;
+}
+.cursor-root[data-state="loupe"] .cursor-arm {
+  opacity: 0.5;
+}
+.cursor-root[data-press] .cursor-ring {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+}
+
+.cursor-readout {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  white-space: nowrap;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+.cursor-root[data-state="idle"] .cursor-readout,
+.cursor-root[data-state="loupe"] .cursor-readout {
+  opacity: 0.7;
+}
+
+/* ── Colour bar ───────────────────────────────────────────────
+   The control strip from the trim edge of a press sheet.
+   ───────────────────────────────────────────────────────────── */
+.press-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.press-bar-label {
+  color: var(--ink-3);
+}
+
+.press-bar-inks,
+.press-bar-wedge {
+  display: flex;
+}
+
+.press-swatch {
+  position: relative;
+  width: 2.25rem;
+  height: 1.1rem;
+  display: grid;
+  place-items: center;
+}
+
+.press-swatch-key {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  /* Legible on both a yellow and a black swatch without a second token. */
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+.press-step {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.press-bar-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* A miniature registration target, drawn with gradients rather than an SVG. */
+.press-target {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 50%;
+  background:
+    linear-gradient(to right, transparent calc(50% - 0.5px), var(--rule-strong) calc(50% - 0.5px), var(--rule-strong) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--rule-strong) calc(50% - 0.5px), var(--rule-strong) calc(50% + 0.5px), transparent calc(50% + 0.5px));
 }
 
 /* ── Feature spread ───────────────────────────────────────────
@@ -1162,12 +1478,33 @@
    Unsupported browsers render children and simply do not animate, which is
    why this needs no fallback.
    ───────────────────────────────────────────────────────────── */
-::view-transition-old(root),
+/* The outgoing page holds still and the incoming one is laid over it, the way
+   a sheet is pulled through. A cross fade would read as software; a wipe with
+   a soft leading edge reads as ink meeting paper. */
+::view-transition-old(root) {
+  animation: ink-out 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 ::view-transition-new(root) {
-  /* Capped well under half a second so scroll restoration never becomes
-     visible as a jump mid-transition. */
-  animation-duration: 260ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation: ink-in 420ms cubic-bezier(0.22, 1, 0.28, 1) both;
+}
+
+@keyframes ink-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes ink-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.55;
+  }
 }
 
 /* The header is fixed and must not travel with the page. */
@@ -1179,6 +1516,7 @@
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;
+    clip-path: none;
   }
 }
 
@@ -1198,10 +1536,15 @@
       from {
         opacity: 0.68;
         letter-spacing: 0.008em;
+        /* Fraunces carries a real optical size axis, so the heading is cut
+           for display size as it arrives rather than being scaled. This is a
+           genuine change of letterform, not a transform. */
+        font-variation-settings: "opsz" 14;
       }
       to {
         opacity: 1;
         letter-spacing: -0.02em;
+        font-variation-settings: "opsz" 144;
       }
     }
 

@@ -135,6 +135,26 @@ Body copy here. Standard markdown, plus any React component you import.
   `compact`, which renders 21:9 instead of 16:9. Spreads and case-study
   mastheads pass it automatically when `cover` is missing, so adding a real
   screenshot restores the full-height box by itself.
+- **The press is hand-written WebGL, and that is deliberate.** `src/lib/halftone.ts`
+  is one fragment shader that separates the portrait into CMYK and screens each
+  ink on its traditional angle (C 15, M 75, Y 0, K 45). Those angles are the
+  only reason it produces a rosette instead of a moire. It is about 3.5 KB
+  gzipped with no library; three.js would have cost 160 KB to run the same
+  shader. Do not "upgrade" it to a framework.
+- **The shader must never become the LCP element.** `HalftoneLayer` is a canvas
+  laid over the real `next/image`, and it only fades in once WebGL has
+  compiled, the texture has decoded, and a frame is on screen. Any failure at
+  all leaves the plain photograph, which is the correct result.
+- **GLSL lives in a JS template literal, so it may not contain backticks.**
+  A backtick inside a shader comment terminates the string and produces
+  syntax errors pointing at seemingly unrelated lines.
+- **The display name is four plates, and only K is real text.** C, M and Y are
+  aria-hidden duplicates that carry the misregistration. They never reach true
+  register, because a perfect fit reads as digital. K carries no animation
+  because it is the LCP paint.
+- **The custom cursor hides the native one, so it only mounts when it can
+  fully replace it**: fine pointer, motion allowed. Text inputs always keep a
+  real caret cursor.
 - **The accent is print red and it is rationed.** `--accent` may colour display
   type, hairlines, numerals, marks, selection, active nav, and focus rings.
   It must never colour body or meta text; small accent text uses the darker

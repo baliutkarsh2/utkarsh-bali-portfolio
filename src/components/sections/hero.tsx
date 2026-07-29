@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { now, profile, socials } from "@/content";
+import { PlateWord } from "@/components/ui/plate-word";
 import { HeroPortrait } from "./hero-portrait";
 
 export function Hero() {
@@ -30,8 +31,8 @@ export function Hero() {
           {/* LCP element. Clip-path reveal paints immediately: no opacity
               animation, no animation-delay, no scroll-driven timeline. */}
           <h1 className="hero-name enter-clip text-display-xl font-display">
-            <span className="block">Utkarsh</span>
-            <span className="block">Bali</span>
+            <PlateWord>Utkarsh</PlateWord>
+            <PlateWord>Bali</PlateWord>
           </h1>
 
           <div className="hero-figure enter" style={{ "--stagger": 2 } as React.CSSProperties}>
