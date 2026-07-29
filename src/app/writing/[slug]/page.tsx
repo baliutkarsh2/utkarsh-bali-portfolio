@@ -5,13 +5,13 @@ import { ArrowLeft } from "lucide-react";
 import { Contact } from "@/components/sections/contact";
 import { Reveal } from "@/components/interactive/reveal";
 import { ScrollProgress } from "@/components/interactive/scroll-progress";
-import { formatPostDate, getPost, publishedPosts } from "@/lib/writing";
+import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
 import { absoluteUrl, jsonLd, personId } from "@/lib/seo";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return publishedPosts().map((post) => ({ slug: post.slug }));
+  return hostedPosts().map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({

@@ -6,7 +6,14 @@ import { navItems, orderedProjects, profile, socials } from "@/content";
 import { fuzzyMatch } from "@/lib/fuzzy";
 import { toggleTheme } from "./theme-toggle";
 
-export type PalettePost = { slug: string; title: string; summary: string };
+export type PalettePost = {
+  slug: string;
+  title: string;
+  summary: string;
+  /** Absolute for a piece published elsewhere, site-relative otherwise. */
+  href: string;
+  external: boolean;
+};
 
 type Command = {
   id: string;
@@ -173,10 +180,17 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
     const postCommands = posts.map<Command>((post) => ({
       id: `post:${post.slug}`,
       label: post.title,
-      hint: "Post",
+      hint: post.external ? "External" : "Post",
       group: "Writing",
       haystack: post.summary,
-      run: (ctx) => ctx.navigate(`/writing/${post.slug}`),
+      run: (ctx) => {
+        if (post.external) {
+          ctx.close();
+          window.open(post.href, "_blank", "noopener,noreferrer");
+          return;
+        }
+        ctx.navigate(post.href);
+      },
     }));
     // Writing sits after Work, matching the header order.
     const cut = commands.findIndex((c) => c.group === "Elsewhere");

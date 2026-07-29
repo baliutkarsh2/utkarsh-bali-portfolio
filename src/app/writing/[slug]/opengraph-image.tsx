@@ -1,4 +1,4 @@
-import { formatPostDate, getPost, publishedPosts } from "@/lib/writing";
+import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgCard } from "@/lib/og";
 
 export const size = OG_SIZE;
@@ -6,7 +6,7 @@ export const contentType = OG_CONTENT_TYPE;
 export const alt = "Post by Utkarsh Bali";
 
 export function generateStaticParams() {
-  return publishedPosts().map((post) => ({ slug: post.slug }));
+  return hostedPosts().map((post) => ({ slug: post.slug }));
 }
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {

@@ -15,7 +15,7 @@ export function Writing({ index = "03" }: { index?: string }) {
       <SectionHeading
         index={index}
         eyebrow="Writing"
-        title="Notes on building things that have to work."
+        title="Things worth thinking about twice."
         id="writing-title"
       />
 
@@ -31,14 +31,30 @@ export function Writing({ index = "03" }: { index?: string }) {
 
               <div className="min-w-0">
                 <h3 className="text-display-s font-display">
-                  <Link href={`/writing/${post.slug}`} className="stretch-link">
-                    {post.title}
-                  </Link>
+                  {post.external ? (
+                    <a
+                      href={post.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="stretch-link"
+                    >
+                      {post.title}
+                    </a>
+                  ) : (
+                    <Link href={post.href} className="stretch-link">
+                      {post.title}
+                    </Link>
+                  )}
                 </h3>
                 {post.summary && (
                   <p className="mt-1.5 max-w-lg text-pretty text-sm leading-6 text-muted">
                     {post.summary}
                   </p>
+                )}
+                {post.external && (
+                  <span className="meta mt-2 inline-block border border-rule px-1.5 py-1 text-faint">
+                    {post.external.publisher}
+                  </span>
                 )}
               </div>
 

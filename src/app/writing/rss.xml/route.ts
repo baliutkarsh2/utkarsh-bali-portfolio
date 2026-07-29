@@ -19,7 +19,9 @@ export function GET() {
 
   const items = posts
     .map((post) => {
-      const url = absoluteUrl(`/writing/${post.slug}`);
+      // External pieces link to where they actually live, which is what a
+      // reader subscribing to this feed wants to open.
+      const url = post.external ? post.external.url : absoluteUrl(`/writing/${post.slug}`);
       return `    <item>
       <title>${escapeXml(post.title)}</title>
       <link>${url}</link>
@@ -36,7 +38,7 @@ ${post.tags.map((tag) => `      <category>${escapeXml(tag)}</category>`).join("\
   <channel>
     <title>${escapeXml(siteConfig.name)}</title>
     <link>${absoluteUrl("/writing")}</link>
-    <description>Notes on agent infrastructure, developer tools, and shipping software.</description>
+    <description>Occasional essays. Some about building software, some about the things that sit underneath it.</description>
     <language>en-us</language>
     <atom:link href="${absoluteUrl("/writing/rss.xml")}" rel="self" type="application/rss+xml"/>
 ${updated ? `    <lastBuildDate>${new Date(`${updated}T00:00:00Z`).toUTCString()}</lastBuildDate>` : ""}

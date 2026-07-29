@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { orderedProjects } from "@/content";
-import { publishedPosts } from "@/lib/writing";
+import { hostedPosts, publishedPosts } from "@/lib/writing";
 import { absoluteUrl } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -51,7 +51,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
           },
         ]
       : []),
-    ...posts.map((post) => ({
+    // Only pages this site actually serves. An external piece is not our URL.
+    ...hostedPosts().map((post) => ({
       url: absoluteUrl(`/writing/${post.slug}`),
       lastModified: new Date(post.date),
       changeFrequency: "yearly" as const,

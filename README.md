@@ -115,6 +115,25 @@ Body copy here. Standard markdown, plus any React component you import.
 
 - **The filename is the URL.** `my-post.mdx` becomes `/writing/my-post`.
 - `title` and `date` are required; the build fails loudly if either is missing.
+- **To list a piece published somewhere else**, add `external` and `publisher`
+  and skip the body:
+
+  ```mdx
+  ---
+  title: "The title as published"
+  summary: "One or two sentences."
+  date: "2025-07-11"
+  external: "https://medium.com/@you/the-post"
+  publisher: "Medium"
+  readingMinutes: 3
+  ---
+  ```
+
+  The canonical copy stays where it was published, so the row links out, gets a
+  publisher badge, and is deliberately kept out of `generateStaticParams`, the
+  sitemap and the per-post OG route. RSS points subscribers at the real
+  article. `readingMinutes` is required here because there is no body to
+  measure, and the build says so if you forget it.
 - `draft: true` renders in `npm run dev` and is excluded from production, the
   sitemap, and RSS.
 - Reading time is computed from the body, not stored.

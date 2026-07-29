@@ -129,10 +129,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         </main>
         <SiteFooter />
         <CommandPalette
-          posts={publishedPosts().map(({ slug, title, summary }) => ({
+          posts={publishedPosts().map(({ slug, title, summary, href, external }) => ({
             slug,
             title,
             summary,
+            href,
+            external: Boolean(external),
           }))}
         />
       </body>

@@ -9,7 +9,7 @@ import { ordinal } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Writing",
   description:
-    "Notes on agent infrastructure, developer tools, and the parts of building software that are harder than they look.",
+    "Occasional essays by Utkarsh Bali. Some about building software, some about the things that sit underneath it.",
   alternates: { canonical: "/writing" },
 };
 
@@ -22,14 +22,14 @@ export default function WritingPage() {
         <div className="enter">
           <p className="meta text-faint">Writing</p>
           <h1 className="mt-6 text-balance text-display-l font-display">
-            Notes on building things that have to work.
+            Things worth thinking about twice.
           </h1>
           <p
             className="measure mt-6 text-pretty text-lede text-muted"
             style={{ "--stagger": 1 } as React.CSSProperties}
           >
-            Mostly agent infrastructure and developer tools, occasionally the parts of
-            shipping software that turn out harder than they looked.
+            Occasional essays. Some about building software, some about the things that
+            sit underneath it. Pieces published elsewhere are marked and link out.
           </p>
         </div>
       </header>
@@ -50,20 +50,38 @@ export default function WritingPage() {
 
                   <div className="min-w-0">
                     <h2 className="text-display-s font-display">
-                      <Link href={`/writing/${post.slug}`} className="stretch-link">
-                        {post.title}
-                      </Link>
+                      {post.external ? (
+                        <a
+                          href={post.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="stretch-link"
+                        >
+                          {post.title}
+                        </a>
+                      ) : (
+                        <Link href={post.href} className="stretch-link">
+                          {post.title}
+                        </Link>
+                      )}
                     </h2>
                     {post.summary && (
                       <p className="mt-1.5 max-w-lg text-pretty text-sm leading-6 text-muted">
                         {post.summary}
                       </p>
                     )}
-                    {post.draft && (
-                      <span className="meta mt-2 inline-block border border-rule px-1.5 py-1 text-faint">
-                        Draft
-                      </span>
-                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {post.external && (
+                        <span className="meta inline-block border border-rule px-1.5 py-1 text-faint">
+                          {post.external.publisher}
+                        </span>
+                      )}
+                      {post.draft && (
+                        <span className="meta inline-block border border-rule px-1.5 py-1 text-faint">
+                          Draft
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="hidden md:block">
