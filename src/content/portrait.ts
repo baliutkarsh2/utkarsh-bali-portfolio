@@ -13,5 +13,5 @@ import image from "@/assets/utkarsh.jpg";
  */
 export const portrait: { src: StaticImageData; alt: string } | null = {
   src: image,
-  alt: "Utkarsh Bali looking out over the ocean at sunset",
+  alt: "Utkarsh Bali sitting on a hilltop above the coast, smiling into the light as the sun drops over the ocean behind him",
 };
