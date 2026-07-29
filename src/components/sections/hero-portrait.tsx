@@ -29,7 +29,7 @@ export function HeroPortrait() {
             sizes="(min-width: 80rem) 26rem, min(74vw, 18rem)"
             className="portrait-image"
           />
-          <HalftoneLayer src={portrait.src.src} />
+          <HalftoneLayer />
         </>
       ) : (
         <div className="portrait-plate">

@@ -28,9 +28,12 @@ export function Hero() {
         </div>
 
         <div className="hero-spread mt-8">
-          {/* LCP element. Clip-path reveal paints immediately: no opacity
-              animation, no animation-delay, no scroll-driven timeline. */}
-          <h1 className="hero-name enter-clip text-display-xl font-display">
+          {/* LCP element, and it must paint on the first frame. The clip-path
+              reveal that used to be here started the name fully clipped away,
+              which cost about 2s of LCP once the fixed hero grid made this the
+              largest element. The plates landing out of register is the actual
+              signature moment and it never hides the text, so nothing is lost. */}
+          <h1 className="hero-name text-display-xl font-display">
             <PlateWord>Utkarsh</PlateWord>
             <PlateWord>Bali</PlateWord>
           </h1>

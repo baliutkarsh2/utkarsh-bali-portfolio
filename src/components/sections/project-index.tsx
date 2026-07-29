@@ -15,7 +15,7 @@ export function ProjectIndex({ index = "02" }: { index?: string }) {
       <SectionHeading
         index={index}
         eyebrow="Selected work"
-        title="Agent infrastructure, developer tools, and a few things I shipped alone."
+        title="Agent infrastructure, developer tools, and a few things I shipped end to end."
         id="work-title"
       >
         Each one has a write-up: what the problem actually was, what I built, and what

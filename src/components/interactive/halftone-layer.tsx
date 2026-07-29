@@ -27,11 +27,9 @@ function easeOut(t: number) {
  * and the visitor simply keeps the photograph.
  */
 export function HalftoneLayer({
-  src,
   focus = 0.22,
   freq = 5.2,
 }: {
-  src: string;
   /** Vertical framing, matching the CSS object-position of the photo. */
   focus?: number;
   /** Screen ruling: cell size in CSS px before device scaling. */
@@ -111,11 +109,24 @@ export function HalftoneLayer({
      * Shader compilation and texture upload are synchronous main thread work.
      * Held until the browser is idle so they can never land between the
      * photograph arriving and the browser painting it, which is the gap LCP
-     * measures. The image itself is already in cache from next/image.
+     * measures.
+     *
+     * The source is taken from the sibling <img> rather than the raw asset,
+     * because next/image has already downloaded and decoded exactly the right
+     * size for this viewport. Pointing at the original cost a second download
+     * of the full resolution file and a texture upload roughly nine times
+     * larger than the canvas can show.
      */
     const begin = () => {
       if (disposed) return;
-      image.src = src;
+      const photo = host.querySelector("img");
+      if (!photo) return;
+      // currentSrc is only settled once the browser has picked from srcset.
+      if (!photo.complete || !photo.currentSrc) {
+        photo.addEventListener("load", begin, { once: true });
+        return;
+      }
+      image.src = photo.currentSrc;
       image
         .decode()
         .then(() => {
@@ -186,7 +197,7 @@ export function HalftoneLayer({
       canvas.removeEventListener("webglcontextlost", onLost);
       press?.dispose();
     };
-  }, [src, focus, freq]);
+  }, [focus, freq]);
 
   return (
     <canvas
