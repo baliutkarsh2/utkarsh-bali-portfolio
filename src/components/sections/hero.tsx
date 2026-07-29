@@ -111,7 +111,7 @@ export function Hero() {
               ))}
             </dl>
 
-            <ul className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <ul className="tap-list mt-5 flex flex-wrap items-center gap-x-5 gap-y-1">
               {socials
                 .filter((social) => social.kind !== "email")
                 .map((social) => (

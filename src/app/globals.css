@@ -339,6 +339,29 @@
    6. Component classes, keep this list short
    ───────────────────────────────────────────────────────────── */
 
+/* ── Display leading at small sizes ───────────────────────────
+   The display scale is set very tight because it is drawn for huge type,
+   where negative leading reads as confident. At the bottom of the clamp the
+   same ratios put descenders into the next line's ascenders, so phones get a
+   little air back. Values must be literal, not token overrides: `@theme
+   inline` bakes the number into the utility, so redefining the custom
+   property here would do nothing.
+   ───────────────────────────────────────────────────────────── */
+@media (width < 48rem) {
+  .text-display-xl {
+    line-height: 0.94;
+  }
+  .text-display-l {
+    line-height: 1.04;
+  }
+  .text-display-m {
+    line-height: 1.14;
+  }
+  .text-display-s {
+    line-height: 1.24;
+  }
+}
+
 /* Paper grain. One fixed layer behind everything, so it never repaints while
    the page scrolls. feTurbulence as a data URI is ~300 bytes and resolution
    independent, which a tiled PNG is not. */
@@ -431,6 +454,14 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   column-gap: 1.25rem;
   row-gap: 2.5rem;
+}
+
+/* Load-bearing. Without an explicit span every child auto-places into its
+   own single column, so the name, the tagline, the portrait and the meta
+   table end up side by side in quarter-width strips. The interlock at
+   >= 80rem overrides this with real placements. */
+.hero-spread > * {
+  grid-column: 1 / -1;
 }
 
 /* Declared before the media queries: at >= 80rem the figure fills its column
@@ -1365,6 +1396,24 @@
   }
   .duotone-frame:hover::after {
     opacity: 0;
+  }
+}
+
+/* ── Touch targets ────────────────────────────────────────────
+   Standalone navigation links are set at 13px, which gives an 18px tall hit
+   area: fine for a cursor, far under the 24px minimum for a finger. On a
+   coarse pointer they get a real 44px target without moving the text, since
+   the box grows around a centred label. Links inside running prose are
+   deliberately untouched: they are exempt, and padding them would wreck the
+   line rhythm.
+   ───────────────────────────────────────────────────────────── */
+@media (pointer: coarse) {
+  .tap,
+  .tap-list a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 

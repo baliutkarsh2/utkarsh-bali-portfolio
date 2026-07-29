@@ -79,7 +79,7 @@ export function Writing({ index = "03" }: { index?: string }) {
       {total > posts.length && (
         <Link
           href="/writing"
-          className="group mt-8 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
+          className="tap group mt-8 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
         >
           <span className="link-underline">All writing ({total} posts)</span>
           <ArrowRight

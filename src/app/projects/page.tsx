@@ -22,7 +22,9 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <header className="shell pb-12 pt-14 sm:pt-20">
+      {/* pt has to clear the 3.5rem fixed header and then leave real air.
+          pt-14 alone put the eyebrow flush against the header rule. */}
+      <header className="shell pb-12 pt-24 sm:pt-28">
         <div className="enter">
           <p className="meta text-faint">Work</p>
           <h1 className="mt-6 text-balance text-display-l font-display">

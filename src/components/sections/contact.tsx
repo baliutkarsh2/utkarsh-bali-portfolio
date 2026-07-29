@@ -41,7 +41,7 @@ export function Contact({ index }: { index?: string }) {
           />
         </a>
 
-        <ul className="mt-16 flex flex-wrap gap-x-6 gap-y-2 border-t border-rule pt-6">
+        <ul className="tap-list mt-16 flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-rule pt-6">
           {socials
             .filter((social) => social.kind !== "email")
             .map((social) => (

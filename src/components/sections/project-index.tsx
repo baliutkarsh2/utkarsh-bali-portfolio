@@ -30,7 +30,7 @@ export function ProjectIndex({ index = "02" }: { index?: string }) {
 
       <Link
         href="/projects"
-        className="group mt-20 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground lg:mt-28"
+        className="tap group mt-20 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground lg:mt-28"
       >
         <span className="link-underline">All work ({projects.length} projects)</span>
         <ArrowRight

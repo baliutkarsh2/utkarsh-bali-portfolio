@@ -18,7 +18,7 @@ export function SiteFooter() {
         </div>
 
         <nav aria-label="Elsewhere">
-          <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+          <ul className="tap-list flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             {socials.map((social) => (
               <li key={social.kind}>
                 <a

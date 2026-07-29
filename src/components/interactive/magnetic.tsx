@@ -64,8 +64,11 @@ export function Magnetic({ children, className = "" }: { children: ReactNode; cl
     };
   }, []);
 
+  // No hardcoded display class: `inline-block` here would win the cascade
+  // against a caller's `hidden`, because Tailwind orders display utilities
+  // by its own rules rather than by class attribute order.
   return (
-    <span ref={ref} className={`inline-block ${className}`}>
+    <span ref={ref} className={className}>
       {children}
     </span>
   );

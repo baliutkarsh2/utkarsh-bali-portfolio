@@ -18,7 +18,7 @@ export default function WritingPage() {
 
   return (
     <>
-      <header className="shell pb-12 pt-14 sm:pt-20">
+      <header className="shell pb-12 pt-24 sm:pt-28">
         <div className="enter">
           <p className="meta text-faint">Writing</p>
           <h1 className="mt-6 text-balance text-display-l font-display">

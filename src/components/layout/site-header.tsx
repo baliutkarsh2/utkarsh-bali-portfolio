@@ -90,7 +90,7 @@ export function SiteHeader() {
             </button>
           </Magnetic>
 
-          <Magnetic>
+          <Magnetic className="inline-block">
             <ThemeToggle />
           </Magnetic>
 

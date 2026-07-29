@@ -67,7 +67,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <div className="shell flex h-11 items-center">
           <Link
             href="/projects"
-            className="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
+            className="tap group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
           >
             <ArrowLeft
               aria-hidden
@@ -208,7 +208,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
                           href={link.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
+                          className="tap group inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"
                         >
                           <span className="link-underline">{link.label}</span>
                           <ArrowUpRight
