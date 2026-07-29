@@ -226,6 +226,18 @@ Body copy here. Standard markdown, plus any React component you import.
 
 ## Deployment
 
-Pushes to `master` deploy via Vercel. Set `NEXT_PUBLIC_SITE_URL` only if the
-canonical domain changes. `src/lib/seo.ts` is the single source of truth for
-every absolute URL (canonical tags, OG, sitemap, JSON-LD).
+Pushes to `master` deploy to production automatically; every other branch gets
+a preview URL. The Vercel project is linked to this repository, so no local
+step is needed.
+
+If that link is ever lost (a new clone shows "To deploy every commit
+automatically, connect a Git Repository"), restore it with:
+
+```bash
+npx vercel git connect
+npx vercel deploy --prod --yes   # one-off manual deploy
+```
+
+Set `NEXT_PUBLIC_SITE_URL` only if the canonical domain changes.
+`src/lib/seo.ts` is the single source of truth for every absolute URL
+(canonical tags, OG, sitemap, JSON-LD).
