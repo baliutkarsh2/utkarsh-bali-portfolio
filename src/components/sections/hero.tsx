@@ -35,10 +35,11 @@ export function Hero() {
             <PlateWord>Bali</PlateWord>
           </h1>
 
-          <div className="hero-figure enter" style={{ "--stagger": 2 } as React.CSSProperties}>
-            <HeroPortrait />
-          </div>
-
+          {/* Deliberately after the copy in the DOM. Above 80rem the grid
+              places every child by line number so this is invisible there,
+              but on a phone the stack follows source order, and a photograph
+              wedged between the name and the tagline both reads badly and
+              makes itself the LCP element ahead of the text. */}
           <div className="hero-body enter" style={{ "--stagger": 1 } as React.CSSProperties}>
             <p className="measure text-pretty text-display-s font-display text-foreground">
               {profile.tagline}
@@ -85,11 +86,14 @@ export function Hero() {
             </div>
           </div>
 
+          <div className="hero-figure enter" style={{ "--stagger": 2 } as React.CSSProperties}>
+            <HeroPortrait />
+          </div>
+
           {/* The education line used to hang under the photo as an orphaned
-              caption. It reads as a record here instead. */}
-          {/* The social list used to live inside the <dl>, which is invalid:
-              a description list may only contain dt/dd groups. It is a
-              sibling now and nothing moved visually. */}
+              caption. It reads as a record here instead. The social list used
+              to live inside the <dl>, which is invalid: a description list may
+              only contain dt/dd groups. */}
           <div className="hero-meta enter" style={{ "--stagger": 3 } as React.CSSProperties}>
             <dl>
               {[
