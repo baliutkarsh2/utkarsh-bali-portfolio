@@ -45,10 +45,13 @@ export function Now({ index = "01" }: { index?: string }) {
                 <dd className="text-sm">{row.value}</dd>
               </div>
             ))}
-            <div className="px-4 py-3">
-              <p className="meta text-faint">
-                Last updated <time dateTime={now.updated}>{formatDate(now.updated)}</time>
-              </p>
+            {/* A <dl> may only contain dt/dd groups, so this is a real pair
+                rather than a loose paragraph. It reads better as one anyway. */}
+            <div className="flex items-baseline justify-between gap-4 px-4 py-3">
+              <dt className="meta text-faint">Last updated</dt>
+              <dd className="meta text-faint">
+                <time dateTime={now.updated}>{formatDate(now.updated)}</time>
+              </dd>
             </div>
           </dl>
         </div>

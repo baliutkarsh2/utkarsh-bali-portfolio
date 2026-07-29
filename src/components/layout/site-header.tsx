@@ -36,8 +36,11 @@ export function SiteHeader() {
       className="fixed inset-x-0 top-0 z-50 border-b border-rule bg-background/85 backdrop-blur-md"
     >
       <div className="shell flex h-14 items-center justify-between gap-4">
+        {/* The wordmark is hidden below sm and the initials are decorative, so
+            without this the home link has no accessible name on a phone. */}
         <Link
           href="/"
+          aria-label={`${profile.name}, home`}
           className="group flex items-center gap-2.5 text-sm font-medium tracking-tight"
         >
           <span
@@ -72,10 +75,12 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Magnetic className="hidden sm:inline-block">
+            {/* No aria-label: the visible word is the accessible name, so a
+                voice-control user saying "Search" actually hits it. An
+                aria-label of "Open command palette" silently broke that. */}
             <button
               type="button"
               onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-              aria-label="Open command palette"
               className="flex h-9 items-center gap-2 border border-rule px-2.5 text-muted transition-colors hover:border-rule-strong hover:text-foreground"
             >
               <span className="meta">Search</span>

@@ -87,20 +87,25 @@ export function Hero() {
 
           {/* The education line used to hang under the photo as an orphaned
               caption. It reads as a record here instead. */}
-          <dl className="hero-meta enter" style={{ "--stagger": 3 } as React.CSSProperties}>
-            {[
-              { term: "Education", value: profile.education },
-              { term: "Graduating", value: profile.graduation },
-              { term: "Based in", value: profile.location },
-            ].map((row) => (
-              <div
-                key={row.term}
-                className="flex items-baseline justify-between gap-4 border-t border-rule py-2.5"
-              >
-                <dt className="meta text-faint">{row.term}</dt>
-                <dd className="text-right text-sm">{row.value}</dd>
-              </div>
-            ))}
+          {/* The social list used to live inside the <dl>, which is invalid:
+              a description list may only contain dt/dd groups. It is a
+              sibling now and nothing moved visually. */}
+          <div className="hero-meta enter" style={{ "--stagger": 3 } as React.CSSProperties}>
+            <dl>
+              {[
+                { term: "Education", value: profile.education },
+                { term: "Graduating", value: profile.graduation },
+                { term: "Based in", value: profile.location },
+              ].map((row) => (
+                <div
+                  key={row.term}
+                  className="flex items-baseline justify-between gap-4 border-t border-rule py-2.5"
+                >
+                  <dt className="meta text-faint">{row.term}</dt>
+                  <dd className="text-right text-sm">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
 
             <ul className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
               {socials
@@ -118,7 +123,7 @@ export function Hero() {
                   </li>
                 ))}
             </ul>
-          </dl>
+          </div>
         </div>
       </div>
     </section>

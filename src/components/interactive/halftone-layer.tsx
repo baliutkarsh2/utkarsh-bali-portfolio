@@ -45,6 +45,11 @@ export function HalftoneLayer({
     const host = canvas?.parentElement;
     if (!canvas || !host) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // The loupe is the reason this exists and it needs a real pointer. Without
+    // this gate a phone compiles shaders, uploads a texture and fetches the
+    // photograph a second time to power an interaction it can never trigger,
+    // on the hardware least able to afford it.
+    if (!window.matchMedia("(pointer: fine)").matches) return;
 
     let press: Press | null = null;
     let raf = 0;
@@ -101,24 +106,41 @@ export function HalftoneLayer({
 
     const image = new Image();
     image.decoding = "async";
-    image.src = src;
 
-    image.decode()
-      .then(() => {
-        if (disposed) return;
-        // Screen ruling is in device pixels, so the scale has to be known
-        // before the shader is built.
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        press = createPress(canvas, image, paper(), focus, freq * dpr);
-        if (!press) return;
+    /**
+     * Shader compilation and texture upload are synchronous main thread work.
+     * Held until the browser is idle so they can never land between the
+     * photograph arriving and the browser painting it, which is the gap LCP
+     * measures. The image itself is already in cache from next/image.
+     */
+    const begin = () => {
+      if (disposed) return;
+      image.src = src;
+      image
+        .decode()
+        .then(() => {
+          if (disposed) return;
+          // Screen ruling is in device pixels, so the scale has to be known
+          // before the shader is built.
+          dpr = Math.min(window.devicePixelRatio || 1, 2);
+          press = createPress(canvas, image, paper(), focus, freq * dpr);
+          if (!press) return;
 
-        sizeTo();
-        setLive(true);
-        schedule();
-      })
-      .catch(() => {
-        /* Decode failed. The photograph below is already correct. */
-      });
+          sizeTo();
+          setLive(true);
+          schedule();
+        })
+        .catch(() => {
+          /* Decode failed. The photograph below is already correct. */
+        });
+    };
+
+    // A `in window` check here narrows window to never in the else branch,
+    // so this tests the function directly.
+    const canIdle = typeof window.requestIdleCallback === "function";
+    const idle = canIdle
+      ? window.requestIdleCallback(begin, { timeout: 2500 })
+      : window.setTimeout(begin, 900);
 
     const onMove = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
@@ -156,6 +178,8 @@ export function HalftoneLayer({
     return () => {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
+      if (canIdle) window.cancelIdleCallback(idle);
+      else clearTimeout(idle);
       ro.disconnect();
       host.removeEventListener("pointermove", onMove);
       host.removeEventListener("pointerleave", onLeave);
