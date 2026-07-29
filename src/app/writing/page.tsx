@@ -28,8 +28,7 @@ export default function WritingPage() {
             className="measure mt-6 text-pretty text-lede text-muted"
             style={{ "--stagger": 1 } as React.CSSProperties}
           >
-            Occasional essays on software, life, art, and philosophy. Pieces published
-            elsewhere are marked and link out.
+            Occasional essays on software, life, art, and philosophy.
           </p>
         </div>
       </header>
