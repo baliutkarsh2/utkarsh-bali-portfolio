@@ -23,7 +23,10 @@ export function HeroPortrait() {
             priority
             quality={82}
             placeholder="blur"
-            sizes="(min-width: 80rem) 26rem, (min-width: 48rem) 34vw, 74vw"
+            /* Must track .hero-figure, which is capped at max-width 18rem
+               everywhere below 80rem. Claiming 34vw/74vw there made the
+               browser fetch a file larger than the box can ever display. */
+            sizes="(min-width: 80rem) 26rem, min(74vw, 18rem)"
             className="portrait-image"
           />
           <HalftoneLayer src={portrait.src.src} />
