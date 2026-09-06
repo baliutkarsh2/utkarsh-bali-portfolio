@@ -50,7 +50,7 @@ export function Hero() {
             {now.status}
           </span>
           <span aria-hidden="true">/</span>
-          <span>{now.location}</span>
+          <span>{profile.location}</span>
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export function Hero() {
         <p className="max-w-[34ch] text-display-s text-ink">{profile.tagline}</p>
 
         <p className="mt-5 max-w-[34ch] text-lede text-ink-2">
-          Right now I&apos;m a software engineering intern at Recurly. Before that I built agent
+          This summer I was a software engineering intern at Recurly. Before that I built agent
           infrastructure at <span className="text-ink">QualGent</span> (YC X25), and I
           co-founded{" "}
           <Link

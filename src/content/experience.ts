@@ -7,7 +7,7 @@ export const experiences: Experience[] = [
     location: "Broomfield, CO",
     dates: "May 2026 to Aug 2026",
     sortDate: "2026-05-01",
-    current: true,
+    current: false,
     summary:
       "Built internal agent infrastructure for Recurly's engineering and go-to-market teams, from the platform that turns product requirements into merged pull requests to the tooling that researches inbound prospects.",
     bullets: [

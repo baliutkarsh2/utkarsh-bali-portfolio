@@ -29,6 +29,12 @@ export type DotBoardProps = {
 };
 
 const SEEN_KEY = "board:seen";
+/**
+ * Portrait fields are baked at twice the page pitch in each direction
+ * (scripts/bake-portrait.py), so a 192 x 240 field fills a 96 x 120 lattice
+ * box. Text mode rasterises at the lattice itself.
+ */
+const PORTRAIT_DENSITY = 2;
 const PHONE = "(width < 48rem)";
 const FINE = "(hover: hover) and (pointer: fine)";
 /** Text mode waits for the sans to load before rasterising, but never longer than this. */
@@ -83,8 +89,10 @@ export function DotBoard({
   }, [mode, mobileField]);
 
   const active: BoardField | undefined = mode === "hero" && phone && mobileField ? mobileField : field;
-  const cols = mode === "text" ? (phone ? 64 : 96) : (active?.w ?? 96);
-  const rows = mode === "text" ? (phone ? 28 : 40) : (active?.h ?? 120);
+  const density = mode === "text" ? 1 : PORTRAIT_DENSITY;
+  // The box is measured in lattice steps, whatever the field's density.
+  const cols = mode === "text" ? (phone ? 64 : 96) : Math.round((active?.w ?? 192) / density);
+  const rows = mode === "text" ? (phone ? 28 : 40) : Math.round((active?.h ?? 240) / density);
 
   useEffect(() => {
     const figure = figureRef.current;
@@ -146,6 +154,7 @@ export function DotBoard({
         if (el && el.textContent !== s) el.textContent = s;
       };
 
+      const cell = pitch / density;
       const relayout = () => {
         const rect = figure.getBoundingClientRect();
         if (fixed) {
@@ -154,11 +163,20 @@ export function DotBoard({
             height: window.innerHeight,
             originX: Math.round(rect.left / pitch) * pitch,
             originY: Math.round(rect.top / pitch) * pitch,
-            pitch,
+            pitch: cell,
+            lattice: pitch,
             dpr,
           });
         } else {
-          board.layout({ width: rect.width, height: rect.height, originX: 0, originY: 0, pitch, dpr });
+          board.layout({
+            width: rect.width,
+            height: rect.height,
+            originX: 0,
+            originY: 0,
+            pitch: cell,
+            lattice: pitch,
+            dpr,
+          });
         }
       };
 
@@ -375,7 +393,7 @@ export function DotBoard({
       disposed = true;
       cleanup?.();
     };
-  }, [mode, active, text, caption, restLabel]);
+  }, [mode, active, text, caption, restLabel, density]);
 
   const fallbackSrc =
     fallback ??
@@ -411,7 +429,10 @@ export function DotBoard({
           "--board-cols": cols,
           "--board-rows": rows,
           ...(mode === "hero" && mobileField
-            ? { "--board-cols-sm": mobileField.w, "--board-rows-sm": mobileField.h }
+            ? {
+                "--board-cols-sm": Math.round(mobileField.w / density),
+                "--board-rows-sm": Math.round(mobileField.h / density),
+              }
             : {}),
         } as React.CSSProperties
       }

@@ -104,3 +104,24 @@
     opacity: 0.5;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   The field light: the page lattice answering the pointer everywhere.
+   Owned by src/components/interactive/field-light.tsx. Fixed at z 0, so it
+   sits above the CSS field (z -1) and below every page section (z 1).
+   ───────────────────────────────────────────────────────────── */
+.field-light {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-board);
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+@media (hover: none), print {
+  .field-light {
+    display: none;
+  }
+}

@@ -46,10 +46,21 @@ export type Cell = { x: number; y: number; L: number };
 export type Board = {
   /**
    * Geometry in CSS px. `originX/Y` is where the field's cell (0,0) sits in the
-   * canvas; `pitch` is the page pitch; the canvas is `width x height` CSS px at
-   * `dpr`. Call on every resize and, for the fixed hero canvas, on every scroll.
+   * canvas; `pitch` is the cell size; `lattice` is the page pitch (cells are
+   * the lattice or a whole fraction of it: portrait fields are baked at half
+   * the lattice, so every second cell sits on a page dot); the canvas is
+   * `width x height` CSS px at `dpr`. Call on every resize and, for the fixed
+   * hero canvas, on every scroll.
    */
-  layout: (g: { width: number; height: number; originX: number; originY: number; pitch: number; dpr: number }) => void;
+  layout: (g: {
+    width: number;
+    height: number;
+    originX: number;
+    originY: number;
+    pitch: number;
+    lattice: number;
+    dpr: number;
+  }) => void;
   /** Begin the assembly clock. */
   assemble: (now: number) => void;
   /** Jump to the settled portrait. */
@@ -110,14 +121,19 @@ function mix(a: [number, number, number], b: [number, number, number], t: number
 }
 
 const TONES = 8; // colour steps between --dot-off and --ink / --sun
-const DIAS = 16; // diameter steps between 0.18 and 1.3 pitch
+const DIAS = 16; // diameter steps, in cells, between DIA_MIN and DIA_MAX
 const DIA_MIN = 0.18;
-const DIA_MAX = 1.3;
+const DIA_MAX = 2.0; // the datum is 0.96 of the lattice, two cells at double density
+/** Below this tone a cell is "the field": drawn only where a page dot is. */
+const FIELD_TONE = 0.04;
 const ASSEMBLE_MS = 1100;
 const GROW_MS = 500;
-const SPRING_K = 0.14;
-const SPRING_DAMP = 0.74;
-const REST_V = 0.01; // px
+// Critically damped: the pair below has real eigenvalues (modulus ~0.7), so a
+// dot reaches its target in ~20 frames with no overshoot, and the loop can
+// stop the frame after the last dot rests.
+const SPRING_K = 0.2;
+const SPRING_DAMP = 0.6;
+const REST_V = 0.05; // px: below this, a dot is at rest
 
 export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: BoardOptions): Board | null {
   const ctx = canvas.getContext("2d", { alpha: true });
@@ -185,7 +201,9 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   let height = 0;
   let originX = 0;
   let originY = 0;
-  let pitch = 6;
+  let pitch = 6; // cell size
+  let lattice = 6; // page pitch
+  let density = 1; // cells per lattice step
   let dpr = 1;
   let pointerX: number | null = null;
   let pointerY: number | null = null;
@@ -211,15 +229,17 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   // beneath it are the same pixel.
   const homeX = (i: number) => originX + gx[i] * pitch + 0.5;
   const homeY = (i: number) => originY + gy[i] * pitch + 0.5;
-  const snap = (v: number) => Math.round((v - 0.5) / pitch) * pitch + 0.5;
+  const snap = (v: number) => Math.round((v - 0.5) / lattice) * lattice + 0.5;
 
-  function layout(g: { width: number; height: number; originX: number; originY: number; pitch: number; dpr: number }) {
+  function layout(g: { width: number; height: number; originX: number; originY: number; pitch: number; lattice: number; dpr: number }) {
     const resized = g.width !== width || g.height !== height || g.dpr !== dpr;
     width = g.width;
     height = g.height;
     originX = g.originX;
     originY = g.originY;
     pitch = g.pitch;
+    lattice = g.lattice;
+    density = Math.max(1, Math.round(lattice / pitch));
     dpr = g.dpr;
     if (resized) {
       canvas.width = Math.max(1, Math.round(width * dpr));
@@ -273,7 +293,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     const t = opts.mode === "hero" ? scrollT : 0;
     const t2 = t * t;
     const hasPointer = pointerX !== null && pointerY !== null && lightEnabled;
-    const R = 18 * pitch;
+    const R = 18 * lattice;
     const afterimage = opts.mode === "afterimage";
 
     counts.fill(0);
@@ -308,17 +328,19 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       }
 
       // The light: brightness and diameter under the pointer, a little push.
+      // Measured from the dot's home, not its displaced position, so the
+      // target is fixed while the pointer rests and the spring settles fast.
       let f = 0;
       if (hasPointer) {
-        const dx = hx + px[i] - (pointerX as number);
-        const dy = hy + py[i] - (pointerY as number);
+        const dx = hx - (pointerX as number);
+        const dy = hy - (pointerY as number);
         const d = Math.hypot(dx, dy);
         if (d < R) {
           const s = 1 - smoothstep(0, R, d);
           f = s * s;
           if (pushEnabled && d > 0.001 && !datum) {
-            tx += (dx / d) * 1.6 * pitch * f;
-            ty += (dy / d) * 1.6 * pitch * f;
+            tx += (dx / d) * 1.6 * lattice * f;
+            ty += (dy / d) * 1.6 * lattice * f;
           }
         }
       }
@@ -342,10 +364,10 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       let dia: number;
       let tone: number;
       if (datum) {
-        dia = 0.96;
+        dia = 0.96 * density;
         tone = 1;
       } else if (L < UNLIT && f === 0) {
-        dia = DIA_MIN;
+        dia = DIA_MIN * density;
         tone = 0;
       } else {
         const base = DIA_MIN + 0.78 * L;
@@ -356,6 +378,17 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
           dia = dia + (DIA_MIN - dia) * t;
           tone *= 1 - Math.min(1, Math.max(0, (t - 0.6) / 0.4));
         }
+      }
+      // A cell with no tone is the field itself: at double density only the
+      // cells that sit on a page dot are drawn, at the page dot's size, so the
+      // unlit part of the portrait is pixel-identical to the lattice around it.
+      if (!datum && tone < FIELD_TONE) {
+        if (density > 1 && (gx[i] % density !== 0 || gy[i] % density !== 0)) {
+          bucketOf[i] = 65535;
+          continue;
+        }
+        dia = DIA_MIN * density;
+        tone = 0;
       }
       if (afterimage) {
         if (unlit) {

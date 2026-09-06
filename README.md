@@ -72,10 +72,13 @@ with every output committed. Vercel runs none of this.
    stay in photograph coordinates.
 2. `python scripts/bake-portrait.py` samples that cutout onto three dot grids
    and writes:
-   - `src/content/portrait-field-96.ts` (96 × 120, the hero from 48rem),
-     `portrait-field-64.ts` (64 × 80, the phone hero and the Contact
-     afterimage) and `portrait-field-about.ts` (64 × 80, a tighter face crop
-     for About). Each is one base64 string plus the lit count, the datum
+   - `src/content/portrait-field-96.ts` (192 × 240 cells: the hero from
+     48rem, a 96 × 120 lattice box at double density), `portrait-field-64.ts`
+     (128 × 160: the phone hero and the Contact afterimage, a 64 × 80 box) and
+     `portrait-field-about.ts` (128 × 160, a tighter face crop for About).
+     Portrait cells are half the page pitch, so every second cell sits on a
+     page dot; unlit cells are drawn only where a page dot is, which keeps the
+     unlit part of the portrait pixel-identical to the lattice around it. Each is one base64 string plus the lit count, the datum
      (the always-orange eye dot), the face centre and the rim indices.
    - `src/content/portrait-meta.ts` with `DOT_COUNT`, which the footer
      colophon imports (never type the number).
@@ -181,7 +184,8 @@ Body copy here. Standard markdown, plus any React component you import.
   80rem). The page field, the portrait grid, the Doto numerals, the dot
   leaders, dotted underlines, image masks, the progress row, the spine and the
   view-transition mask all use it. Nothing dotted exists off the pitch; if a
-  new dotted thing is needed, build it from `var(--pitch)`.
+  new dotted thing is needed, build it from `var(--pitch)`. The portrait fields are the one sanctioned exception: they are baked at half the pitch (double density) so the face reads, and every second cell still lands on the page lattice.
+
 - **Doto sets numbers, Geist sets words.** `<Numeral>` (`ui/numeral.tsx`) is
   the only component that reaches the dot face, at two sizes (10 × and 20 × the
   pitch, so the glyphs' own dots sit on the page lattice). An ESLint rule in
@@ -219,6 +223,7 @@ Body copy here. Standard markdown, plus any React component you import.
   and stops the frame after the last dot rests. Every other movement is a CSS
   transition on a font axis, a mask radius or a background size, or a
   scroll-driven animation. Do not add a loop.
+- **The field answers the pointer everywhere.** `src/components/interactive/field-light.tsx` is one fixed canvas behind every page that lights lattice dots near a fine pointer and stops drawing the moment the light settles. It skips the hero board's box (the board lights itself) and is off on touch devices and under reduced motion.
 - **Frame zero is CSS.** The page field is `body::before`, a fixed SVG tile at
   the pitch; the board box is transparent until the canvas mounts and draws
   the same unlit dots, so nothing changes on screen at mount. The `h1` is the

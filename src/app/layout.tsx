@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
+import { FieldLight } from "@/components/interactive/field-light";
 import { profile, socials } from "@/content";
 import { dot, mono, sans } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
@@ -110,6 +111,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           a background here would paint over the lattice (see globals.css §4). */}
       <body>
         <SkipLink />
+        {/* The lattice answering the pointer on every page; behind all content. */}
+        <FieldLight />
         <SiteHeader />
         <main id="main" tabIndex={-1}>
           <ViewTransition>{children}</ViewTransition>
