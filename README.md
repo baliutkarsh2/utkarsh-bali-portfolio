@@ -70,7 +70,11 @@ with every output committed. Vercel runs none of this.
    `src/assets/portrait/utkarsh-cutout.png` plus `CUTOUT_ORIGIN.txt` (the
    crop's top-left in the original frame), so the windows in the bake script
    stay in photograph coordinates.
-2. `python scripts/bake-portrait.py` samples that cutout onto four dot grids
+2. `python scripts/tune-portrait.py DIR` renders the head at large cells for
+   several candidate tone curves, side by side. The photograph is backlit, so
+   the face sits in shadow and the curve is the whole game: use this to judge
+   the eyes, brows, nose and lips before touching the constants in the bake.
+3. `python scripts/bake-portrait.py` samples that cutout onto four dot grids
    and writes:
    - `src/content/portrait-field-96.ts` (192 × 240 cells: the hero from
      48rem, a 96 × 120 lattice box at double density), `portrait-field-64.ts`

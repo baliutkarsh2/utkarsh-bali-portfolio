@@ -39,7 +39,7 @@ export function Experience() {
       id="experience"
       aria-labelledby="experience-title"
       data-section-index="01"
-      data-section-title="Where I’ve worked"
+      data-section-title="Experience"
       className="section section-first shell"
     >
       <div className="section-head">

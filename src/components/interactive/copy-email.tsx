@@ -96,7 +96,7 @@ export function CopyEmail({ email }: { email: string }) {
 
   return (
     <div className="copy-email" data-state={state}>
-      <button type="button" className="copy-email-button" onClick={onClick}>
+      <button type="button" className="copy-email-button tap" onClick={onClick}>
         <span ref={addressRef} className="copy-email-address text-display-m font-medium text-ink">
           {email}
         </span>

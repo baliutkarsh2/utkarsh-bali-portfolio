@@ -44,6 +44,12 @@ const FINE = "(hover: hover) and (pointer: fine)";
 const FONT_WAIT_MS = 1500;
 /** Governor threshold (§4.8): a frame longer than this is a slow one. */
 const SLOW_MS = 20;
+/**
+ * Smooth frames that earn the resolution back. The governor is a one-way
+ * ratchet otherwise, and a single stall (another tab, a cold cache) would pin
+ * the board below the display's resolution for the life of the page.
+ */
+const FAST_RECOVER = 90;
 /** The light's reach from a dot's home, in lattice steps (board.ts). */
 const LIGHT_CELLS = 18;
 
@@ -190,6 +196,8 @@ export function DotBoard({
       let bleed = 0;
       let rect = figure.getBoundingClientRect();
       let slowFrames = 0;
+      let fastFrames = 0;
+      let recovered = false;
       let pushDisabled = false;
       let leaveTimer = 0;
       let assembledOnce = false;
@@ -270,9 +278,18 @@ export function DotBoard({
         // pin bed. The callback's own time misses the raster, which happens
         // after it returns, so the rAF interval (which includes it) counts
         // too, on frames that directly follow another.
-        const slow = dt > SLOW_MS || (continuous && now - lastNow > SLOW_MS);
+        //
+        // The assembly is exempt. It is a bounded one-off burst of the whole
+        // field, the same work on every machine, and judging by it capped
+        // every retina display at 1.5x for the life of the page even where
+        // the steady state then held 60fps. What the governor is for is the
+        // steady state, where a dropped frame is something a visitor feels.
+        const slow =
+          figure.dataset.board !== "assembling" &&
+          (dt > SLOW_MS || (continuous && now - lastNow > SLOW_MS));
         lastNow = now;
         if (slow) {
+          fastFrames = 0;
           slowFrames++;
           if (slowFrames === 3 && dprCap > 1.5) {
             dprCap = 1.5;
@@ -281,6 +298,15 @@ export function DotBoard({
             pushDisabled = true;
             board.disablePush();
           }
+        } else if (!recovered && dprCap < 2 && ++fastFrames >= FAST_RECOVER) {
+          // A second and a half of smooth frames: the stall was transient.
+          // Once only, so a board that is genuinely at the edge of the budget
+          // settles at 1.5x instead of oscillating and relaying out forever.
+          recovered = true;
+          dprCap = 2;
+          slowFrames = 0;
+          fastFrames = 0;
+          relayout();
         }
         continuous = more && visible && !hidden;
         if (continuous) raf = requestAnimationFrame(loop);

@@ -110,7 +110,7 @@ export function SiteHeader() {
       href="/"
       aria-label={`${profile.name}, home`}
       onClick={closeMenu}
-      className="site-mark"
+      className="site-mark tap"
     >
       <NineDotMark />
       <span className="text-small font-medium">{profile.name}</span>

@@ -46,14 +46,42 @@ ABOUT_CROP = (760, 340, 1400, 1140)  # the face, second angle for About
 DATUM_HINT = (1162, 693)
 CENTER_HINT = (1250, 800)
 
-# Tone curve, tuned by eye on the real photograph.
-LOCAL = 1.4      # local contrast strength
-LOCAL_RADIUS_PX = 48   # unsharp radius in photograph pixels (was 4 cells at 96 columns)
-EDGE_BAND_PX = 18      # silhouette band in photograph pixels (was 1.5 cells at 96 columns)
-GAMMA = 0.92
-CONTRAST = 1.3   # S-curve about the midtone
+# Tone curve, tuned by eye on the real photograph with scripts/tune-portrait.py.
+#
+# The photograph is backlit by a sunset, so the face sits in shadow: one global
+# curve either crushes it to a dark mass, taking the eyes, brows, nose and lips
+# with it, or blows out the rim and the tee. Three stages fix that.
+#   1. Two unsharp passes. The broad one lifts the shadow side off the
+#      background; the fine one, at about one cell, is what actually draws the
+#      eyelid, the nostril, the lip line and the brow.
+#   2. A local (CLAHE-like) normalisation weighted to the shadows, so the face
+#      gets its own full range while the sunlit rim and the white tee keep the
+#      global curve and the photograph stays backlit rather than going flat.
+#   3. A toe lift, so shadow features stay above the renderer's unlit cut and
+#      are drawn at full double density instead of dropping to the lattice.
+BROAD = 1.2            # broad unsharp strength
+BROAD_RADIUS_PX = 48   # in photograph pixels
+FINE = 1.1             # fine unsharp strength: the features
+FINE_RADIUS_CELLS = 1.1
+ADAPT = 0.95           # local normalisation blend, before the shadow weight
+ADAPT_RADIUS_PX = 62
+ADAPT_SD = 0.23        # target local standard deviation
+ADAPT_FLOOR = 0.045    # never divide by a smaller local sd than this
+ADAPT_MAX = 3.4        # nor amplify by more than this
+ADAPT_MID = 0.35       # 0 keeps the local mean, 1 recentres on 0.5
+ADAPT_UPTO = 0.45      # local means above this keep the global curve
+PLO, PHI = 2, 98       # normalisation percentiles
+GAMMA = 0.82
+CONTRAST = 1.18  # S-curve about the midtone
+TOE = 0.06       # floor under every lit cell
+EDGE_BAND_PX = 18      # silhouette band in photograph pixels
 EDGE_FLOOR = 0.42  # silhouette cells are forced to at least this luminance
 UNLIT = 0.05
+# Share of lit cells that carry the sunset. Opening up the shadows raised the
+# lit count by about 40%, and at a flat 2% the rim stopped reading as a light
+# on an edge and started reading as orange blocks on the hand and the shoulder.
+# 1.4% holds the sun to roughly the same number of dots it has always had.
+RIM_FRACTION = 0.014
 
 
 def hex_rgb(h: str) -> tuple[int, int, int]:
@@ -81,30 +109,85 @@ def window(im: Image.Image, origin: tuple[int, int], crop: tuple[int, int, int, 
     return out
 
 
+def blur(a: np.ndarray, radius: float) -> np.ndarray:
+    """Gaussian blur of a float array. Pillow has no float kernel, so the array
+    is carried through 8-bit on its own min/max, which is ample for the low
+    frequencies every caller here wants."""
+    if radius <= 0:
+        return a.astype(np.float32).copy()
+    lo, hi = float(a.min()), float(a.max())
+    span = max(hi - lo, 1e-6)
+    img = Image.fromarray(np.clip((a - lo) / span * 255.0, 0, 255).astype(np.uint8))
+    out = np.asarray(img.filter(ImageFilter.GaussianBlur(radius=radius))).astype(np.float32) / 255.0
+    return out * span + lo
+
+
+def cell_mean(a: np.ndarray, cols: int, rows: int, mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Average `a` over each cell, counting only masked-in pixels, and return
+    the mask coverage alongside. Averaging the cell rather than sampling its
+    centre pixel is most of what makes the face read: at 192 columns a cell is
+    about six photograph pixels across, and one of them is not the face."""
+    H, W = a.shape
+    xs = (np.arange(cols + 1) * (W / cols)).astype(int)
+    ys = (np.arange(rows + 1) * (H / rows)).astype(int)
+    m = mask.astype(np.float32)
+    am = a.astype(np.float32) * m
+    out = np.zeros((rows, cols), np.float32)
+    cov = np.zeros((rows, cols), np.float32)
+    for j in range(rows):
+        y0, y1 = ys[j], max(ys[j + 1], ys[j] + 1)
+        rowa, rowm = am[y0:y1], m[y0:y1]
+        for i in range(cols):
+            x0, x1 = xs[i], max(xs[i + 1], xs[i] + 1)
+            w = float(rowm[:, x0:x1].sum())
+            cov[j, i] = w / max((y1 - y0) * (x1 - x0), 1)
+            if w > 0:
+                out[j, i] = float(rowa[:, x0:x1].sum()) / w
+    return out, cov
+
+
 def sample(win: Image.Image, cols: int, rows: int) -> tuple[np.ndarray, np.ndarray]:
     """Return (bytes per the mapping above, per-cell warmth) as rows x cols arrays."""
     W, H = win.size
     pitch = W / cols
     assert abs(H / rows - pitch) < 0.02 * pitch, "window aspect must match the grid"
 
-    blurred = win.filter(ImageFilter.GaussianBlur(radius=max(0.5, pitch / 3)))
-    arr = np.asarray(blurred).astype(np.float32) / 255.0
+    arr = np.asarray(win).astype(np.float32) / 255.0
     rgb, alpha = arr[..., :3], arr[..., 3]
     lum = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
-
-    if LOCAL > 0:
-        wide = Image.fromarray((lum * 255).astype(np.uint8)).filter(
-            ImageFilter.GaussianBlur(radius=LOCAL_RADIUS_PX)
-        )
-        wide = np.asarray(wide).astype(np.float32) / 255.0
-        lum = np.clip(lum + LOCAL * (lum - wide), 0, 1)
-
     inside = alpha > 0.5
-    lo, hi = np.percentile(lum[inside], 2), np.percentile(lum[inside], 98)
+
+    # 1. Two unsharp passes: the shape, then the features.
+    if BROAD > 0:
+        lum = lum + BROAD * (lum - blur(lum, BROAD_RADIUS_PX))
+    if FINE > 0:
+        lum = lum + FINE * (lum - blur(lum, max(0.6, pitch * FINE_RADIUS_CELLS)))
+    lum = np.clip(lum, 0, 1)
+
+    # 2. Local normalisation, weighted to the shadows. The local mean and
+    # standard deviation count masked-in pixels only, so the empty background
+    # never drags the face's window down.
+    if ADAPT > 0:
+        cover = np.maximum(blur(inside.astype(np.float32), ADAPT_RADIUS_PX), 1e-3)
+        mean = blur(np.where(inside, lum, 0.0), ADAPT_RADIUS_PX) / cover
+        var = blur(np.where(inside, (lum - mean) ** 2, 0.0), ADAPT_RADIUS_PX) / cover
+        sd = np.sqrt(np.maximum(var, 0.0))
+        gain = np.minimum(ADAPT_SD / np.maximum(sd, ADAPT_FLOOR), ADAPT_MAX)
+        target = ADAPT_MID * 0.5 + (1 - ADAPT_MID) * mean
+        adapted = np.clip(target + (lum - mean) * gain, 0, 1)
+        t = np.clip((ADAPT_UPTO - mean) / ADAPT_UPTO, 0, 1)
+        weight = ADAPT * (t * t * (3 - 2 * t))  # smoothstep: shadows only
+        lum = (1 - weight) * lum + weight * adapted
+
+    # 3. Global window, gamma, S-curve, then the toe that keeps shadow detail
+    # above the renderer's unlit cut.
+    lo, hi = np.percentile(lum[inside], PLO), np.percentile(lum[inside], PHI)
     norm = np.clip((lum - lo) / max(hi - lo, 1e-6), 0, 1)
     norm = np.power(norm, GAMMA)
     if CONTRAST != 1.0:
         norm = np.clip(0.5 + (norm - 0.5) * CONTRAST, 0, 1)
+    if TOE > 0:
+        norm = TOE + (1 - TOE) * norm
 
     # Silhouette: cells whose neighbourhood alpha is partial are on the outline.
     amask = Image.fromarray((alpha * 255).astype(np.uint8))
@@ -116,16 +199,12 @@ def sample(win: Image.Image, cols: int, rows: int) -> tuple[np.ndarray, np.ndarr
     # face is strongly warm; the white tee and the sky are not.
     warmth_px = np.clip((rgb[..., 0] - rgb[..., 2]) * 3.0, 0, 1)
 
+    values, cover = cell_mean(norm, cols, rows, inside)
+    warmth, _ = cell_mean(warmth_px, cols, rows, inside)
+    keep = cover > 0.5
     out = np.zeros((rows, cols), np.uint8)
-    warmth = np.zeros((rows, cols), np.float32)
-    for j in range(rows):
-        cy = min(int((j + 0.5) * pitch), H - 1)
-        for i in range(cols):
-            cx = min(int((i + 0.5) * pitch), W - 1)
-            if alpha[cy, cx] < 0.5:
-                continue
-            out[j, i] = max(1, int(round(float(norm[cy, cx]) * 255)))
-            warmth[j, i] = float(warmth_px[cy, cx])
+    out[keep] = np.maximum(1, np.round(np.clip(values[keep], 0, 1) * 255).astype(np.uint8))
+    warmth = np.where(keep, warmth, 0.0).astype(np.float32)
     # Feather the bottom eight rows to unlit so the figure sits on the board
     # rather than being cut by it.
     for k in range(8):
@@ -144,11 +223,11 @@ def find_datum(field: np.ndarray, hint_cell: tuple[int, int]) -> tuple[int, int]
 
 
 def rim_indices(field: np.ndarray, warmth: np.ndarray) -> list[int]:
-    """The brightest 2% of lit cells ranked by luminance x warmth: the sun on the face."""
+    """The brightest RIM_FRACTION of lit cells ranked by luminance x warmth: the sun on the face."""
     lit_mask = field >= UNLIT * 255
     score = (field.astype(np.float32) / 255.0) * warmth
     score[~lit_mask] = -1
-    n = int(round(lit_mask.sum() * 0.02))
+    n = int(round(lit_mask.sum() * RIM_FRACTION))
     flat = np.argsort(score, axis=None)[::-1][:n]
     return sorted(int(i) for i in flat if score.flat[i] > 0)
 
