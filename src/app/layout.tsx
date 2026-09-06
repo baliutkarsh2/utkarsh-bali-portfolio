@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
 import { FieldLight } from "@/components/interactive/field-light";
-import { profile, socials } from "@/content";
+import { orderedProjects, profile, socials } from "@/content";
 import { dot, mono, sans } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
 import { publishedPosts } from "@/lib/writing";
@@ -118,7 +118,17 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <ViewTransition>{children}</ViewTransition>
         </main>
         <SiteFooter />
+        {/* Both lists are trimmed here so the content barrel (every case
+            study's prose) never enters the palette's client chunk. */}
         <CommandPalette
+          projects={orderedProjects.map(({ slug, name, eyebrow, tagline, stack, org }) => ({
+            slug,
+            name,
+            eyebrow,
+            tagline,
+            stack,
+            org,
+          }))}
           posts={publishedPosts().map(({ slug, title, summary, href, external }) => ({
             slug,
             title,

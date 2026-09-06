@@ -185,7 +185,9 @@
 
   --container-shell: var(--shell);
   --container-measure: var(--measure);
-  --container-prose: var(--prose);
+  /* `max-w-prose` reads --max-width-* first (Tailwind's own is 65ch), so
+     the prose column is mapped there, not under --container-*. */
+  --max-width-prose: var(--prose);
   --container-rail: var(--rail);
 
   /* Geist 500. The weight rides on the token so display type cannot be set
@@ -714,6 +716,14 @@
     letter-spacing: 0;
     text-transform: none;
     color: var(--ink-3);
+  }
+
+  /* A row link's covering pseudo-element has no job on paper; left absolute,
+     it would paint the href above as a box over the row's index and title.
+     Static, the href flows inline after the title. */
+  .stretch-link::after {
+    position: static;
+    inset: auto;
   }
 }
 

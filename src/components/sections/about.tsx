@@ -1,7 +1,7 @@
 import { DotBoard } from "@/components/interactive/dot-board";
 import { SpecList } from "@/components/ui/spec-list";
 import { aboutNote, profile } from "@/content";
-import { portrait, portraitFieldAbout } from "@/content/portrait";
+import { portrait } from "@/content/portrait";
 
 /**
  * The first section of /about (§7.2). The Section primitive renders an h2,
@@ -55,10 +55,11 @@ export function About() {
 
         <DotBoard
           mode="still"
-          field={portraitFieldAbout}
+          source="about"
           alt={portrait.alt}
           caption
           restLabel="64 × 80 · second angle"
+          fallback={portrait.fallback.about}
           className="about-board"
         />
 

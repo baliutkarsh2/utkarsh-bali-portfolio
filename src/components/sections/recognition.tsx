@@ -4,10 +4,12 @@ import { achievements } from "@/content";
 
 /**
  * /experience §7.7, section 02. Every achievement is one <Row>: the year in
- * the gutter, the label in display-s, the detail in small --ink-2, the kind
- * as the meta line. Rows with an href (YC, NeurIPS) are whole-row links with
- * the arrow; the rest are static. No numerals and no LED: the spine above is
- * the page's accent, and the rows here are words.
+ * the gutter (through `gutter`, not `index`: it is a data column, and the
+ * only place the year appears, so it is read rather than hidden), the label
+ * in display-s, the detail in small --ink-2, the kind as the meta line.
+ * Rows with an href (YC, NeurIPS) are whole-row links with the arrow; the
+ * rest are static. No numerals and no LED: the spine above is the page's
+ * accent, and the rows here are words.
  *
  * The gutter is drawn for a two-digit index; a year span ("2024 to 2026")
  * needs more, so `.recognition .row` in components.css widens it. The rows
@@ -20,7 +22,7 @@ export function Recognition() {
         {achievements.map((item) => (
           <li key={item.label}>
             <Row
-              index={item.year}
+              gutter={<span className="data normal-case">{item.year}</span>}
               title={item.label}
               subtitle={item.detail}
               meta={item.kind}

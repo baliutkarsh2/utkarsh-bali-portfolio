@@ -216,8 +216,11 @@
       column-gap: 1.5rem;
       padding-block: 1.75rem;
     }
+    /* The trailing column holds the longest metric, "Top 10%", at size m:
+       Doto advances 0.6em, so seven glyphs are 210px at the 5px pitch and
+       252px at 6px. 14rem and 16rem hold it without wrapping or overflow. */
     .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 12rem 1.5rem;
+      grid-template-columns: 3rem minmax(0, 1fr) 14rem 1.5rem;
       grid-template-areas: "gutter main trailing arrow";
     }
     .row-trailing {
@@ -226,6 +229,11 @@
     }
     .row-arrow {
       display: block;
+    }
+  }
+  @media (width >= 80rem) {
+    .row[data-trailing] {
+      grid-template-columns: 3rem minmax(0, 1fr) 16rem 1.5rem;
     }
   }
 
@@ -782,9 +790,10 @@
   }
 
   /* ═══ CopyEmail ═════════════════════════════════════════════════════════════
-     The address is real text in Geist 500 display-m; the button is the whole
-     line. The label beside it is the only thing that changes, and it is
-     information, so it changes with no transition at all. */
+     The address is real text in Geist 500 display-m and is the button; the
+     status label sits beside it in the same line box, outside the button so
+     assistive tech hears it change. The label is the only thing that
+     changes, and it is information, so it changes with no transition. */
   .copy-email {
     display: flex;
     flex-wrap: wrap;
@@ -792,11 +801,18 @@
     column-gap: var(--space-3);
     row-gap: 0.5rem;
     width: 100%;
+    color: var(--ink);
+  }
+
+  .copy-email-button {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
     margin: 0;
     padding: 0;
     border: 0;
     background: none;
-    color: var(--ink);
+    color: inherit;
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -1418,20 +1434,6 @@
     }
     .work-inspect {
       grid-column: 9 / span 4;
-    }
-  }
-
-  /* The row's 12rem numeral column is three glyphs short of "Top 10%" at
-     size m: Doto advances 0.6em, so seven glyphs are 210px at the 5px pitch
-     and 252px at 6px. 14rem and 16rem hold it without wrapping. */
-  @media (width >= 48rem) {
-    .work-rows .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 14rem 1.5rem;
-    }
-  }
-  @media (width >= 80rem) {
-    .work-rows .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 16rem 1.5rem;
     }
   }
 

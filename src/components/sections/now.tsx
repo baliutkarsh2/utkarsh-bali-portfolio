@@ -24,7 +24,13 @@ export function Now({ index = "01" }: { index?: string }) {
   ];
 
   return (
-    <Section index={index} title={now.headline} id="now" rail={<SpecList rows={rows} />}>
+    <Section
+      index={index}
+      title={now.headline}
+      id="now"
+      rail={<SpecList rows={rows} />}
+      railLabel="Now, at a glance"
+    >
       <p className="measure text-body text-ink-2">{now.body}</p>
 
       <ul className="dot-list measure mt-8 text-body text-ink-2">

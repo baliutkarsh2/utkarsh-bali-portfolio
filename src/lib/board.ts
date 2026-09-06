@@ -10,8 +10,15 @@
  * field and stops being drawn. Scrolling back reconnects the dots.
  *
  * Rendering batches dots by (colour, tone, diameter) with a counting sort
- * each frame, so a 5.7k-cell field is a couple of hundred path fills rather
- * than thousands of arcs: ~2 ms on a laptop, well inside a phone's budget.
+ * each frame, so a field is a couple of hundred path fills rather than one
+ * call per dot, and the two smallest diameters (the unlit field and the
+ * first step of growth, about a pixel) are squares, which cost a fraction of
+ * an arc and cover the same pixels. Fields are baked at double density
+ * (portrait-field-*.ts: 192 x 240 with 15,970 lit cells for the hero,
+ * 128 x 160 with 7,150 on a phone), so a settled hero frame is ~16k lit dots
+ * on a desktop and ~7k on a phone. The addendum's 2.4 ms / 6.3k-dot figure
+ * predates that bake; re-measure on a mid-range Android against the 3 ms
+ * phone budget (spec §10) before trusting a number here.
  *
  * Idle costs zero frames: `frame()` reports whether anything is still moving
  * and the caller stops scheduling when it is not.
@@ -244,6 +251,11 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     if (resized) {
       canvas.width = Math.max(1, Math.round(width * dpr));
       canvas.height = Math.max(1, Math.round(height * dpr));
+      // The CSS box follows the bitmap, never the other way round: a fixed
+      // canvas sized 100vh by CSS would be stretched wherever 100vh and
+      // innerHeight disagree (a phone with its toolbar showing).
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
     }
     dirty = true;
   }
@@ -437,12 +449,25 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       const r = ((DIA_MIN + ((DIA_MAX - DIA_MIN) * di) / (DIAS - 1)) * pitch) / 2;
       c.fillStyle = palette[k * TONES + ti];
       c.beginPath();
-      for (let q = start; q < end; q++) {
-        const i = order[q];
-        const X = homeX(i) + px[i];
-        const Y = homeY(i) + py[i];
-        c.moveTo(X + r, Y);
-        c.arc(X, Y, r, 0, Math.PI * 2);
+      if (di <= 1) {
+        // The two smallest buckets are about a pixel across: a square is the
+        // same pixels as a disc that small at a fraction of the path cost,
+        // and never smaller than the 1 px lattice dot, so an unlit cell is
+        // exactly the field's own dot.
+        const s = Math.max(1, 2 * r);
+        const h = s / 2;
+        for (let q = start; q < end; q++) {
+          const i = order[q];
+          c.rect(homeX(i) + px[i] - h, homeY(i) + py[i] - h, s, s);
+        }
+      } else {
+        for (let q = start; q < end; q++) {
+          const i = order[q];
+          const X = homeX(i) + px[i];
+          const Y = homeY(i) + py[i];
+          c.moveTo(X + r, Y);
+          c.arc(X, Y, r, 0, Math.PI * 2);
+        }
       }
       c.fill();
     }

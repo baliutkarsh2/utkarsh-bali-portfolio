@@ -2,7 +2,6 @@ import { CopyEmail } from "@/components/interactive/copy-email";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { Section } from "@/components/ui/section";
 import { profile, socials } from "@/content";
-import { portraitField64 } from "@/content/portrait";
 
 /**
  * The close of every page (§7.1 04): "Building something? Let's talk.", the
@@ -27,7 +26,7 @@ export function Contact({ index }: { index?: string }) {
       className="max-lg:[&_.section-rail]:hidden"
       rail={
         <div className="hidden lg:block">
-          <DotBoard mode="afterimage" field={portraitField64} alt="" />
+          <DotBoard mode="afterimage" source="contact" alt="" />
         </div>
       }
     >

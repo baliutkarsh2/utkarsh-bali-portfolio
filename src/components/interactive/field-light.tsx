@@ -76,12 +76,18 @@ export function FieldLight() {
     let hero: HTMLElement | null = null;
     let heroChecked = 0;
 
+    // Allocated on the first pointer move, not at mount: a viewport bitmap at
+    // DPR 2 is tens of megabytes, and a keyboard visit never needs it. The
+    // CSS box is set from the same numbers as the bitmap, so it is never
+    // stretched where 100vh and the visible viewport disagree.
     const resize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(width * dpr));
       canvas.height = Math.max(1, Math.round(height * dpr));
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
       pitch = readPitch();
     };
 
@@ -160,6 +166,7 @@ export function FieldLight() {
 
     const onMove = (event: PointerEvent) => {
       if (event.pointerType !== "mouse" || !enabled) return;
+      if (width === 0) resize();
       if (targetI === 0) {
         // Arriving: open the light where the pointer is, not from off-screen.
         lx = event.clientX;
@@ -180,12 +187,18 @@ export function FieldLight() {
         raf = 0;
       } else schedule();
     };
+    // Coalesced to one per frame: each call reallocates the viewport bitmap.
+    // Nothing to do until the first move has allocated it.
+    let resizeRaf = 0;
     const onResize = () => {
-      resize();
-      schedule();
+      if (width === 0 || resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resize();
+        schedule();
+      });
     };
 
-    resize();
     document.addEventListener("pointermove", onMove);
     document.documentElement.addEventListener("pointerleave", onLeave);
     document.addEventListener("visibilitychange", onVisibility);
@@ -202,6 +215,7 @@ export function FieldLight() {
     return () => {
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
       document.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       document.removeEventListener("visibilitychange", onVisibility);

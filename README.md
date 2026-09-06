@@ -218,6 +218,14 @@ Body copy here. Standard markdown, plus any React component you import.
   `position: relative; z-index: 1`, and anything inside the hero or the 404
   that must paint above the canvas carries the `board-above` class. The
   figure box (`role="img"`) is only the layout anchor and the accessible name.
+- **Portrait fields never cross the server boundary.** `<DotBoard>` takes a
+  `source` ("hero", "about", "contact") and imports the matching
+  `portrait-field-*.ts` module on the client, so each field is one hashed,
+  cached chunk rather than base64 inlined in every page's HTML and RSC
+  payload. Server components pass only what markup needs (the count for the
+  caption, the WebP paths for print and no-canvas). Client components import
+  `@/content/profile`, never the `@/content` barrel, which carries every case
+  study's prose.
 - **Idle costs zero frames.** The board schedules a frame only while
   something is moving (assembly, a live spring under the pointer, a scroll)
   and stops the frame after the last dot rests. Every other movement is a CSS

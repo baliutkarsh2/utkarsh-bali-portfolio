@@ -81,20 +81,27 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
         dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
       />
 
-      {/* Sub-bar. `sticky` and the z-index are utilities, so they win over
-          the `main > *` base rule (position: relative, z --z-content) that
-          keeps page content above the hero canvas. The ground at 80 % with
-          no blur: the header and the palette scrim are the only two blurred
-          surfaces on the site (§2). The progress row is in flow as the
-          bar's bottom edge, so its dots are never painted over the link. */}
-      <div className="sticky top-14 z-(--z-sticky) bg-ground/80">
+      {/* Sub-bar: the case study's `.case-bar`, in flow under the 3.5rem
+          fixed header (hence mt-14) and then sticky at its bottom edge, the
+          ground at 80 % with no blur (the header and the palette scrim are
+          the only two blurred surfaces on the site, §2). The underline draws
+          on the label span, not the anchor, because `transition-colors` on
+          the same element would reset the underline's transition. The
+          progress row is in flow as the bar's bottom edge, so its dots are
+          never painted over the link. */}
+      <div className="case-bar mt-14">
         <div className="shell flex h-11 items-center">
           <Link
             href="/writing"
-            className="dot-underline tap inline-flex items-center gap-2 text-small text-ink-2 transition-colors duration-(--dur-1) hover:text-ink"
+            className="group tap inline-flex items-center gap-2 text-small text-ink-2 transition-colors hover:text-ink"
           >
-            <ArrowLeft aria-hidden="true" className="size-3.5 shrink-0" />
-            Writing
+            <ArrowLeft
+              aria-hidden="true"
+              className="size-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5"
+            />
+            <span className="dot-underline group-hover:[--u:100%] group-focus-visible:[--u:100%]">
+              Writing
+            </span>
           </Link>
         </div>
         <ProgressRow />

@@ -5,15 +5,17 @@ import { Led } from "@/components/ui/led";
 import { cn } from "@/lib/utils";
 
 type RowProps = {
-  /** "01", "02" … meta in the gutter; --ink-3 at rest, --ink on hover. */
+  /** "01", "02" … meta in the gutter; --ink-3 at rest, --ink on hover. Decorative: aria-hidden. */
   index?: string;
+  /** Gutter content that is data, not decoration (a year): rendered and read. */
+  gutter?: ReactNode;
   /** The row's name in display-s (Geist 500). Pass text, or your own heading. */
   title: ReactNode;
   /** One line under the title, small --ink-2. */
   subtitle?: ReactNode;
   /** The meta line: "eyebrow · year · status". */
   meta?: ReactNode;
-  /** Right slot: a <Numeral> with its label, or a <Tag>. 12rem at ≥ 48rem. */
+  /** Right slot: a <Numeral> with its label, or a <Tag>. 14rem at ≥ 48rem, 16rem at ≥ 80rem. */
   trailing?: ReactNode;
   href?: string;
   /** Opens in a new tab, outward arrow, sr-only notice. */
@@ -49,6 +51,7 @@ type RowProps = {
  */
 export function Row({
   index,
+  gutter,
   title,
   subtitle,
   meta,
@@ -96,6 +99,7 @@ export function Row({
     >
       <div className="row-gutter meta">
         {index && <span aria-hidden="true">{index}</span>}
+        {gutter}
         {led && <Led state={led} label={ledLabel} />}
       </div>
 

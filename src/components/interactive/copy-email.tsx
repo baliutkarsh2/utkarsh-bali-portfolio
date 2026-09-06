@@ -62,10 +62,12 @@ async function copyText(text: string, source: HTMLElement | null): Promise<boole
 }
 
 /**
- * The address is real text in Geist 500 display-m; the whole line is the
+ * The address is real text in Geist 500 display-m; the address is the
  * button. The meta label beside it is the only thing that changes, with no
- * transition (it is information, and words never animate). A polite live
- * region announces the state change to screen readers.
+ * transition (it is information, and words never animate). It is a polite
+ * live region and a sibling of the button, not a child: a button's children
+ * are presentational, so a status inside it would be flattened into the
+ * button's name and never announced.
  */
 export function CopyEmail({ email }: { email: string }) {
   const [state, setState] = useState<CopyState>("rest");
@@ -93,13 +95,16 @@ export function CopyEmail({ email }: { email: string }) {
   }
 
   return (
-    <button type="button" className="copy-email" data-state={state} onClick={onClick}>
-      <span ref={addressRef} className="copy-email-address text-display-m font-medium text-ink">
-        {email}
-      </span>
+    <div className="copy-email" data-state={state}>
+      <button type="button" className="copy-email-button" onClick={onClick}>
+        <span ref={addressRef} className="copy-email-address text-display-m font-medium text-ink">
+          {email}
+        </span>
+        <span className="sr-only">, copy to clipboard</span>
+      </button>
       <span className="copy-email-label meta" role="status" aria-live="polite">
         {LABEL[state]}
       </span>
-    </button>
+    </div>
   );
 }

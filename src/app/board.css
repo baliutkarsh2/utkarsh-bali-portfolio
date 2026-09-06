@@ -4,8 +4,13 @@
    ───────────────────────────────────────────────────────────── */
 
 /* The figure box: a fixed number of cells at the page pitch, so it can never
-   shift and the canvas grid lands exactly on the CSS box. */
+   shift and the canvas grid lands exactly on the CSS box. The component
+   writes the `-lg` pair (and, for hero and text, the `-sm` pair) inline; the
+   breakpoint is resolved here, never in JS, so the phone box is right on the
+   first frame and nothing below it moves after hydration. */
 .board {
+  --board-cols: var(--board-cols-lg, 96);
+  --board-rows: var(--board-rows-lg, 120);
   position: relative;
   display: block;
   margin: 0;
@@ -15,31 +20,45 @@
 }
 
 @media (width < 48rem) {
-  .board[data-mode="hero"] {
-    --board-cols: var(--board-cols-sm, 64);
-    --board-rows: var(--board-rows-sm, 80);
+  .board {
+    --board-cols: var(--board-cols-sm, var(--board-cols-lg, 96));
+    --board-rows: var(--board-rows-sm, var(--board-rows-lg, 120));
   }
 }
 
-/* Still and afterimage draw inside the box. */
+/* Rail boards (the About still, the Contact afterimage) keep their cell
+   width at the 6px pitch: four columns at 80rem are 379px before any padding,
+   and the box needs 384, so it may run into the shell padding as the
+   inspection panel does. Clamped, the last column and row would be clipped. */
+@media (width >= 80rem) {
+  .about-board,
+  .section-rail .board {
+    max-width: none;
+  }
+}
+
+/* Still and afterimage draw inside the box, on a canvas that bleeds one
+   pitch on every side: the grid origin is snapped to the page lattice, which
+   can put it just outside the box. The component sets the exact CSS size
+   from the bitmap it allocates. */
 .board-canvas {
   position: absolute;
-  inset: 0;
+  inset: calc(-1 * var(--pitch));
   display: block;
-  width: 100%;
-  height: 100%;
+  width: calc(100% + 2 * var(--pitch));
+  height: calc(100% + 2 * var(--pitch));
   pointer-events: none;
 }
 
 /* Hero and text draw on the viewport, behind the words, so dispersing dots
    can leave the box and settle onto the fixed page field. The component sets
    data-fixed only when motion is allowed; under reduced motion the canvas
-   stays in the box. */
+   stays in the box. No 100vw/100vh here: the box is sized in px from
+   innerWidth/innerHeight by the component, so the bitmap is never stretched
+   where 100vh and the visible viewport disagree (a phone's toolbar). */
 .board[data-fixed] .board-canvas {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
   z-index: var(--z-board);
 }
 
@@ -67,12 +86,20 @@
   z-index: var(--z-content);
 }
 
+/* The finished portrait (the WebP). In the DOM always, but out of layout on
+   screen, so its lazy image is never requested there; shown when the canvas
+   cannot run, without JS, and in print. */
 .board-fallback {
   position: absolute;
   inset: 0;
-  display: block;
+  display: none;
   width: 100%;
   height: 100%;
+}
+
+.board[data-board="fallback"] .board-fallback,
+noscript .board-fallback {
+  display: block;
 }
 
 /* The canvas is out of flow (absolute or fixed), so the caption is placed
@@ -96,11 +123,13 @@
   }
 }
 
+/* Print (§4.9): the canvas goes, the WebP prints at 50 %. */
 @media print {
   .board-canvas {
     display: none;
   }
   .board-fallback {
+    display: block;
     opacity: 0.5;
   }
 }
@@ -115,8 +144,8 @@
   inset: 0;
   z-index: var(--z-board);
   display: block;
-  width: 100vw;
-  height: 100vh;
+  /* Sized in px by the component from the bitmap it allocates (see the
+     hero canvas above for why not 100vw/100vh). */
   pointer-events: none;
 }
 

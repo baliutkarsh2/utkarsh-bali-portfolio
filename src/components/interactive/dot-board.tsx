@@ -1,30 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { BoardField } from "@/content/portrait-types";
-import { portrait } from "@/content/portrait";
 import { createBoard, type Board, type BoardMode } from "@/lib/board";
-import { textField } from "@/lib/board-text";
-import { motionAllowed } from "@/lib/motion";
+import { motionAllowed, onMotionChange } from "@/lib/motion";
 
 type BoardStatus = "lattice" | "assembling" | "live" | "settled" | "static" | "fallback";
 
+/** Which baked portrait a board shows. The field itself is loaded on the client. */
+export type PortraitSource = "hero" | "about" | "contact";
+
 export type DotBoardProps = {
   mode: BoardMode;
-  /** The baked field. Required for hero, still and afterimage. */
-  field?: BoardField;
-  /** Hero only: the field used below 48rem. */
-  mobileField?: BoardField;
+  /** The baked field to load. Required for hero, still and afterimage. */
+  source?: PortraitSource;
   /** Text mode: the string to set in dots. */
   text?: string;
   /** Accessible name of the figure. Empty string marks it decorative. */
   alt: string;
   /** Show the mono readout under the box. */
   caption?: boolean;
-  /** The readout's resting text. Defaults to "96 × 120 · 3,085 dots" from the field. */
+  /** The readout's resting text. Defaults to "192 × 240 · 15,970 dots" from the field. */
   restLabel?: string;
-  /** Image shown when the canvas cannot run (and in print). Defaults per mode. */
+  /** Lit-cell count of the field, for the resting text before the field arrives. */
+  count?: number;
+  /** Image shown when the canvas cannot run, and in print. */
   fallback?: string;
+  /** Hero only: the image used below 48rem. */
+  mobileFallback?: string;
   className?: string;
 };
 
@@ -39,10 +42,62 @@ const PHONE = "(width < 48rem)";
 const FINE = "(hover: hover) and (pointer: fine)";
 /** Text mode waits for the sans to load before rasterising, but never longer than this. */
 const FONT_WAIT_MS = 1500;
+/** Governor threshold (§4.8): a frame longer than this is a slow one. */
+const SLOW_MS = 20;
+/** The light's reach from a dot's home, in lattice steps (board.ts). */
+const LIGHT_CELLS = 18;
+
+type Box = { cols: number; rows: number; colsSm?: number; rowsSm?: number };
+
+type SourceSpec = Box & {
+  load: () => Promise<BoardField>;
+  /** Hero only: the field below 48rem. */
+  loadSm?: () => Promise<BoardField>;
+};
+
+/**
+ * The fields stay on the client side of the server boundary: each is its own
+ * hashed chunk, fetched when a board first needs it and cached across routes,
+ * instead of 30-90 KB of base64 inlined in every page's HTML and RSC payload.
+ * The box sizes are the spec's (§4.3, §4.7, §4.10) and are what the server
+ * renders, so the box never depends on the data.
+ */
+const SOURCES: Record<PortraitSource, SourceSpec> = {
+  hero: {
+    cols: 96,
+    rows: 120,
+    colsSm: 64,
+    rowsSm: 80,
+    load: () => import("@/content/portrait-field-96").then((m) => m.portraitField96),
+    loadSm: () => import("@/content/portrait-field-64").then((m) => m.portraitField64),
+  },
+  about: {
+    cols: 64,
+    rows: 80,
+    load: () => import("@/content/portrait-field-about").then((m) => m.portraitFieldAbout),
+  },
+  contact: {
+    cols: 64,
+    rows: 80,
+    load: () => import("@/content/portrait-field-64").then((m) => m.portraitField64),
+  },
+};
+
+const TEXT_BOX: Required<Box> = { cols: 96, rows: 40, colsSm: 64, rowsSm: 28 };
+const DEFAULT_BOX: Box = { cols: 96, rows: 120 };
 
 function cssVar(el: Element, name: string, fallback: string): string {
   const v = getComputedStyle(el).getPropertyValue(name).trim();
   return v || fallback;
+}
+
+function densityOf(mode: BoardMode): number {
+  return mode === "text" ? 1 : PORTRAIT_DENSITY;
+}
+
+function boxOf(mode: BoardMode, source: PortraitSource | undefined): Box {
+  if (mode === "text") return TEXT_BOX;
+  return source ? SOURCES[source] : DEFAULT_BOX;
 }
 
 /**
@@ -55,44 +110,34 @@ function cssVar(el: Element, name: string, fallback: string): string {
  * leave the box, pass behind the name and settle onto the fixed page field.
  * Under reduced motion nothing disperses, so the canvas stays in the box.
  * Still and afterimage always draw inside the box.
+ *
+ * The box is sized by CSS from the `--board-*-lg/-sm` pairs written here, so
+ * the phone box is right on the first frame; JS only picks the field.
  */
 export function DotBoard({
   mode,
-  field,
-  mobileField,
+  source,
   text,
   alt,
   caption = false,
   restLabel,
+  count,
   fallback,
+  mobileFallback,
   className,
 }: DotBoardProps) {
   const figureRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
-  // The board's state lives on the figure as data-board, written imperatively
-  // by the effect below: it changes on the animation's own schedule, and a
-  // React render for each step would be wasted work. React state is kept only
-  // for the one change that swaps DOM: showing the fallback image.
-  const [fallbackShown, setFallbackShown] = useState(false);
-  const [phone, setPhone] = useState(false);
+  // The motion policy can flip mid-session (the palette's toggle, the OS
+  // setting). Each change re-runs the board effect, which tears the board
+  // down and rebuilds it under the new policy: a settled still when reduced,
+  // the fixed canvas with its pin bed when restored.
+  const [motionEpoch, setMotionEpoch] = useState(0);
+  useEffect(() => onMotionChange(() => setMotionEpoch((n) => n + 1)), []);
 
-  // Which field is on the board follows the breakpoint, and the pixel grid
-  // must match the CSS box exactly, so the board rebuilds when it flips.
-  useEffect(() => {
-    if (mode !== "hero" || !mobileField) return;
-    const mq = window.matchMedia(PHONE);
-    const apply = () => setPhone(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, [mode, mobileField]);
-
-  const active: BoardField | undefined = mode === "hero" && phone && mobileField ? mobileField : field;
-  const density = mode === "text" ? 1 : PORTRAIT_DENSITY;
-  // The box is measured in lattice steps, whatever the field's density.
-  const cols = mode === "text" ? (phone ? 64 : 96) : Math.round((active?.w ?? 192) / density);
-  const rows = mode === "text" ? (phone ? 28 : 40) : Math.round((active?.h ?? 240) / density);
+  const box = boxOf(mode, source);
+  const density = densityOf(mode);
 
   useEffect(() => {
     const figure = figureRef.current;
@@ -100,15 +145,15 @@ export function DotBoard({
     if (!figure || !canvas) return;
 
     let disposed = false;
+    let generation = 0;
     let cleanup: (() => void) | null = null;
 
+    // The board's state lives on the figure as data-board, written
+    // imperatively: it changes on the animation's own schedule, and a React
+    // render for each step would be wasted work. CSS shows the fallback image
+    // for data-board="fallback".
     const setStatus = (s: BoardStatus) => {
       figure.dataset.board = s;
-      if (s === "fallback") {
-        queueMicrotask(() => {
-          if (!disposed) setFallbackShown(true);
-        });
-      }
     };
 
     const fine = window.matchMedia(FINE).matches;
@@ -116,16 +161,17 @@ export function DotBoard({
     const fixed = (mode === "hero" || mode === "text") && motion;
     if (fixed) figure.dataset.fixed = "";
     else delete figure.dataset.fixed;
-    const pitch = parseFloat(cssVar(figure, "--pitch", "6")) || 6;
+    const readPitch = () => parseFloat(cssVar(figure, "--pitch", "6")) || 6;
     const colors = {
       ink: cssVar(figure, "--ink", "#F2F1EC"),
       sun: cssVar(figure, "--sun", "#FF6A2B"),
       off: cssVar(figure, "--dot-off", "#232326"),
     };
+    const phoneQuery = window.matchMedia(PHONE);
 
     /** Everything after the field is known. Returns its own teardown. */
-    const start = (source: BoardField): (() => void) | null => {
-      const board: Board | null = createBoard(canvas, source, {
+    const start = (field: BoardField): (() => void) | null => {
+      const board: Board | null = createBoard(canvas, field, {
         mode,
         colors,
         pointer: fine && motion,
@@ -138,41 +184,63 @@ export function DotBoard({
       let raf = 0;
       let visible = true;
       let hidden = document.hidden;
-      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // The governor pins the DPR cap below the display's; relayout applies it.
+      let dprCap = 2;
+      let pitch = readPitch();
+      let bleed = 0;
+      let rect = figure.getBoundingClientRect();
       let slowFrames = 0;
       let pushDisabled = false;
       let leaveTimer = 0;
       let assembledOnce = false;
+      let pending = false;
       let idle: number | undefined;
       let begin: (() => void) | null = null;
+      let lastNow = 0;
+      let continuous = false;
+      let inside = false;
+      let scrollRaf = 0;
+      let resizeRaf = 0;
       const canIdle = typeof window.requestIdleCallback === "function";
 
       const restText = () =>
-        restLabel ?? `${source.w} × ${source.h} · ${board.count.toLocaleString("en-US")} dots`;
+        restLabel ?? `${field.w} × ${field.h} · ${board.count.toLocaleString("en-US")} dots`;
       const setReadout = (s: string) => {
         const el = readoutRef.current;
         if (el && el.textContent !== s) el.textContent = s;
       };
 
-      const cell = pitch / density;
+      // Geometry is read fresh every time: the pitch steps at 80rem, the DPR
+      // changes with zoom or a display move, and the box moves with the page.
+      // The grid origin snaps to the page lattice (viewport k * pitch) so an
+      // unlit cell and the field dot beneath it are the same pixel.
       const relayout = () => {
-        const rect = figure.getBoundingClientRect();
+        pitch = readPitch();
+        const cell = pitch / density;
+        const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+        rect = figure.getBoundingClientRect();
+        const snapX = Math.round(rect.left / pitch) * pitch;
+        const snapY = Math.round(rect.top / pitch) * pitch;
         if (fixed) {
+          bleed = 0;
           board.layout({
             width: window.innerWidth,
             height: window.innerHeight,
-            originX: Math.round(rect.left / pitch) * pitch,
-            originY: Math.round(rect.top / pitch) * pitch,
+            originX: snapX,
+            originY: snapY,
             pitch: cell,
             lattice: pitch,
             dpr,
           });
         } else {
+          // In the box the canvas bleeds one pitch on every side, so a snapped
+          // origin just outside the box is not clipped.
+          bleed = pitch;
           board.layout({
-            width: rect.width,
-            height: rect.height,
-            originX: 0,
-            originY: 0,
+            width: rect.width + 2 * bleed,
+            height: rect.height + 2 * bleed,
+            originX: snapX - rect.left + bleed,
+            originY: snapY - rect.top + bleed,
             pitch: cell,
             lattice: pitch,
             dpr,
@@ -198,35 +266,71 @@ export function DotBoard({
         const t0 = performance.now();
         const more = board.frame(now);
         const dt = performance.now() - t0;
-        // Governor: three slow frames drop the resolution; three more drop the pin bed.
-        if (dt > 20) {
+        // Governor: three slow frames drop the resolution; three more drop the
+        // pin bed. The callback's own time misses the raster, which happens
+        // after it returns, so the rAF interval (which includes it) counts
+        // too, on frames that directly follow another.
+        const slow = dt > SLOW_MS || (continuous && now - lastNow > SLOW_MS);
+        lastNow = now;
+        if (slow) {
           slowFrames++;
-          if (slowFrames === 3 && dpr > 1.5) {
-            dpr = 1.5;
+          if (slowFrames === 3 && dprCap > 1.5) {
+            dprCap = 1.5;
             relayout();
           } else if (slowFrames === 6 && !pushDisabled) {
             pushDisabled = true;
             board.disablePush();
           }
         }
-        if (more && visible && !hidden) raf = requestAnimationFrame(loop);
+        continuous = more && visible && !hidden;
+        if (continuous) raf = requestAnimationFrame(loop);
         else if (!more && figure.dataset.board === "assembling") finish();
       };
       const schedule = () => {
-        if (!raf && !disposed && visible && !hidden) raf = requestAnimationFrame(loop);
+        if (!raf && !disposed && visible && !hidden) {
+          continuous = false;
+          raf = requestAnimationFrame(loop);
+        }
       };
 
-      // ── Pointer: the light ──────────────────────────────────────────────
+      // ── Pointer: the light, and the readout ─────────────────────────────
+      // The readout is information and works under reduced motion; the light
+      // and the pin bed are motion and do not.
+      const leave = () => {
+        inside = false;
+        if (motion) {
+          board.pointer(null, null);
+          schedule();
+        }
+        if (caption) {
+          window.clearTimeout(leaveTimer);
+          leaveTimer = window.setTimeout(() => setReadout(restText()), 240);
+        }
+      };
       const onMove = (event: PointerEvent) => {
         if (event.pointerType !== "mouse") return;
         let x = event.clientX;
         let y = event.clientY;
-        if (!fixed) {
-          const rect = figure.getBoundingClientRect();
-          x -= rect.left;
-          y -= rect.top;
+        if (fixed) {
+          // Read on the document while fixed, but a pointer beyond the light's
+          // reach of the box changes nothing, so it schedules nothing.
+          const R = LIGHT_CELLS * pitch;
+          const near =
+            x > rect.left - R && x < rect.right + R && y > rect.top - R && y < rect.bottom + R;
+          if (!near) {
+            if (inside) leave();
+            return;
+          }
+          inside = true;
+        } else {
+          const r = figure.getBoundingClientRect();
+          x += bleed - r.left;
+          y += bleed - r.top;
         }
-        board.pointer(x, y);
+        if (motion) {
+          board.pointer(x, y);
+          schedule();
+        }
         if (caption) {
           const cell = board.cellAt(x, y);
           window.clearTimeout(leaveTimer);
@@ -238,19 +342,10 @@ export function DotBoard({
             leaveTimer = window.setTimeout(() => setReadout(restText()), 240);
           }
         }
-        schedule();
       };
-      const onLeave = () => {
-        board.pointer(null, null);
-        if (caption) {
-          window.clearTimeout(leaveTimer);
-          leaveTimer = window.setTimeout(() => setReadout(restText()), 240);
-        }
-        schedule();
-      };
+      const onLeave = () => leave();
 
       // ── Scroll: the fixed canvas follows the figure; hero disperses ─────
-      let scrollRaf = 0;
       const onScroll = () => {
         if (scrollRaf) return;
         scrollRaf = requestAnimationFrame(() => {
@@ -262,9 +357,14 @@ export function DotBoard({
         });
       };
 
+      // Coalesced like scroll: a resize reallocates a viewport-sized bitmap.
       const onResize = () => {
-        relayout();
-        schedule();
+        if (resizeRaf) return;
+        resizeRaf = requestAnimationFrame(() => {
+          resizeRaf = 0;
+          relayout();
+          schedule();
+        });
       };
       const onVisibility = () => {
         hidden = document.hidden;
@@ -275,7 +375,9 @@ export function DotBoard({
         (entries) => {
           visible = entries.some((e) => e.isIntersecting);
           figure.dataset.visible = visible ? "true" : "false";
-          if (visible) schedule();
+          if (!visible) return;
+          if (pending) begin?.();
+          else schedule();
         },
         { rootMargin: "20% 0px" },
       );
@@ -290,7 +392,7 @@ export function DotBoard({
 
       const pointerTarget: HTMLElement | Document = fixed ? document : figure;
       const leaveTarget = fixed ? document.documentElement : figure;
-      const wantsPointer = fine && motion && mode !== "afterimage";
+      const wantsPointer = fine && mode !== "afterimage" && (motion || caption);
       if (wantsPointer) {
         pointerTarget.addEventListener("pointermove", onMove as EventListener);
         leaveTarget.addEventListener("pointerleave", onLeave);
@@ -308,7 +410,7 @@ export function DotBoard({
         // a fine pointer keeps its light; the loop only runs while it moves.
         board.drawSettled();
         setStatus("static");
-        if (mode === "still" && wantsPointer) {
+        if (mode === "still" && fine && motion) {
           board.settle();
           setStatus("settled");
         }
@@ -321,7 +423,8 @@ export function DotBoard({
       } else {
         // Frame zero now; the assembly once the browser is idle, the box is
         // on screen and the tab is visible. Opened in a background tab, the
-        // hello waits for the visitor rather than running out unseen.
+        // hello waits for the visitor rather than running out unseen; opened
+        // scrolled past the box, it waits for the observer, not a timer.
         board.frame(performance.now());
         const run = () => {
           if (disposed) return;
@@ -330,9 +433,10 @@ export function DotBoard({
             return;
           }
           if (!visible) {
-            idle = window.setTimeout(run, 300);
+            pending = true;
             return;
           }
+          pending = false;
           board.assemble(performance.now());
           setStatus("assembling");
           schedule();
@@ -344,6 +448,7 @@ export function DotBoard({
       return () => {
         if (raf) cancelAnimationFrame(raf);
         if (scrollRaf) cancelAnimationFrame(scrollRaf);
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
         if (idle !== undefined) {
           if (canIdle) window.cancelIdleCallback(idle);
           window.clearTimeout(idle);
@@ -360,11 +465,14 @@ export function DotBoard({
       };
     };
 
-    if (mode === "text") {
-      // The string is rasterised in the page's sans. A webfont that is still
-      // loading draws nothing on a canvas, so wait for it (briefly).
-      const w = window.matchMedia(PHONE).matches ? 64 : 96;
-      const h = window.matchMedia(PHONE).matches ? 28 : 40;
+    /**
+     * Text mode: the string is rasterised in the page's sans. A webfont that
+     * is still loading draws nothing on a canvas, so wait for it (briefly).
+     * The rasteriser is its own chunk; only the 404 pays for it.
+     */
+    const loadText = async (phone: boolean): Promise<BoardField | null> => {
+      const w = phone ? TEXT_BOX.colsSm : TEXT_BOX.cols;
+      const h = phone ? TEXT_BOX.rowsSm : TEXT_BOX.rows;
       const family = getComputedStyle(figure).fontFamily || "sans-serif";
       const ready =
         typeof document.fonts?.load === "function"
@@ -374,46 +482,111 @@ export function DotBoard({
             )
           : Promise.resolve();
       const timeout = new Promise<void>((resolve) => window.setTimeout(resolve, FONT_WAIT_MS));
-      Promise.race([ready, timeout]).then(() => {
-        if (disposed) return;
-        const source = textField(text ?? "404", w, h, family);
-        if (!source) {
-          setStatus("fallback");
-          return;
-        }
-        cleanup = start(source);
-      });
-    } else if (active) {
-      cleanup = start(active);
-    } else {
-      setStatus("fallback");
-    }
+      const [{ textField }] = await Promise.all([
+        import("@/lib/board-text"),
+        Promise.race([ready, timeout]),
+      ]);
+      return textField(text ?? "404", w, h, family);
+    };
+
+    const stop = () => {
+      cleanup?.();
+      cleanup = null;
+    };
+
+    // The field follows the breakpoint, chosen here rather than in React
+    // state, so the board is built once with the right field instead of
+    // built with the desktop field and rebuilt after the state lands.
+    const boot = () => {
+      const gen = ++generation;
+      const phone = phoneQuery.matches;
+      const spec = source ? SOURCES[source] : undefined;
+      const loading: Promise<BoardField | null> =
+        mode === "text"
+          ? loadText(phone)
+          : spec
+            ? phone && spec.loadSm
+              ? spec.loadSm()
+              : spec.load()
+            : Promise.resolve(null);
+      loading.then(
+        (field) => {
+          if (disposed || gen !== generation) return;
+          if (!field) {
+            setStatus("fallback");
+            return;
+          }
+          cleanup = start(field);
+        },
+        () => {
+          if (!disposed && gen === generation) setStatus("fallback");
+        },
+      );
+    };
+
+    // Hero and text: the field and the pixel grid follow the 48rem breakpoint
+    // and must match the CSS box exactly, so a flip rebuilds the board.
+    const rebuilds = mode === "text" || Boolean(source && SOURCES[source].loadSm);
+    const onBreakpoint = () => {
+      stop();
+      setStatus("lattice");
+      boot();
+    };
+    if (rebuilds) phoneQuery.addEventListener("change", onBreakpoint);
+
+    // Print: the fallback image is in the DOM but out of layout (and lazy) on
+    // screen, so it costs no request; asking for it before the print snapshot
+    // covers engines that do not load lazy images for paper.
+    const onBeforePrint = () => {
+      for (const img of figure.querySelectorAll<HTMLImageElement>("img.board-fallback")) {
+        img.loading = "eager";
+      }
+    };
+    const printQuery = window.matchMedia("print");
+    const onPrintQuery = (event: MediaQueryListEvent) => {
+      if (event.matches) onBeforePrint();
+    };
+    window.addEventListener("beforeprint", onBeforePrint);
+    printQuery.addEventListener("change", onPrintQuery);
+
+    boot();
 
     return () => {
       disposed = true;
-      cleanup?.();
+      generation++;
+      if (rebuilds) phoneQuery.removeEventListener("change", onBreakpoint);
+      window.removeEventListener("beforeprint", onBeforePrint);
+      printQuery.removeEventListener("change", onPrintQuery);
+      stop();
     };
-  }, [mode, active, text, caption, restLabel, density]);
-
-  const fallbackSrc =
-    fallback ??
-    (mode === "hero"
-      ? phone
-        ? portrait.fallback.phone
-        : portrait.fallback.hero
-      : mode === "still"
-        ? portrait.fallback.about
-        : undefined);
+  }, [mode, source, text, caption, restLabel, density, motionEpoch]);
 
   const decorative = alt === "";
   // The caption's resting text is in the HTML from the first frame; the
-  // effect only ever replaces it with the pointer readout. Text mode has no
-  // count until the string is rasterised, so it shows the grid alone.
+  // effect only ever replaces it with the pointer readout (and, on a phone,
+  // with the phone field's numbers once it arrives). Text mode has no count
+  // until the string is rasterised, so it shows the grid alone.
+  const grid = `${box.cols * density} × ${box.rows * density}`;
   const rest =
-    restLabel ??
-    (active
-      ? `${active.w} × ${active.h} · ${active.count.toLocaleString("en-US")} dots`
-      : `${cols} × ${rows}`);
+    restLabel ?? (count !== undefined ? `${grid} · ${count.toLocaleString("en-US")} dots` : grid);
+
+  // The finished portrait, shown by CSS when the canvas cannot run and in
+  // print. Out of layout and lazy on screen, so it is never requested there.
+  // <picture> picks the phone crop below 48rem with no state involved.
+  const image = (
+    <picture>
+      {mobileFallback && <source media={PHONE} srcSet={mobileFallback} />}
+      <img
+        src={fallback}
+        alt=""
+        className="board-fallback"
+        width={box.cols}
+        height={box.rows}
+        loading="lazy"
+        decoding="async"
+      />
+    </picture>
+  );
 
   return (
     <figure
@@ -426,28 +599,17 @@ export function DotBoard({
       aria-hidden={decorative ? true : undefined}
       style={
         {
-          "--board-cols": cols,
-          "--board-rows": rows,
-          ...(mode === "hero" && mobileField
-            ? {
-                "--board-cols-sm": Math.round(mobileField.w / density),
-                "--board-rows-sm": Math.round(mobileField.h / density),
-              }
+          "--board-cols-lg": box.cols,
+          "--board-rows-lg": box.rows,
+          ...(box.colsSm !== undefined
+            ? { "--board-cols-sm": box.colsSm, "--board-rows-sm": box.rowsSm }
             : {}),
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       <canvas ref={canvasRef} aria-hidden className="board-canvas" />
-      {fallbackSrc && fallbackShown && (
-        // eslint-disable-next-line @next/next/no-img-element -- the finished portrait, fixed size, no resizing wanted
-        <img src={fallbackSrc} alt="" className="board-fallback" width={cols} height={rows} />
-      )}
-      {fallbackSrc && (
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-img-element -- no JS, no canvas */}
-          <img src={fallbackSrc} alt="" className="board-fallback" width={cols} height={rows} />
-        </noscript>
-      )}
+      {fallback && image}
+      {fallback && <noscript>{image}</noscript>}
       {caption && (
         <figcaption className="board-caption data" aria-live="off">
           <span ref={readoutRef}>{rest}</span>

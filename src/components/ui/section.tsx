@@ -8,6 +8,11 @@ type SectionProps = {
   id?: string;
   /** Right rail, 4 of 12 columns from column 9, sticky at ≥ 64rem. */
   rail?: ReactNode;
+  /**
+   * Names the rail as a complementary landmark. Without it the rail is a
+   * plain div: an unnamed, or decorative, aside is noise in a landmark list.
+   */
+  railLabel?: string;
   children: ReactNode;
   className?: string;
 };
@@ -20,7 +25,7 @@ type SectionProps = {
  * readout as the section comes into view. The index is aria-hidden; the
  * heading carries the text.
  */
-export function Section({ index, title, id, rail, children, className }: SectionProps) {
+export function Section({ index, title, id, rail, railLabel, children, className }: SectionProps) {
   const sectionId = id ?? `section-${index}`;
   const headingId = `${sectionId}-title`;
 
@@ -43,7 +48,14 @@ export function Section({ index, title, id, rail, children, className }: Section
 
       <div className="section-body">
         <div className="section-copy">{children}</div>
-        {rail && <aside className="section-rail">{rail}</aside>}
+        {rail &&
+          (railLabel ? (
+            <aside className="section-rail" aria-label={railLabel}>
+              {rail}
+            </aside>
+          ) : (
+            <div className="section-rail">{rail}</div>
+          ))}
       </div>
     </section>
   );

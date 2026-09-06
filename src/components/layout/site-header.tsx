@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { navItems, profile, socials } from "@/content";
+import { navItems, profile, socials } from "@/content/profile";
 import { NineDotMark } from "@/components/ui/nine-dot-mark";
 import { SectionSpy } from "@/components/interactive/section-spy";
 

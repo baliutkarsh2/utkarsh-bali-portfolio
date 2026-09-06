@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Led } from "@/components/ui/led";
 import { MissionLine } from "@/components/ui/mission-line";
 import { mission, now, profile } from "@/content";
-import { portrait, portraitField64, portraitField96 } from "@/content/portrait";
+import { portrait, portraitField96 } from "@/content/portrait";
 
 /** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
 const [firstName, ...restOfName] = profile.name.split(" ");
@@ -63,13 +63,17 @@ export function Hero() {
       </h1>
 
       {/* Column 2 from 80rem, directly under the name below that. The figure
-          box is the layout anchor; the canvas is fixed behind the page. */}
+          box is the layout anchor; the canvas is fixed behind the page. The
+          board loads its field on the client (its own cached chunk); only
+          the count crosses the boundary, for the caption's first frame. */}
       <DotBoard
         mode="hero"
-        field={portraitField96}
-        mobileField={portraitField64}
+        source="hero"
         alt={portrait.alt}
         caption
+        count={portraitField96.count}
+        fallback={portrait.fallback.hero}
+        mobileFallback={portrait.fallback.phone}
         className="hero-board"
       />
 

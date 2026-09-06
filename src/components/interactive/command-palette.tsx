@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { navItems, orderedProjects, profile, socials } from "@/content";
+import { navItems, profile, socials } from "@/content/profile";
 import { fuzzyMatch } from "@/lib/fuzzy";
 import { getMotion, motionAllowed, setMotion } from "@/lib/motion";
 
@@ -13,6 +13,20 @@ export type PalettePost = {
   /** Absolute for a piece published elsewhere, site-relative otherwise. */
   href: string;
   external: boolean;
+};
+
+/**
+ * The six fields a Work command needs, and nothing else: the case studies'
+ * prose lives in the content barrel, which must never enter a client graph,
+ * so the layout (a server component) trims the projects to this shape.
+ */
+export type PaletteProject = {
+  slug: string;
+  name: string;
+  eyebrow: string;
+  tagline: string;
+  stack: string[];
+  org?: string;
 };
 
 /** State the palette owns that a command's hint may reflect. */
@@ -40,7 +54,10 @@ type CommandContext = {
   toggleMotion: () => void;
 };
 
-/** Built once at module scope, not rebuilt per render or per keystroke. */
+/**
+ * Built once at module scope, not rebuilt per render or per keystroke. Work
+ * and Writing come from props (server-read data) and are spliced in below.
+ */
 const commands: Command[] = [
   ...navItems.map<Command>((item) => ({
     id: `nav:${item.href}`,
@@ -48,14 +65,6 @@ const commands: Command[] = [
     hint: "Section",
     group: "Sections",
     run: (ctx) => ctx.navigate(item.href),
-  })),
-  ...orderedProjects.map<Command>((project) => ({
-    id: `project:${project.slug}`,
-    label: project.name,
-    hint: project.eyebrow,
-    group: "Work",
-    haystack: `${project.tagline} ${project.stack.join(" ")} ${project.org ?? ""}`,
-    run: (ctx) => ctx.navigate(`/projects/${project.slug}`),
   })),
   ...socials
     .filter((s) => s.kind !== "email")
@@ -134,8 +143,14 @@ function countLabel(n: number): string {
   return `${n} result${n === 1 ? "" : "s"}`;
 }
 
-/** Posts are read through a server-only module, so they arrive as a prop. */
-export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
+/** Projects and posts are read on the server, so they arrive as props. */
+export function CommandPalette({
+  projects = [],
+  posts = [],
+}: {
+  projects?: PaletteProject[];
+  posts?: PalettePost[];
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -194,7 +209,14 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
   }, [open, close]);
 
   const allCommands = useMemo<Command[]>(() => {
-    if (posts.length === 0) return commands;
+    const projectCommands = projects.map<Command>((project) => ({
+      id: `project:${project.slug}`,
+      label: project.name,
+      hint: project.eyebrow,
+      group: "Work",
+      haystack: `${project.tagline} ${project.stack.join(" ")} ${project.org ?? ""}`,
+      run: (ctx) => ctx.navigate(`/projects/${project.slug}`),
+    }));
     const postCommands = posts.map<Command>((post) => ({
       id: `post:${post.slug}`,
       label: post.title,
@@ -210,10 +232,10 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
         ctx.navigate(post.href);
       },
     }));
-    // Writing sits after Work, matching the header order.
+    // Work, then Writing, after the sections: the header order.
     const cut = commands.findIndex((c) => c.group === "Elsewhere");
-    return [...commands.slice(0, cut), ...postCommands, ...commands.slice(cut)];
-  }, [posts]);
+    return [...commands.slice(0, cut), ...projectCommands, ...postCommands, ...commands.slice(cut)];
+  }, [projects, posts]);
 
   const results = useMemo(() => {
     if (!query.trim()) return allCommands;
@@ -354,6 +376,14 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
             />
           </div>
 
+          {/* The empty state sits beside the listbox, not in it: a listbox
+              may only contain options and groups. */}
+          {grouped.length === 0 && (
+            <p className="palette-empty text-small" role="status">
+              Nothing matches &quot;{query}&quot;.
+            </p>
+          )}
+
           <div
             ref={listRef}
             id="command-list"
@@ -361,15 +391,12 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
             aria-label="Results"
             className="palette-list"
           >
-            {grouped.length === 0 && (
-              <p className="palette-empty text-small">
-                Nothing matches &quot;{query}&quot;.
-              </p>
-            )}
-
             {grouped.map((section) => (
               <div key={section.group} role="group" aria-label={section.group}>
-                <p className="palette-group-label meta">{section.group}</p>
+                {/* The group carries its name; the visible label is for eyes. */}
+                <p className="palette-group-label meta" aria-hidden="true">
+                  {section.group}
+                </p>
                 {section.items.map((command) => {
                   const index = results.indexOf(command);
                   const isActive = index === active;
