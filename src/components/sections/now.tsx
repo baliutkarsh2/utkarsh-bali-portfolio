@@ -1,61 +1,37 @@
-import { SectionHeading } from "@/components/ui/section-heading";
+import { Section } from "@/components/ui/section";
+import { SpecList } from "@/components/ui/spec-list";
 import { now } from "@/content";
 import { formatDate } from "@/lib/utils";
 
 /**
- * Set as an ink band: the scoped `dark` class flips every token inside, so
- * the section reads as a stamped notice against the paper around it.
+ * Section 01 (§7.1): what is happening this week. The headline is the
+ * section title; the body sits at the prose measure with the three points
+ * as a dot list (4 px --ink bullets at the pitch); the rail is a SpecList
+ * whose top edge is --line-strong, never --sun, because the numbers board's
+ * accent figure may still be on screen. `updated` stays visible so a stale
+ * entry is honest rather than misleading.
  */
 export function Now({ index = "01" }: { index?: string }) {
+  const rows = [
+    { term: "Organisation", value: now.org },
+    { term: "Role", value: now.role },
+    { term: "Location", value: now.location },
+    { term: "Period", value: now.period },
+    {
+      term: "Updated",
+      value: <time dateTime={now.updated}>{formatDate(now.updated)}</time>,
+    },
+  ];
+
   return (
-    <section id="now" aria-labelledby="now-title" className="dark ink-band">
-      <div className="shell section-y">
-        <SectionHeading index={index} eyebrow="Now" title={now.headline} id="now-title" />
+    <Section index={index} title={now.headline} id="now" rail={<SpecList rows={rows} />}>
+      <p className="measure text-body text-ink-2">{now.body}</p>
 
-        <div className="grid-editorial !mx-0 !max-w-none !px-0 mt-12">
-          <div className="col-span-full md:col-span-5 lg:col-span-7">
-            <p className="measure text-pretty text-lede text-muted">{now.body}</p>
-
-            <ul className="mt-8">
-              {now.points.map((point) => (
-                <li key={point} className="flex gap-4 border-t border-rule py-4">
-                  {/* Drawn rule rather than a dash character: it aligns to the
-                      grid and carries no punctuation semantics for a screen reader. */}
-                  <span aria-hidden className="mt-3 h-px w-4 shrink-0 bg-rule-strong" />
-                  <span className="text-sm leading-6 text-muted">{point}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Meta block, the register that makes it read as a record, not a blurb.
-              The accent top edge is the stamp. */}
-          <dl className="col-span-full mt-10 self-start border border-rule border-t-2 border-t-accent md:col-span-3 md:col-start-6 md:mt-0 lg:col-span-4 lg:col-start-9">
-            {[
-              { term: "Organisation", value: now.org },
-              { term: "Role", value: now.role },
-              { term: "Location", value: now.location },
-              { term: "Period", value: now.period },
-            ].map((row) => (
-              <div
-                key={row.term}
-                className="flex items-baseline justify-between gap-4 border-b border-rule px-4 py-3"
-              >
-                <dt className="meta text-faint">{row.term}</dt>
-                <dd className="text-sm">{row.value}</dd>
-              </div>
-            ))}
-            {/* A <dl> may only contain dt/dd groups, so this is a real pair
-                rather than a loose paragraph. It reads better as one anyway. */}
-            <div className="flex items-baseline justify-between gap-4 px-4 py-3">
-              <dt className="meta text-faint">Last updated</dt>
-              <dd className="meta text-faint">
-                <time dateTime={now.updated}>{formatDate(now.updated)}</time>
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </section>
+      <ul className="dot-list measure mt-8 text-body text-ink-2">
+        {now.points.map((point) => (
+          <li key={point}>{point}</li>
+        ))}
+      </ul>
+    </Section>
   );
 }

@@ -1,0 +1,106 @@
+/* ─────────────────────────────────────────────────────────────
+   The board. Owned by src/components/interactive/dot-board.tsx.
+   Imported by globals.css after the tokens exist.
+   ───────────────────────────────────────────────────────────── */
+
+/* The figure box: a fixed number of cells at the page pitch, so it can never
+   shift and the canvas grid lands exactly on the CSS box. */
+.board {
+  position: relative;
+  display: block;
+  margin: 0;
+  width: calc(var(--board-cols) * var(--pitch));
+  max-width: 100%;
+  aspect-ratio: var(--board-cols) / var(--board-rows);
+}
+
+@media (width < 48rem) {
+  .board[data-mode="hero"] {
+    --board-cols: var(--board-cols-sm, 64);
+    --board-rows: var(--board-rows-sm, 80);
+  }
+}
+
+/* Still and afterimage draw inside the box. */
+.board-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Hero and text draw on the viewport, behind the words, so dispersing dots
+   can leave the box and settle onto the fixed page field. The component sets
+   data-fixed only when motion is allowed; under reduced motion the canvas
+   stays in the box. */
+.board[data-fixed] .board-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: var(--z-board);
+}
+
+/* Off-screen boards must not paint over whatever is on screen. */
+.board[data-fixed][data-visible="false"] .board-canvas {
+  display: none;
+}
+
+/* Return visits in a session: the settled portrait fades in over 200 ms. */
+.board[data-fade] .board-canvas {
+  animation: board-fade var(--dur-2) var(--ease-out) both;
+}
+@keyframes board-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Anything that must sit above the hero canvas (the copy, the name). */
+.board-above {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+.board-fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The canvas is out of flow (absolute or fixed), so the caption is placed
+   under the box explicitly rather than after it. */
+.board-caption {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.75rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Under a fine pointer the displacement is the cursor. */
+@media (hover: hover) and (pointer: fine) {
+  .board[data-mode="hero"][data-board="settled"],
+  .board[data-mode="hero"][data-board="assembling"],
+  .board[data-mode="hero"][data-board="live"] {
+    cursor: none;
+  }
+}
+
+@media print {
+  .board-canvas {
+    display: none;
+  }
+  .board-fallback {
+    opacity: 0.5;
+  }
+}

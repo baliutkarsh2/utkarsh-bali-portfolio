@@ -1,38 +1,23 @@
-import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Row } from "@/components/ui/row";
 import type { Project } from "@/content";
 
+/**
+ * Previous / next at the foot of a case study (§7.4.7): two <Row>s, the
+ * names in display-s, "Previous" / "Next" in meta beneath. The same list as
+ * everywhere else on the site.
+ *
+ * No `view-transition-name` here on purpose. §5.8 pairs exactly one element
+ * per project across routes, the index row title and the case-study h1;
+ * naming these rows as well would add two more groups flying off-screen
+ * over the root's dot mask on every index → case-study navigation. No
+ * headings either: this is navigation, not a section.
+ */
 export function ProjectNav({ prev, next }: { prev: Project; next: Project }) {
   return (
-    <nav aria-label="More work" className="border-t border-rule">
-      <div className="shell grid sm:grid-cols-2">
-        <Link
-          href={`/projects/${prev.slug}`}
-          className="index-row group flex flex-col gap-2 border-b border-rule py-8 sm:border-b-0 sm:border-r sm:pr-8"
-        >
-          <span className="meta flex items-center gap-2 text-faint">
-            <ArrowLeft
-              aria-hidden
-              className="size-3.5 transition-transform group-hover:-translate-x-1"
-            />
-            Previous
-          </span>
-          <span className="text-display-s font-display">{prev.name}</span>
-        </Link>
-
-        <Link
-          href={`/projects/${next.slug}`}
-          className="index-row group flex flex-col items-end gap-2 py-8 text-right sm:pl-8"
-        >
-          <span className="meta flex items-center gap-2 text-faint">
-            Next
-            <ArrowRight
-              aria-hidden
-              className="size-3.5 transition-transform group-hover:translate-x-1"
-            />
-          </span>
-          <span className="text-display-s font-display">{next.name}</span>
-        </Link>
+    <nav aria-label="More work" className="shell">
+      <div className="rows">
+        <Row titleAs="div" title={prev.name} meta="Previous" href={`/projects/${prev.slug}`} />
+        <Row titleAs="div" title={next.name} meta="Next" href={`/projects/${next.slug}`} />
       </div>
     </nav>
   );

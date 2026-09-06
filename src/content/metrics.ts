@@ -1,13 +1,14 @@
 /**
- * The band under the hero. Every number here is claimed somewhere else on the
- * site with its full context, so this is a summary, never the only place a
- * figure appears. Keep it under about a dozen items: the marquee duplicates
- * the track, so each entry is rendered twice.
+ * The numbers board under the hero (#proof). Every number here is claimed
+ * somewhere else on the site with its full context, so this is a summary,
+ * never the only place a figure appears. Eight entries fill the 4 x 2 grid.
+ * Every value must be set from the Doto subset (DOT_GLYPHS in src/lib/fonts.ts);
+ * the prebuild check fails otherwise.
  */
 export type Metric = {
   value: string;
   label: string;
-  /** At most one or two: the figure sets in the accent colour. */
+  /** At most one: the figure sets in --sun, the board's one accent element. */
   accent?: boolean;
 };
 

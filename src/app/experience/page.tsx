@@ -2,25 +2,26 @@ import type { Metadata } from "next";
 import { Experience } from "@/components/sections/experience";
 import { Recognition } from "@/components/sections/recognition";
 import { Contact } from "@/components/sections/contact";
-import { Reveal } from "@/components/interactive/reveal";
 
 export const metadata: Metadata = {
   title: "Experience",
   description:
-    "Where I've worked: Recurly, QualGent (YC X25), Purdue University, and Microsoft Research, plus awards and rankings along the way.",
+    "Where I've worked: Recurly, QualGent (YC X25), Purdue University, and Microsoft (a Microsoft Research collaboration at the Data Mine), plus awards and rankings along the way.",
   alternates: { canonical: "/experience" },
 };
 
+/**
+ * /experience (§7.7): the entries with the spine between the columns, the
+ * recognition rows, then the shared outro. The spine's sun head is the one
+ * accent element on this page; nothing else here is --sun, which is what
+ * lets both current roles say "Current" honestly without two LEDs.
+ */
 export default function ExperiencePage() {
   return (
-    <div className="pt-14">
-      <Experience index="01" as="h1" />
-      <Reveal>
-        <Recognition index="02" />
-      </Reveal>
-      <Reveal>
-        <Contact index="03" />
-      </Reveal>
-    </div>
+    <>
+      <Experience />
+      <Recognition />
+      <Contact index="03" />
+    </>
   );
 }

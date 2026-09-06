@@ -2,104 +2,136 @@
 
 Live at **https://ubali.dev**
 
-Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · TypeScript · deployed on Vercel.
+## What it is
+
+The site is one field of dots at one pitch. The page is an unlit board, and
+wherever there is something to say, dots light: into a face, into the numbers,
+into the images, into a row that tracks how far you have read, and then they
+return to the field between things. "Connecting the dots" is the first line on
+the site and the last, and both times it is literal. The concept is called
+Resolve; the design spec it was built from lists five rules that every file in
+this repository is checked against (see *Things worth knowing* below).
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · Tailwind CSS 4 · TypeScript · MDX ·
+deployed on Vercel. Fonts are Geist and Geist Mono through `next/font/google`
+and a hand-subset Doto (numerals only) through `next/font/local`. Runtime
+dependencies beyond Next, React and the MDX loader: `gray-matter`,
+`lucide-react` (four icons), `server-only`. There is no animation library:
+the only loop on the site is the portrait board, a dependency-free 2D canvas.
 
 ```bash
 npm install
 npm run dev      # http://localhost:3000
-npm run build
+npm run build    # runs scripts/check-glyphs.mjs first, then next build
 npm run lint
+npm start
 ```
-
----
 
 ## Structure
 
 ```
 src/
-  app/            routes, metadata, OG images, sitemap, robots
-    about/              About + toolkit + off-hours
-    experience/         work history + recognition
-    projects/           the full work index (spreads + rows)
-    projects/[slug]/    case studies (static, one per project)
-    writing/            MDX blog
-    _fonts/             static font files for OG rendering only
+  app/                  routes, metadata, OG images, sitemap, robots
+    globals.css           tokens, @theme mapping, utilities, base, print, reduced motion
+    board.css             the portrait board (owned by dot-board.tsx)
+    components.css        primitives (row, section, numeral, prose …) and page layouts
+    chrome.css            header, footer, menu, command palette
+    about/  experience/  projects/  projects/[slug]/  writing/  writing/[slug]/
+    not-found.tsx         the 404, "404" set in dots
+    _fonts/               static TTFs for OG rendering only (never sent to a browser)
   components/
-    layout/       header, footer, skip link
-    sections/     page sections, composed by the routes above
-    project/      case-study pieces
-    interactive/  the only "use client" components
-    ui/           shared primitives
-  content/        ← all copy and data lives here
-  lib/            seo, theme script, fuzzy matcher, utils
-  assets/         images imported by code (enables blur placeholders)
+    layout/             site-header, site-footer, skip-link
+    sections/           page sections, composed by the routes above
+    project/            case-study pieces: number plate, body, rail, gallery, prev/next, inspection panel
+    interactive/        the only "use client" files: dot-board, reveal, copy-email,
+                        section-spy, progress-row, command-palette
+    ui/                 primitives: numeral, row, section, spec-list, dot-leader, led,
+                        button, tag, dot-mask, spine, mission-line, nine-dot-mark
+  content/              all copy and data, plus the generated portrait fields
+    writing/            MDX posts
+  lib/                  board renderer, fonts, motion policy, scroll progress, seo, writing, og
+  fonts/                Doto-numerals.woff2, the hand-subset dot face
+  assets/portrait/      utkarsh-cutout.png, the committed source of the portrait
+scripts/                segment.py, bake-portrait.py (run by hand), check-glyphs.mjs (prebuild)
+public/portrait/        dots-96@2x.webp, dots-64@2x.webp, dots-about@2x.webp (generated fallbacks)
 ```
 
-**Everything you'd want to edit is in `src/content/`.** No copy is hardcoded in
-components.
+### The portrait pipeline
+
+The photograph itself is never served. It becomes data in two offline steps,
+both Python (Pillow + NumPy; `segment.py` also needs `rembg`), run by hand,
+with every output committed. Vercel runs none of this.
+
+1. `python scripts/segment.py path/to/photo.jpg` cuts the subject out of the
+   original photograph (which is not committed), crops the cutout to the
+   subject's bounding box, quantises it to a 256-colour palette PNG and writes
+   `src/assets/portrait/utkarsh-cutout.png` plus `CUTOUT_ORIGIN.txt` (the
+   crop's top-left in the original frame), so the windows in the bake script
+   stay in photograph coordinates.
+2. `python scripts/bake-portrait.py` samples that cutout onto three dot grids
+   and writes:
+   - `src/content/portrait-field-96.ts` (96 × 120, the hero from 48rem),
+     `portrait-field-64.ts` (64 × 80, the phone hero and the Contact
+     afterimage) and `portrait-field-about.ts` (64 × 80, a tighter face crop
+     for About). Each is one base64 string plus the lit count, the datum
+     (the always-orange eye dot), the face centre and the rim indices.
+   - `src/content/portrait-meta.ts` with `DOT_COUNT`, which the footer
+     colophon imports (never type the number).
+   - `src/content/portrait-og.ts`, a 48 × 60 downsample as circles for the
+     share cards.
+   - `public/portrait/dots-*.webp`, the settled frame for `<noscript>`,
+     print and browsers without a canvas.
+   `--preview DIR` also writes review PNGs. The crop windows, the datum and
+   the tone curve are constants at the top of the script, chosen by eye.
+
+Re-run the bake only when the photograph changes. After it, update `alt` in
+`src/content/portrait.ts` if the picture is different, and commit everything
+it wrote.
+
+## Editing content
+
+Everything you would want to edit is in `src/content/`. No copy is hardcoded
+in components.
 
 | File | What's in it |
 |---|---|
 | `profile.ts` | Name, tagline, email, socials, nav, résumé slot |
-| `now.ts` | The "Now" section: current role and its `updated` date |
+| `now.ts` | The "Now" section: current role, body, points and its `updated` date |
+| `metrics.ts` | The eight numbers on the home page; one may carry `accent: true` |
 | `projects.ts` | All projects; each becomes `/projects/<slug>` automatically |
-| `experience.ts` | Work history |
+| `experience.ts` | Work history (the spine page) |
 | `recognition.ts` | Awards and rankings |
-| `skills.ts` | Toolkit columns |
-| `personal.ts` | About copy, beliefs, reading, music, interests |
+| `skills.ts` | The toolkit groups |
+| `personal.ts` | About copy, beliefs, reading, music, interests, the mission line |
+| `portrait.ts` | The portrait's `alt` and fallback paths; re-exports the generated fields |
 
----
+### Adding a project
 
-## Adding the things that aren't in yet
+Add an entry to `src/content/projects.ts`. The slug is the URL, the record
+drives the index row, the case study, the inspection panel, the sitemap, the
+command palette and the OG card; nothing else needs touching.
 
-### Project screenshots
+- `metric` and `metricLabel` are the one number the project is judged by and
+  the hedge that goes with it ("internal benchmark", "research testing").
+  The number is set in Doto, so it may only use the characters in
+  `DOT_GLYPHS` (`src/lib/fonts.ts`): digits, `. , % < > ~ + x K` and the
+  word `Top`. `npm run build` fails on anything else; add a glyph there and
+  re-subset the font (see below).
+- `status: "ongoing"` gives the row the page's one orange LED. Only one
+  project should be ongoing at a time.
+- `cover` (16:9) and `media` (a gallery) are optional. Drop the file in
+  `public/projects/` and give it real `width`, `height` and `alt`; every
+  picture resolves through a dot mask and the box is reserved from the
+  dimensions, so nothing shifts when it loads. There are no placeholder
+  plates: a project without a screenshot simply has none.
+- `learnings` adds a sixth section, "What I'd do differently".
+- `confidential: true` shows "NDA" where a source link would be.
 
-Every project renders a `SpecPlate`, a typographic panel at the same 16:9 box a
-screenshot would occupy, until you give it a real image. Adding one changes the
-picture without shifting any surrounding layout.
+### Adding a post
 
-1. Drop the file in `public/projects/`.
-2. Add a `cover` to that project in `src/content/projects.ts`:
-
-```ts
-cover: {
-  kind: "image",
-  src: "/projects/checkpoint-dashboard.png",
-  alt: "Checkpoint dashboard showing a failed multi-turn test run",
-  width: 2400,
-  height: 1350,
-},
-```
-
-For extra images further down the case study, add a `media: [...]` array using
-the same shape. The gallery section renders only when that array exists.
-
-> Write a real `alt`. It's the description a screen-reader user gets, and it's
-> also what a recruiter's screenshot-less preview falls back to.
-
-### Résumé PDF
-
-1. Put the PDF in `public/`, e.g. `public/utkarsh-bali-resume.pdf`.
-2. In `src/content/profile.ts`:
-
-```ts
-resume: { href: "/utkarsh-bali-resume.pdf", updated: "2026-08-01" },
-```
-
-It's `null` today, which is why no résumé link appears anywhere. Setting it turns
-on the command-palette entry. Nothing 404s in the meantime.
-
-### More Checkpoint detail
-
-`src/content/projects.ts` → the `checkpoint` entry. `architecture` and
-`learnings` are arrays; add entries and the case study grows to fit.
-
----
-
-## Writing a blog post
-
-Posts are MDX files in `src/content/writing/`. Create one, commit, deploy. That
-is the whole workflow.
+Posts are MDX files in `src/content/writing/`. Create one, commit, deploy.
 
 ```mdx
 ---
@@ -115,8 +147,9 @@ Body copy here. Standard markdown, plus any React component you import.
 
 - **The filename is the URL.** `my-post.mdx` becomes `/writing/my-post`.
 - `title` and `date` are required; the build fails loudly if either is missing.
-- **To list a piece published somewhere else**, add `external` and `publisher`
-  and skip the body:
+- To list a piece published somewhere else, add `external` and `publisher`
+  and skip the body. `readingMinutes` is required then, because there is no
+  body to measure:
 
   ```mdx
   ---
@@ -129,100 +162,106 @@ Body copy here. Standard markdown, plus any React component you import.
   ---
   ```
 
-  The canonical copy stays where it was published, so the row links out, gets a
-  publisher badge, and is deliberately kept out of `generateStaticParams`, the
-  sitemap and the per-post OG route. RSS points subscribers at the real
-  article. `readingMinutes` is required here because there is no body to
-  measure, and the build says so if you forget it.
+  The row links out in a new tab with the publisher as its tag, and the piece
+  is kept out of `generateStaticParams`, the sitemap and the per-post OG route.
 - `draft: true` renders in `npm run dev` and is excluded from production, the
-  sitemap, and RSS.
-- Reading time is computed from the body, not stored.
-- Code blocks get syntax highlighting from a custom theme in
-  `src/lib/code-theme.json` that matches the paper palette. Highlight lines with
-  ` ```ts {2,5-7} ` and add a filename with ` ```ts title="server.ts" `.
-- Everything else is automatic: the index page, the homepage section, RSS at
-  `/writing/rss.xml`, the sitemap, the command palette, and a generated OG image.
+  sitemap and RSS.
+- Give pictures their dimensions (`<img src="/…" width="1600" height="900" />`
+  or a markdown image a plugin has sized); the box is reserved from them.
+  An image with a `title` gets it as a caption.
+- Code blocks are highlighted with the single dark theme in
+  `src/lib/code-theme.json`. Highlight lines with ` ```ts {2,5-7} ` and add a
+  filename with ` ```ts title="server.ts" `.
+- Everything else is automatic: the index, the home-page row, RSS at
+  `/writing/rss.xml`, the sitemap, the command palette and the OG image.
 
 ## Things worth knowing before you change them
 
-- **The site is multi-page.** The homepage is a landing (hero, marquee, Now,
-  top-three spreads, recent writing, outro); About, Work, and Experience are
-  routes. Section components take an `index` prop so numbering restarts per
-  page, and an `as="h1"` prop when a section opens its own page. The Contact
-  nav item is the one anchor (`/#contact`), it targets the shared outro.
-- **Photo-less projects use the compact plate.** `SpecPlate` accepts
-  `compact`, which renders 21:9 instead of 16:9. Spreads and case-study
-  mastheads pass it automatically when `cover` is missing, so adding a real
-  screenshot restores the full-height box by itself.
-- **The press is hand-written WebGL, and that is deliberate.** `src/lib/halftone.ts`
-  is one fragment shader that separates the portrait into CMYK and screens each
-  ink on its traditional angle (C 15, M 75, Y 0, K 45). Those angles are the
-  only reason it produces a rosette instead of a moire. It is about 3.5 KB
-  gzipped with no library; three.js would have cost 160 KB to run the same
-  shader. Do not "upgrade" it to a framework.
-- **The shader must never become the LCP element.** `HalftoneLayer` is a canvas
-  laid over the real `next/image`, and it only fades in once WebGL has
-  compiled, the texture has decoded, and a frame is on screen. Any failure at
-  all leaves the plain photograph, which is the correct result.
-- **GLSL lives in a JS template literal, so it may not contain backticks.**
-  A backtick inside a shader comment terminates the string and produces
-  syntax errors pointing at seemingly unrelated lines.
-- **The display name is four plates, and only K is real text.** C, M and Y are
-  aria-hidden duplicates that carry the misregistration. They never reach true
-  register, because a perfect fit reads as digital. K carries no animation
-  because it is the LCP paint.
-- **The custom cursor hides the native one, so it only mounts when it can
-  fully replace it**: fine pointer, motion allowed. Text inputs always keep a
-  real caret cursor.
-- **The accent is print red and it is rationed.** `--accent` may colour display
-  type, hairlines, numerals, marks, selection, active nav, and focus rings.
-  It must never colour body or meta text; small accent text uses the darker
-  `--accent-ink`, which clears 4.5:1 on paper and on the row-hover inset fill.
-  If a screenshot reads "red website" rather than "paper site with a red
-  pulse", something used it that shouldn't have.
-- **Ink bands work by scoping the `dark` class** (`<section class="dark ink-band">`).
-  Two traps: `--band-bg` must stay OUT of the `.dark` token block (the band
-  matches `.dark` itself and would self-override in both themes; the dark value
-  lives on `:root.dark`), and `.ink-band` must declare `color: var(--ink)`,
-  because children without a colour utility inherit the computed colour from
-  `<body>`, which was resolved in the light scope.
-- **`@theme inline` in `globals.css` must stay `inline`.** It inlines
-  `var(--paper)` into each emitted utility so colours re-resolve under `.dark`.
-  Drop the keyword and dark mode silently stops working.
-- **Don't animate the hero `<h1>` opacity.** It's the LCP element. It uses a
-  `clip-path` reveal specifically because that paints immediately; a fade or an
-  `animation-delay` would push LCP by the full duration.
-- **OG fonts must be static, not variable.** Satori's parser crashes on variable
-  fonts. `src/app/_fonts/` holds static instances and is build-time only, so those
-  files are never sent to a browser.
-- **Metrics carry a `metricLabel`.** It's where the hedge lives ("internal
-  benchmark", "research testing"). Keep them attached when the number moves.
-- **`now.updated` renders on the page.** Update it when the Now section changes
-  so a stale entry is visible rather than misleading.
-- Seven components are `"use client"`; everything else is a server component.
-  `<Reveal>` and `<WorkPreview>` wrap server children without pulling them
-  across the boundary.
-- **No em dashes anywhere**, including source comments. Check with a script, not
-  `grep`: a multibyte character class matches individual UTF-8 bytes and gives
-  false positives on the box-drawing characters used in the CSS section
-  separators.
+- **One pitch.** `--pitch` is a single integer pixel value (5px, 6px from
+  80rem). The page field, the portrait grid, the Doto numerals, the dot
+  leaders, dotted underlines, image masks, the progress row, the spine and the
+  view-transition mask all use it. Nothing dotted exists off the pitch; if a
+  new dotted thing is needed, build it from `var(--pitch)`.
+- **Doto sets numbers, Geist sets words.** `<Numeral>` (`ui/numeral.tsx`) is
+  the only component that reaches the dot face, at two sizes (10 × and 20 × the
+  pitch, so the glyphs' own dots sit on the page lattice). An ESLint rule in
+  `eslint.config.mjs` fails any other file that names `font-dot` or
+  `text-dot-`. The font is hand-subset to exactly `DOT_GLYPHS`
+  (`src/fonts/Doto-numerals.woff2`, about 2 KB); to add a glyph, extend
+  `DOT_GLYPHS` in `src/lib/fonts.ts` and re-subset from the Google Fonts
+  variable file:
+  `pyftsubset "Doto[ROND,wght].ttf" --text="<DOT_GLYPHS>" --flavor=woff2 --layout-features='*'`.
+  `scripts/check-glyphs.mjs` runs before every build and rejects a figure in
+  `src/content` that the subset cannot set.
+- **One accent per screen.** `--sun` is the sunset on his face; as a UI colour
+  it appears at most once per 1440 × 900 screen, never on hover. The
+  sanctioned elements are: the hero status LED, the accent numeral on the
+  numbers board, the ongoing project's row LED on the work index, the
+  experience spine's leading dot, the progress row's leading dot on case
+  studies and posts, the active row's LED in the command palette, and focus
+  rings. Everything else that might want orange (the header's active-route
+  LED, the case-study masthead LED, the number plate, the inspection panel)
+  is `--ink` on purpose. The portrait's rim and datum are the light source,
+  not UI, and do not count.
+- **Words never animate.** No fade, slide or blur on any text, ever. Only dots
+  move: numerals warm from 400 to 700, dot masks resolve, hairlines draw, the
+  portrait assembles and disperses. `<Reveal>` wraps dot surfaces only (a
+  numeral, a `<DotMask>`, a mission line); wrapping copy in it is a bug.
+  Colour transitions on links are fine; they are not motion.
+- **The hero canvas is `position: fixed`** behind the page while the hero is
+  on screen, so dispersing dots can leave the board and settle onto the fixed
+  page lattice behind the name. It sits at `z-index: 0`; `main > *` is
+  `position: relative; z-index: 1`, and anything inside the hero or the 404
+  that must paint above the canvas carries the `board-above` class. The
+  figure box (`role="img"`) is only the layout anchor and the accessible name.
+- **Idle costs zero frames.** The board schedules a frame only while
+  something is moving (assembly, a live spring under the pointer, a scroll)
+  and stops the frame after the last dot rests. Every other movement is a CSS
+  transition on a font axis, a mask radius or a background size, or a
+  scroll-driven animation. Do not add a loop.
+- **Frame zero is CSS.** The page field is `body::before`, a fixed SVG tile at
+  the pitch; the board box is transparent until the canvas mounts and draws
+  the same unlit dots, so nothing changes on screen at mount. The `h1` is the
+  LCP element on every viewport; there is no hero image outside `<noscript>`.
+- **Reduced motion has two switches**: the OS setting and the command
+  palette's "Reduce motion" action, which persists `localStorage["motion"]`
+  and sets `data-motion="reduce"` on `<html>`. The inline boot script in
+  `layout.tsx` restores it before first paint and adds the `.js` class that
+  the unlit-until-revealed CSS is gated on, so a visitor without JavaScript
+  sees every dot surface finished. `src/lib/motion.ts` is the only JS that
+  reads either switch.
+- **Scroll-driven CSS (`animation-timeline`) has no Firefox support**, so
+  nothing behind those `@supports` blocks may carry meaning; the fallback is
+  always the finished state, and `src/lib/scroll-progress.ts` writes the
+  progress row's `--p` where the timeline is missing.
+- **OG fonts must be static, not variable.** Satori cannot parse variable
+  fonts, so `src/app/_fonts/` holds `Geist-Medium.ttf` and
+  `GeistMono-Medium.ttf`, build-time only. There is no Doto on a share card;
+  the dots come from `portrait-og.ts`. One `renderOgCard()` in `src/lib/og.tsx`
+  serves every route.
+- **One dark theme, no toggle.** `color-scheme: dark` on the root, no `.dark`
+  class and no `dark:` utilities anywhere. `@theme inline` in `globals.css`
+  must stay `inline`: the numeral sizes are calcs on the pitch and have to
+  re-resolve at the element. `@media print` is the only second palette (ink
+  on white, board hidden, links spelled out).
+- **`now.updated` renders on the page.** Update it when the Now section
+  changes so a stale entry is visible rather than misleading.
+- **Metrics carry a `metricLabel`.** It is where the hedge lives. Keep it
+  attached when the number moves.
 - **MDX plugin options must be plain JSON.** Turbopack passes loader options
-  across a Rust boundary, so functions are impossible. That rules out Shiki's
-  `getHighlighter` (the language set cannot be trimmed), `transformers`, and all
-  `onVisit*` callbacks.
-- **`pageExtensions` is deliberately unset.** Posts are imported, not routed, so
-  the Turbopack rule already matches them. Leaving it alone means a stray `.mdx`
-  file can never accidentally become a page.
-- The post route imports with a **relative** specifier, not `@/`. Path aliases
-  inside a template literal are the flakiest part of context-module building.
-- View transitions come from Next's **bundled** React, which exports
-  `ViewTransition` even though `react@19.2.5` does not. `src/types/react-canary.d.ts`
-  exists only to pull in the type. Kill switch is one line in `next.config.ts`.
-- Scroll-driven CSS (`animation-timeline`) has **no Firefox support at all**, so
-  nothing behind that `@supports` block may carry meaning. `Reveal` is the
-  universal baseline.
-- The paper grain is `position: fixed` at `z-index: -1` so it never repaints
-  during scroll. Do not make it a scrolling background.
+  across a Rust boundary, so functions are impossible: no `getHighlighter`,
+  no `transformers`, no `onVisit*` callbacks. `pageExtensions` is deliberately
+  unset (posts are imported, not routed), and the post route imports with a
+  relative specifier, not `@/`, because aliases inside a template literal are
+  the flakiest part of context-module building.
+- View transitions come from Next's bundled React, which exports
+  `ViewTransition`; `src/types/react-canary.d.ts` exists only to pull in the
+  type. The kill switch is one line in `next.config.ts`. Project names share
+  `view-transition-name: project-{slug}` between the index row and the
+  case-study `h1`.
+- Six files are `"use client"` (`components/interactive/*`), plus the header
+  and the inspection panel. Everything else is a server component. `<Reveal>`
+  wraps server children without pulling them across the boundary.
 
 ## Deployment
 
@@ -240,4 +279,5 @@ npx vercel deploy --prod --yes   # one-off manual deploy
 
 Set `NEXT_PUBLIC_SITE_URL` only if the canonical domain changes.
 `src/lib/seo.ts` is the single source of truth for every absolute URL
-(canonical tags, OG, sitemap, JSON-LD).
+(canonical tags, OG, sitemap, JSON-LD); the share cards always print
+`ubali.dev` so a preview deployment never advertises a `vercel.app` host.

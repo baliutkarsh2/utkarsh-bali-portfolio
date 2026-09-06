@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { ProjectRow } from "@/components/project/project-row";
-import { FeatureSpread } from "@/components/project/feature-spread";
-import { WorkPreview } from "@/components/interactive/work-preview";
+import { InspectionPanel } from "@/components/project/inspection-panel";
 import { Contact } from "@/components/sections/contact";
 import { Reveal } from "@/components/interactive/reveal";
-import { orderedProjects } from "@/content";
+import { Numeral } from "@/components/ui/numeral";
+import { Row } from "@/components/ui/row";
+import { orderedProjects, statusLabel } from "@/content";
+import { ordinal } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Work",
@@ -13,62 +14,96 @@ export const metadata: Metadata = {
   alternates: { canonical: "/projects" },
 };
 
-/** The top three keep their magazine spreads; the rest are index rows. */
-const SPREAD_COUNT = 3;
-
+/**
+ * The Work index (§7.3): the board, listed. A meta count, "The work." at
+ * display-l, the lede, then every project as a <Row> on the body columns
+ * with the inspection panel sticky in the rail at ≥ 64rem. Below that the
+ * panel is gone and each row carries its metric inline under the title.
+ *
+ * The one accent on this page is the ongoing project's row LED (Checkpoint).
+ * Every figure, in the rows and in the panel, is --ink.
+ */
 export default function ProjectsPage() {
-  const spreads = orderedProjects.slice(0, SPREAD_COUNT);
-  const rows = orderedProjects.slice(SPREAD_COUNT);
+  const count = orderedProjects.length;
+
+  // Only the seven fields the panel reads cross to the client; the full
+  // record (story, architecture, links…) stays on the server.
+  const inspected = orderedProjects.map(
+    ({ slug, metric, metricLabel, role, org, highlight, stack }) => ({
+      slug,
+      metric,
+      metricLabel,
+      role,
+      org,
+      highlight,
+      stack,
+    }),
+  );
 
   return (
     <>
-      {/* pt has to clear the 3.5rem fixed header and then leave real air.
-          pt-14 alone put the eyebrow flush against the header rule. */}
-      <header className="shell pb-12 pt-24 sm:pt-28">
-        <div className="enter">
-          <p className="meta text-faint">Work</p>
-          <h1 className="mt-6 text-balance text-display-l font-display">
-            Everything I&rsquo;ve built worth writing up.
-          </h1>
-          <p
-            className="measure mt-6 text-pretty text-lede text-muted"
-            style={{ "--stagger": 1 } as React.CSSProperties}
-          >
-            {orderedProjects.length} projects, from production agent infrastructure to
-            research prototypes. Each one covers the problem, the architecture, and what
-            it actually proved.
-          </p>
-        </div>
+      <header className="shell pt-24 pb-12 md:pt-32 md:pb-16">
+        <p className="meta text-ink-3">Index · {count} projects</p>
+        <h1 className="mt-6 text-display-l text-ink">The work.</h1>
+        <p className="measure mt-6 text-lede text-ink-2">
+          {count} projects, from production agent infrastructure to research prototypes. Each
+          one covers the problem, the architecture, and what it actually proved.
+        </p>
       </header>
 
-      <div className="shell mt-10 space-y-24 lg:space-y-32">
-        {spreads.map((project, index) => (
-          <FeatureSpread key={project.slug} project={project} index={index} />
-        ))}
+      <div className="shell work-index">
+        {/* `data-project-rows` is PROJECT_ROWS_ATTRIBUTE in inspection-panel.tsx:
+            the panel's one delegated listener lives on this list and reads
+            `data-slug` from the row wrappers. */}
+        <ul className="work-rows rows" data-project-rows="">
+          {orderedProjects.map((project, i) => {
+            const live = project.status === "ongoing";
+            // "NDA" sits where a source link would: confidential work has
+            // nothing public to link, and the index says so up front.
+            const meta = [
+              project.eyebrow,
+              project.year,
+              statusLabel[project.status],
+              project.confidential ? "NDA" : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <li key={project.slug} data-slug={project.slug}>
+                <Row
+                  index={ordinal(i)}
+                  title={project.name}
+                  titleAs="h2"
+                  transitionName={`project-${project.slug}`}
+                  subtitle={project.tagline}
+                  meta={meta}
+                  led={live ? "live" : "off"}
+                  ledLabel={statusLabel[project.status]}
+                  href={`/projects/${project.slug}`}
+                  trailing={
+                    <>
+                      {/* Only the figure is a dot surface; the label is a word
+                          and stays outside the Reveal. */}
+                      <Reveal>
+                        <Numeral value={project.metric} size="m" />
+                      </Reveal>
+                      <p className="meta mt-2 text-ink-3">{project.metricLabel}</p>
+                    </>
+                  }
+                />
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="work-inspect">
+          <InspectionPanel projects={inspected} />
+        </div>
       </div>
 
-      {rows.length > 0 && (
-        <div className="shell">
-          <p className="meta mt-24 border-t border-rule pt-5 text-faint lg:mt-32">
-            More work
-          </p>
-          <WorkPreview>
-            <ul className="mt-6">
-              {rows.map((project, index) => (
-                <ProjectRow
-                  key={project.slug}
-                  project={project}
-                  index={index + SPREAD_COUNT}
-                />
-              ))}
-            </ul>
-          </WorkPreview>
-        </div>
-      )}
-
-      <Reveal>
-        <Contact />
-      </Reveal>
+      {/* The index has no numbered sections, so the close is the first. */}
+      <Contact index="01" />
     </>
   );
 }

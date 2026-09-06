@@ -1,0 +1,1551 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   components.css — owned by the primitives agent. Imported by globals.css
+   after `@import "tailwindcss"`, so every token (§2), every `@theme` utility
+   and every `@property` registration (--dot-r, --p, --u) already exists here.
+
+   Every class in this file belongs to one primitive in src/components/ui or
+   src/components/interactive. Nothing dotted exists off `--pitch`; nothing in
+   here animates a word; nothing here loops. Motion gating is written with
+   plain selectors (`:root.js`, `[data-motion="reduce"]`, the reduced-motion
+   media query) rather than the `js` / `motion-ok` custom variants so this file
+   has no compile-time dependency on globals.css beyond the tokens.
+
+   One dark theme. There is no `.dark` and there is no light half.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Registered properties and keyframes live outside the layer; everything
+   else is in @layer components so a utility in JSX wins on the same element
+   (the same convention chrome.css uses). */
+@property --lit {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@keyframes spine-light {
+  from {
+    --lit: 0;
+  }
+  to {
+    --lit: 1;
+  }
+}
+@keyframes progress-fill {
+  from {
+    --p: 0;
+  }
+  to {
+    --p: 1;
+  }
+}
+
+@layer components {
+  /* Shared: a 1.5 px dot in one pitch-square tile. The spine and the progress
+     row repeat it along one axis; underlines and leaders (which animate their
+     painted width) use the equivalent repeating gradient from globals.css.
+     At 1.5 px a square and a circle are the same dot. */
+  :root {
+    --dot-1: radial-gradient(circle, currentColor 0.75px, transparent 1px);
+    --stagger: 40ms; /* sibling warm-up offset; Reveal multiplies it by --i */
+  }
+
+  /* ═══ Numeral ═══════════════════════════════════════════════════════════════
+     The only rule on the site that names `--font-dot`. Doto's own dot pitch is
+     0.1em, and both `text-dot-*` sizes are 10× / 20× the page pitch, so the
+     figure's dots sit on the lattice. Weight is dot size: 400 is a pinprick,
+     700 is the lit figure. Both `font-weight` and `font-variation-settings` are
+     transitioned (addendum A4): Chromium animates the axis, WebKit the weight.
+     Advance widths are identical at every weight, so the warm-up never reflows.
+     ───────────────────────────────────────────────────────────────────────── */
+  .numeral {
+    display: inline-block;
+    font-family: var(--font-dot);
+    font-weight: 700;
+    font-variation-settings:
+      "ROND" 100,
+      "wght" 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: 0;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+    transition-property: font-weight, font-variation-settings;
+    transition-duration: var(--dur-4);
+    transition-timing-function: var(--ease-out);
+    transition-delay: calc(var(--i, 0) * var(--stagger) + var(--delay, 0ms));
+  }
+
+  /* Cold state: only when JS is running and motion is allowed. Without JS the
+     figure renders lit at 700 (a hidden heading is worse than a static one);
+     under reduced motion it is lit from the first frame. Specificity: the lit
+     rule below is (0,6,0), this one is (0,5,0), so `data-in` always wins. */
+  @media (prefers-reduced-motion: no-preference) {
+    :root.js:not([data-motion="reduce"]) .numeral[data-warm] {
+      font-weight: 400;
+      font-variation-settings:
+        "ROND" 100,
+        "wght" 400;
+    }
+    :root.js:not([data-motion="reduce"])
+      :is(.numeral[data-warm][data-in], [data-in] .numeral[data-warm]) {
+      font-weight: 700;
+      font-variation-settings:
+        "ROND" 100,
+        "wght" 700;
+    }
+  }
+
+  /* ═══ Row ═══════════════════════════════════════════════════════════════════
+     One list for the whole site (§12.9). The row is `position: relative` so the
+     title's `stretch-link` ::after can cover it; the hover fill is a ::before
+     that reaches past the shell padding to the shell edge. It sits at z -1
+     inside the section's stacking context (`main > *` is z: --z-content), which
+     paints it above the section ground but below the row's own hairline, so
+     hairlines are never swallowed by the fill.
+
+     Columns: gutter (index + LED) · main · trailing (numeral, 12rem) · arrow.
+     Below 48rem the trailing slot drops under the title, left-aligned, and the
+     arrow is hidden; the whole row is still the link.
+     ───────────────────────────────────────────────────────────────────────── */
+  .row {
+    --row-bleed: var(--shell-pad);
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    grid-template-areas: "gutter main";
+    column-gap: 1rem;
+    row-gap: 0.75rem;
+    align-items: baseline;
+    padding-block: 1.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+  }
+
+  /* The trailing slot (a numeral) drops under the title on narrow screens. */
+  .row[data-trailing] {
+    grid-template-areas:
+      "gutter main"
+      "gutter trailing";
+  }
+
+  /* Close a list of rows with a bottom hairline on the container:
+     `<ul class="rows">` or a `border-b border-line` utility. */
+  .rows {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .row::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline: calc(-1 * var(--row-bleed));
+    z-index: -1;
+    background: var(--ground-2);
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease-snap);
+  }
+
+  .row[data-link]:hover::before,
+  .row:has(.row-link:focus-visible)::before,
+  .row:has([aria-current])::before {
+    opacity: 1;
+  }
+
+  .row-gutter {
+    grid-area: gutter;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    color: var(--ink-3);
+    transition: color var(--dur-2) var(--ease-snap);
+  }
+
+  .row[data-link]:hover .row-gutter,
+  .row:has(.row-link:focus-visible) .row-gutter {
+    color: var(--ink);
+  }
+
+  .row-main {
+    grid-area: main;
+    min-width: 0;
+  }
+
+  .row-title {
+    color: var(--ink);
+  }
+
+  .row-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .row-trailing {
+    grid-area: trailing;
+    min-width: 0;
+  }
+
+  /* The arrow is an icon, not a word: it may move 2 px (§7.3). */
+  .row-arrow {
+    grid-area: arrow;
+    display: none;
+    align-self: start;
+    justify-self: end;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.35em;
+    color: var(--ink-3);
+    transition:
+      transform var(--dur-2) var(--ease-snap),
+      color var(--dur-2) var(--ease-snap);
+  }
+
+  .row[data-link]:hover .row-arrow,
+  .row:has(.row-link:focus-visible) .row-arrow {
+    color: var(--ink);
+    transform: translate(2px, 0);
+  }
+
+  .row[data-external]:hover .row-arrow,
+  .row[data-external]:has(.row-link:focus-visible) .row-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  @media (width >= 48rem) {
+    .row {
+      grid-template-columns: 3rem minmax(0, 1fr) 1.5rem;
+      grid-template-areas: "gutter main arrow";
+      column-gap: 1.5rem;
+      padding-block: 1.75rem;
+    }
+    .row[data-trailing] {
+      grid-template-columns: 3rem minmax(0, 1fr) 12rem 1.5rem;
+      grid-template-areas: "gutter main trailing arrow";
+    }
+    .row-trailing {
+      text-align: right;
+      justify-self: end;
+    }
+    .row-arrow {
+      display: block;
+    }
+  }
+
+  /* Compact: label left, hint right, no hairline, a 4 px LED gutter. Active
+     is driven by the listbox option that wraps it (`aria-selected`) or by
+     `data-active` on the row, and fills --ground-3; the LED in the gutter is
+     the one accent element of that screen. The command palette currently
+     renders its own `.palette-row` (chrome.css) with this same grammar, since
+     a listbox option needs role/id/aria-selected on the row element itself;
+     the two must stay visually in step (padding 0.625rem, 4 px LED, --ground-3). */
+  .row[data-variant="compact"] {
+    --row-bleed: 0px;
+    --led-size: 4px;
+    grid-template-columns: 1rem minmax(0, 1fr) auto;
+    grid-template-areas: "gutter main trailing";
+    column-gap: 0.75rem;
+    row-gap: 0;
+    padding: 0.625rem 1rem;
+    border-top: 0;
+  }
+
+  .row[data-variant="compact"] .row-arrow {
+    display: none;
+  }
+
+  .row[data-variant="compact"]::before {
+    background: var(--ground-3);
+  }
+
+  .row[data-variant="compact"] .row-trailing {
+    text-align: right;
+    justify-self: end;
+  }
+
+  [aria-selected="true"] > .row[data-variant="compact"]::before,
+  .row[data-variant="compact"][data-active]::before {
+    opacity: 1;
+  }
+
+  [aria-selected="true"] > .row[data-variant="compact"] .row-gutter,
+  .row[data-variant="compact"][data-active] .row-gutter {
+    color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .row::before,
+    .row-gutter,
+    .row-arrow {
+      transition: none;
+    }
+  }
+  :root[data-motion="reduce"] .row::before,
+  :root[data-motion="reduce"] .row-gutter,
+  :root[data-motion="reduce"] .row-arrow {
+    transition: none;
+  }
+
+  /* ═══ Led ═══════════════════════════════════════════════════════════════════
+     A 6 px disc (4 px inside compact rows and the header nav via --led-size).
+     The only circles on the site besides dots, because it is a dot. Colour is
+     the state and it never transitions (§6 "LED colour" never animates). */
+  .led {
+    display: inline-block;
+    flex: none;
+    width: var(--led-size, 6px);
+    height: var(--led-size, 6px);
+    border-radius: 50%;
+    background: var(--ink-3);
+    vertical-align: middle;
+    /* Baseline-align inside a flex row of text without moving the text. */
+    transform: translateY(-0.1em);
+  }
+
+  .led[data-state="live"] {
+    background: var(--sun);
+  }
+
+  /* ═══ Section ═══════════════════════════════════════════════════════════════
+     Hairline · meta index · display-m title · body on 7 of 12 columns with an
+     optional sticky rail on 4 from column 9 (§7). Nothing is centred. */
+  .section-head {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .section-head > h2,
+  .section-head > h1 {
+    margin-top: 1rem;
+  }
+
+  .section-body {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+    row-gap: var(--space-8);
+    margin-top: var(--section-gap);
+  }
+
+  .section-copy,
+  .section-rail {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  @media (width >= 64rem) {
+    /* 8 columns between 64 and 80rem: copy on 5, rail on 3. */
+    .section-copy {
+      grid-column: 1 / span 5;
+    }
+    .section-rail {
+      grid-column: 6 / span 3;
+    }
+    .section-rail > * {
+      position: sticky;
+      top: calc(3.5rem + var(--space-4)); /* under the fixed header */
+    }
+  }
+
+  @media (width >= 80rem) {
+    .section-copy {
+      grid-column: 1 / span 7;
+    }
+    .section-rail {
+      grid-column: 9 / span 4;
+    }
+  }
+
+  /* ═══ SpecList ══════════════════════════════════════════════════════════════
+     A hairlined <dl>. Stacked: term left, value right from 40rem. Inline: a
+     four-up grid of hairlined cells (the case-study masthead). The top edge of a
+     rail SpecList is --line-strong rather than --sun (rule 3). */
+  .spec-list {
+    margin: 0;
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .spec-list > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.375rem;
+    padding-block: 0.875rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .spec-list dt,
+  .spec-list dd {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .spec-list dd {
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  @media (width >= 40rem) {
+    .spec-list > div {
+      grid-template-columns: 9rem minmax(0, 1fr);
+      column-gap: var(--space-3);
+      align-items: baseline;
+    }
+  }
+
+  .spec-list[data-inline] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--gutter);
+    border-top: 0;
+  }
+
+  .spec-list[data-inline] > div {
+    display: block;
+    padding-block: 0.875rem 0;
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 0;
+  }
+
+  .spec-list[data-inline] dd {
+    margin-top: 0.5rem;
+  }
+
+  @media (width >= 48rem) {
+    .spec-list[data-inline] {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  /* ═══ DotLeader ═════════════════════════════════════════════════════════════
+     Label · leader · value on one baseline. The dots themselves come from the
+     `dot-leader` utility in globals.css (anchored right so the last dot is
+     always whole; an empty 2 px span sits on the text baseline). `leader-draw`
+     adds the draw-in: the run is clipped to `--u` of its width, 0 → 100 % over
+     --dur-5 on `data-in`, paint only, no layout. `--u` is a registered
+     <percentage>, so it interpolates; without JS or under reduced motion the
+     leader is simply drawn.
+     ───────────────────────────────────────────────────────────────────────── */
+  .leader {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    min-width: 0;
+    padding-block: 0.5rem;
+  }
+
+  .leader-label,
+  .leader-value {
+    flex: none;
+    min-width: 0;
+    max-width: 70%;
+    overflow-wrap: anywhere;
+  }
+
+  .leader-draw {
+    --u: 100%;
+    clip-path: inset(0 calc(100% - var(--u)) 0 0);
+    transition: --u var(--dur-5) var(--ease-out) calc(var(--i, 0) * var(--stagger));
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :root.js:not([data-motion="reduce"]) .leader-draw {
+      --u: 0%;
+    }
+    :root.js:not([data-motion="reduce"]) :is(.leader-draw[data-in], [data-in] .leader-draw) {
+      --u: 100%;
+    }
+  }
+
+  /* ═══ DotMask ═══════════════════════════════════════════════════════════════
+     Every screenshot resolves through the lattice. The mask and its resolve
+     (--dot-r 0.45 → 0.71 × pitch on data-in) are the `dot-mask` utility in
+     globals.css; `dot-mask-box` is the box it is applied to: it reserves the
+     aspect ratio before the image lands (CLS 0) and makes the image fill it.
+     The hairline lives on the frame, outside the mask, or it would be eaten.
+     ───────────────────────────────────────────────────────────────────────── */
+  .dot-frame {
+    position: relative;
+    border: 1px solid var(--line);
+    background: var(--ground-2);
+  }
+
+  .dot-mask-box {
+    display: block;
+    width: 100%;
+    aspect-ratio: var(--ratio, auto);
+    overflow: hidden;
+  }
+
+  .dot-mask-box > img,
+  .dot-mask-box > picture,
+  .dot-mask-box > video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ═══ Spine ═════════════════════════════════════════════════════════════════
+     The experience column: a track of quiet dots at the pitch that lights --ink
+     from the top as you read, with the leading lit dot in --sun (the only
+     accent on the page). Scrubbed by `animation-timeline: view()` on a local
+     registered number, `--lit`; where the timeline is unsupported the initial
+     value of 1 leaves the spine fully lit. Three layers, one element: the track
+     on the element, the lit dots on ::before under a soft one-pitch mask edge,
+     the sun head on ::after positioned by percentage (a no-repeat tile of one
+     pitch travels top to bottom as --lit runs 0 → 1). No JS, no loop.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  .spine {
+    position: relative;
+    width: var(--pitch);
+    min-height: calc(4 * var(--pitch));
+    align-self: stretch;
+    grid-row: 1 / span var(--rows, 1);
+    color: var(--line-strong);
+    background-image: var(--dot-1);
+    background-size: var(--pitch) var(--pitch);
+    background-repeat: repeat-y;
+    background-position: 0 0;
+    pointer-events: none;
+  }
+
+  .spine::before,
+  .spine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .spine::before {
+    color: var(--ink);
+    background-image: radial-gradient(circle, currentColor 1.25px, transparent 1.75px);
+    background-size: var(--pitch) var(--pitch);
+    background-repeat: repeat-y;
+    mask-image: linear-gradient(
+      to bottom,
+      #000 calc(var(--lit) * 100% - var(--pitch)),
+      transparent calc(var(--lit) * 100%)
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 calc(var(--lit) * 100% - var(--pitch)),
+      transparent calc(var(--lit) * 100%)
+    );
+  }
+
+  .spine::after {
+    color: var(--sun);
+    background-image: radial-gradient(circle, currentColor 1.5px, transparent 2px);
+    background-size: var(--pitch) var(--pitch);
+    background-repeat: no-repeat;
+    background-position: 0 calc(var(--lit) * 100%);
+  }
+
+  @supports (animation-timeline: view()) {
+    .spine {
+      animation: spine-light linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+  }
+
+  @media print {
+    .spine {
+      animation: none;
+      --lit: 1;
+    }
+  }
+
+  /* ═══ ProgressRow ═══════════════════════════════════════════════════════════
+     One row of unlit dots along the sub-bar's bottom edge; they light --ink
+     left to right with reading progress, the leading lit dot in --sun (§5.7).
+     Driven by `--p` (registered <number>, inherits, in globals.css): the CSS
+     scroll timeline writes it under @supports, otherwise progress-row.tsx calls
+     `startScrollProgress` from @/lib/scroll-progress, which writes the same
+     property from a passive listener (and no-ops where the timeline exists).
+     Reduced motion and print set `--p` to 1 at the root and remove the
+     animation, so the row shows the finished state there. Same three-layer
+     construction as the spine, turned on its side.
+     ───────────────────────────────────────────────────────────────────────── */
+  .progress-row {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: var(--pitch);
+    color: var(--dot-off);
+    background-image: var(--dot-1);
+    background-size: var(--pitch) var(--pitch);
+    background-repeat: repeat-x;
+    pointer-events: none;
+  }
+
+  .progress-row::before,
+  .progress-row::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .progress-row::before {
+    color: var(--ink);
+    background-image: var(--dot-1);
+    background-size: var(--pitch) var(--pitch);
+    background-repeat: repeat-x;
+    mask-image: linear-gradient(
+      to right,
+      #000 calc(var(--p) * 100% - var(--pitch)),
+      transparent calc(var(--p) * 100%)
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 calc(var(--p) * 100% - var(--pitch)),
+      transparent calc(var(--p) * 100%)
+    );
+  }
+
+  .progress-row::after {
+    color: var(--sun);
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1.5px);
+    background-size: var(--pitch) var(--pitch);
+    background-repeat: no-repeat;
+    background-position: calc(var(--p) * 100%) 0;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .progress-row {
+      animation: progress-fill linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+
+  @media print {
+    .progress-row {
+      display: none;
+    }
+  }
+
+  /* ═══ Button ════════════════════════════════════════════════════════════════
+     2.75rem, radius 0, Geist 500 small. Primary is the only filled control on
+     the site; its press is a fill scaling, not a word moving. */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-inline: 1.25rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: var(--text-small);
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    background: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color var(--dur-2) var(--ease-snap),
+      border-color var(--dur-2) var(--ease-snap),
+      color var(--dur-1) var(--ease-snap),
+      transform 80ms var(--ease-snap);
+  }
+
+  .btn[data-variant="primary"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--ground);
+  }
+  .btn[data-variant="primary"]:hover {
+    background: #ffffff;
+    border-color: #ffffff;
+  }
+  .btn[data-variant="primary"]:active {
+    transform: scale(0.985);
+  }
+
+  .btn[data-variant="secondary"] {
+    border-color: var(--line-strong);
+  }
+  .btn[data-variant="secondary"]:hover {
+    background: var(--ground-2);
+    border-color: var(--ink-2);
+  }
+  .btn[data-variant="secondary"]:active {
+    background: var(--ground-3);
+  }
+
+  /* Text: no box, the dotted underline at the pitch drawn on hover (§5.5).
+     Same construction as the `dot-underline` utility: a repeating gradient
+     whose period is exactly --pitch whatever width it is painted at, grown
+     from 0 to 100 % through the registered --u. Inline with the copy. */
+  .btn[data-variant="text"] {
+    padding-inline: 0;
+    color: var(--ink-2);
+  }
+  .btn[data-variant="text"]:hover {
+    color: var(--ink);
+  }
+  .btn[data-variant="text"] > .btn-label {
+    --u: 0%;
+    padding-bottom: 0.2em;
+    background-image: repeating-linear-gradient(
+      to right,
+      currentColor 0 1.5px,
+      transparent 1.5px var(--pitch)
+    );
+    background-size: var(--u) 1.5px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    transition: --u 220ms var(--ease-snap);
+  }
+  .btn[data-variant="text"]:hover > .btn-label,
+  .btn[data-variant="text"]:focus-visible > .btn-label {
+    --u: 100%;
+  }
+
+  .btn[data-external] .btn-arrow {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: currentColor;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    .btn > .btn-label {
+      transition: none;
+    }
+  }
+  :root[data-motion="reduce"] .btn,
+  :root[data-motion="reduce"] .btn > .btn-label {
+    transition: none;
+  }
+
+  /* ═══ Tag ═══════════════════════════════════════════════════════════════════
+     Meta text, no border, no fill. A TagRow is one meta line joined by
+     middots, not a shelf of chips. */
+  .tag {
+    display: inline-block;
+    color: var(--ink-3);
+    text-decoration: none;
+  }
+  /* The transition sits on the rest state so the colour eases both ways;
+     declared only on hover it would snap back on leave. */
+  a.tag {
+    transition: color var(--dur-1) var(--ease-snap);
+  }
+  a.tag:hover {
+    color: var(--ink);
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-3);
+  }
+  .tag-row > li + li::before {
+    content: "·";
+    margin-inline: 0.6em;
+    color: var(--ink-3);
+  }
+
+  /* ═══ Dot list ══════════════════════════════════════════════════════════════
+     4 px --ink dot bullets at the pitch, the bullet register for now.points and
+     experience bullets. Consumers put `dot-list` on a <ul>. */
+  .dot-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dot-list > li {
+    position: relative;
+    padding-left: calc(4 * var(--pitch));
+  }
+  .dot-list > li + li {
+    margin-top: 0.625rem;
+  }
+  .dot-list > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: calc(0.8em - 2px);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+
+  /* ═══ CopyEmail ═════════════════════════════════════════════════════════════
+     The address is real text in Geist 500 display-m; the button is the whole
+     line. The label beside it is the only thing that changes, and it is
+     information, so it changes with no transition at all. */
+  .copy-email {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--space-3);
+    row-gap: 0.5rem;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .copy-email-address {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  .copy-email-label {
+    flex: none;
+    color: var(--ink-3);
+  }
+  .copy-email[data-state="copied"] .copy-email-label {
+    color: var(--ink);
+  }
+
+  /* ═══ Prose ═════════════════════════════════════════════════════════════════
+     Writing-post typography (§7.6). Hand-rolled rather than the typography
+     plugin, which would fight the token scale for no gain. Body 1.0625rem/1.7
+     in --ink-2; headings Geist 500 in --ink; links dotted at rest at 50 %;
+     blockquote behind a 2 px --ink rule; code on --ground-2. No dot type
+     anywhere in a post. The rehype hooks (heading-anchor, data-line,
+     data-highlighted-line, data-rehype-pretty-code-title) are kept from the
+     existing pipeline. Images arrive already wrapped by mdx-components.tsx:
+     a <figure> holding a <Reveal> around a <DotMask>, so `.dot-frame` and
+     `.dot-mask-box` above do the resolving and only the figure's rhythm and
+     caption are set here.
+     ───────────────────────────────────────────────────────────────────────── */
+  .prose {
+    max-width: var(--prose);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  .prose > * + * {
+    margin-top: 1.4em;
+  }
+
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    color: var(--ink);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  .prose h2 {
+    margin-top: 2.4em;
+    font-size: var(--text-display-s);
+    line-height: var(--text-display-s--line-height);
+    letter-spacing: var(--text-display-s--letter-spacing);
+  }
+  .prose h3 {
+    margin-top: 2em;
+    font-size: var(--text-lede);
+    line-height: var(--text-lede--line-height);
+    letter-spacing: -0.01em;
+  }
+  .prose h4 {
+    margin-top: 1.8em;
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  .prose strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .prose em {
+    font-style: italic;
+  }
+
+  /* Links: the dotted rule at the pitch, at rest at 50 % across the whole
+     word, full strength drawing over it on hover. The same two layers as the
+     `dot-underline` utility (MDX anchors carry no class, so it is written
+     out). Colour, not opacity, so nothing composites. */
+  .prose a {
+    --u: 0%;
+    color: var(--ink);
+    text-decoration: none;
+    background-image:
+      repeating-linear-gradient(to right, currentColor 0 1.5px, transparent 1.5px var(--pitch)),
+      repeating-linear-gradient(
+        to right,
+        color-mix(in srgb, currentColor 50%, transparent) 0 1.5px,
+        transparent 1.5px var(--pitch)
+      );
+    background-size:
+      var(--u) 1.5px,
+      100% 1.5px;
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    padding-bottom: 0.08em;
+    transition:
+      color var(--dur-1) var(--ease-snap),
+      --u 220ms var(--ease-snap);
+  }
+  .prose a:hover,
+  .prose a:focus-visible {
+    --u: 100%;
+  }
+
+  /* The autolink wrapper is the heading's own text; it carries no rule. */
+  .prose .heading-anchor {
+    background-image: none;
+    color: inherit;
+    padding-bottom: 0;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.4em;
+  }
+  .prose ul {
+    list-style: none;
+    padding-left: calc(4 * var(--pitch));
+  }
+  .prose ul > li {
+    position: relative;
+  }
+  .prose ul > li::before {
+    content: "";
+    position: absolute;
+    left: calc(-4 * var(--pitch));
+    top: calc(0.85em - 2px);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .prose ol {
+    list-style: decimal;
+  }
+  .prose li + li {
+    margin-top: 0.5em;
+  }
+  .prose li::marker {
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prose blockquote {
+    margin-inline: 0;
+    padding-left: 1.25rem;
+    border-left: 2px solid var(--ink);
+    color: var(--ink);
+    font-size: var(--text-lede);
+    line-height: var(--text-lede--line-height);
+  }
+  .prose blockquote > * + * {
+    margin-top: 1em;
+  }
+
+  .prose hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin-block: 2.5em;
+  }
+
+  .prose figure {
+    margin-inline: 0;
+  }
+  .prose figure figcaption {
+    margin-top: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: var(--text-meta);
+    line-height: var(--text-meta--line-height);
+    letter-spacing: var(--text-meta--letter-spacing);
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .prose img,
+  .prose video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+    font-variant-numeric: tabular-nums;
+  }
+  .prose th,
+  .prose td {
+    border-bottom: 1px solid var(--line);
+    padding: 0.6rem 0.75rem 0.6rem 0;
+    text-align: left;
+    vertical-align: top;
+  }
+  .prose th {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* Wide content scrolls inside itself; the page never scrolls sideways. */
+  .prose .table-scroll,
+  .prose pre {
+    overflow-x: auto;
+  }
+
+  /* Code. rehype-pretty-code runs one dark theme (code-theme.json), so every
+     token carries its colour as an inline style and nothing is mapped here;
+     the plain text between tokens takes the pre's --ink. */
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    font-variant-ligatures: none;
+  }
+
+  .prose :not(pre) > code {
+    padding: 0.12em 0.35em;
+    border-radius: var(--radius);
+    background: var(--ground-2);
+    color: var(--ink);
+  }
+
+  /* The block's inline padding lives on the lines, not the pre, so a
+     highlighted line's fill and rule run to the border on both sides; the
+     code element is as wide as its longest line (and never narrower than the
+     block), so they still do when the block scrolls sideways. */
+  .prose pre {
+    --code-pad: 1.15rem;
+    padding: 1rem 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--ground-2);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    tab-size: 2;
+    color: var(--ink);
+  }
+
+  .prose pre > code {
+    display: grid; /* one row per line so highlighted lines span the width */
+    width: max-content;
+    min-width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: inherit;
+  }
+
+  /* A <pre> that did not go through rehype-pretty-code (no line spans) keeps
+     its padding on the code element instead. */
+  .prose pre > code:not(:has([data-line])) {
+    padding-inline: var(--code-pad);
+  }
+
+  /* Every line reserves the 2 px rule as a transparent border, so lighting
+     it on a highlighted line moves nothing. A border, not an inset shadow:
+     there are no shadows on the site (§2). */
+  .prose [data-line] {
+    padding-inline: calc(var(--code-pad) - 2px) var(--code-pad);
+    border-left: 2px solid transparent;
+  }
+
+  .prose [data-highlighted-line] {
+    background: var(--ground-3);
+    border-left-color: var(--ink);
+  }
+
+  /* The title is a <figcaption> before the <pre> inside the plugin's figure;
+     the margin is zeroed so the caption rule above (0.75rem, for pictures)
+     does not open a gap between the title strip and its block. */
+  .prose [data-rehype-pretty-code-title] {
+    margin: 0;
+    padding: 0.5rem 1.15rem;
+    border: 1px solid var(--line);
+    border-bottom: 0;
+    background: var(--ground-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-meta);
+    letter-spacing: var(--text-meta--letter-spacing);
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .prose [data-rehype-pretty-code-title] + pre {
+    margin-top: 0;
+  }
+
+  @media print {
+    .prose a {
+      background-image: none;
+      text-decoration: underline;
+    }
+    .prose pre,
+    .prose :not(pre) > code,
+    .prose [data-rehype-pretty-code-title] {
+      background: transparent;
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Page layouts for About, Experience and the 404 (§7.2, §7.7, §7.8). Appended
+   by the page agent that owns those routes; same layer and conventions as the
+   primitives above: tokens only, nothing dotted off the pitch, no word moves.
+   ───────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* A page's first section: its head carries the h1 in the Section grammar,
+     and its top padding also clears the fixed 3.5rem header. Used in place of
+     the `section-y` utility, which would outrank a padding rule in this layer. */
+  .section-first {
+    padding-block: calc(3.5rem + var(--section-y)) var(--section-y);
+  }
+
+  /* A Section without a rail whose body is rows or columns rather than prose
+     (Beliefs, Toolkit, Off hours, Recognition): the copy runs the full shell,
+     so three columns have room and a row's hover fill reaches both edges. */
+  .section-wide .section-copy {
+    grid-column: 1 / -1;
+  }
+
+  /* ═══ About (§7.2) ══════════════════════════════════════════════════════════
+     Copy on 7 of 12 columns (5 of 8 between 64 and 80rem); the still board and
+     the spec list on the rail columns, the board in row 1 and the list in row
+     2 while the copy spans both. Below 64rem the copy wrapper is a plain div
+     dissolved with `display: contents` and `order` puts the board straight
+     after the lead, at its own 320 px, then the body, then the facts. */
+  .about-body {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+    row-gap: var(--space-6);
+    margin-top: var(--section-gap);
+  }
+
+  .about-body > *,
+  .about-copy > * {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  @media (width < 64rem) {
+    .about-copy {
+      display: contents;
+    }
+    .about-board {
+      order: 1;
+    }
+    .about-prose {
+      order: 2;
+    }
+    .about-specs {
+      order: 3;
+    }
+  }
+
+  @media (width >= 64rem) {
+    .about-copy {
+      grid-column: 1 / span 5;
+      grid-row: 1 / span 2;
+    }
+    .about-board,
+    .about-specs {
+      grid-column: 6 / span 3;
+      align-self: start;
+    }
+    .about-board {
+      grid-row: 1;
+    }
+    .about-specs {
+      grid-row: 2;
+    }
+  }
+
+  @media (width >= 80rem) {
+    .about-copy {
+      grid-column: 1 / span 7;
+    }
+    .about-board,
+    .about-specs {
+      grid-column: 9 / span 4;
+    }
+  }
+
+  /* ═══ Experience (§7.7) ═════════════════════════════════════════════════════
+     Dates · spine · entry. The spine (column 2, rows 1..n) runs from the first
+     entry's top edge to the last one's bottom. Each entry spans all three
+     columns as a subgrid so its hairline crosses under the spine and its two
+     halves land in the outer columns; its row is explicit (`--row` from the
+     JSX) because an auto-placed item that spans column 2 would be pushed
+     below the spine's definite placement. Below 48rem, and wherever subgrid
+     is missing, it is one column: the spine at the content's left edge (the
+     1.25rem gutter on a phone) and the entries indented exactly 1.5rem. */
+  .experience {
+    display: grid;
+    grid-template-columns: var(--pitch) minmax(0, 1fr);
+    column-gap: calc(1.5rem - var(--pitch));
+    margin-top: var(--section-gap);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .experience > .spine {
+    grid-column: 1;
+  }
+
+  .experience-entry {
+    grid-column: 2;
+    grid-row: var(--row, auto);
+    min-width: 0;
+    padding-block: var(--space-5);
+    border-top: 1px solid var(--line);
+  }
+
+  .experience-when {
+    color: var(--ink-3);
+  }
+
+  .experience-what {
+    min-width: 0;
+    margin-top: var(--space-3);
+  }
+
+  @media (width >= 48rem) {
+    @supports (grid-template-columns: subgrid) {
+      .experience {
+        grid-template-columns: 11rem var(--pitch) minmax(0, 1fr);
+        column-gap: var(--space-4);
+      }
+      .experience > .spine {
+        grid-column: 2;
+      }
+      .experience-entry {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+        padding-block: var(--space-6);
+      }
+      .experience-when {
+        grid-column: 1;
+      }
+      .experience-what {
+        grid-column: 3;
+        margin-top: 0;
+      }
+    }
+  }
+
+  @media (width >= 80rem) {
+    @supports (grid-template-columns: subgrid) {
+      .experience {
+        grid-template-columns: 14rem var(--pitch) minmax(0, 1fr);
+      }
+    }
+  }
+
+  /* ═══ Recognition ═══════════════════════════════════════════════════════════
+     The row gutter is drawn for a two-digit index; here it carries a year
+     span ("2024 to 2026"). On a phone it wraps onto two lines in 4rem. */
+  .recognition .row {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+
+  @media (width >= 48rem) {
+    .recognition .row {
+      grid-template-columns: 7rem minmax(0, 1fr) 1.5rem;
+    }
+  }
+
+  /* ═══ 404 (§7.8) ════════════════════════════════════════════════════════════
+     The shell at 70svh, top padding clearing the header. Without JS, or when
+     the board reports it cannot draw, the board box goes and "404" is set in
+     Geist display-xl in its place. The board is wrapped in a plain div so the
+     hide applies to a layered rule of ours, not the board's own display. */
+  .not-found {
+    min-height: 70svh;
+    padding-block: calc(3.5rem + var(--space-8)) var(--space-10);
+  }
+
+  .not-found-fallback {
+    display: none;
+  }
+
+  :root:not(.js) .not-found-board,
+  .not-found-board:has([data-board="fallback"]) {
+    display: none;
+  }
+
+  :root:not(.js) .not-found-fallback,
+  .not-found-board:has([data-board="fallback"]) + .not-found-fallback {
+    display: block;
+  }
+}
+
+/* ═══ Hero (home) ═══════════════════════════════════════════════════════════
+   Owned by the home page agent (src/components/sections/hero.tsx). A page
+   composition rather than a primitive, appended here because it is the one
+   layout on the site that needs explicit grid placement. Nothing in this
+   block animates; spacing inside the blocks is utilities in the JSX.
+
+   One column by default, in the phone order: mission line + status, the
+   name, the board, then tagline / lede / actions. From 80rem (§7.1, addendum
+   §E) it is a two-column grid placed by line number, because auto-placement
+   can never overlap items and the name must pass over the board:
+
+       row 1   intro (mission line, status)   │ board: column 2,
+       row 2   h1, grid-column 1 / -1 ────────┤ rows 1–3,
+       row 3   tagline, lede, actions         │ align-self: start
+
+   The name's first line ends over the board's left columns; the bake keeps
+   that region empty (checked against the 96-field: columns 0–29 carry no
+   mask above row 100, well past the crop's 24 × 24 guarantee). The h1 is
+   `justify-self: start` so its box is only as wide as "Utkarsh": the box
+   overlaps the board only where the letters do, and the board's `cursor:
+   none` region is not covered by an empty span of heading box.
+
+   The board's canvas is position: fixed at z 0 (board.css); the copy
+   wrappers and the h1 carry `board-above` in the JSX so they paint over it.
+
+   Vertical rhythm at 1440 × 900: the box is the viewport under the 3.5rem
+   header (margin-top, so the spec's min-height is the box itself), padding
+   3rem puts the board at y ≈ 104 and its caption at ≈ 840, and the copy
+   column ends a few pixels above that.
+   ───────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-4);
+    margin-top: 3.5rem; /* the fixed header; the box below it is the hero's */
+    padding-block: var(--space-6);
+  }
+
+  .hero-name,
+  .hero-board {
+    justify-self: start;
+  }
+
+  @media (width >= 80rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr) calc(96 * var(--pitch));
+      grid-template-rows: auto auto minmax(0, 1fr);
+      column-gap: var(--space-8);
+      min-height: calc(100svh - 3.5rem);
+    }
+    .hero-intro {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    .hero-name {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+    .hero-copy {
+      grid-column: 1;
+      grid-row: 3;
+    }
+    .hero-board {
+      grid-column: 2;
+      grid-row: 1 / 4;
+      align-self: start;
+    }
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   Work index and case study (src/app/projects/**). Appended by the work track.
+   Tokens only; nothing here animates a word. Layout for the two pages' grids,
+   the inspection panel, the sub-bar, the number plate and the rail; everything
+   else on those pages is utilities in the JSX.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ── Work index: rows on the body columns, the panel in the rail.
+        5 + 3 of 8 columns between 64 and 80rem, 8 + 4 of 12 above (§7.3). ── */
+  .work-index {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+  }
+
+  .work-rows {
+    grid-column: 1 / -1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Hidden with its panel below 64rem, or an empty grid item would still
+     take a row. */
+  .work-inspect {
+    display: none;
+  }
+
+  @media (width >= 64rem) {
+    .work-rows {
+      grid-column: 1 / span 5;
+    }
+    .work-inspect {
+      display: block;
+      grid-column: 6 / span 3;
+      min-width: 0;
+    }
+    /* The hover fill runs from the shell's left edge to the panel's edge,
+       not symmetrically past the body. */
+    .work-rows .row::before {
+      inset-inline-end: calc(-1 * var(--gutter));
+    }
+  }
+
+  @media (width >= 80rem) {
+    .work-rows {
+      grid-column: 1 / span 8;
+    }
+    .work-inspect {
+      grid-column: 9 / span 4;
+    }
+  }
+
+  /* The row's 12rem numeral column is three glyphs short of "Top 10%" at
+     size m: Doto advances 0.6em, so seven glyphs are 210px at the 5px pitch
+     and 252px at 6px. 14rem and 16rem hold it without wrapping. */
+  @media (width >= 48rem) {
+    .work-rows .row[data-trailing] {
+      grid-template-columns: 3rem minmax(0, 1fr) 14rem 1.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .work-rows .row[data-trailing] {
+      grid-template-columns: 3rem minmax(0, 1fr) 16rem 1.5rem;
+    }
+  }
+
+  /* ── Inspection panel (≥ 64rem only). Sticky under the header on
+        --ground-2 with a --line border, at the sticky layer so it paints
+        over the rows' hover fills. ── */
+  .inspect {
+    display: none;
+  }
+
+  @media (width >= 64rem) {
+    .inspect {
+      display: block;
+      position: sticky;
+      top: calc(3.5rem + var(--space-4));
+      z-index: var(--z-sticky);
+      /* Bleeds into the shell padding like a row's hover fill: a size-l
+         "0.844" is 5 × 72px = 360px at the 6px pitch, and four columns at
+         80rem are 379px before any padding. */
+      margin-inline-end: calc(-1 * var(--shell-pad));
+      padding: var(--space-4) var(--space-3) var(--space-3);
+      border: 1px solid var(--line);
+      background: var(--ground-2);
+    }
+  }
+
+  /* A size-l figure may break at its one space ("Top" / "10%") where the
+     column is narrower than seven glyphs. A number never breaks inside
+     itself: UAX #14 keeps digits with ".", "%", "+", "<", ">" and "~". */
+  .inspect .numeral,
+  .case-plate .numeral {
+    display: block;
+    white-space: normal;
+  }
+
+  /* ── Case study ── */
+
+  /* Sub-bar: sticky at the header's bottom edge, --ground at 80 %, no blur
+     (the header and the palette scrim are the site's two blurred surfaces).
+     The progress row inside it is its bottom edge. */
+  .case-bar {
+    position: sticky;
+    top: 3.5rem;
+    z-index: var(--z-sticky);
+    background: color-mix(in srgb, var(--ground) 80%, transparent);
+  }
+
+  /* The masthead LED is --ink when live, not --sun. The progress row in the
+     sticky sub-bar is this page's one accent (rule 3) and it is on every
+     screen, so a sun dot here would be a double on the first one. The word
+     beside the LED carries the status; the header nav makes the same call
+     for its active-route LED. Off stays --ink-3. */
+  .case-mast .led[data-state="live"] {
+    background: var(--ink);
+  }
+
+  /* The one-number plate: a full-bleed --ground-2 band between hairlines,
+     the figure at the top, the highlight at the bottom. 60svh, 40svh on a
+     phone. */
+  .case-plate {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-8);
+    min-height: 40svh;
+    padding-block: var(--space-6);
+    border-block: 1px solid var(--line);
+    background: var(--ground-2);
+  }
+
+  @media (width >= 48rem) {
+    .case-plate {
+      min-height: 60svh;
+      padding-block: var(--space-8);
+    }
+  }
+
+  /* Body on 8 columns with a sticky 3-column rail from column 10 (5 + 3 of
+     8 between 64 and 80rem). Stacked below, the rail after the body. */
+  .case-body {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+    row-gap: var(--space-10);
+  }
+
+  .case-copy,
+  .case-rail {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  @media (width >= 64rem) {
+    .case-copy {
+      grid-column: 1 / span 5;
+    }
+    .case-rail {
+      grid-column: 6 / span 3;
+    }
+    /* Sticky on the rail's child, not the grid item, which stretches to the
+       body's height. Clears the header and the sub-bar (2.75rem plus one
+       row of dots). */
+    .case-rail > * {
+      position: sticky;
+      top: calc(3.5rem + 2.75rem + var(--pitch) + var(--space-4));
+    }
+  }
+
+  @media (width >= 80rem) {
+    .case-copy {
+      grid-column: 1 / span 8;
+    }
+    .case-rail {
+      grid-column: 10 / span 3;
+    }
+  }
+}

@@ -9,9 +9,8 @@ export default async function Image() {
   const count = publishedPosts().length;
   return renderOgCard({
     eyebrow: "Writing",
-    title: "Worth thinking about twice",
-    description:
-      "Occasional essays on software, life, art, and philosophy.",
+    title: "Writing.",
+    description: "Occasional essays on software, life, art, and philosophy.",
     meta: [`${count} ${count === 1 ? "post" : "posts"}`, "Utkarsh Bali"],
   });
 }

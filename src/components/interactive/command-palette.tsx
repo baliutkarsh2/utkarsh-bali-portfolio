@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { navItems, orderedProjects, profile, socials } from "@/content";
 import { fuzzyMatch } from "@/lib/fuzzy";
-import { toggleTheme } from "./theme-toggle";
+import { getMotion, motionAllowed, setMotion } from "@/lib/motion";
 
 export type PalettePost = {
   slug: string;
@@ -15,10 +15,17 @@ export type PalettePost = {
   external: boolean;
 };
 
+/** State the palette owns that a command's hint may reflect. */
+type PaletteView = {
+  /** True when the site-level override `<html data-motion="reduce">` is set. */
+  motionReduced: boolean;
+};
+
 type Command = {
   id: string;
   label: string;
-  hint: string;
+  /** Right-hand meta. A function when it mirrors state the palette owns. */
+  hint: string | ((view: PaletteView) => string);
   group: "Sections" | "Work" | "Writing" | "Elsewhere" | "Actions";
   /** Extra text folded into matching but never displayed. */
   haystack?: string;
@@ -29,6 +36,8 @@ type CommandContext = {
   navigate: (href: string) => void;
   announce: (message: string) => void;
   close: () => void;
+  /** Flips the site-wide reduced-motion override and announces the result. */
+  toggleMotion: () => void;
 };
 
 /** Built once at module scope, not rebuilt per render or per keystroke. */
@@ -60,17 +69,6 @@ const commands: Command[] = [
         ctx.close();
       },
     })),
-  {
-    id: "action:theme",
-    label: "Switch colour theme",
-    hint: "Light / dark",
-    group: "Actions",
-    haystack: "dark light mode appearance",
-    run: (ctx) => {
-      toggleTheme();
-      ctx.announce("Theme switched");
-    },
-  },
   {
     id: "action:copy-email",
     label: "Copy email address",
@@ -110,6 +108,14 @@ const commands: Command[] = [
       ctx.close();
     },
   },
+  {
+    id: "action:motion",
+    label: "Reduce motion",
+    hint: (view) => (view.motionReduced ? "On" : "Off"),
+    group: "Actions",
+    haystack: "animation accessibility prefers-reduced-motion still dots",
+    run: (ctx) => ctx.toggleMotion(),
+  },
 ];
 
 const GROUP_ORDER: Command["group"][] = [
@@ -119,6 +125,14 @@ const GROUP_ORDER: Command["group"][] = [
   "Elsewhere",
   "Actions",
 ];
+
+function hintOf(command: Command, view: PaletteView): string {
+  return typeof command.hint === "function" ? command.hint(view) : command.hint;
+}
+
+function countLabel(n: number): string {
+  return `${n} result${n === 1 ? "" : "s"}`;
+}
 
 /** Posts are read through a server-only module, so they arrive as a prop. */
 export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
@@ -131,12 +145,16 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [status, setStatus] = useState("");
+  const [motionReduced, setMotionReduced] = useState(false);
 
   const open = useCallback(() => {
     setEverOpened(true);
     setQuery("");
     setActive(0);
     setStatus("");
+    // The toggle's hint mirrors <html data-motion>, which the inline head
+    // script (or a previous toggle) set long before this component rendered.
+    setMotionReduced(getMotion() === "reduce");
     // Wait for the contents to mount before showing, so focus lands correctly.
     requestAnimationFrame(() => {
       const dialog = dialogRef.current;
@@ -215,7 +233,7 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
 
   useEffect(() => {
     if (!dialogRef.current?.open) return;
-    setStatus(`${results.length} result${results.length === 1 ? "" : "s"}`);
+    setStatus(countLabel(results.length));
   }, [results.length]);
 
   const navigate = useCallback(
@@ -236,10 +254,27 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
     [close, router],
   );
 
+  const toggleMotion = useCallback(() => {
+    const reduce = getMotion() !== "reduce";
+    // setMotion writes data-motion immediately and persists it, so the board
+    // and every CSS transition respond before this render lands.
+    setMotion(reduce ? "reduce" : "auto");
+    setMotionReduced(reduce);
+    if (reduce) {
+      setStatus("Motion reduced");
+    } else {
+      // Clearing the override does not restore motion when the OS still asks
+      // for less; say so rather than announce something that is not true.
+      setStatus(motionAllowed() ? "Motion restored" : "Motion follows your system setting");
+    }
+  }, []);
+
   const ctx = useMemo<CommandContext>(
-    () => ({ navigate, announce: setStatus, close }),
-    [navigate, close],
+    () => ({ navigate, announce: setStatus, close, toggleMotion }),
+    [navigate, close, toggleMotion],
   );
+
+  const view: PaletteView = { motionReduced };
 
   function onInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown" || (event.key === "n" && event.ctrlKey)) {
@@ -261,6 +296,22 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
       ?.scrollIntoView({ block: "nearest" });
   }, [active]);
 
+  // The <dialog> is the panel itself, so a click whose target is the dialog
+  // is either on its own box (nothing there but children, so this does not
+  // happen) or on the ::backdrop, which reports the dialog as the target.
+  // The rect check makes that distinction explicit rather than assumed.
+  function onDialogClick(event: React.MouseEvent<HTMLDialogElement>) {
+    const dialog = dialogRef.current;
+    if (!dialog || event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    const inside =
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom;
+    if (!inside) close();
+  }
+
   const grouped = GROUP_ORDER.map((group) => ({
     group,
     items: results.filter((command) => command.group === group),
@@ -270,88 +321,90 @@ export function CommandPalette({ posts = [] }: { posts?: PalettePost[] }) {
     <dialog
       ref={dialogRef}
       aria-label="Command palette"
+      className="palette"
       onClose={() => setQuery("")}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) close();
-      }}
-      className="m-0 max-h-none max-w-none bg-transparent p-0 backdrop:bg-foreground/25 backdrop:backdrop-blur-[2px]"
+      onClick={onDialogClick}
     >
       {everOpened && (
-        <div className="fixed inset-0 flex items-start justify-center overflow-y-auto p-4 pt-[10vh]">
-          <div
-            className="w-full max-w-xl border border-rule-strong bg-background shadow-2xl shadow-foreground/10"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 border-b border-rule px-4">
-              <span aria-hidden className="meta text-faint">
-                &gt;
-              </span>
-              <input
-                ref={inputRef}
-                type="text"
-                role="combobox"
-                aria-expanded
-                aria-controls="command-list"
-                aria-activedescendant={results[active] ? `cmd-${results[active].id}` : undefined}
-                aria-autocomplete="list"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="Search projects, sections, actions…"
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  // Reset selection here rather than in an effect, which would
-                  // cascade an extra render on every keystroke.
-                  setActive(0);
-                }}
-                onKeyDown={onInputKeyDown}
-                className="h-13 w-full bg-transparent text-base text-foreground outline-none placeholder:text-faint"
-              />
-              <kbd className="meta hidden shrink-0 border border-rule px-1.5 py-1 text-faint sm:block">
-                ESC
-              </kbd>
-            </div>
-
-            <div ref={listRef} id="command-list" role="listbox" className="max-h-[52vh] overflow-y-auto py-2">
-              {grouped.length === 0 && (
-                <p className="px-4 py-8 text-center text-sm text-muted">
-                  Nothing matches &ldquo;{query}&rdquo;.
-                </p>
-              )}
-
-              {grouped.map((section) => (
-                <div key={section.group} role="group" aria-label={section.group}>
-                  <p className="meta px-4 pb-1.5 pt-3 text-faint">{section.group}</p>
-                  {section.items.map((command) => {
-                    const index = results.indexOf(command);
-                    const isActive = index === active;
-                    return (
-                      <div
-                        key={command.id}
-                        id={`cmd-${command.id}`}
-                        role="option"
-                        aria-selected={isActive}
-                        data-active={isActive}
-                        onMouseMove={() => setActive(index)}
-                        onClick={() => command.run(ctx)}
-                        className={`flex cursor-pointer items-baseline justify-between gap-4 px-4 py-2.5 text-sm ${
-                          isActive ? "bg-inset text-foreground" : "text-muted"
-                        }`}
-                      >
-                        <span className="truncate">{command.label}</span>
-                        <span className="meta shrink-0 truncate text-faint">{command.hint}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-
-            <p aria-live="polite" className="sr-only">
-              {status}
-            </p>
+        <>
+          <div className="palette-input">
+            <span aria-hidden className="palette-prompt data">
+              ›
+            </span>
+            <input
+              ref={inputRef}
+              type="text"
+              role="combobox"
+              aria-expanded
+              aria-controls="command-list"
+              aria-activedescendant={results[active] ? `cmd-${results[active].id}` : undefined}
+              aria-autocomplete="list"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Search work, writing, actions"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                // Reset selection here rather than in an effect, which would
+                // cascade an extra render on every keystroke.
+                setActive(0);
+              }}
+              onKeyDown={onInputKeyDown}
+              className="palette-field text-body"
+            />
           </div>
-        </div>
+
+          <div
+            ref={listRef}
+            id="command-list"
+            role="listbox"
+            aria-label="Results"
+            className="palette-list"
+          >
+            {grouped.length === 0 && (
+              <p className="palette-empty text-small">
+                Nothing matches &quot;{query}&quot;.
+              </p>
+            )}
+
+            {grouped.map((section) => (
+              <div key={section.group} role="group" aria-label={section.group}>
+                <p className="palette-group-label meta">{section.group}</p>
+                {section.items.map((command) => {
+                  const index = results.indexOf(command);
+                  const isActive = index === active;
+                  return (
+                    // Compact row: label left, hint right in meta. The active
+                    // row fills --ground-3 and carries the 4px --sun LED in
+                    // its gutter (chrome.css), the one accent on this screen.
+                    <div
+                      key={command.id}
+                      id={`cmd-${command.id}`}
+                      role="option"
+                      aria-selected={isActive}
+                      data-active={isActive}
+                      onMouseMove={() => setActive(index)}
+                      onClick={() => command.run(ctx)}
+                      className="palette-row text-small"
+                    >
+                      <span className="palette-row-label">{command.label}</span>
+                      <span className="palette-row-hint meta">{hintOf(command, view)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          <div className="palette-foot meta">
+            <span aria-hidden>↑↓ navigate · ↵ open · esc close</span>
+            <span>{countLabel(results.length)}</span>
+          </div>
+
+          <p aria-live="polite" className="sr-only">
+            {status}
+          </p>
+        </>
       )}
     </dialog>
   );

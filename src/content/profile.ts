@@ -31,8 +31,8 @@ export const socials: Social[] = [
 
 /**
  * The site is multi-page: every nav item is a route except Contact, which
- * anchors to the shared ink outro on the homepage and therefore works from
- * anywhere. Route links take aria-current="page".
+ * anchors to the shared closing section on the homepage and therefore works
+ * from anywhere. Route links take aria-current="page".
  */
 export const navItems: { label: string; href: string }[] = [
   { label: "About", href: "/about" },

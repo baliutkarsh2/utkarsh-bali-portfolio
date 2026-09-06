@@ -2,38 +2,24 @@ import type { Metadata, Viewport } from "next";
 // Next aliases `react$` to its bundled copy, which exports ViewTransition.
 // The type comes from @types/react's canary.d.ts, pulled in by src/types.
 import { ViewTransition, type ReactNode } from "react";
-import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
-import { PressCursor } from "@/components/interactive/press-cursor";
 import { profile, socials } from "@/content";
+import { dot, mono, sans } from "@/lib/fonts";
+import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
 import { publishedPosts } from "@/lib/writing";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
-import { PAPER_DARK, PAPER_LIGHT, THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
-const display = Fraunces({
-  variable: "--font-display-src",
-  subsets: ["latin"],
-  axes: ["opsz"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const sans = Geist({
-  variable: "--font-sans-src",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const mono = Geist_Mono({
-  variable: "--font-mono-src",
-  subsets: ["latin"],
-  weight: ["500"],
-  display: "swap",
-});
+/**
+ * The page ground, mirrored from `--ground` in globals.css. Browser chrome
+ * (the address bar, the tab strip on Android) reads it from the meta tag,
+ * not from CSS, and `color-scheme: dark` in the viewport paints the canvas
+ * dark before the stylesheet arrives so there is never a white frame.
+ */
+const GROUND = "#0A0A0B";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -73,10 +59,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: PAPER_LIGHT },
-    { media: "(prefers-color-scheme: dark)", color: PAPER_DARK },
-  ],
+  themeColor: GROUND,
+  colorScheme: "dark",
 };
 
 const personSchema = {
@@ -88,7 +72,8 @@ const personSchema = {
   email: `mailto:${profile.email}`,
   jobTitle: "Software Engineer",
   description: siteConfig.description,
-  alumniOf: {
+  // Still enrolled (graduating Dec 2026), so an affiliation, not alumniOf.
+  affiliation: {
     "@type": "CollegeOrUniversity",
     name: "Purdue University",
   },
@@ -104,24 +89,26 @@ const personSchema = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
+    // suppressHydrationWarning: the boot script adds `.js` and may set
+    // data-motion before React hydrates, and both are expected to differ
+    // from the server-rendered attributes.
     <html
       lang="en"
-      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+      className={`${sans.variable} ${mono.variable} ${dot.variable}`}
       suppressHydrationWarning
     >
       <head>
-        <meta name="theme-color" content={PAPER_LIGHT} />
         {/* Must run before first paint. React 19 hoists <script src> but not
             inline scripts, so <head> is written explicitly here. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(personSchema) }}
         />
       </head>
-      <body className="bg-background text-foreground antialiased">
-        <div aria-hidden className="paper-grain" />
-        <PressCursor />
+      {/* No class on <body>: colour, type and the field are base styles, and
+          a background here would paint over the lattice (see globals.css §4). */}
+      <body>
         <SkipLink />
         <SiteHeader />
         <main id="main" tabIndex={-1}>

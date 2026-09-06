@@ -1,56 +1,35 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { SectionHeading } from "@/components/ui/section-heading";
+import { Row } from "@/components/ui/row";
+import { Section } from "@/components/ui/section";
 import { achievements } from "@/content";
 
-export function Recognition({ index = "02" }: { index?: string }) {
+/**
+ * /experience §7.7, section 02. Every achievement is one <Row>: the year in
+ * the gutter, the label in display-s, the detail in small --ink-2, the kind
+ * as the meta line. Rows with an href (YC, NeurIPS) are whole-row links with
+ * the arrow; the rest are static. No numerals and no LED: the spine above is
+ * the page's accent, and the rows here are words.
+ *
+ * The gutter is drawn for a two-digit index; a year span ("2024 to 2026")
+ * needs more, so `.recognition .row` in components.css widens it. The rows
+ * run the full shell (`section-wide`) so the hover fill reaches both edges.
+ */
+export function Recognition() {
   return (
-    <section id="recognition" aria-labelledby="recognition-title" className="shell section-y">
-      <SectionHeading
-        index={index}
-        eyebrow="Recognition"
-        title="Awards, rankings, and a near miss."
-        id="recognition-title"
-      />
-
-      <ul className="mt-12">
-        {achievements.map((item) => {
-          const content = (
-            <div className="grid gap-y-2 py-6 md:grid-cols-[6rem_minmax(0,1fr)] md:gap-x-8">
-              <span className="meta pt-1.5 text-faint">{item.year}</span>
-              <div>
-                <div className="flex items-start gap-2">
-                  <h3 className="text-lg font-sans font-medium">{item.label}</h3>
-                  {item.href && (
-                    <ArrowUpRight
-                      aria-hidden
-                      className="row-arrow mt-1.5 size-4 shrink-0 text-faint"
-                    />
-                  )}
-                </div>
-                <p className="measure mt-2 text-pretty text-sm leading-6 text-muted">
-                  {item.detail}
-                </p>
-              </div>
-            </div>
-          );
-
-          return (
-            <li
-              key={item.label}
-              className={`border-t border-rule last:border-b ${item.href ? "index-row" : ""}`}
-            >
-              {item.href ? (
-                <Link href={item.href} className="block">
-                  {content}
-                </Link>
-              ) : (
-                content
-              )}
-            </li>
-          );
-        })}
+    <Section index="02" title="Recognition" id="recognition" className="recognition section-wide">
+      <ul className="rows">
+        {achievements.map((item) => (
+          <li key={item.label}>
+            <Row
+              index={item.year}
+              title={item.label}
+              subtitle={item.detail}
+              meta={item.kind}
+              href={item.href}
+              titleAs="h3"
+            />
+          </li>
+        ))}
       </ul>
-    </section>
+    </Section>
   );
 }

@@ -1,58 +1,46 @@
-import { SectionHeading } from "@/components/ui/section-heading";
-import { interests, mission, music, reading } from "@/content";
+import { Section } from "@/components/ui/section";
+import { interests, music, reading } from "@/content";
 
-export function OffHours({ index = "03" }: { index?: string }) {
+/**
+ * /about §7.2, section 04: three meta-headed lists under hairlines, three
+ * columns from 64rem and stacked below. Reading carries the author after the
+ * title in --ink-3 (at body size, well above the 11 px floor for that ink);
+ * Listening and Chasing are plain lists in --ink-2. Warmth, no ornament.
+ */
+export function OffHours() {
   return (
-    <section id="off-hours" aria-labelledby="off-hours-title" className="shell section-y">
-      <SectionHeading
-        index={index}
-        eyebrow="Off hours"
-        title="What I'm reading, listening to, and chasing."
-        id="off-hours-title"
-      />
-
-      <div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="border-t border-rule pt-5">
-          <h3 className="meta text-faint">Currently reading</h3>
-          <ul className="mt-4 space-y-3">
+    <Section index="04" title="Off hours" id="off-hours" className="section-wide">
+      <div className="grid gap-y-12 lg:grid-cols-3 lg:gap-x-(--gutter)">
+        <div className="border-t border-line pt-6">
+          <h3 className="meta text-ink-3">Reading</h3>
+          <ul className="mt-5 space-y-2 text-body">
             {reading.map((book) => (
               <li key={book.title}>
-                <p className="text-sm">{book.title}</p>
-                <p className="mt-0.5 text-sm text-faint">{book.author}</p>
+                <span className="text-ink">{book.title}</span>{" "}
+                <span className="text-ink-3">{book.author}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="border-t border-rule pt-5">
-          <h3 className="meta text-faint">In rotation</h3>
-          <ul className="mt-4 space-y-2">
+        <div className="border-t border-line pt-6">
+          <h3 className="meta text-ink-3">Listening</h3>
+          <ul className="mt-5 space-y-2 text-body text-ink-2">
             {music.map((item) => (
-              <li key={item} className="text-sm text-muted">
-                {item}
-              </li>
+              <li key={item}>{item}</li>
             ))}
           </ul>
         </div>
 
-        <div className="border-t border-rule pt-5">
-          <h3 className="meta text-faint">Interests</h3>
-          <ul className="mt-4 space-y-2">
+        <div className="border-t border-line pt-6">
+          <h3 className="meta text-ink-3">Chasing</h3>
+          <ul className="mt-5 space-y-2 text-body text-ink-2">
             {interests.map((item) => (
-              <li key={item} className="text-sm text-muted">
-                {item}
-              </li>
+              <li key={item}>{item}</li>
             ))}
           </ul>
-        </div>
-
-        <div className="border-t border-rule pt-5">
-          <h3 className="meta text-faint">The mission</h3>
-          <p className="mt-4 font-display text-xl italic leading-snug">
-            &ldquo;{mission}&rdquo;
-          </p>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }

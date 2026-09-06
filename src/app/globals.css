@@ -1,196 +1,338 @@
 @import "tailwindcss";
-
-@custom-variant dark (&:where(.dark, .dark *));
+@import "./board.css";
+@import "./components.css";
+@import "./chrome.css";
 
 /* ─────────────────────────────────────────────────────────────
-   1. Semantic tokens, light
-   Names describe role, not colour, so dark mode is a value swap.
+   0. Custom variants
+   `in`        a dot surface has resolved: data-in on the element or on an
+               ancestor (the Reveal wrapper).
+   `js`        the boot script ran. Anything that starts unlit waits for this,
+               so a visitor without JavaScript is never shown dim numerals or
+               a half-masked image.
+   `motion-ok` both motion switches agree: the OS setting and the palette's
+               toggle, which the boot script mirrors as data-motion on <html>.
+   `fine`      a mouse or trackpad, the only pointers the board reacts to.
+   ───────────────────────────────────────────────────────────── */
+@custom-variant in (&[data-in], [data-in] &);
+@custom-variant js (:root.js &);
+@custom-variant motion-ok {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion="reduce"]) & {
+      @slot;
+    }
+  }
+}
+@custom-variant fine (@media (hover: hover) and (pointer: fine));
+
+/* ─────────────────────────────────────────────────────────────
+   1. Tokens
+   One dark theme. Contrast ratios are against the stated ground.
    ───────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: light;
-
-  --paper: #f5f4ee;
-  --paper-inset: #ecebe3;
-  --paper-raised: #fbfaf5;
-
-  --ink: #14140f; /* 16.8:1 */
-  --ink-2: #57574e; /* 6.6:1, AA body text */
-  /* 4.9:1. The `meta` utility sets 11px labels in this colour, which is small
-     text, so it has to clear 4.5:1, a lighter grey would fail AA. */
-  --ink-3: #6b6b62;
-
-  --rule: rgba(20, 20, 15, 0.14); /* decorative hairlines */
-  --rule-strong: rgba(20, 20, 15, 0.46); /* ~3:1, interactive borders */
-
-  /* Print red. 4.8:1 on paper, which clears AA even at small sizes, but the
-     discipline rule still holds: --accent for display type, rules, and marks;
-     --accent-ink for anything set small or on the inset background. */
-  --accent: #c33d1c;
-  --accent-ink: #a03015; /* 6.5:1 on paper, 6.0:1 on the inset hover fill */
-  --spot: #eaff4d; /* background only, 1.1:1 as text */
-  --focus: #c33d1c;
-
-  --grid-line: rgba(20, 20, 15, 0.075);
-
-  /* Art direction. Paper needs almost no help; dark needs a lot. */
-  --grain-opacity: 0.032;
-  --raise: 0 1px 2px rgba(20, 20, 15, 0.04), 0 8px 24px rgba(20, 20, 15, 0.05);
-  --rule-hi: rgba(255, 255, 255, 0.7); /* top bevel on raised surfaces */
-  --rule-lo: var(--rule);
-  --media-grade: none; /* screenshots need no correction on paper */
-  --accent-wash: rgba(195, 61, 28, 0.055);
-  --portrait-grade: saturate(1.02) contrast(1.02);
-
-  /* Ink-band fill. Deliberately NOT in the .dark token block: the band element
-     carries the `dark` class itself, so a `.dark` declaration would override
-     this in both themes and the light/dark distinction would vanish. The dark
-     override lives on :root.dark, which only the <html> theme class matches. */
-  --band-bg: #191914;
-}
-
-:root.dark {
-  /* Deeper than the dark page paper (#10110f) so the spread stays visible
-     when the whole site is already dark. */
-  --band-bg: #0b0b09;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   2. Semantic tokens, dark
-   ───────────────────────────────────────────────────────────── */
-.dark {
   color-scheme: dark;
 
-  --paper: #10110f;
-  --paper-inset: #1a1c18;
-  --paper-raised: #171815;
+  /* ── The pitch. Integer pixels only: the lattice must land on device pixels. ── */
+  --pitch: 5px;
+  --lattice-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='5'%3E%3Crect width='1' height='1' fill='%23232326'/%3E%3C/svg%3E");
 
-  --ink: #fffde8;
-  --ink-2: #c1c0ad; /* 10.3:1 */
-  --ink-3: #8b8a7c; /* 5.4:1, clears AA for the same small meta labels */
+  /* ── Grounds ── */
+  --ground: #0a0a0b; /* page */
+  --ground-2: #121214; /* panels, palette, row hover fill */
+  --ground-3: #1a1a1d; /* pressed / active fills */
 
-  --rule: rgba(255, 253, 232, 0.13);
-  --rule-strong: rgba(255, 253, 232, 0.4);
+  /* ── Ink (warm white: the photograph was lit by a sunset) ── */
+  --ink: #f2f1ec; /* 17.5:1 on ground, 16.5:1 on ground-2, 15.4:1 on ground-3 */
+  --ink-2: #a6a5a0; /* 8.0:1 / 7.6:1 / 7.0:1, body and secondary */
+  --ink-3: #8a8984; /* 5.65:1 / 5.3:1 / 4.95:1, 11px meta labels; the floor for text */
 
-  /* The warm red family survives the theme flip; mint would read as a second
-     brand. Both clear 4.5:1 on the dark paper. */
-  --accent: #ff6f4d; /* 6.9:1 */
-  --accent-ink: #ff8a6e; /* 8.2:1 */
-  --spot: #eaff4d;
-  --focus: #ff6f4d;
+  /* ── Dots ── */
+  --dot-off: #232326; /* the unlit dot. 1.26:1 by design. Decorative only, never text. */
 
-  /* Dark needs a stronger grid or the structure disappears entirely. */
-  --grid-line: rgba(255, 253, 232, 0.085);
+  /* ── Rules ── */
+  --line: rgba(242, 241, 236, 0.1); /* renders #212122; decorative hairlines */
+  --line-strong: rgba(242, 241, 236, 0.38); /* renders #626260; 3.24:1, interactive borders (non-text AA) */
 
-  /* Dark is not an inversion. Shadow cannot separate surfaces on a near-black
-     page, so separation comes from a lit top edge and a raised fill instead. */
-  --grain-opacity: 0.055;
-  --raise: 0 1px 0 rgba(255, 253, 232, 0.045) inset, 0 18px 40px rgba(0, 0, 0, 0.45);
-  --rule-hi: rgba(255, 253, 232, 0.16);
-  --rule-lo: rgba(0, 0, 0, 0.45);
-  /* Product screenshots are mostly white and glare against near-black. */
-  --media-grade: brightness(0.9) contrast(1.04);
-  --accent-wash: rgba(255, 111, 77, 0.07);
-  --portrait-grade: saturate(0.94) contrast(1.05) brightness(0.94);
+  /* ── The accent: the sun on his face ── */
+  --sun: #ff6a2b; /* 6.92:1 on ground, 6.55:1 on ground-2, 6.08:1 on ground-3; ground on sun 6.92:1 */
+
+  /* ── Focus / selection ── */
+  --focus: var(--sun);
+  --selection-bg: var(--sun);
+  --selection-fg: var(--ground); /* 6.92:1 */
+
+  /* ── Radii: none. LEDs are the only circles, and they are dots. ── */
+  --radius: 0px;
+
+  /* ── Materials: no shadow, no blur except two surfaces (header, palette scrim). ── */
+  --header-bg: rgba(10, 10, 11, 0.8);
+  --header-blur: 12px;
+  --scrim: rgba(10, 10, 11, 0.7);
+  --scrim-blur: 2px;
+
+  /* ── Z-index scale. Tailwind has no z namespace; use `z-(--z-header)`. ── */
+  --z-field: -1; /* the fixed lattice */
+  --z-board: 0; /* hero canvas */
+  --z-content: 1; /* text over the board */
+  --z-sticky: 30; /* case-study sub-bar, inspection panel */
+  --z-header: 50;
+  --z-dialog: 100; /* palette, mobile menu (<dialog> top layer anyway) */
+  --z-skip: 110;
+
+  /* ── Spacing: 0.5rem steps. Tailwind's 0.25rem utilities are allowed for
+        inline gaps; block rhythm snaps to these. ── */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 2.5rem;
+  --space-6: 3rem;
+  --space-8: 4rem;
+  --space-10: 5rem;
+  --space-12: 6rem;
+  --section-y: clamp(5rem, 9vw, 8.5rem);
+  --section-gap: 3rem; /* section head to body */
+
+  /* ── Containers ── */
+  --shell: 84rem; /* stops growing here; 4K gets more field, not a wider page */
+  --shell-pad: 1.25rem; /* 2rem at ≥48rem, 2.5rem at ≥80rem */
+  --measure: 66ch; /* prose */
+  --prose: 44rem; /* writing post column */
+  --rail: 20rem; /* sticky right rail */
+
+  /* ── Grid ── */
+  --cols: 4; /* 8 at ≥48rem, 12 at ≥80rem */
+  --gutter: 1.25rem; /* 1.5rem at ≥48rem, 2rem at ≥80rem */
+
+  /* ── Motion. The three easings are repeated literally in @theme below
+        (section 2) because their names sit in Tailwind's `--ease-*` namespace
+        and an alias there would be a self-reference. Keep both in sync. ── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* settle: anything that lights or resolves */
+  --ease-snap: cubic-bezier(0.2, 0, 0, 1); /* commit: fills, LEDs, row hover, borders */
+  --ease-page: cubic-bezier(0.65, 0, 0.35, 1); /* view transitions */
+  --dur-1: 120ms; /* colour */
+  --dur-2: 200ms; /* fills, LEDs */
+  --dur-3: 320ms; /* image resolve, page in */
+  --dur-4: 600ms; /* numeral warm-up */
+  --dur-5: 900ms; /* hairline draw */
+  --dur-board: 1100ms; /* portrait assembly */
+}
+
+/* Pitch steps. Integer only. Above 80rem the pitch is 6px and the shell is
+   capped, so a 4K panel gets the same object on a larger board. */
+@media (width >= 80rem) {
+  :root {
+    --pitch: 6px;
+    --lattice-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='1' height='1' fill='%23232326'/%3E%3C/svg%3E");
+    --shell-pad: 2.5rem;
+    --cols: 12;
+    --gutter: 2rem;
+  }
+}
+@media (width >= 48rem) and (width < 80rem) {
+  :root {
+    --shell-pad: 2rem;
+    --cols: 8;
+    --gutter: 1.5rem;
+  }
+}
+
+/* Breakpoints (Tailwind 4 defaults; the ones this design uses by name):
+   40rem sm — two-column meta tables
+   48rem md — tablet: 8 columns, nav appears, view-transition mask allowed
+   64rem lg — sticky rails, inspection panel, header readout, afterimage
+   80rem xl — 12 columns, hero side-by-side, pitch 6px */
+
+/* ─────────────────────────────────────────────────────────────
+   2. Theme mapping
+   `inline` is load-bearing for the type scale: `--text-dot-m` is a calc on
+   the pitch and must be re-resolved at the element, not frozen at :root.
+   ───────────────────────────────────────────────────────────── */
+@theme inline {
+  --font-sans: var(--font-sans-src), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-src), ui-monospace, "SF Mono", monospace;
+  --font-dot: var(--font-dot-src), var(--font-mono-src), monospace;
+
+  --color-ground: var(--ground);
+  --color-ground-2: var(--ground-2);
+  --color-ground-3: var(--ground-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-sun: var(--sun);
+  --color-dot-off: var(--dot-off);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  /* No radius and no shadow exist on this site, so the utilities for them
+     do not either: `rounded-md` and `shadow-sm` are compile-time no-ops.
+     `rounded-full` (the LED) and `shadow-none` are static and survive. */
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+
+  /* Easings. `ease-out` is retuned from Tailwind's default so the utility
+     and the token agree; `ease-out-soft` is the same curve under the name
+     the component contract uses. Literal values: see the note in section 1. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snap: cubic-bezier(0.2, 0, 0, 1);
+  --ease-page: cubic-bezier(0.65, 0, 0.35, 1);
+  /* `transition-colors` and friends commit on the snap curve at --dur-2. */
+  --default-transition-duration: var(--dur-2);
+  --default-transition-timing-function: var(--ease-snap);
+
+  --container-shell: var(--shell);
+  --container-measure: var(--measure);
+  --container-prose: var(--prose);
+  --container-rail: var(--rail);
+
+  /* Geist 500. The weight rides on the token so display type cannot be set
+     at 400 or 600 by accident. */
+  --text-display-xl: clamp(3.25rem, 11vw, 10.5rem); /* the name only */
+  --text-display-xl--line-height: 0.92;
+  --text-display-xl--letter-spacing: -0.045em;
+  --text-display-xl--font-weight: 500;
+
+  --text-display-l: clamp(2.25rem, 5.5vw, 4.25rem); /* page h1, case-study name, mobile nav */
+  --text-display-l--line-height: 1.02;
+  --text-display-l--letter-spacing: -0.03em;
+  --text-display-l--font-weight: 500;
+
+  --text-display-m: clamp(1.625rem, 3vw, 2.5rem); /* section titles, contact line, the email */
+  --text-display-m--line-height: 1.1;
+  --text-display-m--letter-spacing: -0.02em;
+  --text-display-m--font-weight: 500;
+
+  --text-display-s: clamp(1.25rem, 2vw, 1.625rem); /* taglines, row titles, problem statements */
+  --text-display-s--line-height: 1.25;
+  --text-display-s--letter-spacing: -0.015em;
+  --text-display-s--font-weight: 500;
+
+  /* Geist 400 */
+  --text-lede: 1.125rem;
+  --text-lede--line-height: 1.6;
+  --text-body: 1rem;
+  --text-body--line-height: 1.65;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.55;
+
+  /* Geist Mono 500 */
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.2;
+  --text-meta--letter-spacing: 0.16em; /* uppercase */
+  --text-meta--font-weight: 500;
+  --text-data: 0.8125rem;
+  --text-data--line-height: 1.4;
+  --text-data--letter-spacing: 0.02em; /* tabular, mixed case */
+  --text-data--font-weight: 500;
+
+  /* Doto 700, ROND 100. Dot pitch inside the glyph = 0.1em, so these sit ON the page pitch. */
+  --text-dot-m: calc(10 * var(--pitch)); /* 50px / 60px: numbers board, row metrics, footer count */
+  --text-dot-m--line-height: 1;
+  --text-dot-m--letter-spacing: 0;
+  --text-dot-l: calc(20 * var(--pitch)); /* 100px / 120px: case-study plate, inspection panel. Dots on every second lattice point. */
+  --text-dot-l--line-height: 1;
+  --text-dot-l--letter-spacing: 0;
 }
 
 /* ─────────────────────────────────────────────────────────────
-   3. Theme mapping
-   `inline` is load-bearing: it inlines var(--paper) into the emitted
-   utility so `bg-background` re-resolves under `.dark`. Without it,
-   dark mode silently stops working.
+   3. Registered properties
+   Registration is what makes these animatable: an unregistered custom
+   property flips at the midpoint instead of interpolating.
    ───────────────────────────────────────────────────────────── */
-@theme inline {
-  --font-display: var(--font-display-src), Georgia, "Times New Roman", serif;
-  --font-sans: var(--font-sans-src), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono-src), ui-monospace, "SF Mono", monospace;
-
-  --color-background: var(--paper);
-  --color-inset: var(--paper-inset);
-  --color-raised: var(--paper-raised);
-  --color-foreground: var(--ink);
-  --color-muted: var(--ink-2);
-  --color-faint: var(--ink-3);
-  --color-rule: var(--rule);
-  --color-rule-strong: var(--rule-strong);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-spot: var(--spot);
-
-  /* Fluid editorial scale */
-  --text-display-xl: clamp(3rem, 11.5vw, 10rem);
-  --text-display-xl--line-height: 0.86;
-  --text-display-xl--letter-spacing: -0.035em;
-
-  --text-display-l: clamp(2.25rem, 6vw, 4.5rem);
-  --text-display-l--line-height: 0.95;
-  --text-display-l--letter-spacing: -0.028em;
-
-  --text-display-m: clamp(1.75rem, 3.6vw, 2.75rem);
-  --text-display-m--line-height: 1.05;
-  --text-display-m--letter-spacing: -0.02em;
-
-  --text-display-s: clamp(1.375rem, 2.4vw, 1.75rem);
-  --text-display-s--line-height: 1.15;
-  --text-display-s--letter-spacing: -0.015em;
-
-  --text-lede: 1.1875rem;
-  --text-lede--line-height: 1.62;
-
-  --text-meta: 0.8125rem;
-  --text-meta--line-height: 1.4;
-
-  --text-micro: 0.6875rem;
-  --text-micro--line-height: 1.2;
-  --text-micro--letter-spacing: 0.18em;
-
-  --radius-none: 0px;
-  --radius-xs: 2px;
-
-  --container-measure: 68ch;
-  --container-content: 78rem;
+/* Disc radius of a dot mask (image resolve). */
+@property --dot-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+/* Disc radius of the view-transition mask. */
+@property --vt-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+/* Reading progress, 0..1. Inherits so a root override reaches every row. */
+@property --p {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+/* Drawn width of a dotted underline. */
+@property --u {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
 }
 
 /* ─────────────────────────────────────────────────────────────
    4. Base
    ───────────────────────────────────────────────────────────── */
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
-
   html {
-    scroll-padding-top: 6rem;
+    background: var(--ground);
+    color-scheme: dark;
+    scroll-padding-top: 5rem;
     -webkit-text-size-adjust: 100%;
   }
 
-  /* Opt in per-element instead of globally, so programmatic scrolls and
-     reduced-motion users are not fighting a smooth-scroll default. */
+  /* Opt in rather than default: programmatic scrolls and reduced-motion
+     users must not fight a smooth-scroll setting. */
   @media (prefers-reduced-motion: no-preference) {
-    html {
+    :root:not([data-motion="reduce"]) {
       scroll-behavior: smooth;
     }
   }
 
+  /* No background on <body>, deliberately. The field below is a z-index -1
+     descendant, and the paint order puts negative-z descendants ABOVE the
+     root background but BELOW in-flow block backgrounds, so any fill on
+     <body> would hide the lattice. The ground lives on <html>. */
   body {
     min-height: 100svh;
-    /* Flat fill: the old layered gradients were two large non-composited
-       paints sitting directly behind the LCP element. */
-    background: var(--paper);
     color: var(--ink);
     font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* The field (§5.1). One fixed layer that never repaints on scroll. The tile
+     is an SVG rect, not a gradient: a 0.5px radial gradient renders as grey
+     mush at DPR 1, and an integer pitch keeps every dot on a device pixel. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-field);
+    pointer-events: none;
+    background-image: var(--lattice-tile);
+    background-size: var(--pitch) var(--pitch);
+  }
+
+  /* The hero canvas is position: fixed at z-index 0 while the hero is on
+     screen (dispersed dots snap to the fixed lattice in viewport space).
+     Every content block in <main> sits one step above it so text is never
+     painted under a dot. Each child is its own stacking context; sticky
+     rails and sub-bars inside a section resolve within that section. */
+  main > * {
+    position: relative;
+    z-index: var(--z-content);
   }
 
   ::selection {
-    background: var(--accent);
-    color: var(--paper);
+    background: var(--selection-bg);
+    color: var(--selection-fg);
   }
 
   :focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 3px;
-    border-radius: 2px;
   }
 
   :focus:not(:focus-visible) {
@@ -206,30 +348,53 @@
     cursor: pointer;
   }
 
+  /* Geist 500 is the ceiling. 600+ reads loud on black, and Geist Mono is
+     only loaded at 500 (font-synthesis-weight: none keeps it honest). */
   h1,
   h2,
-  h3 {
-    font-family: var(--font-display);
-    font-weight: 400;
+  h3,
+  h4 {
+    font-weight: 500;
+    text-wrap: balance;
   }
 
-  /* Tabular figures everywhere numbers are compared vertically. */
+  b,
+  strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* Tabular figures wherever numbers sit in columns. */
   time,
-  .tabular {
+  .font-dot {
     font-variant-numeric: tabular-nums;
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  /* Doto always carries ROND 100: circles, the same circles as the portrait.
+     Anything that sets font-variation-settings on a numeral (the wght
+     warm-up) must repeat "ROND" 100, since the property is not additive. */
+  .font-dot {
+    font-variation-settings: "ROND" 100;
   }
-  ::-webkit-scrollbar-track {
-    background: transparent;
+
+  /* Display tokens balance, running text is pretty. Base layer, so a
+     text-wrap utility still wins. */
+  .text-display-xl,
+  .text-display-l,
+  .text-display-m,
+  .text-display-s {
+    text-wrap: balance;
   }
-  ::-webkit-scrollbar-thumb {
-    background: var(--rule-strong);
-    border: 3px solid var(--paper);
-    border-radius: 999px;
+  .text-lede,
+  .text-body {
+    text-wrap: pretty;
+  }
+
+  /* Reading progress without JavaScript is the finished state: the CSS
+     scroll timeline drives --p where it exists, scroll-progress.ts writes it
+     where it does not, and a visitor with neither sees a lit row. */
+  :root:not(.js) {
+    --p: 1;
   }
 }
 
@@ -237,56 +402,143 @@
    5. Utilities
    ───────────────────────────────────────────────────────────── */
 
-/* 4 → 8 → 12 column editorial grid. Asymmetric placement inside this
-   is what separates the layout from a centred template. */
-@utility grid-editorial {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  column-gap: 1.25rem;
-  width: 100%;
-  max-width: var(--container-content);
-  margin-inline: auto;
-  padding-inline: 1.25rem;
-}
-
+/* The page column. Caps at --shell; a 4K panel gets more field, not more page. */
 @utility shell {
   width: 100%;
-  max-width: var(--container-content);
+  max-width: var(--shell);
   margin-inline: auto;
-  padding-inline: 1.25rem;
+  padding-inline: var(--shell-pad);
 }
 
-@utility section-y {
-  padding-block: clamp(4rem, 8vw, 7.5rem);
+/* 4 → 8 → 12 columns, driven by the tokens so the steps live in one place.
+   Grid only: compose with `shell` for the container. */
+@utility grid-editorial {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  column-gap: var(--gutter);
 }
 
 @utility measure {
-  max-width: var(--container-measure);
+  max-width: var(--measure);
 }
 
+@utility section-y {
+  padding-block: var(--section-y);
+}
+
+/* Geist Mono 500, uppercase, tracked: labels, dates, section indices. */
 @utility meta {
   font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  line-height: 1.2;
-  letter-spacing: 0.18em;
+  font-weight: 500;
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
+  letter-spacing: var(--text-meta--letter-spacing);
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
 }
 
-@utility hairline {
-  border-top: 1px solid var(--rule);
+/* Geist Mono 500, mixed case, tabular: readouts, dates in rows, the caption. */
+@utility data {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-data);
+  line-height: var(--text-data--line-height);
+  letter-spacing: var(--text-data--letter-spacing);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Underline that grows from the left. The editorial link signature. */
-@utility link-underline {
-  background-image: linear-gradient(currentColor, currentColor);
+@utility hairline {
+  border-top: 1px solid var(--line);
+}
+
+/* The link signature: a dotted underline at the pitch that draws left to
+   right on hover. Two layers of the same dots on the same phase. The lower
+   one is the resting state inside prose (50 %, always full width); the upper
+   one is full-strength and grows from 0 to --u, drawing over the faint one.
+
+   Why a repeating-linear-gradient and not the radial tile: the reveal is
+   done by animating background-size, and a radial tile would stretch with
+   it. A repeating gradient with stops in absolute px keeps its period at
+   exactly --pitch whatever width it is painted at. At 1.5px a square and a
+   circle are the same dot.
+
+   Vertical position: 0.58em below the box's centre, not at its bottom edge.
+   Geist's content area is 1.3em (ascent 1.005 + descent 0.295), so for an
+   inline link that is the descender line, exactly where `0 100%` would put
+   it; and when `tap` grows the same link into a 44px centred box on a
+   finger, the dots stay under the text instead of dropping to the bottom of
+   the box. Keep the label vertically centred in whatever box carries this. */
+@utility dot-underline {
+  --u: 0%;
+  --u-rest: 0%;
+  text-decoration: none;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      currentColor 0 1.5px,
+      transparent 1.5px var(--pitch)
+    ),
+    repeating-linear-gradient(
+      to right,
+      color-mix(in srgb, currentColor 50%, transparent) 0 1.5px,
+      transparent 1.5px var(--pitch)
+    );
+  background-size:
+    var(--u) 1.5px,
+    var(--u-rest) 1.5px;
   background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 0% 1px;
-  transition: background-size 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  background-position: 0 calc(50% + 0.58em);
+  transition:
+    color var(--dur-1) var(--ease-snap),
+    --u 220ms var(--ease-snap);
   &:hover,
   &:focus-visible {
-    background-size: 100% 1px;
+    --u: 100%;
+  }
+  .prose & {
+    --u-rest: 100%;
+  }
+}
+
+/* A run of dots at the pitch that fills the space it is given. Place it as
+   an empty, aria-hidden span between a label and its value in a flex row;
+   the dots are anchored to the right edge so the last one is always whole. */
+@utility dot-leader {
+  flex: 1 1 auto;
+  min-width: calc(4 * var(--pitch));
+  height: 2px;
+  color: var(--ink-3);
+  background-image: repeating-linear-gradient(
+    to left,
+    currentColor 0 1.5px,
+    transparent 1.5px var(--pitch)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+/* Image resolve (§6). Every screenshot sits under a disc mask at the pitch.
+   Resolved is a disc radius of 0.71 × pitch: the half-diagonal of the tile
+   is 0.707, so the discs overlap and the image is whole. Under `.js` with
+   motion allowed it rests at 0.45 (a dot screen) until data-in lands, then
+   grows over --dur-3 and stays. No JS, or reduced motion: resolved from
+   the first frame. */
+@utility dot-mask {
+  --dot-r: calc(0.71 * var(--pitch));
+  mask-image: radial-gradient(
+    circle,
+    #000 var(--dot-r),
+    transparent calc(var(--dot-r) + 0.5px)
+  );
+  mask-size: var(--pitch) var(--pitch);
+  mask-repeat: repeat;
+  @media (prefers-reduced-motion: no-preference) {
+    :root.js:not([data-motion="reduce"]) & {
+      transition: --dot-r var(--dur-3) var(--ease-out);
+    }
+    :root.js:not([data-motion="reduce"]) &:not([data-in]):not([data-in] *) {
+      --dot-r: calc(0.45 * var(--pitch));
+    }
   }
 }
 
@@ -300,1116 +552,10 @@
   }
 }
 
-/* Separates a surface from the page. On paper that is a soft shadow; in dark
-   it is a lit top edge, because shadow does nothing against near-black. */
-@utility raised {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule);
-  box-shadow: var(--raise);
-}
-
-/* Corrects screenshots that would otherwise glare in dark mode. */
-@utility graded {
-  filter: var(--media-grade);
-}
-
-@media (width >= 48rem) {
-  .grid-editorial {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    column-gap: 1.5rem;
-    padding-inline: 2rem;
-  }
-  .shell {
-    padding-inline: 2rem;
-  }
-}
-
-@media (width >= 80rem) {
-  .grid-editorial {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    column-gap: 2rem;
-    padding-inline: 2.5rem;
-  }
-  .shell {
-    padding-inline: 2.5rem;
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────
-   6. Component classes, keep this list short
-   ───────────────────────────────────────────────────────────── */
-
-/* ── Display leading at small sizes ───────────────────────────
-   The display scale is set very tight because it is drawn for huge type,
-   where negative leading reads as confident. At the bottom of the clamp the
-   same ratios put descenders into the next line's ascenders, so phones get a
-   little air back. Values must be literal, not token overrides: `@theme
-   inline` bakes the number into the utility, so redefining the custom
-   property here would do nothing.
-   ───────────────────────────────────────────────────────────── */
-@media (width < 48rem) {
-  .text-display-xl {
-    line-height: 0.94;
-  }
-  .text-display-l {
-    line-height: 1.04;
-  }
-  .text-display-m {
-    line-height: 1.14;
-  }
-  .text-display-s {
-    line-height: 1.24;
-  }
-}
-
-/* Paper grain. One fixed layer behind everything, so it never repaints while
-   the page scrolls. feTurbulence as a data URI is ~300 bytes and resolution
-   independent, which a tiled PNG is not. */
-.paper-grain {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-}
-
-/* ── Ink band ─────────────────────────────────────────────────
-   Full-bleed inverted spread: the section carries `dark ink-band`, and the
-   scoped `dark` class re-resolves every token inside (the custom variant
-   matches nested scopes), so children need no per-band variants. The band
-   paints its own fill because the page background lives on <body>.
-   ───────────────────────────────────────────────────────────── */
-.ink-band {
-  position: relative;
-  /* Forces a stacking context so the grain layer below can sit between the
-     band's own background and its content. */
-  isolation: isolate;
-  background: var(--band-bg);
-  /* Load-bearing: children without a colour utility (bare h2, dd) inherit
-     their COMPUTED colour from <body>, which was resolved in the light scope.
-     Re-declaring here re-resolves var(--ink) inside the band's dark scope,
-     and inheritance picks up the flipped value. */
-  color: var(--ink);
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-}
-
-/* Texture continuity: the same turbulence tile as .paper-grain, scoped to the
-   band, because the fixed page grain is at z-index -1 behind this fill. */
-.ink-band::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-}
-
-/* The closing email. Sized to span most of the container on one line rather
-   than reusing display-xl, which is tuned for a two-word name. */
-.contact-email {
-  font-family: var(--font-display);
-  font-size: clamp(1.75rem, 5.4vw, 4.75rem);
-  line-height: 1.12;
-  letter-spacing: -0.025em;
-  overflow-wrap: anywhere;
-}
-
-/* The old mask was an ellipse anchored at top centre, which cut off in a
-   visible hard rectangle. This one is anchored where the display type
-   actually sits and fades out over a much longer distance. */
-.hero-grid {
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 96px 96px;
-  -webkit-mask-image: radial-gradient(
-    125% 105% at 18% -15%,
-    #000 0%,
-    rgba(0, 0, 0, 0.55) 34%,
-    rgba(0, 0, 0, 0.18) 58%,
-    transparent 82%
-  );
-  mask-image: radial-gradient(
-    125% 105% at 18% -15%,
-    #000 0%,
-    rgba(0, 0, 0, 0.55) 34%,
-    rgba(0, 0, 0, 0.18) 58%,
-    transparent 82%
-  );
-}
-
-/* ── Hero spread ──────────────────────────────────────────────
-   Name, portrait and body copy share ONE grid. The portrait is placed on
-   the same row as the name with an overlapping column range, which is the
-   only way to get the interlock: a sibling grid below the h1 can never
-   reach back up beside it.
-   ───────────────────────────────────────────────────────────── */
-.hero-spread {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  column-gap: 1.25rem;
-  row-gap: 2.5rem;
-}
-
-/* Load-bearing. Without an explicit span every child auto-places into its
-   own single column, so the name, the tagline, the portrait and the meta
-   table end up side by side in quarter-width strips. The interlock at
-   >= 80rem overrides this with real placements. */
-.hero-spread > * {
-  grid-column: 1 / -1;
-}
-
-/* Declared before the media queries: at >= 80rem the figure fills its column
-   span instead, and source order decides that at equal specificity. */
-.hero-figure {
-  width: 100%;
-  max-width: 18rem;
-}
-
-@media (width >= 48rem) {
-  .hero-spread {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    column-gap: 1.5rem;
-  }
-}
-
-/* The interlock only exists where there is room for it. Below 80rem the
-   placements simply do not apply and the grid flows in source order. */
-@media (width >= 80rem) {
-  .hero-spread {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    column-gap: 2rem;
-    row-gap: 0;
-    align-items: start;
-  }
-  /* Name and figure share row 1 and both start at its top edge. Bottom
-     aligning the name against the taller figure left a ~200px void in the
-     top left, which is dead space rather than composition. */
-  /* Two columns that each flow on their own, rather than rows that make the
-     short side wait for the tall side. The figure spans both text rows, so
-     the name and body copy sit directly on top of each other on the left. */
-  .hero-name {
-    grid-column: 1 / 9;
-    grid-row: 1;
-    position: relative;
-    z-index: 1;
-    margin-top: -0.08em; /* optical: lift cap height to the figure's top edge */
-  }
-  .hero-body {
-    grid-column: 1 / 8;
-    grid-row: 2;
-    margin-top: 2.5rem;
-  }
-  .hero-figure {
-    grid-column: 9 / 13;
-    grid-row: 1 / span 2;
-    z-index: 0;
-    max-width: none;
-  }
-  .hero-meta {
-    grid-column: 9 / 13;
-    grid-row: 3;
-    margin-top: 2rem;
-    align-self: start;
-  }
-}
-
-/* ── Process plates ───────────────────────────────────────────
-   The display name is set four times, once per process ink. Only the K plate
-   is real text; C, M and Y are aria-hidden duplicates that land out of
-   register and pull in. They never reach true: a residual fraction of a pixel
-   is what separates "printed" from "rendered".
-   ───────────────────────────────────────────────────────────── */
-/* Deliberately NOT `isolation: isolate`. The inks have to multiply against
-   the paper behind the heading, and an isolated group would blend them
-   against transparent black instead. */
-.plate-word {
-  position: relative;
-  display: block;
-}
-
-.plate {
-  display: block;
-}
-
-/* K is the readable layer and the LCP paint. No animation, ever. */
-.plate-k {
-  position: relative;
-  z-index: 1;
-}
-
-.plate-c,
-.plate-m,
-.plate-y {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  /* Overlapping inks darken on paper and lighten on an unlit press sheet. */
-  mix-blend-mode: multiply;
-}
-
-.dark .plate-c,
-.dark .plate-m,
-.dark .plate-y {
-  mix-blend-mode: screen;
-}
-
-.plate-c {
-  color: #00aeef;
-  --reg-x: -0.014em;
-  --reg-y: 0.008em;
-}
-.plate-m {
-  color: #ec008c;
-  --reg-x: 0.012em;
-  --reg-y: -0.007em;
-}
-.plate-y {
-  color: #ffd400;
-  --reg-x: 0.004em;
-  --reg-y: 0.013em;
-}
-
-.plate-c,
-.plate-m,
-.plate-y {
-  opacity: var(--plate-ink, 0.4);
-  translate: var(--reg-x) var(--reg-y);
-}
-
-/* Screen blend is additive, so the same density that reads as a delicate
-   fringe on paper reads as a glow on an unlit sheet. Dark carries roughly
-   half the ink. */
-.dark {
-  --plate-ink: 0.24;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .js .plate-c,
-  .js .plate-m,
-  .js .plate-y {
-    animation: plate-register 1150ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .js .plate-m {
-    animation-delay: 90ms;
-  }
-  .js .plate-y {
-    animation-delay: 170ms;
-  }
-}
-
-@keyframes plate-register {
-  from {
-    /* Sixteen times the resting offset: visibly off the pin, then pulled in. */
-    translate: calc(var(--reg-x) * 16) calc(var(--reg-y) * 16);
-    opacity: calc(var(--plate-ink, 0.4) * 1.7);
-  }
-  to {
-    translate: var(--reg-x) var(--reg-y);
-    opacity: var(--plate-ink, 0.4);
-  }
-}
-
-.portrait-frame {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  overflow: hidden;
-  background: var(--paper-inset);
-  border: 1px solid var(--rule);
-}
-
-/* The live press. Sits over the photograph and only becomes visible once a
-   real frame has been drawn, so a WebGL failure is completely invisible. */
-.portrait-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 420ms ease;
-}
-.portrait-canvas[data-live] {
-  opacity: 1;
-}
-
-/* Sits below the plate, not on it: a caption printed over a photograph is
-   never reliably legible, whatever blend mode it uses. */
-.portrait-caption {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 0.7rem;
-  color: var(--ink-3);
-}
-
-/* The loupe only exists for a fine pointer, so the hint only exists there. */
-.portrait-caption-hint {
-  display: none;
-}
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .portrait-caption-hint {
-    display: inline;
-  }
-}
-
-.portrait-image {
-  object-fit: cover;
-  object-position: center 22%;
-  filter: var(--portrait-grade);
-}
-
-/* Grounds the photo into the page instead of letting it float as a
-   rectangle pasted on paper. */
-.portrait-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 2; /* above the press canvas */
-  pointer-events: none;
-  background:
-    linear-gradient(to top, var(--accent-wash), transparent 42%),
-    radial-gradient(120% 90% at 50% 100%, rgba(20, 20, 15, 0.14), transparent 62%);
-}
-
-.portrait-plate {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1.5rem;
-  background: var(--paper-inset);
-}
-
-/* Registration marks. Reads as a printed plate, costs nothing. */
-.portrait-mark {
-  position: absolute;
-  z-index: 2; /* above the press canvas */
-  width: 0.75rem;
-  height: 0.75rem;
-  pointer-events: none;
-  border-color: var(--rule-strong);
-}
-.portrait-mark-tl {
-  top: 0.5rem;
-  left: 0.5rem;
-  border-top: 1px solid;
-  border-left: 1px solid;
-}
-.portrait-mark-br {
-  right: 0.5rem;
-  bottom: 0.5rem;
-  border-right: 1px solid;
-  border-bottom: 1px solid;
-}
-
-/* ── Metrics marquee ──────────────────────────────────────────
-   The mask sits on this static outer element, never on the animated track,
-   so the compositor is not asked to re-rasterise a very wide layer.
-   ───────────────────────────────────────────────────────────── */
-.marquee {
-  position: relative;
-  overflow: hidden;
-  contain: content;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  padding-block: 1.25rem;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-}
-
-.marquee-track {
-  display: flex;
-  width: max-content;
-}
-
-.marquee-list {
-  display: flex;
-  align-items: baseline;
-  flex-shrink: 0;
-}
-
-.marquee-item {
-  display: flex;
-  align-items: baseline;
-  gap: 0.625rem;
-  padding-inline: 1.75rem;
-  white-space: nowrap;
-}
-
-.marquee-item + .marquee-item {
-  /* Red registration ticks between figures. Decorative, so alpha is fine. */
-  border-left: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .marquee-track {
-    animation: marquee 52s linear infinite;
-  }
-  .marquee:hover .marquee-track,
-  .marquee:focus-within .marquee-track {
-    animation-play-state: paused;
-  }
-}
-
-@keyframes marquee {
-  to {
-    /* Exactly one of the two identical tracks, so the loop is seamless. */
-    transform: translateX(-50%);
-  }
-}
-
-/* Reduced motion gets a real static row, not a paused animation: the track
-   stops being a single-line strip and wraps like ordinary content. */
-@media (prefers-reduced-motion: reduce) {
-  .marquee {
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-  .marquee-track {
-    width: 100%;
-  }
-  .marquee-list {
-    flex-wrap: wrap;
-    gap: 0.75rem 0;
-  }
-  .marquee-list[aria-hidden="true"] {
-    display: none;
-  }
-  .marquee-item {
-    padding-inline: 0 1.75rem;
-  }
-  .marquee-item + .marquee-item {
-    border-left: 0;
-  }
-}
-
-/* ── Press cursor ─────────────────────────────────────────────
-   A registration target. The crosshair tracks the pointer exactly so that
-   aiming stays honest; only the ring trails. Mounted by JS for fine pointers
-   with motion allowed, so the native cursor is only ever hidden when a real
-   replacement is on screen.
-   ───────────────────────────────────────────────────────────── */
-.press-cursor,
-.press-cursor a,
-.press-cursor button,
-.press-cursor summary,
-.press-cursor [role="button"] {
-  cursor: none;
-}
-
-/* Text entry always keeps a real caret cursor: a crosshair over an input is
-   actively misleading about what the click will do. */
-.press-cursor input,
-.press-cursor textarea,
-.press-cursor [contenteditable="true"] {
-  cursor: text;
-}
-
-.cursor-root {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 200ms ease;
-}
-.cursor-root[data-on] {
-  opacity: 1;
-}
-.cursor-root[data-state="text"] {
-  opacity: 0;
-}
-
-.cursor-cross,
-.cursor-ring {
-  position: absolute;
-  top: 0;
-  left: 0;
-  will-change: transform;
-}
-
-.cursor-arm {
-  position: absolute;
-  background: var(--accent);
-  transition:
-    width 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    height 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 200ms ease;
-}
-.cursor-arm-h {
-  left: -11px;
-  top: -0.5px;
-  width: 22px;
-  height: 1px;
-}
-.cursor-arm-v {
-  top: -11px;
-  left: -0.5px;
-  width: 1px;
-  height: 22px;
-}
-
-/* Over a live target the arms retract and the ring takes over. */
-.cursor-root[data-state="live"] .cursor-arm-h {
-  width: 8px;
-  left: -4px;
-}
-.cursor-root[data-state="live"] .cursor-arm-v {
-  height: 8px;
-  top: -4px;
-}
-
-.cursor-ring {
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
-  border: 1px solid var(--rule-strong);
-  border-radius: 50%;
-  transition:
-    width 300ms cubic-bezier(0.16, 1, 0.3, 1),
-    height 300ms cubic-bezier(0.16, 1, 0.3, 1),
-    margin 300ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 220ms ease,
-    opacity 220ms ease;
-}
-.cursor-root[data-state="live"] .cursor-ring {
-  width: 46px;
-  height: 46px;
-  margin: -23px 0 0 -23px;
-  border-color: var(--accent);
-}
-/* The portrait draws its own glass, so the ring gets out of the way. */
-.cursor-root[data-state="loupe"] .cursor-ring {
-  opacity: 0;
-}
-.cursor-root[data-state="loupe"] .cursor-arm {
-  opacity: 0.5;
-}
-.cursor-root[data-press] .cursor-ring {
-  width: 18px;
-  height: 18px;
-  margin: -9px 0 0 -9px;
-}
-
-.cursor-readout {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  white-space: nowrap;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-  opacity: 0;
-  transition: opacity 220ms ease;
-}
-.cursor-root[data-state="idle"] .cursor-readout,
-.cursor-root[data-state="loupe"] .cursor-readout {
-  opacity: 0.7;
-}
-
-/* ── Colour bar ───────────────────────────────────────────────
-   The control strip from the trim edge of a press sheet.
-   ───────────────────────────────────────────────────────────── */
-.press-bar {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.press-bar-label {
-  color: var(--ink-3);
-}
-
-.press-bar-inks,
-.press-bar-wedge {
-  display: flex;
-}
-
-.press-swatch {
-  position: relative;
-  width: 2.25rem;
-  height: 1.1rem;
-  display: grid;
-  place-items: center;
-}
-
-.press-swatch-key {
-  font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  letter-spacing: 0.14em;
-  /* Legible on both a yellow and a black swatch without a second token. */
-  color: #fff;
-  mix-blend-mode: difference;
-}
-
-.press-step {
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
-.press-bar-target {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* A miniature registration target, drawn with gradients rather than an SVG. */
-.press-target {
-  width: 0.85rem;
-  height: 0.85rem;
-  border: 1px solid var(--rule-strong);
-  border-radius: 50%;
-  background:
-    linear-gradient(to right, transparent calc(50% - 0.5px), var(--rule-strong) calc(50% - 0.5px), var(--rule-strong) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-    linear-gradient(to bottom, transparent calc(50% - 0.5px), var(--rule-strong) calc(50% - 0.5px), var(--rule-strong) calc(50% + 0.5px), transparent calc(50% + 0.5px));
-}
-
-/* ── Feature spread ───────────────────────────────────────────
-   Magazine spread for the top three projects. Media and copy alternate
-   sides by index; below 64rem the grid collapses to source order and the
-   oversized numeral disappears (the copy keeps its own meta line).
-   ───────────────────────────────────────────────────────────── */
-.feature-spread {
-  display: grid;
-  row-gap: 1.75rem;
-}
-
-.spread-media {
-  position: relative;
-}
-
-/* The numeral exists only where there is room to overlap the plate. */
-.spread-num {
-  display: none;
-}
-
-@media (width >= 64rem) {
-  .feature-spread {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    column-gap: 2rem;
-    align-items: center;
-  }
-  .feature-spread .spread-media {
-    grid-column: 1 / 8;
-    grid-row: 1;
-  }
-  .feature-spread .spread-copy {
-    grid-column: 9 / 13;
-    grid-row: 1;
-  }
-  .feature-spread[data-flip] .spread-media {
-    grid-column: 6 / 13;
-  }
-  .feature-spread[data-flip] .spread-copy {
-    grid-column: 1 / 5;
-    grid-row: 1;
-  }
-
-  /* Oversized index numeral, overlapping the plate's top outer corner.
-     Two characters, so unlike the hero interlock the geometry always fits. */
-  .spread-num {
-    display: block;
-    position: absolute;
-    z-index: 2;
-    top: -0.52em;
-    left: -0.06em;
-    font-family: var(--font-display);
-    font-size: clamp(4.5rem, 8vw, 7.5rem);
-    line-height: 1;
-    letter-spacing: -0.03em;
-    font-variant-numeric: tabular-nums;
-    color: var(--accent);
-    pointer-events: none;
-  }
-  .feature-spread[data-flip] .spread-num {
-    left: auto;
-    right: -0.06em;
-  }
-}
-
-/* ── Cursor-following work preview ────────────────────────────
-   The card is a sibling of the row list, positioned with transforms only.
-   It is decorative and aria-hidden: everything it shows is already in the
-   row markup, so a screen reader loses nothing.
-   ───────────────────────────────────────────────────────────── */
-.work-preview-root {
-  position: relative;
-}
-
-.work-preview-card {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 20; /* below the z-40 sticky subheader and the z-50 header */
-  width: 300px;
-  height: 190px;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
-  box-shadow: var(--raise);
-  transition:
-    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s linear 220ms;
-}
-
-.work-preview-card[data-visible="true"] {
-  opacity: 1;
-  visibility: visible;
-  transition:
-    opacity 220ms cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0s;
-}
-
-.work-preview-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: var(--media-grade);
-}
-
-.work-preview-body {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: 0.875rem 1rem;
-}
-
-/* With a cover behind it the caption needs its own ground to stay legible. */
-.work-preview-card[data-has-image="true"] .work-preview-body {
-  background: linear-gradient(to top, var(--paper-raised) 62%, transparent);
-}
-
-/* Without one, the card is purely typographic and fills the frame. */
-.work-preview-card[data-has-image="false"] .work-preview-body {
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 1.25rem;
-}
-
-/* Touch and reduced-motion never see it, so it must never take up space. */
-@media (pointer: coarse), (prefers-reduced-motion: reduce) {
-  .work-preview-card {
-    display: none;
-  }
-}
-
-/* ── Prose ────────────────────────────────────────────────────
-   Hand-rolled rather than @tailwindcss/typography, which would fight the
-   fluid type scale and the token system for no gain over this.
-   ───────────────────────────────────────────────────────────── */
-.prose {
-  max-width: var(--container-measure);
-  font-size: 1.0625rem;
-  line-height: 1.75;
-  color: var(--ink-2);
-}
-
-.prose > * + * {
-  margin-top: 1.35em;
-}
-
-.prose h2,
-.prose h3,
-.prose h4 {
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.015em;
-}
-
-.prose h2 {
-  margin-top: 2.6em;
-  font-size: 1.85rem;
-  line-height: 1.2;
-}
-.prose h3 {
-  margin-top: 2.1em;
-  font-size: 1.4rem;
-  line-height: 1.25;
-}
-.prose h4 {
-  margin-top: 1.9em;
-  font-size: 1.15rem;
-}
-
-.prose strong {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.prose a {
-  color: var(--ink);
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 1px;
-  transition: background-size 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.prose a:hover {
-  background-size: 0% 1px;
-}
-
-/* The autolink wrapper must not inherit the underline treatment. */
-.prose .heading-anchor {
-  background-image: none;
-  color: inherit;
-}
-
-.prose ul,
-.prose ol {
-  padding-left: 1.4em;
-}
-.prose ul {
-  list-style: disc;
-}
-.prose ol {
-  list-style: decimal;
-}
-.prose li + li {
-  margin-top: 0.5em;
-}
-.prose li::marker {
-  color: var(--ink-3);
-}
-
-.prose blockquote {
-  border-left: 2px solid var(--ink);
-  padding-left: 1.25rem;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  line-height: 1.5;
-  color: var(--ink);
-}
-
-.prose hr {
-  border: 0;
-  border-top: 1px solid var(--rule);
-  margin-block: 2.5em;
-}
-
-.prose figure figcaption {
-  margin-top: 0.75rem;
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.prose table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-}
-.prose th,
-.prose td {
-  border-bottom: 1px solid var(--rule);
-  padding: 0.6rem 0.75rem 0.6rem 0;
-  text-align: left;
-  vertical-align: top;
-}
-.prose th {
-  color: var(--ink);
-  font-weight: 500;
-}
-
-/* Wide content must scroll inside itself, never widen the page. */
-.prose .table-scroll,
-.prose pre {
-  overflow-x: auto;
-}
-
-/* ── Code ─────────────────────────────────────────────────────
-   rehype-pretty-code emits inline --shiki-light / --shiki-dark custom
-   properties per token, so one payload serves both themes and the swap is
-   a CSS variable read. No JavaScript, no second request.
-   ───────────────────────────────────────────────────────────── */
-.prose code {
-  font-family: var(--font-mono);
-  font-size: 0.875em;
-}
-
-/* Inline code, not inside a block. */
-.prose :not(pre) > code {
-  border: 1px solid var(--rule);
-  background: var(--paper-inset);
-  border-radius: 2px;
-  padding: 0.15em 0.35em;
-  color: var(--ink);
-}
-
-.prose pre {
-  border: 1px solid var(--rule);
-  background: var(--paper-inset);
-  padding: 1rem 1.15rem;
-  font-size: 0.875rem;
-  line-height: 1.7;
-  tab-size: 2;
-}
-
-.prose pre > code {
-  display: grid; /* one row per line, so line highlighting can span full width */
-  font-size: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-}
-
-.prose [data-line] {
-  padding-inline: 0.15rem;
-}
-
-.prose code[data-theme] span,
-.prose code[data-theme] {
-  color: var(--shiki-light);
-  font-style: var(--shiki-light-font-style);
-  font-weight: var(--shiki-light-font-weight);
-}
-
-.dark .prose code[data-theme] span,
-.dark .prose code[data-theme] {
-  color: var(--shiki-dark);
-  font-style: var(--shiki-dark-font-style);
-  font-weight: var(--shiki-dark-font-weight);
-}
-
-.dark .prose pre,
-.dark .prose :not(pre) > code {
-  background: var(--paper-raised);
-}
-
-.prose [data-highlighted-line] {
-  background: var(--accent-wash);
-  box-shadow: inset 2px 0 0 var(--accent);
-}
-
-.prose [data-rehype-pretty-code-title] {
-  border: 1px solid var(--rule);
-  border-bottom: 0;
-  background: var(--paper-inset);
-  padding: 0.5rem 1.15rem;
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.prose [data-rehype-pretty-code-title] + pre {
-  margin-top: 0;
-}
-
-.highlight-mark {
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  background: linear-gradient(
-    180deg,
-    transparent 16%,
-    var(--spot) 16%,
-    var(--spot) 88%,
-    transparent 88%
-  );
-  padding-inline: 0.06em;
-  color: #14140f;
-}
-
-/* Active header nav item: an accent underline instead of a colour change, so
-   the label keeps full ink contrast and the red stays a mark, not text. */
-.nav-active {
-  background-image: linear-gradient(var(--accent), var(--accent));
-  background-repeat: no-repeat;
-  background-position: 50% calc(100% - 0.2rem);
-  background-size: calc(100% - 1.25rem) 2px;
-}
-
-/* ── Char-slide link hover ────────────────────────────────────
-   The label is stacked twice inside an overflow-clipped line; hovering the
-   `.slide-trigger` ancestor slides both copies up one line. The duplicate is
-   aria-hidden. No-hover devices and reduced motion never see it move.
-   ───────────────────────────────────────────────────────────── */
-.link-slide {
-  position: relative;
-  display: block;
-  overflow: clip;
-}
-.link-slide > span {
-  display: block;
-}
-.link-slide > span[aria-hidden] {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-}
-
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .slide-trigger .link-slide > span {
-    transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  /* The duplicate trails by a frame's worth, which is what makes it read as
-     type moving rather than a block sliding. */
-  .slide-trigger .link-slide > span[aria-hidden] {
-    transition-delay: 45ms;
-  }
-  .slide-trigger:hover .link-slide > span,
-  .slide-trigger:focus-visible .link-slide > span {
-    transform: translateY(-100%);
-  }
-}
-
-/* ── Duotone media ────────────────────────────────────────────
-   Screenshots rest as an accent-washed monochrome plate and release to full
-   colour on hover, so mixed-palette UI shots sit inside the art direction
-   instead of on top of it. Hover-incapable and reduced-motion users always
-   get full colour.
-   ───────────────────────────────────────────────────────────── */
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .duotone-frame img {
-    filter: grayscale(1) contrast(1.03) var(--media-grade);
-    transition: filter 340ms ease;
-  }
-  .duotone-frame::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: var(--accent);
-    opacity: 0.14;
-    mix-blend-mode: multiply;
-    transition: opacity 340ms ease;
-  }
-  .duotone-frame:hover img {
-    filter: var(--media-grade);
-  }
-  .duotone-frame:hover::after {
-    opacity: 0;
-  }
-}
-
-/* ── Touch targets ────────────────────────────────────────────
-   Standalone navigation links are set at 13px, which gives an 18px tall hit
-   area: fine for a cursor, far under the 24px minimum for a finger. On a
-   coarse pointer they get a real 44px target without moving the text, since
-   the box grows around a centred label. Links inside running prose are
-   deliberately untouched: they are exempt, and padding them would wreck the
-   line rhythm.
-   ───────────────────────────────────────────────────────────── */
-@media (pointer: coarse) {
-  .tap,
-  .tap-list a {
+/* 44px hit area on a finger without moving the text: the box grows around
+   a centred label. Links inside running prose are exempt by design. */
+@utility tap {
+  @media (pointer: coarse) {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -1417,244 +563,202 @@
   }
 }
 
-/* Hairline index rows, the project list and recognition list. */
-.index-row {
-  position: relative;
-  transition:
-    background-color 200ms ease,
-    border-color 200ms ease;
-}
-/* Accent rule that draws in along the row's top edge on hover. */
-.index-row::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.index-row:hover::after {
-  transform: scaleX(1);
-}
-.index-row:hover {
-  background-color: var(--paper-inset);
-  border-color: var(--rule-strong);
-}
-.index-row .row-arrow {
-  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.index-row:hover .row-arrow {
-  transform: translate(4px, -4px);
-}
-.index-row .row-num {
-  color: var(--ink-3);
-  transition: color 200ms ease;
-}
-.index-row:hover .row-num {
-  /* The inset hover fill is lighter than paper, so the small numeral needs
-     the darker accent variant to hold 4.5:1 there. */
-  color: var(--accent-ink);
+/* ─────────────────────────────────────────────────────────────
+   6. Display leading below 48rem
+   The display scale is tight because it is drawn for large type. At the
+   bottom of the clamp the same ratios put descenders into the next line's
+   ascenders, so phones get +0.06 back. Values must be literal, not token
+   overrides: `@theme inline` bakes the number into the utility, so
+   redefining the custom property here would do nothing.
+   ───────────────────────────────────────────────────────────── */
+@media (width < 48rem) {
+  .text-display-xl {
+    line-height: 0.98;
+  }
+  .text-display-l {
+    line-height: 1.08;
+  }
+  .text-display-m {
+    line-height: 1.16;
+  }
+  .text-display-s {
+    line-height: 1.31;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
-   7. Motion
-   ───────────────────────────────────────────────────────────── */
-
-/* Entrance. Note the LCP rule: the display headline uses `.enter-clip`,
-   which paints immediately, rather than fading in from opacity 0. */
-.enter > * {
-  animation: enter 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--stagger, 0) * 65ms);
-}
-
-@keyframes enter {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.enter-clip {
-  animation: enter-clip 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes enter-clip {
-  from {
-    clip-path: inset(105% 0 0 0);
-  }
-  to {
-    clip-path: inset(-20% -10% -20% -10%);
-  }
-}
-
-.rule-draw {
-  animation: rule-draw 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  transform-origin: left;
-}
-
-@keyframes rule-draw {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-/* Scroll reveal. Gated on `.js` so a visitor without JavaScript is never
-   served a page of permanently invisible content. */
-@media (prefers-reduced-motion: no-preference) {
-  .js .reveal:not([data-revealed]) {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  .js .reveal {
-    transition:
-      opacity 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms),
-      transform 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--reveal-delay, 0ms);
-  }
-}
-
-/* ── View transitions ─────────────────────────────────────────
+   7. View transitions (§5.8)
    Unsupported browsers render children and simply do not animate, which is
-   why this needs no fallback.
+   why this needs no fallback. The header has its own group and never moves.
    ───────────────────────────────────────────────────────────── */
-/* The outgoing page holds still and the incoming one is laid over it, the way
-   a sheet is pulled through. A cross fade would read as software; a wipe with
-   a soft leading edge reads as ink meeting paper. */
-::view-transition-old(root) {
-  animation: ink-out 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-::view-transition-new(root) {
-  animation: ink-in 420ms cubic-bezier(0.22, 1, 0.28, 1) both;
-}
-
-@keyframes ink-in {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-
-@keyframes ink-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.55;
-  }
-}
-
-/* The header is fixed and must not travel with the page. */
 ::view-transition-group(site-header) {
   animation: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
+/* Phones: a plain crossfade. Also the base the mask below builds on. */
+::view-transition-old(root) {
+  animation: vt-fade-out var(--dur-2) var(--ease-page) both;
+}
+::view-transition-new(root) {
+  animation: vt-fade-in var(--dur-2) var(--ease-page) both;
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Tablet and up: the old page disperses into dots and the new one resolves
+   from them. Both snapshots sit under a disc mask at the pitch; the disc
+   radius is what animates. 0.71 × pitch covers the tile (the page is whole),
+   0 is nothing. Where both are partially masked the ground shows through,
+   which is the board between things. 280 ms out, 320 ms in, 120 ms apart. */
+@media (width >= 48rem) {
+  ::view-transition-old(root) {
+    --vt-r: calc(0.71 * var(--pitch));
+    mask-image: radial-gradient(
+      circle,
+      #000 var(--vt-r),
+      transparent calc(var(--vt-r) + 0.5px)
+    );
+    mask-size: var(--pitch) var(--pitch);
+    animation: vt-disperse 280ms var(--ease-page) both;
+  }
   ::view-transition-new(root) {
-    animation: none;
-    clip-path: none;
+    --vt-r: 0px;
+    mask-image: radial-gradient(
+      circle,
+      #000 var(--vt-r),
+      transparent calc(var(--vt-r) + 0.5px)
+    );
+    mask-size: var(--pitch) var(--pitch);
+    animation: vt-resolve var(--dur-3) var(--ease-page) 120ms both;
+  }
+}
+@keyframes vt-disperse {
+  from {
+    --vt-r: calc(0.71 * var(--pitch));
+  }
+  to {
+    --vt-r: 0px;
+  }
+}
+@keyframes vt-resolve {
+  from {
+    --vt-r: 0px;
+  }
+  to {
+    --vt-r: calc(0.71 * var(--pitch));
   }
 }
 
-/* ── Scroll-driven decoration ─────────────────────────────────
-   Strictly an enhancement. Firefox has no support for animation-timeline at
-   all, so nothing here may carry meaning: Reveal remains the universal
-   baseline and layout is identical either way.
+/* ─────────────────────────────────────────────────────────────
+   8. Print
+   Case studies get printed. Ink on white, the board hidden, every dot
+   surface in its finished state, external links spelled out.
    ───────────────────────────────────────────────────────────── */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .type-track {
-      animation: type-track linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 38%;
-    }
-    @keyframes type-track {
-      from {
-        opacity: 0.68;
-        letter-spacing: 0.008em;
-        /* Fraunces carries a real optical size axis, so the heading is cut
-           for display size as it arrives rather than being scaled. This is a
-           genuine change of letterform, not a transform. */
-        font-variation-settings: "opsz" 14;
-      }
-      to {
-        opacity: 1;
-        letter-spacing: -0.02em;
-        font-variation-settings: "opsz" 144;
-      }
-    }
-
-    /* Spread numerals drift against the scroll, slightly slower than the
-       page. Transform only, and the numeral is aria-hidden decoration. */
-    .spread-num {
-      animation: spread-num-drift linear both;
-      animation-timeline: view();
-      animation-range: entry 0% exit 100%;
-    }
-    @keyframes spread-num-drift {
-      from {
-        translate: 0 0.3em;
-      }
-      to {
-        translate: 0 -0.3em;
-      }
-    }
-
-    /* An accent hairline draws along the band's top edge as it enters.
-       Declared entirely inside @supports, so Firefox has no extra box. */
-    .ink-band::after {
-      content: "";
-      position: absolute;
-      top: -1px;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: var(--accent);
-      transform-origin: left;
-      animation: rule-scale linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 35%;
-    }
-    @keyframes rule-scale {
-      from {
-        transform: scaleX(0);
-      }
-      to {
-        transform: scaleX(1);
-      }
-    }
+@media print {
+  :root {
+    color-scheme: light;
+    --ground: #ffffff;
+    --ground-2: #f3f3f1;
+    --ground-3: #ebebe8;
+    --ink: #111111;
+    --ink-2: #444444;
+    --ink-3: #666666;
+    --dot-off: #d2d2ce;
+    --line: rgba(0, 0, 0, 0.14);
+    --line-strong: rgba(0, 0, 0, 0.42);
+    --sun: #b8431a; /* 5.6:1 on white; the screen orange is 2.9:1 there */
+    --p: 1;
   }
-}
 
-/* Keep opacity fades (no vestibular risk); kill movement. */
-@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body > header,
+  canvas,
+  dialog {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
   }
-  .reveal,
-  .enter > *,
-  .enter-clip,
-  .rule-draw {
-    opacity: 1 !important;
-    transform: none !important;
-    clip-path: none !important;
+
+  .dot-mask {
+    --dot-r: calc(0.71 * var(--pitch)) !important;
   }
+
+  /* Numerals print lit, whether or not they were ever scrolled into view.
+     `.numeral` is the class <Numeral> renders (components.css); `.font-dot`
+     covers a stray use of the utility. */
+  .numeral,
+  .font-dot {
+    font-weight: 700 !important;
+    font-variation-settings:
+      "ROND" 100,
+      "wght" 700 !important;
+  }
+
+  main a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-family: var(--font-mono);
+    font-size: var(--text-meta);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink-3);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   9. Reduced motion
+   Two sources, one policy: the OS query and data-motion="reduce" from the
+   palette toggle. Timed animations stop (numerals warm, masks resolve and
+   hairlines draw through transitions gated by `motion-ok`, so they simply
+   render finished); scroll-driven animations fall to their base state,
+   which every consumer defines as the finished one; view transitions lose
+   their pseudo-elements entirely; --p is 1. Colour transitions are left
+   alone, they are not motion.
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --p: 1;
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    mask-image: none !important;
+  }
+}
+
+:root[data-motion="reduce"] {
+  --p: 1;
+  scroll-behavior: auto;
+}
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation: none !important;
+}
+:root[data-motion="reduce"]::view-transition-group(*),
+:root[data-motion="reduce"]::view-transition-image-pair(*),
+:root[data-motion="reduce"]::view-transition-old(*),
+:root[data-motion="reduce"]::view-transition-new(*) {
+  animation: none !important;
+  mask-image: none !important;
 }

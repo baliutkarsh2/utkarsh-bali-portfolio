@@ -7,9 +7,8 @@ export type ProjectLink = {
 };
 
 /**
- * Slots for media the site does not have yet. Every consumer must handle these
- * being undefined, see `SpecPlate`, which renders a typographic panel at the
- * same aspect ratio so layout does not shift when a real image lands.
+ * Optional media. Every consumer must handle these being undefined: there are
+ * no placeholder plates, a project without a cover simply has no cover.
  */
 export type MediaSlot = {
   kind: "image" | "video";

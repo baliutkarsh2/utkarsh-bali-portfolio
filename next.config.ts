@@ -2,7 +2,7 @@ import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
-import codeThemes from "./src/lib/code-theme.json" with { type: "json" };
+import codeTheme from "./src/lib/code-theme.json" with { type: "json" };
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 
@@ -47,9 +47,11 @@ const withMDX = createMDX({
       [
         "rehype-pretty-code",
         {
-          // Custom themes rather than builtins: builtin themes assume an
-          // editor background and several fail AA against the paper token.
-          theme: { light: codeThemes.light, dark: codeThemes.dark },
+          // One custom dark theme rather than a builtin: builtin themes assume
+          // an editor background and several fail AA against --ground-2.
+          // With a single theme rehype-pretty-code inlines token colours as
+          // `style="color:…"`; there are no `--shiki-*` variables to map.
+          theme: codeTheme,
           keepBackground: false,
           defaultLang: { block: "text", inline: "text" },
         },

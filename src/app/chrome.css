@@ -1,0 +1,771 @@
+/* ─────────────────────────────────────────────────────────────
+   Global chrome: skip link, header, mobile menu, footer, command
+   palette, nine-dot mark, mission line. Imported by globals.css
+   after the tokens, so every var() below resolves from :root.
+
+   Conventions:
+   - Component rules live in @layer components so a utility in JSX
+     still wins on the same element.
+   - Type sizes and fonts come from utilities in the JSX (text-small,
+     meta, text-display-l); this file sets colour, layout and state
+     from the :root tokens only.
+   - Words never animate. The only transitions here are on fills,
+     rules, LEDs, dialog opacity/scale and hairline draws.
+   ───────────────────────────────────────────────────────────── */
+
+@layer components {
+  /* ── Skip link ─────────────────────────────────────────────── */
+
+  .skip-link {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: var(--z-skip);
+    display: inline-flex;
+    align-items: center;
+    height: 2.75rem;
+    padding-inline: var(--space-2);
+    background: var(--ink);
+    color: var(--ground);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  /* Clipped, not display:none, so it stays in the tab order. */
+  .skip-link:not(:focus-visible) {
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  /* ── Header ────────────────────────────────────────────────── */
+
+  .site-header {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    z-index: var(--z-header);
+    height: 3.5rem;
+    background: var(--header-bg);
+    -webkit-backdrop-filter: blur(var(--header-blur));
+    backdrop-filter: blur(var(--header-blur));
+    /* Its own view-transition group: a fixed header inside the root
+       snapshot appears to slide with the page on every navigation. */
+    view-transition-name: site-header;
+  }
+
+  /* The scrolled state is one hairline fading in. Nothing else changes. */
+  .site-header::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--line);
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease-snap);
+  }
+
+  .site-header[data-scrolled]::after {
+    opacity: 1;
+  }
+
+  /* The menu dialog is opaque and full-screen; lock the document behind
+     it so a wheel or touch on the menu cannot scroll the page it hides. */
+  html:has(.site-header[data-menu-open]) {
+    overflow: hidden;
+  }
+
+  .site-header-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    height: 100%;
+    column-gap: var(--space-2);
+  }
+
+  /* From md the nav is a real centre column, so it stays centred no matter
+     how wide the readout on the right grows. minmax(0, 1fr) rather than 1fr:
+     a bare 1fr track has min-width auto and would widen for a long readout
+     instead of letting it clip. */
+  @media (width >= 48rem) {
+    .site-header-inner {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+  }
+
+  .site-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .site-nav {
+    display: none;
+  }
+
+  @media (width >= 48rem) {
+    .site-nav {
+      display: block;
+      justify-self: center;
+    }
+  }
+
+  .site-nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding-inline: 0.75rem;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition: color var(--dur-1) var(--ease-snap);
+  }
+
+  .nav-link:hover,
+  .nav-link[aria-current="page"] {
+    color: var(--ink);
+  }
+
+  /* The active-route LED. It lives in the link's left padding so the label
+     does not move between routes. 4px, --ink (the page's one --sun element
+     belongs to the page, never to the chrome), never animates. */
+  .nav-led {
+    position: absolute;
+    left: 0.125rem;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin-top: -2px;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+
+  .site-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    justify-self: end;
+    min-width: 0;
+  }
+
+  /* The section readout. The SectionSpy sets its textContent; no transition
+     so the words never animate. Shown from lg, and only once it has text. A
+     long section title ("04 BUILDING SOMETHING? LET'S TALK.") clips with an
+     ellipsis rather than pushing the chip out of the bar. */
+  .readout {
+    display: none;
+    min-width: 0;
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  @media (width >= 64rem) {
+    .readout {
+      display: block;
+    }
+  }
+
+  .readout:empty {
+    display: none;
+  }
+
+  /* Hairline chip. --line at rest is deliberate: the text is the affordance,
+     and the border firms up to --line-strong under the pointer. */
+  .kbd-chip {
+    display: none;
+    align-items: center;
+    height: 1.75rem;
+    padding-inline: 0.5rem;
+    border: 1px solid var(--line);
+    background: none;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition:
+      color var(--dur-1) var(--ease-snap),
+      border-color var(--dur-1) var(--ease-snap);
+  }
+
+  @media (width >= 48rem) {
+    .kbd-chip {
+      display: inline-flex;
+    }
+  }
+
+  .kbd-chip:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+
+  .kbd-chip kbd {
+    font: inherit;
+    letter-spacing: inherit;
+  }
+
+  /* On a tablet the chip keeps its 1.75rem box (a 44px-tall bordered chip in
+     a 56px bar reads as a button, and it is a key hint); the hit area grows
+     to 44px through a pseudo-element instead: 28px + 2 × 8px. */
+  @media (pointer: coarse) {
+    .kbd-chip {
+      position: relative;
+    }
+    .kbd-chip::before {
+      content: "";
+      position: absolute;
+      inset: -0.5rem -0.375rem;
+    }
+  }
+
+  .menu-button,
+  .menu-close {
+    display: inline-flex;
+    align-items: center;
+    height: 2.75rem;
+    padding: 0 0.25rem;
+    border: 0;
+    background: none;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: color var(--dur-1) var(--ease-snap);
+  }
+
+  .menu-button:hover,
+  .menu-close:hover {
+    color: var(--ink);
+  }
+
+  @media (width >= 48rem) {
+    .menu-button {
+      display: none;
+    }
+  }
+
+  /* ── Mobile menu dialog ───────────────────────────────────── */
+
+  .menu {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--ground);
+    color: var(--ink);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 1;
+    /* Opacity only, --dur-2. display/overlay are transitioned discretely so
+       the fade out can finish before the dialog leaves the top layer. */
+    transition:
+      opacity var(--dur-2) var(--ease-snap),
+      display var(--dur-2) allow-discrete,
+      overlay var(--dur-2) allow-discrete;
+  }
+
+  .menu:not([open]) {
+    opacity: 0;
+  }
+
+  @starting-style {
+    .menu[open] {
+      opacity: 0;
+    }
+  }
+
+  /* Full-screen and opaque: nothing to scrim. */
+  .menu::backdrop {
+    display: none;
+  }
+
+  .menu-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 3.5rem;
+  }
+
+  .menu-nav-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .menu-nav-list li {
+    border-top: 1px solid var(--line);
+  }
+
+  .menu-nav-list li:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* display-l routes. Left padding reserves the LED gutter so the five
+     labels align whether or not one of them is current. */
+  .menu-route {
+    position: relative;
+    display: block;
+    padding: var(--space-2) 0 var(--space-2) calc(4px + var(--space-2));
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .menu-route .nav-led {
+    left: 0;
+  }
+
+  .menu-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+    padding-block: var(--space-4);
+    list-style: none;
+    color: var(--ink-3);
+  }
+
+  .menu-social {
+    color: var(--ink-2);
+    text-decoration: none;
+    transition: color var(--dur-1) var(--ease-snap);
+  }
+
+  .menu-social:hover {
+    color: var(--ink);
+  }
+
+  /* ── Footer ───────────────────────────────────────────────── */
+
+  /* Positioned above the board like every `main > *`: the hero and 404
+     canvases are position: fixed at z 0 inside their section, and a short
+     page (404) can have the footer on screen while dots are still dispersing. */
+  .site-footer {
+    position: relative;
+    z-index: var(--z-content);
+    padding-block: var(--space-8) var(--space-5);
+  }
+
+  .footer-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4) var(--space-6);
+  }
+
+  /* "Connecting the dots" then the three dots one pitch later: the words'
+     ellipsis is made of the site's own dots. */
+  .footer-mission-line {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pitch);
+    margin: 0;
+    color: var(--ink-3);
+  }
+
+  .footer-identity p {
+    margin: 0;
+  }
+
+  @media (width >= 40rem) {
+    .footer-identity {
+      text-align: right;
+    }
+  }
+
+  .footer-links {
+    margin-top: var(--space-6);
+  }
+
+  .footer-links-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* The dotted underline, and the colour transition that goes with it, come
+     from the dot-underline utility on the same element (utilities outrank
+     this layer, so a transition here would be dead). Only the colours live
+     here. */
+  .footer-link {
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+
+  .footer-link:hover {
+    color: var(--ink);
+  }
+
+  .footer-colophon {
+    margin: var(--space-6) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+    color: var(--ink-3);
+  }
+
+  /* ── Command palette ──────────────────────────────────────── */
+
+  /* The <dialog> is the panel: 40rem at 12vh on --ground-2 with a --line-strong
+     border, radius 0. Left padding reserves the LED gutter on every row. */
+  .palette {
+    --palette-pad: 1.25rem;
+    position: fixed;
+    top: 12vh;
+    bottom: auto;
+    inset-inline: 0;
+    width: min(40rem, calc(100% - 2rem));
+    max-width: none;
+    max-height: calc(88vh - 1rem);
+    margin: 0 auto;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    background: var(--ground-2);
+    color: var(--ink);
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 1;
+    scale: 1;
+    transition:
+      opacity 160ms var(--ease-out),
+      scale 160ms var(--ease-out),
+      display 160ms allow-discrete,
+      overlay 160ms allow-discrete;
+  }
+
+  /* Only while open: an unconditional display would show the closed dialog. */
+  .palette[open] {
+    display: flex;
+  }
+
+  .palette:not([open]) {
+    opacity: 0;
+    scale: 0.98;
+    transition-duration: 120ms;
+  }
+
+  @starting-style {
+    .palette[open] {
+      opacity: 0;
+      scale: 0.98;
+    }
+  }
+
+  /* The second of the site's two blurred surfaces. */
+  .palette::backdrop {
+    background: var(--scrim);
+    -webkit-backdrop-filter: blur(var(--scrim-blur));
+    backdrop-filter: blur(var(--scrim-blur));
+    opacity: 1;
+    transition:
+      opacity 160ms var(--ease-out),
+      display 160ms allow-discrete,
+      overlay 160ms allow-discrete;
+  }
+
+  .palette:not([open])::backdrop {
+    opacity: 0;
+    transition-duration: 120ms;
+  }
+
+  @starting-style {
+    .palette[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  .palette-input {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+    height: 3.25rem;
+    padding-inline: var(--palette-pad) var(--space-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .palette-prompt {
+    color: var(--ink-3);
+  }
+
+  /* The one place without the focus ring. The input is the only focusable
+     element inside a modal dialog, so where focus is cannot be in doubt; the
+     active result row (fill + LED, driven by aria-activedescendant) is the
+     visible focus, as in every command palette. A --sun outline through the
+     3.25rem bar would also be the screen's second accent (rule 3). */
+  .palette-field {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    outline: none;
+  }
+
+  .palette-field::placeholder {
+    color: var(--ink-3);
+  }
+
+  .palette-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 52vh;
+    padding-block: var(--space-1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .palette-group-label {
+    margin: 0;
+    padding: var(--space-2) var(--space-2) 0.375rem var(--palette-pad);
+    color: var(--ink-3);
+  }
+
+  .palette-empty {
+    margin: 0;
+    padding: var(--space-4) var(--palette-pad);
+    color: var(--ink-2);
+  }
+
+  /* Compact row: label left, hint right. The fill commits on --ease-snap;
+     the text does not move. */
+  .palette-row {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 0.625rem var(--space-2) 0.625rem var(--palette-pad);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition:
+      background-color var(--dur-2) var(--ease-snap),
+      color var(--dur-1) var(--ease-snap);
+  }
+
+  /* 44px rows on a finger: 12px + 21.7px (small) + 12px. */
+  @media (pointer: coarse) {
+    .palette-row {
+      padding-block: 0.75rem;
+    }
+  }
+
+  .palette-row[data-active="true"] {
+    background: var(--ground-3);
+    color: var(--ink);
+  }
+
+  /* The one accent element on this screen: a 4px --sun LED in the gutter. */
+  .palette-row[data-active="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin-top: -2px;
+    border-radius: 50%;
+    background: var(--sun);
+  }
+
+  .palette-row-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .palette-row-hint {
+    flex: none;
+    color: var(--ink-3);
+  }
+
+  /* --ink-3 is 4.95:1 on --ground-3, below the floor for 11px text, so the
+     hint steps up to --ink-2 (7.0:1) while its row carries the fill. */
+  .palette-row[data-active="true"] .palette-row-hint {
+    color: var(--ink-2);
+  }
+
+  .palette-foot {
+    display: flex;
+    flex: none;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 0.625rem var(--space-2) 0.625rem var(--palette-pad);
+    border-top: 1px solid var(--line);
+    color: var(--ink-3);
+  }
+
+  /* ── Nine-dot mark ────────────────────────────────────────── */
+
+  /* Three pitches square; the SVG has no viewBox and places its dots at
+     1/6, 3/6, 5/6 of this box, so the mark reads as a cut-out of the field
+     at either pitch, with 1px lines and 1.5px dots in CSS pixels. */
+  .nine-dot-mark {
+    display: block;
+    flex: none;
+    width: calc(3 * var(--pitch));
+    height: calc(3 * var(--pitch));
+    overflow: visible;
+    color: var(--ink);
+  }
+
+  .nine-dot-mark circle {
+    fill: currentColor;
+  }
+
+  /* Hairlines between neighbours, hidden at rest, drawn on hover of the link
+     in 220ms. --line-strong rather than --line: a 5px segment at 10% ink is
+     invisible, and the connection is meant to be seen. The dash draw relies
+     on the stroke scaling normally: with `vector-effect: non-scaling-stroke`
+     Chromium measures dashes in screen space and the segments render dashed
+     at every offset. */
+  .nine-dot-mark line {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 220ms var(--ease-snap);
+  }
+
+  :is(a, button):is(:hover, :focus-visible) .nine-dot-mark line,
+  .nine-dot-mark:hover line {
+    stroke-dashoffset: 0;
+  }
+
+  /* ── Mission line ─────────────────────────────────────────── */
+
+  .mission-line {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--ink);
+  }
+
+  /* (n − 1) pitches wide, one pitch tall; the SVG has no viewBox and lays its
+     dots out in percentages of this box, so they sit one pitch apart at
+     either pitch. The end dots overflow by 0.75px on purpose. */
+  .mission-line-rule {
+    display: block;
+    flex: none;
+    width: calc((var(--n, 7) - 1) * var(--pitch));
+    height: var(--pitch);
+    overflow: visible;
+  }
+
+  .mission-line-rule circle {
+    fill: currentColor;
+  }
+
+  /* Base state is drawn: the finished line is the fallback for no JS, no
+     scroll timelines and reduced motion alike. */
+  .mission-line-rule line {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .mission-line-text {
+    color: var(--ink-3);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* With JS: hidden until <Reveal> lands data-in on it or an ancestor,
+       then it draws over --dur-5. The `.js` root class comes from the
+       inline head script, so a page without JS never waits on this. */
+    :root.js:not([data-motion="reduce"]) .mission-line-rule line {
+      stroke-dashoffset: 1;
+      transition: stroke-dashoffset var(--dur-5) var(--ease-out);
+    }
+
+    :root.js:not([data-motion="reduce"])
+      :is(.mission-line[data-in], [data-in] .mission-line)
+      .mission-line-rule
+      line {
+      stroke-dashoffset: 0;
+    }
+
+    /* Without JS, browsers with scroll timelines scrub the draw as the line
+       enters the viewport; the rest simply show it drawn. */
+    @supports (animation-timeline: view()) {
+      :root:not(.js) .mission-line-rule line {
+        animation: mission-draw linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 35%;
+      }
+    }
+  }
+}
+
+@keyframes mission-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Reduced motion, from the OS or the palette toggle. Opacity fades
+   stay (they are not motion); scale and hairline draws go.
+   ───────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .nine-dot-mark line {
+    transition: none;
+  }
+  .palette,
+  .palette:not([open]) {
+    scale: 1;
+    transition:
+      opacity 160ms var(--ease-out),
+      display 160ms allow-discrete,
+      overlay 160ms allow-discrete;
+  }
+}
+
+:root[data-motion="reduce"] .nine-dot-mark line {
+  transition: none;
+}
+
+:root[data-motion="reduce"] .palette,
+:root[data-motion="reduce"] .palette:not([open]) {
+  scale: 1;
+  transition:
+    opacity 160ms var(--ease-out),
+    display 160ms allow-discrete,
+    overlay 160ms allow-discrete;
+}
+
+@media print {
+  .site-header,
+  .skip-link,
+  .menu,
+  .palette {
+    display: none;
+  }
+}

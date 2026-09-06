@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Contact } from "@/components/sections/contact";
-import { Reveal } from "@/components/interactive/reveal";
-import { ScrollProgress } from "@/components/interactive/scroll-progress";
+import { ProgressRow } from "@/components/interactive/progress-row";
+import { Tag, TagRow } from "@/components/ui/tag";
 import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
 import { absoluteUrl, jsonLd, personId } from "@/lib/seo";
 
@@ -37,6 +37,20 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * A hosted post (§7.6). Only posts with a body reach this route: external
+ * pieces never enter generateStaticParams, so today it builds zero pages and
+ * is ready for the first one that lives here.
+ *
+ * Structure, top to bottom: a sticky sub-bar under the header ("← Writing"
+ * and the progress row of dots along its bottom edge, the one --sun element
+ * on a post screen), then the article on the prose column: the data row,
+ * the h1, the summary as lede, the tags as one meta line, and the MDX body
+ * inside `.prose`. Contact closes the page as it does everywhere.
+ *
+ * Words never animate. The only thing on this page that moves is the
+ * progress row, and it is scrubbed by scroll, not timed.
+ */
 export default async function PostPage({ params }: PageProps<"/writing/[slug]">) {
   const { slug } = await params;
   const post = getPost(slug);
@@ -67,59 +81,44 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
         dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
       />
 
-      <div className="sticky top-14 z-40 border-b border-rule bg-background/85 backdrop-blur-md">
+      {/* Sub-bar. `sticky` and the z-index are utilities, so they win over
+          the `main > *` base rule (position: relative, z --z-content) that
+          keeps page content above the hero canvas. The ground at 80 % with
+          no blur: the header and the palette scrim are the only two blurred
+          surfaces on the site (§2). The progress row is in flow as the
+          bar's bottom edge, so its dots are never painted over the link. */}
+      <div className="sticky top-14 z-(--z-sticky) bg-ground/80">
         <div className="shell flex h-11 items-center">
           <Link
             href="/writing"
-            className="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-foreground"
+            className="dot-underline tap inline-flex items-center gap-2 text-small text-ink-2 transition-colors duration-(--dur-1) hover:text-ink"
           >
-            <ArrowLeft
-              aria-hidden
-              className="size-3.5 transition-transform group-hover:-translate-x-1"
-            />
+            <ArrowLeft aria-hidden="true" className="size-3.5 shrink-0" />
             Writing
           </Link>
         </div>
-        <ScrollProgress />
+        <ProgressRow />
       </div>
 
-      <article className="shell pt-14 sm:pt-20">
-        <header className="enter border-b border-rule pb-8">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <time dateTime={post.date} className="meta text-faint">
-              {formatPostDate(post.date)}
-            </time>
-            <span aria-hidden className="meta text-faint">
-              /
-            </span>
-            <span className="meta text-faint">{post.readingMinutes} min read</span>
-            {post.draft && (
-              <span className="meta border border-rule px-1.5 py-1 text-faint">Draft</span>
-            )}
-          </div>
+      <article className="shell pt-16 md:pt-20">
+        <header className="max-w-prose border-b border-line pb-8">
+          <p className="data flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-3">
+            <time dateTime={post.date}>{formatPostDate(post.date)}</time>
+            <span aria-hidden="true">·</span>
+            <span>{post.readingMinutes} min read</span>
+            {/* Drafts are only in publishedPosts() in development, so the
+                tag is a dev-only marker without any extra gating here. */}
+            {post.draft && <Tag>Draft</Tag>}
+          </p>
 
-          <h1 className="mt-6 text-balance text-display-l font-display">{post.title}</h1>
+          <h1 className="mt-6 text-display-l text-ink">{post.title}</h1>
 
-          {post.summary && (
-            <p
-              className="measure mt-6 text-pretty text-lede text-muted"
-              style={{ "--stagger": 1 } as React.CSSProperties}
-            >
-              {post.summary}
-            </p>
-          )}
+          {post.summary && <p className="mt-6 text-lede text-ink-2">{post.summary}</p>}
 
           {post.tags.length > 0 && (
-            <ul className="mt-6 flex flex-wrap gap-1.5">
-              {post.tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="inline-flex items-center border border-rule px-2 py-1 text-xs text-muted"
-                >
-                  {tag}
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6">
+              <TagRow items={post.tags} label="Tags" />
+            </div>
           )}
         </header>
 
@@ -128,9 +127,8 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
         </div>
       </article>
 
-      <Reveal>
-        <Contact />
-      </Reveal>
+      {/* A post has no numbered sections, so the close is the first. */}
+      <Contact index="01" />
     </>
   );
 }

@@ -1,63 +1,55 @@
-import { ArrowUpRight } from "lucide-react";
+import { CopyEmail } from "@/components/interactive/copy-email";
+import { DotBoard } from "@/components/interactive/dot-board";
+import { Section } from "@/components/ui/section";
 import { profile, socials } from "@/content";
+import { portraitField64 } from "@/content/portrait";
 
 /**
- * Shared by the homepage and every case study. The closing ink spread: the
- * scoped `dark` class flips the tokens, and the email is the biggest type on
- * the page after the name, because it is the one action that matters here.
+ * The close of every page (§7.1 04): "Building something? Let's talk.", the
+ * address as one click-to-copy line, the three socials as small dotted links,
+ * and from 64rem the afterimage — the 64-field drawn once at 10 % in the rail,
+ * the same place the hero had the face. Release: the dots let go.
+ *
+ * The rail is hidden below 64rem at the section level (`max-lg:` on the
+ * primitive's `.section-rail`) so the grid drops the empty row and its gap,
+ * and the board's own wrapper is hidden too, belt and braces. The figure is
+ * decorative (`alt=""` gives it aria-hidden) and runs no loop.
+ *
+ * No ink band, no dark class: one theme, and the field shows through.
+ * Signature kept: every page passes its own `index`; the home's is "04".
  */
 export function Contact({ index }: { index?: string }) {
   return (
-    <section id="contact" aria-labelledby="contact-title" className="dark ink-band">
-      <div className="shell section-y">
-        <div className="flex items-baseline gap-4">
-          {index && (
-            <span aria-hidden className="meta text-accent-ink">
-              {index}
-            </span>
-          )}
-          <span className="meta text-faint">Contact</span>
+    <Section
+      index={index ?? "04"}
+      title="Building something? Let's talk."
+      id="contact"
+      className="max-lg:[&_.section-rail]:hidden"
+      rail={
+        <div className="hidden lg:block">
+          <DotBoard mode="afterimage" field={portraitField64} alt="" />
         </div>
+      }
+    >
+      <CopyEmail email={profile.email} />
 
-        <h2 id="contact-title" className="mt-10 text-balance text-display-l font-display">
-          Building something in this world? Let&rsquo;s talk.
-        </h2>
-        <p className="measure mt-6 text-pretty text-lede text-muted">
-          I&rsquo;m always up for a conversation about agents, developer tools, or a
-          product you think should exist. The fastest way to reach me is email.
-        </p>
-
-        <a
-          href={`mailto:${profile.email}`}
-          className="group contact-email slide-trigger mt-14 inline-flex max-w-full items-center gap-[0.35em]"
-        >
-          <span className="link-slide min-w-0">
-            <span>{profile.email}</span>
-            <span aria-hidden>{profile.email}</span>
-          </span>
-          <ArrowUpRight
-            aria-hidden
-            className="size-[0.5em] shrink-0 text-accent transition-transform group-hover:translate-x-[0.08em] group-hover:-translate-y-[0.08em]"
-          />
-        </a>
-
-        <ul className="tap-list mt-16 flex flex-wrap items-center gap-x-6 gap-y-1 border-t border-rule pt-6">
-          {socials
-            .filter((social) => social.kind !== "email")
-            .map((social) => (
-              <li key={social.kind}>
-                <a
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-underline text-sm text-muted transition-colors hover:text-foreground"
-                >
-                  {social.label}
-                </a>
-              </li>
-            ))}
-        </ul>
-      </div>
-    </section>
+      <ul className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-1 text-small" aria-label="Elsewhere">
+        {socials
+          .filter((social) => social.kind !== "email")
+          .map((social) => (
+            <li key={social.kind}>
+              <a
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dot-underline tap text-ink-2 hover:text-ink"
+              >
+                {social.label}
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </li>
+          ))}
+      </ul>
+    </Section>
   );
 }

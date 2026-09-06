@@ -27,5 +27,12 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     title: project.name,
     description: project.tagline,
     meta: [project.role, project.year, statusLabel[project.status]],
+    // The one-number plate; the accent belongs to the ongoing project only.
+    metric: {
+      value: project.metric,
+      label: project.metricLabel,
+      accent: project.status === "ongoing",
+    },
+    portrait: "small",
   });
 }

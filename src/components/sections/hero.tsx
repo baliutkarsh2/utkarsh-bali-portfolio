@@ -1,136 +1,107 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { now, profile, socials } from "@/content";
-import { PlateWord } from "@/components/ui/plate-word";
-import { HeroPortrait } from "./hero-portrait";
+import type { CSSProperties } from "react";
+import { DotBoard } from "@/components/interactive/dot-board";
+import { Reveal } from "@/components/interactive/reveal";
+import { Button } from "@/components/ui/button";
+import { Led } from "@/components/ui/led";
+import { MissionLine } from "@/components/ui/mission-line";
+import { mission, now, profile } from "@/content";
+import { portrait, portraitField64, portraitField96 } from "@/content/portrait";
 
+/** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
+const [firstName, ...restOfName] = profile.name.split(" ");
+const surname = restOfName.join(" ");
+
+/**
+ * The one link inside the lede carries its dotted rule at rest, as links in
+ * prose do: colour alone would not mark it (--ink on --ink-2 is 2.1:1), and
+ * the `dot-underline` utility only rests inside `.prose`. An inline custom
+ * property is the sanctioned way to set it (addendum §C).
+ */
+const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
+
+/**
+ * The first screen (§7.1). Everything here is in the HTML on frame one and
+ * nothing in it moves: the name is the LCP element on every viewport, plain
+ * text in Geist 500, and the only things that animate are dots — the mission
+ * line's hairline drawing in and the portrait assembling on the board.
+ *
+ * The status LED is the one --sun element of this screen (the portrait's rim
+ * and datum are the light source, not UI, and do not count).
+ *
+ * Layout lives in `.hero` (components.css): one column in this DOM order on
+ * phones and tablets; from 80rem a two-column grid where the h1 spans both
+ * columns and passes over the board's empty top-left cells. Server component;
+ * the board and the reveal are the only client islands.
+ */
 export function Hero() {
   return (
-    <section id="home" className="relative overflow-hidden pt-14">
-      <div aria-hidden className="hero-grid pointer-events-none absolute inset-0" />
+    <section id="home" aria-labelledby="hero-title" className="hero shell">
+      <div className="hero-intro board-above flex flex-col items-start gap-4">
+        {/* Reveal lands data-in once the line is on screen (immediately, on
+            load) and the hairline draws over --dur-5. The caption is static. */}
+        <Reveal>
+          <MissionLine dots={7} text={mission} />
+        </Reveal>
 
-      <div className="shell relative pb-14 pt-12 sm:pt-16">
-        {/* `.enter` is applied to each block individually and never to a
-            wrapper containing the h1: `.enter > *` starts children at
-            opacity 0, which would fade the LCP element. */}
-        <div className="enter flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="flex items-center gap-2">
-            <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent opacity-60" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-accent" />
-            </span>
-            <span className="meta text-muted">{now.status}</span>
+        <p className="hero-status meta flex flex-wrap items-center gap-x-3 gap-y-2 text-ink-3">
+          <span className="flex items-center gap-2 text-ink-2">
+            <Led state="live" label="Currently" />
+            {now.status}
           </span>
-          <span aria-hidden className="meta text-faint">
-            /
-          </span>
-          <span className="meta text-faint">{now.location}</span>
-        </div>
+          <span aria-hidden="true">/</span>
+          <span>{now.location}</span>
+        </p>
+      </div>
 
-        <div className="hero-spread mt-8">
-          {/* LCP element, and it must paint on the first frame. The clip-path
-              reveal that used to be here started the name fully clipped away,
-              which cost about 2s of LCP once the fixed hero grid made this the
-              largest element. The plates landing out of register is the actual
-              signature moment and it never hides the text, so nothing is lost. */}
-          <h1 className="hero-name text-display-xl font-display">
-            <PlateWord>Utkarsh</PlateWord>
-            <PlateWord>Bali</PlateWord>
-          </h1>
+      {/* Two block spans rather than a <br>: the whitespace text node between
+          them keeps textContent "Utkarsh Bali" for assistive tech and crawlers
+          while the blocks break the line. */}
+      <h1 id="hero-title" className="hero-name board-above text-display-xl text-ink">
+        <span className="block">{firstName}</span>{" "}
+        {surname && <span className="block">{surname}</span>}
+      </h1>
 
-          {/* Deliberately after the copy in the DOM. Above 80rem the grid
-              places every child by line number so this is invisible there,
-              but on a phone the stack follows source order, and a photograph
-              wedged between the name and the tagline both reads badly and
-              makes itself the LCP element ahead of the text. */}
-          <div className="hero-body enter" style={{ "--stagger": 1 } as React.CSSProperties}>
-            <p className="measure text-pretty text-display-s font-display text-foreground">
-              {profile.tagline}
-            </p>
+      {/* Column 2 from 80rem, directly under the name below that. The figure
+          box is the layout anchor; the canvas is fixed behind the page. */}
+      <DotBoard
+        mode="hero"
+        field={portraitField96}
+        mobileField={portraitField64}
+        alt={portrait.alt}
+        caption
+        className="hero-board"
+      />
 
-            <p className="measure mt-5 text-pretty text-lede text-muted">
-              Right now I&rsquo;m a software engineering intern at Recurly. Before that I
-              built agent infrastructure at{" "}
-              <span className="text-foreground">QualGent (YC X25)</span>, and I
-              co-founded{" "}
-              <Link href="/projects/checkpoint" className="link-underline text-foreground">
-                Checkpoint
-              </Link>
-              , where I&rsquo;m CTO.
-            </p>
+      <div className="hero-copy board-above">
+        <p className="max-w-[34ch] text-display-s text-ink">{profile.tagline}</p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href="#work"
-                className="group inline-flex h-11 items-center gap-2 border border-foreground bg-foreground px-5 text-sm font-medium text-background transition-opacity hover:opacity-88"
-              >
-                View work
-                <ArrowRight
-                  className="size-4 transition-transform group-hover:translate-x-0.5"
-                  aria-hidden
-                />
-              </Link>
-              <a
-                href={`mailto:${profile.email}`}
-                className="inline-flex h-11 items-center border border-rule-strong px-5 text-sm font-medium transition-colors hover:bg-inset"
-              >
-                Get in touch
-              </a>
-              {profile.resume && (
-                <a
-                  href={profile.resume.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center border border-rule-strong px-5 text-sm font-medium transition-colors hover:bg-inset"
-                >
-                  R&eacute;sum&eacute;
-                </a>
-              )}
-            </div>
-          </div>
+        <p className="mt-5 max-w-[34ch] text-lede text-ink-2">
+          Right now I&apos;m a software engineering intern at Recurly. Before that I built agent
+          infrastructure at <span className="text-ink">QualGent</span> (YC X25), and I
+          co-founded{" "}
+          <Link
+            href="/projects/checkpoint"
+            className="dot-underline text-ink"
+            style={LINK_AT_REST}
+          >
+            Checkpoint
+          </Link>
+          , where I&apos;m CTO.
+        </p>
 
-          <div className="hero-figure enter" style={{ "--stagger": 2 } as React.CSSProperties}>
-            <HeroPortrait />
-          </div>
-
-          {/* The education line used to hang under the photo as an orphaned
-              caption. It reads as a record here instead. The social list used
-              to live inside the <dl>, which is invalid: a description list may
-              only contain dt/dd groups. */}
-          <div className="hero-meta enter" style={{ "--stagger": 3 } as React.CSSProperties}>
-            <dl>
-              {[
-                { term: "Education", value: profile.education },
-                { term: "Graduating", value: profile.graduation },
-                { term: "Based in", value: profile.location },
-              ].map((row) => (
-                <div
-                  key={row.term}
-                  className="flex items-baseline justify-between gap-4 border-t border-rule py-2.5"
-                >
-                  <dt className="meta text-faint">{row.term}</dt>
-                  <dd className="text-right text-sm">{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <ul className="tap-list mt-5 flex flex-wrap items-center gap-x-5 gap-y-1">
-              {socials
-                .filter((social) => social.kind !== "email")
-                .map((social) => (
-                  <li key={social.kind}>
-                    <a
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="link-underline text-sm text-muted transition-colors hover:text-foreground"
-                    >
-                      {social.label}
-                    </a>
-                  </li>
-                ))}
-            </ul>
-          </div>
+        <div className="hero-actions mt-8 flex flex-wrap items-center gap-3">
+          <Button variant="primary" href="#work" className="max-md:w-full">
+            View work
+          </Button>
+          <Button variant="secondary" href={`mailto:${profile.email}`}>
+            Get in touch
+          </Button>
+          {profile.resume && (
+            <Button variant="text" href={profile.resume.href} external>
+              Résumé
+            </Button>
+          )}
         </div>
       </div>
     </section>
