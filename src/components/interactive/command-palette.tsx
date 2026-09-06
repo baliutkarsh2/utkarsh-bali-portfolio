@@ -253,6 +253,16 @@ export function CommandPalette({
       .map((x) => x.command);
   }, [query, allCommands]);
 
+  /**
+   * The rows in the order they are drawn. Ranking decides which commands
+   * appear; the group order decides where they sit. Walking `results` meant
+   * ArrowDown jumped from the bottom of the list to the top and back.
+   */
+  const ordered = useMemo(
+    () => GROUP_ORDER.flatMap((group) => results.filter((command) => command.group === group)),
+    [results],
+  );
+
   useEffect(() => {
     if (!dialogRef.current?.open) return;
     setStatus(countLabel(results.length));
@@ -301,13 +311,13 @@ export function CommandPalette({
   function onInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown" || (event.key === "n" && event.ctrlKey)) {
       event.preventDefault();
-      setActive((i) => (results.length ? (i + 1) % results.length : 0));
+      setActive((i) => (ordered.length ? (i + 1) % ordered.length : 0));
     } else if (event.key === "ArrowUp" || (event.key === "p" && event.ctrlKey)) {
       event.preventDefault();
-      setActive((i) => (results.length ? (i - 1 + results.length) % results.length : 0));
+      setActive((i) => (ordered.length ? (i - 1 + ordered.length) % ordered.length : 0));
     } else if (event.key === "Enter") {
       event.preventDefault();
-      results[active]?.run(ctx);
+      ordered[active]?.run(ctx);
     }
   }
 
@@ -359,7 +369,7 @@ export function CommandPalette({
               role="combobox"
               aria-expanded
               aria-controls="command-list"
-              aria-activedescendant={results[active] ? `cmd-${results[active].id}` : undefined}
+              aria-activedescendant={ordered[active] ? `cmd-${ordered[active].id}` : undefined}
               aria-autocomplete="list"
               autoComplete="off"
               spellCheck={false}
@@ -380,7 +390,7 @@ export function CommandPalette({
               may only contain options and groups. */}
           {grouped.length === 0 && (
             <p className="palette-empty text-small" role="status">
-              Nothing matches &quot;{query}&quot;.
+              Nothing matches “{query}”.
             </p>
           )}
 
@@ -398,7 +408,7 @@ export function CommandPalette({
                   {section.group}
                 </p>
                 {section.items.map((command) => {
-                  const index = results.indexOf(command);
+                  const index = ordered.indexOf(command);
                   const isActive = index === active;
                   return (
                     // Compact row: label left, hint right in meta. The active

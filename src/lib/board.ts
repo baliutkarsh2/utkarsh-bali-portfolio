@@ -438,9 +438,10 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     }
 
     // Pass 3: one path per bucket.
-    // A third of the ink: at a tenth the ghost matched the lattice's own
-    // dots and the rail read as empty ground.
-    c.globalAlpha = afterimage ? 0.3 : 1;
+    // Just under half the ink: at a tenth the ghost matched the lattice's own
+    // dots and the rail read as empty ground; at a third it still could not
+    // hold the space its own height makes.
+    c.globalAlpha = afterimage ? 0.45 : 1;
     for (let b = 0; b < 2 * TONES * DIAS; b++) {
       const start = counts[b];
       const end = counts[b + 1];

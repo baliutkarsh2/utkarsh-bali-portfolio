@@ -21,20 +21,24 @@ const TITLE = "Building something? Let\u2019s talk.";
  * Signature kept: every page passes its own `index`; the home's is "04".
  */
 export function Contact({ index }: { index?: string }) {
-  const sectionIndex = index ?? "04";
+  // No default: an index page (Work, Writing) numbers its rows from 01, so a
+  // close numbered 01 beneath them would be the second on that screen.
+  const sectionIndex = index ?? "";
 
   return (
     <section
       id="contact"
       aria-labelledby="contact-title"
       data-section-index={sectionIndex}
-      data-section-title={TITLE}
+      data-section-title="Contact"
       className="contact shell section-y"
     >
       <div className="section-head contact-head">
-        <span className="meta text-ink-3" aria-hidden="true">
-          {sectionIndex}
-        </span>
+        {sectionIndex && (
+          <span className="meta text-ink-3" aria-hidden="true">
+            {sectionIndex}
+          </span>
+        )}
         <h2 id="contact-title" className="text-display-m font-medium text-balance text-ink">
           {TITLE}
         </h2>

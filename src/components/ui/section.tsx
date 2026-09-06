@@ -5,6 +5,11 @@ type SectionProps = {
   /** "01", "02" … Geist Mono meta in --ink-3, never Doto (a 24 px dot face is off-pitch). */
   index: string;
   title: string;
+  /**
+   * Short label for the header readout when the title is a sentence.
+   * "01 THIS SUMMER I BUILT THE AGENT …" is not a section name.
+   */
+  readout?: string;
   id?: string;
   /** Right rail, 4 of 12 columns from column 9, sticky at ≥ 64rem. */
   rail?: ReactNode;
@@ -25,7 +30,7 @@ type SectionProps = {
  * readout as the section comes into view. The index is aria-hidden; the
  * heading carries the text.
  */
-export function Section({ index, title, id, rail, railLabel, children, className }: SectionProps) {
+export function Section({ index, title, readout, id, rail, railLabel, children, className }: SectionProps) {
   const sectionId = id ?? `section-${index}`;
   const headingId = `${sectionId}-title`;
 
@@ -34,7 +39,7 @@ export function Section({ index, title, id, rail, railLabel, children, className
       id={sectionId}
       aria-labelledby={headingId}
       data-section-index={index}
-      data-section-title={title}
+      data-section-title={readout ?? title}
       className={cn("section shell section-y", className)}
     >
       <div className="section-head">

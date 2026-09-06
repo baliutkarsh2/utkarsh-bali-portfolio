@@ -16,7 +16,7 @@ const dotCount = new Intl.NumberFormat("en-US").format(DOT_COUNT);
  */
 export function SiteFooter() {
   return (
-    <footer className="site-footer hairline">
+    <footer className="site-footer">
       <div className="shell">
         <div className="footer-top">
           {/* Reveal sets data-in once the footer enters view; the line's

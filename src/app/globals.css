@@ -118,15 +118,24 @@
   --dur-board: 1100ms; /* portrait assembly */
 }
 
-/* Pitch steps. Integer only. Above 80rem the pitch is 6px and the shell is
-   capped, so a 4K panel gets the same object on a larger board. */
+/* Pitch steps. Integer only. Above 80rem the shell is capped, so a 4K panel
+   gets the same object on a larger board. */
 @media (width >= 80rem) {
   :root {
-    --pitch: 6px;
-    --lattice-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='1' height='1' fill='%23232326'/%3E%3C/svg%3E");
     --shell-pad: 2.5rem;
     --cols: 12;
     --gutter: 2rem;
+  }
+}
+
+/* The 6px pitch also needs a tall window: at 720px the 120-row hero board and
+   its readout fall under the fold. A short laptop keeps the 5px object a
+   1279px window already gets. Same threshold as the hero rule in
+   components.css, so the two never disagree. */
+@media (width >= 80rem) and (height >= 820px) {
+  :root {
+    --pitch: 6px;
+    --lattice-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='1' height='1' fill='%23232326'/%3E%3C/svg%3E");
   }
 }
 @media (width >= 48rem) and (width < 80rem) {
@@ -338,6 +347,14 @@
   }
 
   :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* The skip link moves focus here. <main> is the page, so its ring would be
+     a 2px --sun border around the whole document (and the screen's second
+     accent). The visitor just clicked a visible target; the next Tab stop
+     gets the ring. */
+  #main:focus-visible {
     outline: none;
   }
 
@@ -754,4 +771,27 @@
 :root[data-motion="reduce"]::view-transition-new(*) {
   animation: none !important;
   mask-image: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   10. Forced colours (Windows High Contrast)
+   Every state signal on this site is a dot: the active-route LED, the
+   status LED, the list bullets, the palette's active row. Forced colours
+   paint them Canvas on Canvas and they vanish, taking the meaning with
+   them. Re-assert them in system colours; nothing changes on the normal
+   path.
+   ───────────────────────────────────────────────────────────── */
+@media (forced-colors: active) {
+  .led,
+  .nav-led,
+  .dot-list > li::before,
+  .palette-row[data-active="true"]::before {
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .palette-row[data-active="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }

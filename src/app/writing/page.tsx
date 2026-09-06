@@ -80,7 +80,7 @@ export default function WritingPage() {
       </div>
 
       {/* The index has no numbered sections, so the close is the first. */}
-      <Contact index="01" />
+      <Contact />
     </>
   );
 }

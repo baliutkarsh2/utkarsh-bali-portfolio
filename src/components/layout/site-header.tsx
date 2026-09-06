@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { navItems, profile, socials } from "@/content/profile";
 import { NineDotMark } from "@/components/ui/nine-dot-mark";
@@ -29,14 +29,26 @@ function openPalette() {
  */
 export function SiteHeader() {
   const pathname = usePathname();
+  const segment = useSelectedLayoutSegment();
   const headerRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDialogElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  /** Contact is an anchor into the shared outro and is never "active". */
+  /**
+   * Contact is an anchor into the shared outro and is never "active".
+   *
+   * The selected segment rather than the pathname: every 404 is served from
+   * one prerendered /_not-found document, so usePathname() returned
+   * "/_not-found" on the server and the real URL on the client. On
+   * /writing/anything that lit a nav item the server had not rendered, React
+   * threw the tree away and rebuilt it, which cost the `js` class and the
+   * platform flag set before first paint and left two copies of the JSON-LD
+   * in <head>. The segment comes from the router tree, so both sides agree
+   * and a 404 correctly lights nothing.
+   */
   function isActive(href: string): boolean {
     if (href.includes("#")) return false;
-    return pathname === href || pathname.startsWith(`${href}/`);
+    return segment !== null && href === `/${segment}`;
   }
 
   // Scrolled state goes straight to the DOM, not through React state: a
@@ -152,7 +164,10 @@ export function SiteHeader() {
               user can say what they see; the sr-only tail tells a screen
               reader what the key does without displacing the label. */}
           <button type="button" onClick={openPalette} className="kbd-chip meta">
-            <kbd className="kbd-mac">⌘K</kbd>
+            <kbd className="kbd-mac">
+              <span aria-hidden="true">⌘</span>
+              <span className="sr-only">Command </span>K
+            </kbd>
             <kbd className="kbd-other">Ctrl K</kbd>
             <span className="sr-only">, search</span>
           </button>

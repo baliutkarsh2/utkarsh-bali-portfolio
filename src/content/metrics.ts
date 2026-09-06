@@ -17,7 +17,7 @@ export const metrics: Metric[] = [
   { value: "<1%", label: "task failure rate at scale" },
   { value: "45+", label: "tools and sub-agents unified" },
   { value: "0.844", label: "AUROC on hypothesis verification" },
-  { value: "Top 10%", label: "of YC S26 applicants", accent: true },
+  { value: "Top 10%", label: "of YC Summer 2026 applicants", accent: true },
   { value: "~3x", label: "faster shipping at Recurly" },
   { value: "300+", label: "students taught" },
   { value: "~25%", label: "compute spend cut at Microsoft" },

@@ -39,7 +39,7 @@ export function Experience() {
       id="experience"
       aria-labelledby="experience-title"
       data-section-index="01"
-      data-section-title="Where I've worked"
+      data-section-title="Where I’ve worked"
       className="section section-first shell"
     >
       <div className="section-head">
@@ -50,7 +50,7 @@ export function Experience() {
           id="experience-title"
           className="text-display-l font-medium text-balance text-ink"
         >
-          Where I&apos;ve worked.
+          Where I’ve worked.
         </h1>
       </div>
 

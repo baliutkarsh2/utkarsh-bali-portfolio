@@ -8,7 +8,7 @@ import { Contact } from "@/components/sections/contact";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Who I am, what I believe about building software, the toolkit I reach for, and what I'm reading, listening to, and chasing.",
+    "Who I am, what I believe about building software, the toolkit I reach for, and what I’m reading, listening to, and chasing.",
   alternates: { canonical: "/about" },
 };
 

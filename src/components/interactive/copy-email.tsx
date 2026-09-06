@@ -102,8 +102,21 @@ export function CopyEmail({ email }: { email: string }) {
         </span>
         <span className="sr-only">, copy to clipboard</span>
       </button>
-      <span className="copy-email-label meta" role="status" aria-live="polite">
-        {LABEL[state]}
+      <span className="copy-email-label meta" aria-hidden="true">
+        {state === "rest" ? (
+          <>
+            <span className="copy-hint-fine">{LABEL.rest}</span>
+            <span className="copy-hint-coarse">Tap to copy</span>
+          </>
+        ) : (
+          LABEL[state]
+        )}
+      </span>
+      {/* Only the change is spoken. With the resting hint in the region a
+          screen reader heard "Copied", then "Click to copy" 1.2 s later, on
+          top of the button's own name it had just read. */}
+      <span role="status" aria-live="polite" className="sr-only">
+        {state === "rest" ? "" : LABEL[state]}
       </span>
     </div>
   );

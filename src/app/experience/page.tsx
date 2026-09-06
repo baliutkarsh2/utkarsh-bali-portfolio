@@ -6,7 +6,7 @@ import { Contact } from "@/components/sections/contact";
 export const metadata: Metadata = {
   title: "Experience",
   description:
-    "Where I've worked: Recurly, QualGent (YC X25), Purdue University, and Microsoft (a Microsoft Research collaboration at the Data Mine), plus awards and rankings along the way.",
+    "Where I’ve worked: Recurly, QualGent (YC X25), Purdue University, and Microsoft (a Microsoft Research collaboration at the Data Mine), plus awards and rankings along the way.",
   alternates: { canonical: "/experience" },
 };
 

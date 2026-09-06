@@ -17,7 +17,7 @@ export function projectSectionCount(project: Pick<Project, "learnings">): number
  * The case-study body (§7.4.5): six numbered hairline blocks on the copy
  * columns. Each block is a `section` carrying `data-section-index` and
  * `data-section-title`, so the header readout follows the reader through
- * "01 PROBLEM" … "06 WHAT I'D DO DIFFERENTLY" exactly as it does through
+ * "01 PROBLEM" … "06 WHAT I’D DO DIFFERENTLY" exactly as it does through
  * the home page's sections.
  *
  * 01 Problem is set in display-s: the problem is the title. 02 and 03 are
@@ -73,7 +73,7 @@ export function ProjectBody({ project }: { project: Project }) {
       </Block>
 
       {hasLearnings && (
-        <Block index="06" title="What I'd do differently" id="learnings">
+        <Block index="06" title="What I’d do differently" id="learnings">
           <ul className="m-0 list-none border-b border-line p-0">
             {project.learnings?.map((item) => (
               <li key={item} className="border-t border-line py-5 first:border-t-0 first:pt-0">
@@ -145,7 +145,7 @@ export function ProjectRail({ project }: { project: Project }) {
 
         {project.confidential && (
           <p className="mt-8 border-t border-line pt-5 text-small text-ink-3">
-            Built inside a company codebase, so there&apos;s no public source to link. Happy
+            Built inside a company codebase, so there’s no public source to link. Happy
             to talk through the design.
           </p>
         )}

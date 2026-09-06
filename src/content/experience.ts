@@ -9,11 +9,11 @@ export const experiences: Experience[] = [
     sortDate: "2026-05-01",
     current: false,
     summary:
-      "Built internal agent infrastructure for Recurly's engineering and go-to-market teams, from the platform that turns product requirements into merged pull requests to the tooling that researches inbound prospects.",
+      "Built internal agent infrastructure for Recurly’s engineering and go-to-market teams, from the platform that turns product requirements into merged pull requests to the tooling that researches inbound prospects.",
     bullets: [
       "Built the core PDLC automation platform using specialized Claude agents (planner, decomposer, a Sonnet/Opus coder pair, and a PR responder) deployed as isolated Kubernetes Jobs via the Agent SDK. Drives PRD to merged PRs through five human checkpoints, accelerating shipping about 3x.",
       "Shipped an AI SDR Slack bot (async Python, 3-tier Claude routing) querying BigQuery, 6sense, ZoomInfo, and SFDC to research, qualify, and audit account and call history. Returns source-cited briefs and outreach drafts in about 25 seconds.",
-      "Automated a Prospect Report Card pipeline (n8n to FastAPI on Cloud Run to Claude Opus) that turns an inbound marketing form-fill into a personalized PDF analysis of the prospect's subscription business and emails it back.",
+      "Automated a Prospect Report Card pipeline (n8n to FastAPI on Cloud Run to Claude Opus) that turns an inbound marketing form-fill into a personalized PDF analysis of the prospect’s subscription business and emails it back.",
     ],
     tags: ["Claude Agent SDK", "Kubernetes", "Python", "FastAPI", "BigQuery"],
   },
@@ -44,7 +44,7 @@ export const experiences: Experience[] = [
       "Applied ML research where the product constraints matter as much as the model: interpretability, privacy, and whether a clinician would actually trust the output.",
     bullets: [
       "Built CLIP-H for clinical hypothesis verification on MIMIC-IV using Top-K sparse autoencoders and a GPT/Claude ensemble. Validated against a synthetic oracle at 0.844 AUROC, certifying 14 hypotheses for a NeurIPS submission targeted for September 2026 with Purdue and Harvard Business School faculty.",
-      "Developed a Flutter and TypeScript clinical assistant tested across Indiana hospitals that cuts nurses' documentation overhead by about 40%, running self-hosted LLaMA 3.2 and an on-device, HIPAA-compliant speech-to-text pipeline.",
+      "Developed a Flutter and TypeScript clinical assistant tested across Indiana hospitals that cuts nurses’ documentation overhead by about 40%, running self-hosted LLaMA 3.2 and an on-device, HIPAA-compliant speech-to-text pipeline.",
       "Presented the work at the Purdue Spring Research Conference.",
     ],
     tags: ["Research", "MIMIC-IV", "Interpretability", "LLaMA", "Flutter"],

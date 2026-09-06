@@ -40,7 +40,7 @@
 
 @layer components {
   /* Shared: a 1.5 px dot in one pitch-square tile. The spine and the progress
-     row repeat it along one axis; underlines and leaders (which animate their
+     row repeat it along one axis; underlines (which animate their
      painted width) use the equivalent repeating gradient from globals.css.
      At 1.5 px a square and a circle are the same dot. */
   :root {
@@ -720,7 +720,9 @@
   /* The middot trails each item rather than leading the next, so a line
      that wraps ends with a dot instead of starting with one. */
   .tag-row > li:not(:last-child)::after {
-    content: "·";
+    /* Drawn but not read: the list already conveys the separation, and
+       generated content otherwise enters the accessibility tree. */
+    content: "·" / "";
     margin-inline: 0.6em;
     color: var(--ink-3);
   }
@@ -792,6 +794,21 @@
   .copy-email-label {
     flex: none;
     color: var(--ink-3);
+  }
+
+  /* "Click" is wrong on a finger. One hint per pointer, chosen in CSS so
+     nothing depends on state or hydration. */
+  .copy-hint-coarse {
+    display: none;
+  }
+
+  @media (pointer: coarse) {
+    .copy-hint-fine {
+      display: none;
+    }
+    .copy-hint-coarse {
+      display: inline;
+    }
   }
   .copy-email[data-state="copied"] .copy-email-label {
     color: var(--ink);
@@ -1140,27 +1157,29 @@
   @media (width >= 64rem) {
     .about-copy {
       grid-column: 1 / span 5;
-      grid-row: 1 / span 2;
+      grid-row: 1;
     }
-    .about-board,
+    /* The facts sit under the copy, not out on the rail: with the spec list
+       in the rail's second row the copy column ran 509px past its last line
+       with nothing in it. */
     .about-specs {
-      grid-column: 6 / span 3;
+      grid-column: 1 / span 5;
+      grid-row: 2;
       align-self: start;
     }
     .about-board {
-      grid-row: 1;
-    }
-    .about-specs {
-      grid-row: 2;
+      grid-column: 6 / span 3;
+      grid-row: 1 / span 2;
+      align-self: start;
     }
   }
 
   @media (width >= 80rem) {
-    .about-copy {
+    .about-copy,
+    .about-specs {
       grid-column: 1 / span 7;
     }
-    .about-board,
-    .about-specs {
+    .about-board {
       grid-column: 9 / span 4;
     }
   }
@@ -1318,20 +1337,16 @@
     justify-self: start;
   }
 
-  /* One column: the caption hangs under the box (absolute, board.css), so
-     the box takes a margin for it before the tagline. */
-  @media (width < 80rem) {
-    .hero-board {
-      margin-bottom: var(--space-3);
-    }
-  }
-
   @media (width >= 80rem) {
     .hero {
       grid-template-columns: minmax(0, 1fr) calc(96 * var(--pitch));
       grid-template-rows: auto auto minmax(0, 1fr);
       column-gap: var(--space-8);
-      min-height: calc(100svh - 3.5rem);
+      /* Tall enough for the board and its readout, never taller: on a 1080p
+         panel a full 100svh left 227px of empty ground inside the hero and
+         pushed the numbers board off the first screen. 53rem is 48px pad +
+         720px board + 30px caption + 48px pad at the 6px pitch. */
+      min-height: min(calc(100svh - 3.5rem), 53rem);
     }
     .hero-intro {
       grid-column: 1;
@@ -1584,8 +1599,12 @@
       grid-column: 6 / span 3;
       grid-row: 2 / span 2;
       min-width: 0;
-      padding-top: var(--space-3);
+      /* Ten pitches puts the ghost's top row of dots level with the title box,
+         so the figure is bracketed by the title above and the address below
+         rather than floating between the index line and the title. */
+      padding-top: calc(10 * var(--pitch));
     }
+
   }
 
   @media (width >= 80rem) {
@@ -1631,7 +1650,7 @@
   }
 
   .toolkit-list > li:not(:last-child)::after {
-    content: "·";
+    content: "·" / "";
     margin-inline: 0.6em;
     color: var(--ink-3);
   }

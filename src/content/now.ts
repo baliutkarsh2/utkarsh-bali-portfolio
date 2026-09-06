@@ -6,7 +6,7 @@
  */
 export const now = {
   status: "Final semester at Purdue",
-  headline: "This summer I built the agent platform that ships Recurly's code.",
+  headline: "This summer I built Recurly’s agent platform: PRD to merged pull requests.",
   org: "Recurly",
   role: "Software Engineer Intern",
   location: "Broomfield, CO",

@@ -26,6 +26,16 @@
   }
 }
 
+/* One column: the caption hangs under the box (absolute, below) and is out of
+   flow, so the box carries the gap before whatever follows it. This lives
+   here rather than in components.css because the `.board { margin: 0 }` reset
+   above is unlayered and would beat any rule inside @layer components. */
+@media (width < 80rem) {
+  .board[data-mode="hero"] {
+    margin-bottom: var(--space-4);
+  }
+}
+
 /* Rail boards (the About still, the Contact afterimage) keep their cell
    width at the 6px pitch: four columns at 80rem are 379px before any padding,
    and the box needs 384, so it may run into the shell padding as the
@@ -35,6 +45,17 @@
   .contact-board .board,
   .section-rail .board {
     max-width: none;
+  }
+}
+
+/* A rail board is narrower than its rail. Align it to the shell's right edge,
+   where the hero board, the section hairlines and the footer identity all end,
+   rather than to its column's left edge. Unlayered, next to the `margin: 0`
+   reset above, which would otherwise beat it. */
+@media (width >= 64rem) {
+  .about-board,
+  .contact-board .board {
+    margin-inline-start: auto;
   }
 }
 

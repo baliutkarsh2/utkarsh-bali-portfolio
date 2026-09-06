@@ -13,7 +13,7 @@ import { formatDate } from "@/lib/utils";
  */
 export function Now({ index = "01" }: { index?: string }) {
   const rows = [
-    { term: "Organisation", value: now.org },
+    { term: "Organization", value: now.org },
     { term: "Role", value: now.role },
     { term: "Location", value: now.location },
     { term: "Period", value: now.period },
@@ -27,6 +27,7 @@ export function Now({ index = "01" }: { index?: string }) {
     <Section
       index={index}
       title={now.headline}
+      readout="Now"
       id="now"
       rail={<SpecList rows={rows} />}
       railLabel="Now, at a glance"

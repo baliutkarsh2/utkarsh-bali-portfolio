@@ -123,7 +123,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
             className="mt-10"
             rows={[
               { term: "Role", value: project.role },
-              { term: "Organisation", value: project.org ?? "Independent" },
+              { term: "Organization", value: project.org ?? "Independent" },
               { term: "Year", value: project.year },
               {
                 term: "Status",
@@ -172,7 +172,7 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
       </article>
 
       {adjacent && (
-        <div className="mt-8 md:mt-12">
+        <div className="mt-(--section-y)">
           <ProjectNav prev={adjacent.prev} next={adjacent.next} />
         </div>
       )}

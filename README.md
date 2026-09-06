@@ -70,12 +70,14 @@ with every output committed. Vercel runs none of this.
    `src/assets/portrait/utkarsh-cutout.png` plus `CUTOUT_ORIGIN.txt` (the
    crop's top-left in the original frame), so the windows in the bake script
    stay in photograph coordinates.
-2. `python scripts/bake-portrait.py` samples that cutout onto three dot grids
+2. `python scripts/bake-portrait.py` samples that cutout onto four dot grids
    and writes:
    - `src/content/portrait-field-96.ts` (192 × 240 cells: the hero from
      48rem, a 96 × 120 lattice box at double density), `portrait-field-64.ts`
-     (128 × 160: the phone hero and the Contact afterimage, a 64 × 80 box) and
-     `portrait-field-about.ts` (128 × 160, a tighter face crop for About).
+     (128 × 160: the phone hero, a 64 × 80 box), `portrait-field-about.ts`
+     (128 × 160, a tighter face crop for About) and
+     `portrait-field-contact.ts` (96 × 120: the Contact afterimage, the hero
+     window at half size in a 48 × 60 box).
      Portrait cells are half the page pitch, so every second cell sits on a
      page dot; unlit cells are drawn only where a page dot is, which keeps the
      unlit part of the portrait pixel-identical to the lattice around it. Each is one base64 string plus the lit count, the datum

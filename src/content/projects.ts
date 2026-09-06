@@ -19,7 +19,7 @@ export const projects: Project[] = [
     problem:
       "Teams shipping LLM agents have unit tests for their code and almost nothing for the agent. The failures that matter are not exceptions. They are a tool called with the wrong argument, a policy boundary quietly crossed, a multi-turn conversation that drifts. None of that shows up in a green build.",
     story:
-      "I co-founded Checkpoint with Ayushman Gupta and Aaditya Gaur and led engineering as CTO. The bet was that agents need a pre-production failure surface: somewhere to break the loop on purpose, before a user does it by accident. I'm at Recurly now and run it at lower intensity, but the product is live in private beta and the thesis hasn't changed.",
+      "I co-founded Checkpoint with Ayushman Gupta and Aaditya Gaur and led engineering as CTO. The bet was that agents need a pre-production failure surface: somewhere to break the loop on purpose, before a user does it by accident. I run it at lower intensity while I finish at Purdue, but the product is live in private beta and the thesis hasn’t changed.",
     built:
       "Engineers submit an agent config: prompts, tools, schemas. Checkpoint generates adversarial multi-turn test suites across five categories, runs them against stateful mocked tools in a sandbox, and scores the transcripts with an LLM judge working from a structured rubric rather than string matching.",
     architecture: [
@@ -29,11 +29,11 @@ export const projects: Project[] = [
     ],
     stack: ["Next.js", "Python", "FastAPI", "OpenAI API", "AWS"],
     impact:
-      "Y Combinator told us our Summer 2026 application ranked in the top 10% of the applicant pool. We didn't get an interview. The product is live in private beta, and the sandbox and test-generation work is still the clearest version of a thesis I hold: agents need somewhere to fail on purpose.",
+      "Y Combinator told us our Summer 2026 application ranked in the top 10% of the applicant pool. We didn’t get an interview. The product is live in private beta, and the sandbox and test-generation work is still the clearest version of a thesis I hold: agents need somewhere to fail on purpose.",
     learnings: [
       "Adversarial generation is the easy half. Deciding what counts as a failure, and making that judgment reproducible, is the actual product.",
       "Stateful tool mocking mattered more than model choice. Most interesting agent bugs only appear on turn three or later.",
-      "A strong application signal is not a business. Ranking well told us the problem was legible; it didn't tell us anyone would pay yet.",
+      "A strong application signal is not a business. Ranking well told us the problem was legible; it didn’t tell us anyone would pay yet.",
     ],
     links: [{ label: "usecheckpoint.dev", href: "https://usecheckpoint.dev", kind: "site" }],
   },
@@ -65,7 +65,7 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "GKE", "Kubernetes", "GCP", "Vertex AI", "GPT-4o", "ADB"],
     impact:
-      "Held a sub-1% failure rate at production scale and became core infrastructure inside QualGent, feeding the knowledge base that the company's QA copilot reads from.",
+      "Held a sub-1% failure rate at production scale and became core infrastructure inside QualGent, feeding the knowledge base that the company’s QA copilot reads from.",
     links: [],
     confidential: true,
   },
@@ -87,7 +87,7 @@ export const projects: Project[] = [
     problem:
       "QA teams had capability scattered across a dozen surfaces: test history in one place, tickets in another, app knowledge in a third. Every question meant stitching them together by hand.",
     story:
-      "I built QualGent's flagship assistant: one orchestrator that could reach everything. The interesting engineering was in routing, not generation. With 45+ tools available, picking the right three is the whole problem.",
+      "I built QualGent’s flagship assistant: one orchestrator that could reach everything. The interesting engineering was in routing, not generation. With 45+ tools available, picking the right three is the whole problem.",
     built:
       "An enterprise QA copilot built as a Gemini 2.5 Pro orchestrator on Google ADK, routing across 45+ tools and sub-agents and deployed on Vertex AI Agent Engine through a gated Cloud Build pipeline.",
     architecture: [
@@ -119,7 +119,7 @@ export const projects: Project[] = [
     problem:
       "Language models will generate clinical hypotheses all day. The hard question is which ones survive contact with the data, and whether you can show your work well enough for a reviewer to check it.",
     story:
-      "I built CLIP-H with Purdue and Harvard Business School faculty. The goal was hypothesis verification you could actually audit: sparse features you can name, an ensemble that disagrees usefully, and a validation setup that doesn't quietly grade its own homework.",
+      "I built CLIP-H with Purdue and Harvard Business School faculty. The goal was hypothesis verification you could actually audit: sparse features you can name, an ensemble that disagrees usefully, and a validation setup that doesn’t quietly grade its own homework.",
     built:
       "A hypothesis verification pipeline over MIMIC-IV using Top-K sparse autoencoders to surface interpretable features, with a GPT and Claude ensemble scoring candidate hypotheses.",
     architecture: [
@@ -205,9 +205,9 @@ export const projects: Project[] = [
     org: "Purdue University",
     highlight: "Private speech, local models, real hospital testing",
     problem:
-      "Clinical AI has to be useful without being careless. Privacy, latency, and interpretability matter as much as the model does, and a nurse mid-shift will not wait on a round trip to someone else's API.",
+      "Clinical AI has to be useful without being careless. Privacy, latency, and interpretability matter as much as the model does, and a nurse mid-shift will not wait on a round trip to someone else’s API.",
     story:
-      "I built a clinical assistant with hard privacy constraints: nothing leaves the device that doesn't have to. Local speech-to-text, self-hosted models, and an interface a nurse could use one-handed while doing something else.",
+      "I built a clinical assistant with hard privacy constraints: nothing leaves the device that doesn’t have to. Local speech-to-text, self-hosted models, and an interface a nurse could use one-handed while doing something else.",
     built:
       "A Flutter and TypeScript clinical assistant tested across Indiana hospitals, running self-hosted LLaMA 3.2 and an on-device, HIPAA-compliant speech-to-text pipeline.",
     architecture: [
@@ -217,7 +217,7 @@ export const projects: Project[] = [
     ],
     stack: ["Flutter", "TypeScript", "LLaMA 3.2", "PyTorch", "On-device STT"],
     impact:
-      "Cut nurses' documentation overhead by roughly 40% in hospital testing, and was presented at the Purdue Spring Research Conference.",
+      "Cut nurses’ documentation overhead by roughly 40% in hospital testing, and was presented at the Purdue Spring Research Conference.",
     cover: {
       kind: "image",
       src: "/projects/clinical-cover.png",

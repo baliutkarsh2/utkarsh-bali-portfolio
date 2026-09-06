@@ -46,8 +46,8 @@ export default function ProjectsPage() {
         <p className="meta text-ink-3">Index · {count} projects</p>
         <h1 className="mt-6 text-display-l text-ink">The work.</h1>
         <p className="measure mt-6 text-lede text-ink-2">
-          {count} projects, from production agent infrastructure to research prototypes. For
-          each: the problem, the architecture, and what it proved.
+          From production agent infrastructure to research prototypes. For each: the
+          problem, the architecture, and what it proved.
         </p>
       </header>
 
@@ -103,7 +103,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* The index has no numbered sections, so the close is the first. */}
-      <Contact index="01" />
+      <Contact />
     </>
   );
 }

@@ -19,14 +19,18 @@ export function textField(text: string, w: number, h: number, fontFamily: string
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "#fff";
   ctx.textBaseline = "middle";
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
   // Size the type to fill the height, then shrink until it fits the width.
   let size = h * ss * 0.92;
   ctx.font = `500 ${size}px ${fontFamily}`;
   const measured = ctx.measureText(text).width;
   if (measured > canvas.width * 0.96) size *= (canvas.width * 0.96) / measured;
   ctx.font = `500 ${size}px ${fontFamily}`;
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2 + size * 0.04);
+  // Aligned on the ink, not the advance: the first dot of the figure lands on
+  // the same column edge as the headline under it, like every other dot
+  // surface on the site.
+  const box = ctx.measureText(text);
+  ctx.fillText(text, box.actualBoundingBoxLeft, canvas.height / 2 + size * 0.04);
 
   const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const bytes = new Uint8Array(w * h);

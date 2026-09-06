@@ -4,8 +4,8 @@
  */
 
 export const aboutNote = {
-  lead: 'As a kid I drew up quadcopters, sketched Iron Man suits with a friend, and built motor-powered cars I insisted on calling "Thrust SSC." In high school it was the apps and games I wished existed. Since Purdue: AI agents, developer tools, healthcare prototypes, research systems.',
-  body: "The projects I want are the ones where the hard part isn't the model. It's deciding what the thing should actually do.",
+  lead: 'As a kid I drew up quadcopters, sketched Iron Man suits with a friend, and built motor-powered cars I insisted on calling “Thrust SSC.” In high school it was the apps and games I wished existed. Since Purdue: AI agents, developer tools, healthcare prototypes, research systems.',
+  body: "The projects I want are the ones where the hard part isn’t the model. It’s deciding what the thing should actually do.",
 };
 
 export const beliefs = [
@@ -19,7 +19,7 @@ export const beliefs = [
   },
   {
     title: "Art as a survival trait",
-    body: "Making things, music, dance, film, whatever it is, isn't decoration. It's how people have always stayed alive.",
+    body: "Making things, music, dance, film, whatever it is, isn’t decoration. It’s how people have always stayed alive.",
   },
 ];
 
@@ -32,10 +32,10 @@ export const reading = [
 export const music = [
   "Indian indie artists",
   "Charlie Puth and other pop",
-  "Nusrat Fateh Ali Khan's qawwalis",
+  "Nusrat Fateh Ali Khan’s qawwalis",
   "Whatever beautiful thing the feed serves up",
 ];
 
-export const interests = ["Startups", "Artificial intelligence", "Travelling", "Art"];
+export const interests = ["Startups", "Artificial intelligence", "Traveling", "Art"];
 
 export const mission = "Connecting the dots...";
