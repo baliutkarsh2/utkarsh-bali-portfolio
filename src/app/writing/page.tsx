@@ -28,7 +28,7 @@ export default function WritingPage() {
 
   return (
     <>
-      <header className="shell pt-24 pb-12 md:pt-32">
+      <header className="shell pt-24 pb-10 md:pt-28">
         <p className="meta text-ink-3">
           Index · {count} {count === 1 ? "post" : "posts"}
         </p>

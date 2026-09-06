@@ -47,7 +47,7 @@ src/
     project/            case-study pieces: number plate, body, rail, gallery, prev/next, inspection panel
     interactive/        the only "use client" files: dot-board, reveal, copy-email,
                         section-spy, progress-row, command-palette
-    ui/                 primitives: numeral, row, section, spec-list, dot-leader, led,
+    ui/                 primitives: numeral, row, section, spec-list, led,
                         button, tag, dot-mask, spine, mission-line, nine-dot-mark
   content/              all copy and data, plus the generated portrait fields
     writing/            MDX posts
@@ -181,8 +181,8 @@ Body copy here. Standard markdown, plus any React component you import.
 ## Things worth knowing before you change them
 
 - **One pitch.** `--pitch` is a single integer pixel value (5px, 6px from
-  80rem). The page field, the portrait grid, the Doto numerals, the dot
-  leaders, dotted underlines, image masks, the progress row, the spine and the
+  80rem). The page field, the portrait grid, the Doto numerals, dotted
+  underlines, image masks, the progress row, the spine and the
   view-transition mask all use it. Nothing dotted exists off the pitch; if a
   new dotted thing is needed, build it from `var(--pitch)`. The portrait fields are the one sanctioned exception: they are baked at half the pitch (double density) so the face reads, and every second cell still lands on the page lattice.
 

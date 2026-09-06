@@ -328,7 +328,7 @@
     display: grid;
     grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
     column-gap: var(--gutter);
-    row-gap: var(--space-8);
+    row-gap: var(--space-6);
     margin-top: var(--section-gap);
   }
 
@@ -419,46 +419,6 @@
   @media (width >= 48rem) {
     .spec-list[data-inline] {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
-  /* ═══ DotLeader ═════════════════════════════════════════════════════════════
-     Label · leader · value on one baseline. The dots themselves come from the
-     `dot-leader` utility in globals.css (anchored right so the last dot is
-     always whole; an empty 2 px span sits on the text baseline). `leader-draw`
-     adds the draw-in: the run is clipped to `--u` of its width, 0 → 100 % over
-     --dur-5 on `data-in`, paint only, no layout. `--u` is a registered
-     <percentage>, so it interpolates; without JS or under reduced motion the
-     leader is simply drawn.
-     ───────────────────────────────────────────────────────────────────────── */
-  .leader {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    min-width: 0;
-    padding-block: 0.5rem;
-  }
-
-  .leader-label,
-  .leader-value {
-    flex: none;
-    min-width: 0;
-    max-width: 70%;
-    overflow-wrap: anywhere;
-  }
-
-  .leader-draw {
-    --u: 100%;
-    clip-path: inset(0 calc(100% - var(--u)) 0 0);
-    transition: --u var(--dur-5) var(--ease-out) calc(var(--i, 0) * var(--stagger));
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    :root.js:not([data-motion="reduce"]) .leader-draw {
-      --u: 0%;
-    }
-    :root.js:not([data-motion="reduce"]) :is(.leader-draw[data-in], [data-in] .leader-draw) {
-      --u: 100%;
     }
   }
 
@@ -757,7 +717,9 @@
     list-style: none;
     color: var(--ink-3);
   }
-  .tag-row > li + li::before {
+  /* The middot trails each item rather than leading the next, so a line
+     that wraps ends with a dot instead of starting with one. */
+  .tag-row > li:not(:last-child)::after {
     content: "·";
     margin-inline: 0.6em;
     color: var(--ink-3);
@@ -1356,6 +1318,14 @@
     justify-self: start;
   }
 
+  /* One column: the caption hangs under the box (absolute, board.css), so
+     the box takes a margin for it before the tagline. */
+  @media (width < 80rem) {
+    .hero-board {
+      margin-bottom: var(--space-3);
+    }
+  }
+
   @media (width >= 80rem) {
     .hero {
       grid-template-columns: minmax(0, 1fr) calc(96 * var(--pitch));
@@ -1379,6 +1349,16 @@
       grid-column: 2;
       grid-row: 1 / 4;
       align-self: start;
+    }
+  }
+
+  /* A 720px laptop. The name is already capped by height (display-xl); the
+     hero's own padding and gaps give back the rest, so the actions sit
+     above the fold rather than half under it. */
+  @media (width >= 80rem) and (height < 820px) {
+    .hero {
+      row-gap: var(--space-3);
+      padding-block: var(--space-4);
     }
   }
 }
@@ -1491,14 +1471,12 @@
   }
 
   /* The one-number plate: a full-bleed --ground-2 band between hairlines,
-     the figure at the top, the highlight at the bottom. 60svh, 40svh on a
-     phone. */
+     the figure and its label, then the highlight. Sized by what is on it:
+     a slide with a fixed height is a slide with empty ground on it. */
   .case-plate {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: var(--space-8);
-    min-height: 40svh;
+    gap: var(--space-6);
     padding-block: var(--space-6);
     border-block: 1px solid var(--line);
     background: var(--ground-2);
@@ -1506,7 +1484,7 @@
 
   @media (width >= 48rem) {
     .case-plate {
-      min-height: 60svh;
+      gap: var(--space-8);
       padding-block: var(--space-8);
     }
   }
@@ -1548,6 +1526,122 @@
     }
     .case-rail {
       grid-column: 10 / span 3;
+    }
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════════
+   Contact (the close of every page) and the Toolkit table. Endgame pass.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ── Contact: head and body on the copy columns, the afterimage on the rail
+        spanning both rows, so the ghost sits beside the title and the address
+        lines up with its bottom edge. The hairline is the grid's first row (a
+        pseudo-element spanning every column) rather than a border on the
+        section, whose border would run through the shell padding. Below
+        64rem there is no rail and no board. ── */
+  .contact {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    column-gap: var(--gutter);
+  }
+
+  .contact::before {
+    content: "";
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .contact > .section-head {
+    border-top: 0;
+  }
+
+  .contact-head,
+  .contact-body {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .contact-body {
+    margin-top: var(--section-gap);
+  }
+
+  .contact-board {
+    display: none;
+  }
+
+  @media (width >= 64rem) {
+    .contact-head,
+    .contact-body {
+      grid-column: 1 / span 5;
+    }
+    .contact-body {
+      align-self: end;
+    }
+    .contact-board {
+      display: block;
+      grid-column: 6 / span 3;
+      grid-row: 2 / span 2;
+      min-width: 0;
+      padding-top: var(--space-3);
+    }
+  }
+
+  @media (width >= 80rem) {
+    .contact-head,
+    .contact-body {
+      grid-column: 1 / span 7;
+    }
+    .contact-board {
+      grid-column: 9 / span 4;
+    }
+  }
+
+  /* ── Toolkit: a table, not a scoreboard. Five hairlined rows in the
+        SpecList grammar: the group in the meta column, its tools as one
+        wrapped line joined by middots. Words, so nothing here moves. ── */
+  .toolkit {
+    margin: 0;
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .toolkit > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.5rem;
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .toolkit dt,
+  .toolkit dd {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .toolkit-list {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-2);
+  }
+
+  .toolkit-list > li:not(:last-child)::after {
+    content: "·";
+    margin-inline: 0.6em;
+    color: var(--ink-3);
+  }
+
+  @media (width >= 40rem) {
+    .toolkit > div {
+      grid-template-columns: 11rem minmax(0, 1fr);
+      column-gap: var(--space-3);
+      align-items: baseline;
+      padding-block: 1.125rem;
     }
   }
 }

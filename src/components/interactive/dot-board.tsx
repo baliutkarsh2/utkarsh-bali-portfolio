@@ -77,9 +77,9 @@ const SOURCES: Record<PortraitSource, SourceSpec> = {
     load: () => import("@/content/portrait-field-about").then((m) => m.portraitFieldAbout),
   },
   contact: {
-    cols: 64,
-    rows: 80,
-    load: () => import("@/content/portrait-field-64").then((m) => m.portraitField64),
+    cols: 48,
+    rows: 60,
+    load: () => import("@/content/portrait-field-contact").then((m) => m.portraitFieldContact),
   },
 };
 

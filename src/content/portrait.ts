@@ -11,6 +11,7 @@ export type { BoardField } from "./portrait-types";
 export { portraitField96 } from "./portrait-field-96";
 export { portraitField64 } from "./portrait-field-64";
 export { portraitFieldAbout } from "./portrait-field-about";
+export { portraitFieldContact } from "./portrait-field-contact";
 export { portraitOg } from "./portrait-og";
 export { DOT_COUNT } from "./portrait-meta";
 

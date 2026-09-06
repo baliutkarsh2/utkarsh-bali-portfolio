@@ -42,12 +42,12 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <header className="shell pt-24 pb-12 md:pt-32 md:pb-16">
+      <header className="shell pt-24 pb-10 md:pt-28 md:pb-12">
         <p className="meta text-ink-3">Index · {count} projects</p>
         <h1 className="mt-6 text-display-l text-ink">The work.</h1>
         <p className="measure mt-6 text-lede text-ink-2">
-          {count} projects, from production agent infrastructure to research prototypes. Each
-          one covers the problem, the architecture, and what it actually proved.
+          {count} projects, from production agent infrastructure to research prototypes. For
+          each: the problem, the architecture, and what it proved.
         </p>
       </header>
 

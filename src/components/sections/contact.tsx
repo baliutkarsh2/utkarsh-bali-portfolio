@@ -1,54 +1,73 @@
 import { CopyEmail } from "@/components/interactive/copy-email";
 import { DotBoard } from "@/components/interactive/dot-board";
-import { Section } from "@/components/ui/section";
 import { profile, socials } from "@/content";
 
+const TITLE = "Building something? Let\u2019s talk.";
+
 /**
- * The close of every page (§7.1 04): "Building something? Let's talk.", the
- * address as one click-to-copy line, the three socials as small dotted links,
- * and from 64rem the afterimage — the 64-field drawn once at 10 % in the rail,
- * the same place the hero had the face. Release: the dots let go.
+ * The close of every page: the title, the address as one click-to-copy
+ * line, the three socials, and from 64rem the afterimage: the hero window at
+ * half its size (a 48 x 60 box) drawn once at a third of its ink on the rail,
+ * beside the title, with the address lining up on its bottom edge. Release:
+ * the dots let go.
  *
- * The rail is hidden below 64rem at the section level (`max-lg:` on the
- * primitive's `.section-rail`) so the grid drops the empty row and its gap,
- * and the board's own wrapper is hidden too, belt and braces. The figure is
- * decorative (`alt=""` gives it aria-hidden) and runs no loop.
+ * Its own grid rather than <Section> (`.contact` in components.css): the
+ * board spans the head row and the body row, which the primitive's
+ * head-then-body stack cannot do, and a close must never leave a rail's
+ * worth of empty ground under its title. Below 64rem the board is not
+ * rendered. The figure is decorative (`alt=""` gives it aria-hidden) and
+ * runs no loop.
  *
- * No ink band, no dark class: one theme, and the field shows through.
  * Signature kept: every page passes its own `index`; the home's is "04".
  */
 export function Contact({ index }: { index?: string }) {
-  return (
-    <Section
-      index={index ?? "04"}
-      title="Building something? Let's talk."
-      id="contact"
-      className="max-lg:[&_.section-rail]:hidden"
-      rail={
-        <div className="hidden lg:block">
-          <DotBoard mode="afterimage" source="contact" alt="" />
-        </div>
-      }
-    >
-      <CopyEmail email={profile.email} />
+  const sectionIndex = index ?? "04";
 
-      <ul className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-1 text-small" aria-label="Elsewhere">
-        {socials
-          .filter((social) => social.kind !== "email")
-          .map((social) => (
-            <li key={social.kind}>
-              <a
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="dot-underline tap text-ink-2 hover:text-ink"
-              >
-                {social.label}
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-            </li>
-          ))}
-      </ul>
-    </Section>
+  return (
+    <section
+      id="contact"
+      aria-labelledby="contact-title"
+      data-section-index={sectionIndex}
+      data-section-title={TITLE}
+      className="contact shell section-y"
+    >
+      <div className="section-head contact-head">
+        <span className="meta text-ink-3" aria-hidden="true">
+          {sectionIndex}
+        </span>
+        <h2 id="contact-title" className="text-display-m font-medium text-balance text-ink">
+          {TITLE}
+        </h2>
+      </div>
+
+      <div className="contact-body">
+        <CopyEmail email={profile.email} />
+
+        <ul
+          className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-1 text-small"
+          aria-label="Elsewhere"
+        >
+          {socials
+            .filter((social) => social.kind !== "email")
+            .map((social) => (
+              <li key={social.kind}>
+                <a
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="dot-underline tap text-ink-2 hover:text-ink"
+                >
+                  {social.label}
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </li>
+            ))}
+        </ul>
+      </div>
+
+      <div className="contact-board">
+        <DotBoard mode="afterimage" source="contact" alt="" />
+      </div>
+    </section>
   );
 }

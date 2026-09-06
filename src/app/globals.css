@@ -90,8 +90,8 @@
   --space-8: 4rem;
   --space-10: 5rem;
   --space-12: 6rem;
-  --section-y: clamp(5rem, 9vw, 8.5rem);
-  --section-gap: 3rem; /* section head to body */
+  --section-y: clamp(2.75rem, 4.5vw, 4rem);
+  --section-gap: 2.5rem; /* section head to body */
 
   /* ── Containers ── */
   --shell: 84rem; /* stops growing here; 4K gets more field, not a wider page */
@@ -192,7 +192,7 @@
 
   /* Geist 500. The weight rides on the token so display type cannot be set
      at 400 or 600 by accident. */
-  --text-display-xl: clamp(3.25rem, 11vw, 10.5rem); /* the name only */
+  --text-display-xl: clamp(3.25rem, min(11vw, 17vh), 10.5rem); /* the name only; 17vh keeps the hero on one 720px screen */
   --text-display-xl--line-height: 0.92;
   --text-display-xl--letter-spacing: -0.045em;
   --text-display-xl--font-weight: 500;
@@ -500,23 +500,6 @@
   .prose & {
     --u-rest: 100%;
   }
-}
-
-/* A run of dots at the pitch that fills the space it is given. Place it as
-   an empty, aria-hidden span between a label and its value in a flex row;
-   the dots are anchored to the right edge so the last one is always whole. */
-@utility dot-leader {
-  flex: 1 1 auto;
-  min-width: calc(4 * var(--pitch));
-  height: 2px;
-  color: var(--ink-3);
-  background-image: repeating-linear-gradient(
-    to left,
-    currentColor 0 1.5px,
-    transparent 1.5px var(--pitch)
-  );
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
 }
 
 /* Image resolve (§6). Every screenshot sits under a disc mask at the pitch.

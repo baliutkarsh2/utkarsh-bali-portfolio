@@ -81,8 +81,8 @@ export function Hero() {
         <p className="max-w-[34ch] text-display-s text-ink">{profile.tagline}</p>
 
         <p className="mt-5 max-w-[34ch] text-lede text-ink-2">
-          This summer I was a software engineering intern at Recurly. Before that I built agent
-          infrastructure at <span className="text-ink">QualGent</span> (YC X25), and I
+          This summer I was a software engineering intern at Recurly. Before that, agent
+          infrastructure at <span className="text-ink">QualGent</span> (YC X25). I also
           co-founded{" "}
           <Link
             href="/projects/checkpoint"

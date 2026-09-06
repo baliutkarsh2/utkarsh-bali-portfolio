@@ -219,6 +219,17 @@
     letter-spacing: inherit;
   }
 
+  /* The shortcut as the visitor's keyboard has it: the boot script marks a
+     Mac on <html> (data-mac); everyone else sees Ctrl. */
+  .kbd-chip .kbd-mac,
+  :root[data-mac] .kbd-chip .kbd-other {
+    display: none;
+  }
+
+  :root[data-mac] .kbd-chip .kbd-mac {
+    display: inline;
+  }
+
   /* On a tablet the chip keeps its 1.75rem box (a 44px-tall bordered chip in
      a 56px bar reads as a button, and it is a key hint); the hit area grows
      to 44px through a pseudo-element instead: 28px + 2 × 8px. */
@@ -360,7 +371,7 @@
   .site-footer {
     position: relative;
     z-index: var(--z-content);
-    padding-block: var(--space-8) var(--space-5);
+    padding-block: var(--space-6) var(--space-4);
   }
 
   .footer-top {

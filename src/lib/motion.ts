@@ -29,6 +29,8 @@ const REDUCE_QUERY = "(prefers-reduced-motion: reduce)";
  */
 export const MOTION_BOOT_SCRIPT =
   "document.documentElement.classList.add('js');" +
+  // The palette chip shows ⌘ on a Mac and Ctrl everywhere else (chrome.css).
+  "if(/Mac|iP(hone|ad|od)/.test(navigator.platform||''))document.documentElement.dataset.mac='';" +
   `try{if(localStorage.getItem('${MOTION_STORAGE_KEY}')==='reduce')document.documentElement.dataset.motion='reduce'}catch(e){}`;
 
 function root(): HTMLElement | null {

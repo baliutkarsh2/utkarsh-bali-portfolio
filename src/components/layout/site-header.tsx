@@ -152,7 +152,8 @@ export function SiteHeader() {
               user can say what they see; the sr-only tail tells a screen
               reader what the key does without displacing the label. */}
           <button type="button" onClick={openPalette} className="kbd-chip meta">
-            <kbd>⌘K</kbd>
+            <kbd className="kbd-mac">⌘K</kbd>
+            <kbd className="kbd-other">Ctrl K</kbd>
             <span className="sr-only">, search</span>
           </button>
 

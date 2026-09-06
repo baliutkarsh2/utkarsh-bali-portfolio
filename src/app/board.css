@@ -32,6 +32,7 @@
    inspection panel does. Clamped, the last column and row would be clipped. */
 @media (width >= 80rem) {
   .about-board,
+  .contact-board .board,
   .section-rail .board {
     max-width: none;
   }

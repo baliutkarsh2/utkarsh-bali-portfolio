@@ -3,7 +3,7 @@ Bake the dot-portrait fields from the segmented cutout.
 
 Run by hand; every output is committed. Vercel never runs this.
 
-    python scripts/bake-portrait.py            # writes src/content/portrait-field-*.ts,
+    python scripts/bake-portrait.py            # writes src/content/portrait-field-*.ts (96, 64, about, contact),
                                                # src/content/portrait-meta.ts,
                                                # src/content/portrait-og.ts,
                                                # public/portrait/dots-96@2x.webp, dots-64@2x.webp, dots-about@2x.webp
@@ -222,6 +222,7 @@ def main() -> None:
     f96, w96 = sample(main_win, 192, 240)
     f64, w64 = sample(main_win, 128, 160)
     fab, wab = sample(about_win, 128, 160)
+    fct, wct = sample(main_win, 96, 120)  # the Contact afterimage: a 48 x 60 box
     f48, w48 = sample(main_win, 48, 60)
 
     # The name passes over the board's top-left corner at >= 80rem: it must be sky.
@@ -231,15 +232,19 @@ def main() -> None:
     d96 = find_datum(f96, to_cell(DATUM_HINT, MAIN_CROP, 192))
     d64 = find_datum(f64, to_cell(DATUM_HINT, MAIN_CROP, 128))
     dab = find_datum(fab, to_cell(DATUM_HINT, ABOUT_CROP, 128))
+    dct = find_datum(fct, to_cell(DATUM_HINT, MAIN_CROP, 96))
     d48 = find_datum(f48, to_cell(DATUM_HINT, MAIN_CROP, 48))
     c96 = to_cell(CENTER_HINT, MAIN_CROP, 192)
     c64 = to_cell(CENTER_HINT, MAIN_CROP, 128)
     cab = to_cell(CENTER_HINT, ABOUT_CROP, 128)
+    cct = to_cell(CENTER_HINT, MAIN_CROP, 96)
 
     r96, r64, rab, r48 = rim_indices(f96, w96), rim_indices(f64, w64), rim_indices(fab, wab), rim_indices(f48, w48)
+    rct = rim_indices(fct, wct)
 
     (CONTENT / "portrait-field-96.ts").write_text(ts_module("portraitField96", f96, d96, c96, r96, "Hero at >= 48rem: a 96 x 120 lattice box at double density. Window MAIN_CROP of the photograph."))
-    (CONTENT / "portrait-field-64.ts").write_text(ts_module("portraitField64", f64, d64, c64, r64, "Hero below 48rem and the Contact afterimage: a 64 x 80 box at double density."))
+    (CONTENT / "portrait-field-64.ts").write_text(ts_module("portraitField64", f64, d64, c64, r64, "Hero below 48rem: a 64 x 80 box at double density."))
+    (CONTENT / "portrait-field-contact.ts").write_text(ts_module("portraitFieldContact", fct, dct, cct, rct, "The Contact afterimage: the hero window at half its size, a 48 x 60 box at double density."))
     (CONTENT / "portrait-field-about.ts").write_text(ts_module("portraitFieldAbout", fab, dab, cab, rab, "About: the face only, second angle. Window ABOUT_CROP, a 64 x 80 box at double density."))
 
     count = int((f96 >= UNLIT * 255).sum())
@@ -273,6 +278,7 @@ def main() -> None:
     print(f"96 field: {count} lit, datum {d96}, center {c96}, rim {len(r96)}")
     print(f"64 field: {int((f64 >= UNLIT * 255).sum())} lit, datum {d64}")
     print(f"about field: {int((fab >= UNLIT * 255).sum())} lit, datum {dab}")
+    print(f"contact field: {int((fct >= UNLIT * 255).sum())} lit, datum {dct}")
     print(f"og dots: {len(og)}")
     for f in sorted(PUBLIC.glob("*.webp")):
         print(f"  {f.name}: {os.path.getsize(f) // 1024} KB")
@@ -285,6 +291,7 @@ def main() -> None:
         render(f96, d96, set(r96), 3.5, False).save(out / "bake-96.png")
         render(f64, d64, set(r64), 4.5, False).save(out / "bake-64.png")
         render(fab, dab, set(rab), 4.5, False).save(out / "bake-about.png")
+        render(fct, dct, set(rct), 4.5, False).save(out / "bake-contact.png")
         print("previews in", out)
 
 
