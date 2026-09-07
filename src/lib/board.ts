@@ -72,8 +72,12 @@ export type Board = {
   assemble: (now: number) => void;
   /** Jump to the settled portrait. */
   settle: () => void;
-  /** Pointer in canvas CSS px, or null when it leaves. */
-  pointer: (x: number | null, y: number | null) => void;
+  /**
+   * Pointer in canvas CSS px, or null when it leaves. `vx` / `vy` are how
+   * fast it is travelling, in CSS px per second, which is what decides
+   * whether the pointer is a light or an adversary (see TEAR_SPEED).
+   */
+  pointer: (x: number | null, y: number | null, vx?: number, vy?: number) => void;
   /** Dispersal 0..1 (hero only). */
   scroll: (t: number) => void;
   /** Disable the pin bed (governor). Light stays. */
@@ -141,6 +145,33 @@ const GROW_MS = 500;
 const SPRING_K = 0.2;
 const SPRING_DAMP = 0.6;
 const REST_V = 0.05; // px: below this, a dot is at rest
+
+/**
+ * The tear.
+ *
+ * Move the pointer slowly and it is a light: the dots brighten and lean away
+ * from it, measured from each dot's home, and the formation holds. Move it
+ * fast and it stops being a light and starts being a hand — a narrower, harder
+ * core that grabs whatever is actually under it and throws that material along
+ * the direction of travel. Then the spring, which never changed, pulls every
+ * dot home.
+ *
+ * That is the whole argument the site is making, as an interaction rather than
+ * a sentence: perturb it and it converges. It is triggered by speed, never by a
+ * button, for two reasons. A held drag is also a text selection, and tearing
+ * the field while someone selects a heading is a bug, not a feature. And a
+ * thing you find by accident is worth more than a thing you are told about.
+ *
+ * The impulse is applied to VELOCITY, from the dot's LIVE position — unlike
+ * the light, which moves a target and is measured from home. That is what makes
+ * it feel like material rather than like a field: the dots keep the momentum
+ * they were given and coast, and the spring has to win them back.
+ */
+export const TEAR_SPEED = 600; // px/s: below this the pointer is only a light
+const TEAR_FULL = 1800; // px/s: fully torn
+const TEAR_CELLS = 10; // radius in lattice steps; the light's is 18
+const TEAR_IMPULSE = 2.2; // lattice steps of velocity at the core, fully torn
+const TEAR_DECAY = 0.86; // per frame once the pointer stops moving
 
 export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: BoardOptions): Board | null {
   const ctx = canvas.getContext("2d", { alpha: true });
@@ -214,6 +245,10 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   let dpr = 1;
   let pointerX: number | null = null;
   let pointerY: number | null = null;
+  /** 0..1: how hard the pointer is currently tearing, and which way. */
+  let tear = 0;
+  let tearX = 0;
+  let tearY = 0;
   let scrollT = 0;
   let pushEnabled = opts.pointer && opts.mode === "hero";
   const lightEnabled = opts.pointer && (opts.mode === "hero" || opts.mode === "still" || opts.mode === "text");
@@ -273,9 +308,19 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     dirty = true;
   }
 
-  function pointer(x: number | null, y: number | null) {
+  function pointer(x: number | null, y: number | null, vx = 0, vy = 0) {
     pointerX = x;
     pointerY = y;
+    const speed = Math.hypot(vx, vy);
+    if (x === null || y === null || !pushEnabled || speed <= TEAR_SPEED) return;
+    // Ramp rather than a switch: at 600 px/s nothing happens, at 1800 the
+    // core is at full strength, so there is no moment where the field snaps
+    // into a different mode.
+    const k = Math.min(1, (speed - TEAR_SPEED) / (TEAR_FULL - TEAR_SPEED));
+    if (k <= tear) return;
+    tear = k;
+    tearX = vx / speed;
+    tearY = vy / speed;
     dirty = true;
   }
 
@@ -306,6 +351,11 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     const t2 = t * t;
     const hasPointer = pointerX !== null && pointerY !== null && lightEnabled;
     const R = 18 * lattice;
+    // Read once per frame, then decay: a pointer that stops moving stops
+    // tearing within about a fifth of a second, and the spring takes over.
+    const tearNow = pointerX !== null && pointerY !== null ? tear : 0;
+    const tearR = TEAR_CELLS * lattice;
+    if (physics) tear = tear < 0.01 ? 0 : tear * TEAR_DECAY;
     const afterimage = opts.mode === "afterimage";
 
     counts.fill(0);
@@ -362,6 +412,23 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
         const ay = (ty - py[i]) * SPRING_K;
         vx[i] = (vx[i] + ax) * SPRING_DAMP;
         vy[i] = (vy[i] + ay) * SPRING_DAMP;
+        // The tear, after the spring and before the integrate, so the impulse
+        // survives one whole frame instead of being damped on arrival.
+        if (tearNow > 0 && !datum) {
+          const lx = hx + px[i] - (pointerX as number);
+          const ly = hy + py[i] - (pointerY as number);
+          const ld = Math.hypot(lx, ly);
+          if (ld < tearR) {
+            const g = 1 - ld / tearR;
+            const w = g * g * tearNow * TEAR_IMPULSE * lattice;
+            // Mostly along the travel, a quarter outward: pure travel shears
+            // the field into a smear, pure outward is just a bigger pin bed.
+            const ox = ld > 0.001 ? lx / ld : 0;
+            const oy = ld > 0.001 ? ly / ld : 0;
+            vx[i] += (tearX * 0.75 + ox * 0.25) * w;
+            vy[i] += (tearY * 0.75 + oy * 0.25) * w;
+          }
+        }
         px[i] += vx[i];
         py[i] += vy[i];
         const sp = Math.abs(vx[i]) + Math.abs(vy[i]) + Math.abs(tx - px[i]) + Math.abs(ty - py[i]);
@@ -476,7 +543,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     }
     c.globalAlpha = 1;
 
-    if (restV > REST_V) moving = true;
+    if (restV > REST_V || tear > 0) moving = true;
     return moving;
   }
 

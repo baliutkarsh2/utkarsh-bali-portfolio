@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { BoardField } from "@/content/portrait-types";
-import { createBoard, type Board, type BoardMode } from "@/lib/board";
+import { createBoard, TEAR_SPEED, type Board, type BoardMode } from "@/lib/board";
 import { createGLBoard } from "@/lib/field/gl-board";
 import { motionAllowed, onMotionChange } from "@/lib/motion";
 
@@ -253,6 +253,8 @@ export function DotBoard({
 
       const restText = () =>
         restLabel ?? `${field.w} × ${field.h} · ${board.count.toLocaleString("en-US")} dots`;
+      const cellText = (c: { x: number; y: number; L: number }) =>
+        `x ${String(c.x).padStart(3, "0")} · y ${String(c.y).padStart(3, "0")} · ${c.L.toFixed(2)}`;
       const setReadout = (s: string) => {
         const el = readoutRef.current;
         if (el && el.textContent !== s) el.textContent = s;
@@ -365,8 +367,24 @@ export function DotBoard({
       // ── Pointer: the light, and the readout ─────────────────────────────
       // The readout is information and works under reduced motion; the light
       // and the pin bed are motion and do not.
+      // Pointer velocity in CSS px per second, for the tear. Measured over
+      // the gap between two real events rather than per frame: a mouse that
+      // reports at 1000 Hz would otherwise read as motionless most frames.
+      // getCoalescedEvents is deliberately not used — the tear wants the
+      // gesture, not every sample of it.
+      let lastX = 0;
+      let lastY = 0;
+      let lastT = 0;
+      /** While this is in the future, the readout says so instead of coordinates. */
+      let tornUntil = 0;
+      let tornTimer = 0;
+      let lastCellX = 0;
+      let lastCellY = 0;
       const leave = () => {
         inside = false;
+        lastT = 0;
+        tornUntil = 0;
+        window.clearTimeout(tornTimer);
         if (motion) {
           board.pointer(null, null);
           schedule();
@@ -397,16 +415,40 @@ export function DotBoard({
           y += bleed - r.top;
         }
         if (motion) {
-          board.pointer(x, y);
+          // A gap longer than a quarter second is a new gesture, not a fast
+          // one: re-entering the window must not read as a 4000 px/s flick.
+          const t = event.timeStamp;
+          const dt = lastT > 0 ? (t - lastT) / 1000 : 0;
+          const fresh = dt > 0.001 && dt < 0.25;
+          const vx = fresh ? (x - lastX) / dt : 0;
+          const vy = fresh ? (y - lastY) / dt : 0;
+          board.pointer(x, y, vx, vy);
+          // The one place the field explains itself, and only to someone who
+          // has already made it happen. It says nothing until you tear it.
+          if (Math.hypot(vx, vy) > TEAR_SPEED) {
+            tornUntil = t + 900;
+            // A pointer that tears and then stops dead sends no further
+            // events, so the word has to take itself off the page.
+            window.clearTimeout(tornTimer);
+            tornTimer = window.setTimeout(() => {
+              const c = board.cellAt(lastCellX, lastCellY);
+              setReadout(c ? cellText(c) : restText());
+            }, 900);
+          }
+          lastX = x;
+          lastY = y;
+          lastT = t;
           schedule();
         }
         if (caption) {
+          lastCellX = x;
+          lastCellY = y;
           const cell = board.cellAt(x, y);
           window.clearTimeout(leaveTimer);
-          if (cell) {
-            setReadout(
-              `x ${String(cell.x).padStart(3, "0")} · y ${String(cell.y).padStart(3, "0")} · ${cell.L.toFixed(2)}`,
-            );
+          if (event.timeStamp < tornUntil) {
+            setReadout("torn · converging");
+          } else if (cell) {
+            setReadout(cellText(cell));
           } else {
             leaveTimer = window.setTimeout(() => setReadout(restText()), 240);
           }
@@ -523,6 +565,7 @@ export function DotBoard({
           window.clearTimeout(idle);
         }
         window.clearTimeout(leaveTimer);
+        window.clearTimeout(tornTimer);
         io.disconnect();
         if (begin) document.removeEventListener("visibilitychange", begin);
         window.removeEventListener("resize", onResize);

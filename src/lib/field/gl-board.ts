@@ -52,6 +52,11 @@ const ASSEMBLE_MS = 1100;
 /** Frames keep being scheduled this long after the last input, then stop. */
 const SETTLE_MS = 700;
 
+/** The tear. Every one of these is board.ts's; see the note there. */
+const TEAR_SPEED = 600;
+const TEAR_FULL = 1800;
+const TEAR_DECAY = 0.86;
+
 // Attribute locations, shared by both programs so one VAO serves both.
 const A_HOME = 0;
 const A_LUM = 1;
@@ -82,6 +87,8 @@ uniform float uPush;      // pin bed enabled
 uniform float uScrollT;   // dispersal, 0..1
 uniform float uElapsed;   // ms since assemble(), or -1 when not assembling
 uniform float uSettled;
+uniform float uTear;      // 0..1, how hard the pointer is tearing
+uniform vec2  uTearDir;   // unit vector, the pointer's direction of travel
 
 float easeOutExpo(float t) { return t >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * t); }
 
@@ -149,6 +156,8 @@ ${COMMON}
 
 const float SPRING_K = 0.2;
 const float SPRING_DAMP = 0.6;
+const float TEAR_CELLS = 10.0;
+const float TEAR_IMPULSE = 2.2;
 
 void main() {
   float isDatum = step(1.5, aFlags);
@@ -165,6 +174,22 @@ void main() {
     // overshoot is why the board feels alive; do not "correct" it.
     vec2 a = (target - aDisp) * SPRING_K;
     vVel = (aVel + a) * SPRING_DAMP;
+
+    // The tear: after the spring, before the integrate, so the impulse
+    // survives a whole frame. Measured from the dot's LIVE position, unlike
+    // the light, which is measured from home -- that is what makes this feel
+    // like material being dragged rather than a field being bent.
+    if (uTear > 0.0 && isDatum < 0.5) {
+      float R = TEAR_CELLS * uLattice;
+      vec2 rel = (home + aDisp) - uPointer;
+      float d = length(rel);
+      if (d < R) {
+        float g = 1.0 - d / R;
+        float w = g * g * uTear * TEAR_IMPULSE * uLattice;
+        vec2 out2 = d > 0.001 ? rel / d : vec2(0.0);
+        vVel += (uTearDir * 0.75 + out2 * 0.25) * w;
+      }
+    }
     vDisp = aDisp + vVel;
   }
   gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
@@ -279,6 +304,8 @@ void main() { unused = vec4(0.0); }
 `;
 
 const SHARED = [
+  "uTear",
+  "uTearDir",
   "uOrigin", "uPitch", "uLattice", "uDensity", "uPointer",
   "uHasPointer", "uPush", "uScrollT", "uElapsed", "uSettled",
 ] as const;
@@ -488,6 +515,11 @@ function build(
   let dpr = 1;
   let pointerX: number | null = null;
   let pointerY: number | null = null;
+  /** 0..1: how hard the pointer is currently tearing, and which way. */
+  let tear = 0;
+  let tearNow = 0;
+  let tearX = 0;
+  let tearY = 0;
   let scrollT = 0;
   let assembling = false;
   let assembleStart = 0;
@@ -514,6 +546,8 @@ function build(
     gl.uniform1f(u.uScrollT, opts.mode === "hero" ? scrollT : 0);
     gl.uniform1f(u.uElapsed, elapsed);
     gl.uniform1f(u.uSettled, settled ? 1 : 0);
+    gl.uniform1f(u.uTear, tearNow);
+    gl.uniform2f(u.uTearDir, tearX, tearY);
   }
 
   /**
@@ -557,6 +591,12 @@ function build(
     // Keep frames coming while the driver compiles; there is nothing to draw
     // yet and nothing to settle, so this is a wait, not an idle loop.
     if (!ready()) return !programsFailed;
+
+    // Read once per frame, then decay, exactly as board.ts does: a pointer
+    // that stops moving stops tearing in about a fifth of a second.
+    tearNow = pointerX !== null && pointerY !== null ? tear : 0;
+    if (physics) tear = tear < 0.01 ? 0 : tear * TEAR_DECAY;
+    if (tearNow > 0) wake(SETTLE_MS);
 
     let elapsed = assembling ? now - assembleStart : -1;
     if (assembling && elapsed >= ASSEMBLE_MS) {
@@ -639,10 +679,17 @@ function build(
       wake(SETTLE_MS);
     },
 
-    pointer(x, y) {
+    pointer(x, y, vx = 0, vy = 0) {
       pointerX = x;
       pointerY = y;
       wake(SETTLE_MS);
+      const speed = Math.hypot(vx, vy);
+      if (x === null || y === null || !pushEnabled || speed <= TEAR_SPEED) return;
+      const k = Math.min(1, (speed - TEAR_SPEED) / (TEAR_FULL - TEAR_SPEED));
+      if (k <= tear) return;
+      tear = k;
+      tearX = vx / speed;
+      tearY = vy / speed;
     },
 
     scroll(t) {
