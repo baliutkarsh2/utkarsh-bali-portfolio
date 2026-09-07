@@ -814,6 +814,16 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
 
 
 
+      // Snap to the device pixel grid, exactly as gl-board.ts's DRAW_VS does
+      // and for exactly the same reason: a cell is a whole number of CSS
+      // pixels but a display is not obliged to be a whole number of device
+      // pixels per CSS pixel, and at Windows' 125% a 2px cell is 2.5 device
+      // px. Alternate marks then land on half-pixels, and the difference in
+      // how they resolve beats against the lattice into a grid of light holes
+      // punched through every dark passage. The two renderers must not
+      // disagree about where a mark is, so this is the same arithmetic done
+      // in CSS space: to the device grid and back.
+      const snapX = (v: number) => (Math.floor(v * dpr) + 0.5) / dpr;
       if (di <= 1) {
         // The two smallest buckets are about a pixel across: a square is the
         // same pixels as a disc that small at a fraction of the path cost,
@@ -823,13 +833,13 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
         const h = s / 2;
         for (let q = start; q < end; q++) {
           const i = order[q];
-          c.rect(homeX(i) + px[i] - h, homeY(i) + py[i] - h, s, s);
+          c.rect(snapX(homeX(i) + px[i]) - h, snapX(homeY(i) + py[i]) - h, s, s);
         }
       } else {
         for (let q = start; q < end; q++) {
           const i = order[q];
-          const X = homeX(i) + px[i];
-          const Y = homeY(i) + py[i];
+          const X = snapX(homeX(i) + px[i]);
+          const Y = snapX(homeY(i) + py[i]);
           c.moveTo(X + r, Y);
           c.arc(X, Y, r, 0, Math.PI * 2);
         }

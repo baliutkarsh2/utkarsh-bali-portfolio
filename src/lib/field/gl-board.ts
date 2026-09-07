@@ -371,6 +371,25 @@ void main() {
   // so the off-screen test below sees where the mark actually lands.
   float axis = uAxis * uDpr;
   device.x = axis + (device.x - axis) * uFlip;
+  // ── Snap the mark to the device pixel grid ──────────────────────────────
+  // A cell is a whole number of CSS pixels, but a DISPLAY is under no
+  // obligation to be a whole number of device pixels per CSS pixel. Windows
+  // at 125% -- the most common scaling setting there is -- makes a 2px cell
+  // 2.5 device px, so alternate dots land on half-pixels and a hard-edged
+  // disc rasterises differently on each. That alternation is a difference in
+  // ink density, and it beats against the lattice into a low-frequency grid
+  // of light holes punched through every dark passage.
+  //
+  // It is the screen door the direction spends so much effort avoiding,
+  // arriving through the back door -- and the finer the grid, the worse it
+  // gets, which is why it appeared when the density went to 3. Resolution
+  // does not fix this one; phase does.
+  //
+  // Snapping every centre to a pixel CENTRE makes every mark of a given size
+  // rasterise identically, so the density alternation is gone. What is left
+  // is the lattice spacing alternating 2, 3, 2, 3 device px, which is a fixed
+  // texture at the pixel scale rather than a beat at ten times it.
+  device = floor(device) + 0.5;
   if (device.x < -uPitch * uDpr || device.y < -uPitch * uDpr ||
       device.x > uRes.x + uPitch * uDpr || device.y > uRes.y + uPitch * uDpr) {
     culled = true;
