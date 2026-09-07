@@ -753,6 +753,29 @@
   font-size: clamp(3.25rem, 6vw, 5.5rem);
 }
 
+/* ── The device ───────────────────────────────────────────────────────────
+   The project's own mark, in the movement about the mechanism it draws. The
+   wiped tone comes with it from globals.css and is the whole frame it needs:
+   a full plate mark here would compete with the figure that carries this page,
+   which is the metric bled off the trim.
+
+   It hangs at the head of the movement's own column rather than centring,
+   because the reading column is set ragged-right and a centred figure inside
+   it reads as a different grid. */
+.device-figure {
+  margin: var(--space-5) 0 var(--space-4);
+}
+
+.device-figure .caption {
+  margin-block-start: var(--space-2);
+  max-width: 34ch;
+  color: var(--ink-3);
+}
+
+.device-figure .board::before {
+  content: none;
+}
+
 /* ═══ Print ═════════════════════════════════════════════════════════════════
    Case studies get printed, and a bleed that is a decision on screen is a
    truncation on A4: the printer's own margin already trims the sheet, so the

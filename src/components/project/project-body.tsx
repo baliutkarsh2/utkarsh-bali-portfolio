@@ -3,6 +3,8 @@ import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Project } from "@/content";
 import { CloseFigure } from "@/components/project/number-plate";
+import { DotBoard } from "@/components/interactive/dot-board";
+import { deviceOf } from "@/content/plates";
 import { Reveal } from "@/components/interactive/reveal";
 import { DotMask } from "@/components/ui/dot-mask";
 import { CODA, MOVEMENTS, collationOf, hasCoda } from "@/lib/corpus";
@@ -54,6 +56,7 @@ export function ProjectBody({ project }: { project: Project }) {
   const approach = splitLead(project.story);
   const how = splitLead(project.built);
   const impact = splitLead(project.impact);
+  const device = deviceOf(project.slug);
 
   const learnings = project.learnings ?? [];
   // The learnings are already written as "claim. elaboration.", so the coda
@@ -66,25 +69,56 @@ export function ProjectBody({ project }: { project: Project }) {
   // this page renders. One statement, two consumers: a movement cannot be
   // removed from the page and go on being counted underneath it.
   const coda = hasCoda(project) ? splitLead(learnings[0]) : null;
-  const codaRest = coda ? [coda.rest, ...learnings.slice(1)].filter(Boolean) : [];
+  const codaRest = coda
+    ? [coda.rest, ...learnings.slice(1)].filter(Boolean)
+    : [];
 
   return (
     <div className="movements">
       <Movement n={0} title={MOVEMENTS[0]} id="problem" lead={problem.lead}>
-        {problem.rest && <p className="movement-copy text-body">{problem.rest}</p>}
+        {problem.rest && (
+          <p className="movement-copy text-body">{problem.rest}</p>
+        )}
       </Movement>
 
       <Movement n={1} title={MOVEMENTS[1]} id="approach" lead={approach.lead}>
-        {approach.rest && <p className="movement-copy text-body">{approach.rest}</p>}
+        {approach.rest && (
+          <p className="movement-copy text-body">{approach.rest}</p>
+        )}
       </Movement>
 
       <Movement n={2} title={MOVEMENTS[2]} id="built" lead={how.lead}>
         {how.rest && <p className="movement-copy text-body">{how.rest}</p>}
+        {/* The project's own device, at full size, in the movement about the
+            mechanism it draws. The contents page carries the same mark small,
+            in its margin; this is where a reader who followed it from there
+            meets it whole -- and it is the only picture a phone gets of it,
+            since the contents page has no band to hold eight of them.
+
+            It is a diagram of the thing, not a logo for it, and it is drawn at
+            the page pitch out of the same marks as the portrait. The plan said
+            a case study contains no field, on the grounds that a document does
+            not contain its press. A printer's device is not the press: it is
+            the mark that says whose press it was. */}
+        {device && (
+          <figure className="device-figure">
+            <DotBoard
+              mode="still"
+              source={device.id}
+              alt={device.alt}
+              fallback={device.still}
+              className="device-board"
+            />
+            <figcaption className="caption">{device.subject}</figcaption>
+          </figure>
+        )}
         <Schematic project={project} />
         {project.cover && (
           <figure className="plate-figure plate-mark">
             <Reveal>
-              <DotMask ratio={`${project.cover.width} / ${project.cover.height}`}>
+              <DotMask
+                ratio={`${project.cover.width} / ${project.cover.height}`}
+              >
                 <Image
                   src={project.cover.src}
                   alt={project.cover.alt}
@@ -99,7 +133,9 @@ export function ProjectBody({ project }: { project: Project }) {
       </Movement>
 
       <Movement n={3} title={MOVEMENTS[3]} id="impact" lead={impact.lead}>
-        {impact.rest && <p className="movement-copy text-body">{impact.rest}</p>}
+        {impact.rest && (
+          <p className="movement-copy text-body">{impact.rest}</p>
+        )}
         {/* The argument returns to its number. */}
         <CloseFigure project={project} />
       </Movement>
@@ -212,7 +248,9 @@ function Schematic({ project }: { project: Project }) {
           </li>
         ))}
       </ol>
-      <figcaption className="schematic-caption caption">{project.highlight}</figcaption>
+      <figcaption className="schematic-caption caption">
+        {project.highlight}
+      </figcaption>
     </figure>
   );
 }
@@ -234,15 +272,16 @@ export function ProjectColophon({ project }: { project: Project }) {
   const collation = collationOf(project.slug);
 
   return (
-    <section className="colophon sheet-row shell" aria-labelledby="colophon-title">
+    <section
+      className="colophon sheet-row shell"
+      aria-labelledby="colophon-title"
+    >
       <h2 id="colophon-title" className="movement-title meta">
         Colophon
       </h2>
 
       <div>
-        <p className="colophon-stack data">
-          {project.stack.join("  ·  ")}
-        </p>
+        <p className="colophon-stack data">{project.stack.join("  ·  ")}</p>
 
         {collation && (
           /* The collation formula: every value counted off this project's own
@@ -279,8 +318,8 @@ export function ProjectColophon({ project }: { project: Project }) {
 
         {project.confidential && (
           <p className="colophon-note text-small">
-            Built inside a company codebase, so there’s no public source to link. Happy to
-            talk through the design.
+            Built inside a company codebase, so there’s no public source to
+            link. Happy to talk through the design.
           </p>
         )}
       </div>
@@ -335,7 +374,13 @@ function CancelledPlate() {
           aria-hidden="true"
           focusable="false"
         >
-          <rect className="cancel-ground" x="0" y="0" width="168" height="104" />
+          <rect
+            className="cancel-ground"
+            x="0"
+            y="0"
+            width="168"
+            height="104"
+          />
           <path className="cancel-stroke" d="M0 17.21 L168 86.79" />
           <path className="cancel-stroke" d="M0 86.79 L168 17.21" />
         </svg>
