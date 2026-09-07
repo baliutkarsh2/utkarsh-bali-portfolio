@@ -32,6 +32,7 @@ export const skillGroups: SkillGroup[] = [
       "gRPC",
       "REST",
       "GraphQL",
+      "Server-Sent Events",
       "WebSockets",
     ],
   },
@@ -47,6 +48,8 @@ export const skillGroups: SkillGroup[] = [
       "Supabase",
       "Firebase",
       "MongoDB",
+      "MySQL",
+      "SQLite",
     ],
   },
   {
@@ -61,6 +64,7 @@ export const skillGroups: SkillGroup[] = [
       "Terraform",
       "n8n",
       "CI/CD",
+      "Git",
     ],
   },
 ];

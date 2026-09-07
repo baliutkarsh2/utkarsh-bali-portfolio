@@ -45,8 +45,8 @@ export default function ProjectsPage() {
         <p className="meta text-ink-3">Index · {count} projects</p>
         <h1 className="mt-6 text-display-l text-ink">The work.</h1>
         <p className="measure mt-6 text-lede text-ink-2">
-          Four on agents, two in research, one with 3,000+ users. For each: the problem,
-          the architecture, and what it proved.
+          Five on agents, two in research, one with 3,000+ users. For each: the problem,
+          how it works, and what it proved.
         </p>
       </header>
 

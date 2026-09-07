@@ -56,8 +56,8 @@ export async function generateMetadata({
 /**
  * A case study (§7.4), in order: the sticky sub-bar with its progress row,
  * the masthead (the name morphs in from the index row), the one-number
- * plate, the cover when there is one, the six numbered sections beside the
- * sticky rail, the gallery when there is media, previous / next, Contact.
+ * plate, the cover when there is one, the four numbered sections beside the
+ * sticky rail, the gallery when there is media, previous / next.
  * Rigour, then the number that earns it.
  *
  * Accent count per screen (rule 3): the progress row's leading dot is the

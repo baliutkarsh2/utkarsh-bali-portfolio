@@ -67,7 +67,7 @@ export function About() {
           className="about-specs"
           rows={[
             { term: "Education", value: profile.educationDetail },
-            { term: "Graduating", value: profile.graduation },
+            { term: "At Purdue", value: `${profile.enrolled} to ${profile.graduation}` },
             { term: "GPA", value: profile.gpa },
             { term: "Based in", value: profile.location },
           ]}

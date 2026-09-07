@@ -11,12 +11,13 @@ export const profile = {
   location: "West Lafayette, IN",
   education: "Purdue University, CS + AI",
   educationDetail: "B.S. Computer Science & Artificial Intelligence, minor in Psychology",
+  enrolled: "Aug 2023",
   graduation: "Dec 2026",
   gpa: "3.90 / 4.00",
   github: "https://github.com/baliutkarsh2",
   linkedin: "https://linkedin.com/in/ubali",
   x: "https://x.com/ubali07",
-  resume: { href: "/utkarsh-bali-resume.pdf", updated: "2026-07-28" } as {
+  resume: { href: "/utkarsh-bali-resume.pdf", updated: "2026-09-06" } as {
     href: string;
     updated: string;
   } | null,
@@ -42,6 +43,5 @@ export const socials: Social[] = [
 export const navItems: { label: string; href: string }[] = [
   { label: "About", href: "/about" },
   { label: "Work", href: "/projects" },
-  { label: "Experience", href: "/experience" },
   { label: "Contact", href: "/#contact" },
 ];

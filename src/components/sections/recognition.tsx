@@ -3,12 +3,12 @@ import { Section } from "@/components/ui/section";
 import { achievements } from "@/content";
 
 /**
- * /experience §7.7, section 02. Every achievement is one <Row>: the year in
+ * /about §7.7, section 03. Every achievement is one <Row>: the year in
  * the gutter (through `gutter`, not `index`: it is a data column, and the
  * only place the year appears, so it is read rather than hidden), the label
  * in display-s, the detail in small --ink-2, the kind as the meta line.
  * Rows with an href (YC, NeurIPS) are whole-row links with the arrow; the
- * rest are static. No numerals and no LED: the spine above is the page's
+ * rest are static. No numerals and no LED: the spine above is the section's
  * accent, and the rows here are words.
  *
  * The gutter is drawn for a two-digit index; a year span ("2024 to 2026")
@@ -17,7 +17,7 @@ import { achievements } from "@/content";
  */
 export function Recognition() {
   return (
-    <Section index="02" title="Recognition" id="recognition" className="recognition section-wide">
+    <Section index="03" title="Recognition" id="recognition" className="recognition section-wide">
       <ul className="rows">
         {achievements.map((item) => (
           <li key={item.label}>

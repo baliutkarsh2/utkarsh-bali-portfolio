@@ -2,6 +2,38 @@ import type { Project } from "./types";
 
 export const projects: Project[] = [
   {
+    slug: "recurly-agent-platform",
+    name: "Recurly Agent Platform",
+    eyebrow: "Agent infrastructure",
+    tagline:
+      "A product requirement becomes merged pull requests, through specialised agents and five human checkpoints.",
+    year: "2026",
+    sortDate: "2026-05-01",
+    status: "shipped",
+    featured: true,
+    metric: "~3x",
+    metricLabel: "faster from requirement to merge",
+    role: "Software Engineer Intern",
+    org: "Recurly",
+    highlight: "Claude Agent SDK, isolated Kubernetes Jobs, five human checkpoints",
+    problem:
+      "A written requirement becomes a merged pull request through a chain of handoffs: someone reads the document, someone splits it into work, someone writes the code, someone answers the review. Most of the elapsed time is not any of those steps. It is the waiting between them. One agent handed the whole chain does not fix that either — it returns a diff large enough that nobody wants to be the person who reviews it.",
+    story:
+      "I spent the summer at Recurly building internal agent infrastructure for the engineering and go-to-market teams, reporting into the platform group. The through-line across all three things I shipped is the same: put an agent on the part of the work that is a handoff, and leave the judgement with a person.",
+    built:
+      "Three things shipped between May and August, all of them agent infrastructure for teams inside the company rather than anything a customer sees.",
+    architecture: [
+      "A product development lifecycle platform: requirement to merged pull requests through specialised Claude agents — a planner, a decomposer, a Sonnet and Opus coder pair, and a pull request responder — each running as an isolated Kubernetes Job through the Agent SDK, with five human checkpoints along the way.",
+      "An SDR assistant in Slack: async Python with three-tier Claude routing over BigQuery, 6sense, ZoomInfo and Salesforce, returning source-cited account briefs and outreach drafts.",
+      "A prospect report card pipeline, n8n to FastAPI on Cloud Run to Claude Opus, that turns an inbound form fill into a personalised PDF analysis of that prospect’s subscription business and emails it back.",
+    ],
+    stack: ["Claude Agent SDK", "Python", "Kubernetes", "FastAPI", "BigQuery", "Cloud Run"],
+    impact:
+      "About three times faster from a written requirement to a merged pull request, with all five human checkpoints still in place: the time came out of the waits between handoffs, not out of the review. The Slack assistant answers with a source-cited brief in about twenty-five seconds, which collapses hours of prospecting into one command.",
+    links: [],
+    confidential: true,
+  },
+  {
     slug: "checkpoint",
     name: "Checkpoint",
     eyebrow: "Agent reliability",
@@ -97,7 +129,7 @@ export const projects: Project[] = [
     ],
     stack: ["Google ADK", "Gemini 2.5 Pro", "Vertex AI", "MCP", "pgvector", "Cloud Build"],
     impact:
-      "Unified 45+ autonomous agents and tools behind one interface, becoming the primary way QA engineers at QualGent queried app knowledge, test history, and issue trackers.",
+      "Unified 45+ tools and sub-agents behind one interface, becoming the primary way QA engineers at QualGent queried app knowledge, test history, and issue trackers.",
     links: [],
     confidential: true,
   },
@@ -129,7 +161,7 @@ export const projects: Project[] = [
     ],
     stack: ["Python", "PyTorch", "Sparse autoencoders", "MIMIC-IV", "GPT", "Claude"],
     impact:
-      "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses with Purdue and Harvard Business School faculty. The work is being prepared for a NeurIPS submission targeted for September 2026.",
+      "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses with Purdue and Harvard Business School faculty. The work is being prepared for a NeurIPS submission.",
     links: [
       {
         label: "Source",

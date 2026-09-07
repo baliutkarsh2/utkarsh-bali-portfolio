@@ -1,21 +1,30 @@
 import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
-import { Reveal } from "@/components/interactive/reveal";
-import { Numeral } from "@/components/ui/numeral";
 import type { Project } from "@/content";
 import { ordinal } from "@/lib/utils";
 
 /**
- * The case-study body (§7.4.5): six numbered hairline blocks on the copy
- * columns. Each block is a `section` carrying `data-section-index` and
- * `data-section-title`, so the header readout follows the reader through
- * "01 PROBLEM" … "06 WHAT I’D DO DIFFERENTLY" exactly as it does through
- * the home page's sections.
+ * The case-study body (§7.4.5): four numbered hairline blocks on the copy
+ * columns, five where there are learnings. Each block is a `section` carrying
+ * `data-section-index` and `data-section-title`, so the header readout follows
+ * the reader through "01 PROBLEM" … "04 IMPACT" exactly as it does through the
+ * home page's sections.
  *
- * 01 Problem is set in display-s: the problem is the title. 02 and 03 are
- * body copy in --ink-2. 04 Architecture is numbered hairline rows. 05 Impact
- * is a pull quote behind a 2px --ink rule, then the metric restated at size
- * m with its label. 06 appears only when there are learnings.
+ * 01 Problem is set in display-s: the problem is the title. 02 Approach is
+ * body copy in --ink-2. 03 How it works is the summary paragraph and then the
+ * numbered rows that expand it. 04 Impact is a pull quote behind a 2px --ink
+ * rule. 05 appears only when there are learnings.
+ *
+ * It used to be six. "What I built" and "Architecture" were the same section
+ * written twice — on two of the seven projects the paragraph is literally the
+ * first and third rows welded together — so a reader met the same claim under
+ * two headings and learned nothing the second time. They are one block now:
+ * the paragraph says what it is, the rows say how.
+ *
+ * Impact lost its numeral for the same reason. The figure is already the
+ * plate at the top of the page, at the largest size on the site; restating it
+ * two screens later at a smaller size read as a page that did not trust the
+ * reader to have seen it.
  */
 export function ProjectBody({ project }: { project: Project }) {
   const hasLearnings = project.learnings && project.learnings.length > 0;
@@ -30,12 +39,9 @@ export function ProjectBody({ project }: { project: Project }) {
         <p className="measure text-body text-ink-2">{project.story}</p>
       </Block>
 
-      <Block index="03" title="What I built" id="built">
+      <Block index="03" title="How it works" id="built">
         <p className="measure text-body text-ink-2">{project.built}</p>
-      </Block>
-
-      <Block index="04" title="Architecture" id="architecture">
-        <ol className="m-0 list-none border-b border-line p-0">
+        <ol className="m-0 mt-8 list-none border-b border-line p-0">
           {project.architecture.map((item, i) => (
             <li
               key={item}
@@ -50,22 +56,16 @@ export function ProjectBody({ project }: { project: Project }) {
         </ol>
       </Block>
 
-      <Block index="05" title="Impact" id="impact">
+      <Block index="04" title="Impact" id="impact">
         {/* A pull quote, not a <blockquote>: it is his statement, not a
             citation, and it is the section's own copy rather than a repeat. */}
         <div className="border-l-2 border-ink pl-6">
           <p className="measure text-lede text-ink">{project.impact}</p>
         </div>
-        <div className="mt-8 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-          <Reveal>
-            <Numeral value={project.metric} size="m" />
-          </Reveal>
-          <p className="meta max-w-[24ch] text-ink-3">{project.metricLabel}</p>
-        </div>
       </Block>
 
       {hasLearnings && (
-        <Block index="06" title="What I’d do differently" id="learnings">
+        <Block index="05" title="What I’d do differently" id="learnings">
           <ul className="m-0 list-none border-b border-line p-0">
             {project.learnings?.map((item) => (
               <li key={item} className="border-t border-line py-5 first:border-t-0 first:pt-0">

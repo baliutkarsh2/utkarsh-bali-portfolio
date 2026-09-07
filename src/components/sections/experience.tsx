@@ -14,8 +14,9 @@ const slug = (name: string) =>
     .replace(/(^-|-$)/g, "");
 
 /**
- * The first section of /experience (§7.7). Like About, it writes its own
- * head in the Section grammar so the title can be the page's h1.
+ * /about §7.7, section 02. It writes its own head rather than using
+ * <Section> because the spine has to sit in column 2 across every row, which
+ * the Section body grammar has no room for.
  *
  * The entries sit on a three-column grid: dates on the left in the `data`
  * register (--ink-3, with a meta "Current" in --ink where it applies), the
@@ -29,29 +30,29 @@ const slug = (name: string) =>
  * column with the spine in the left gutter and the entries indented 1.5rem,
  * dates above the company.
  *
- * The spine is the page's one accent: it lights top to bottom as you scroll
- * and its leading lit dot is --sun. "Current" is therefore text, not an LED,
- * which is also why two current roles cost nothing.
+ * The spine is this section's one accent: it lights top to bottom as you
+ * scroll and its leading lit dot is --sun. "Current" is therefore text, not
+ * an LED, which is also why two current roles cost nothing.
  */
 export function Experience() {
   return (
     <section
       id="experience"
       aria-labelledby="experience-title"
-      data-section-index="01"
+      data-section-index="02"
       data-section-title="Experience"
-      className="section section-first shell"
+      className="section shell section-y"
     >
       <div className="section-head">
         <span className="meta text-ink-3" aria-hidden="true">
-          01
+          02
         </span>
-        <h1
+        <h2
           id="experience-title"
-          className="text-display-l font-medium text-balance text-ink"
+          className="text-display-m font-medium text-balance text-ink"
         >
           Where I’ve worked.
-        </h1>
+        </h2>
       </div>
 
       <div className="experience">
@@ -73,12 +74,14 @@ export function Experience() {
               </div>
 
               <div className="experience-what">
-                <h2
+                {/* h3: the section's own title is the h2 now that this lives
+                    under /about rather than being a page of its own. */}
+                <h3
                   id={headingId}
                   className="text-display-s font-medium text-balance text-ink"
                 >
                   {entry.company}
-                </h2>
+                </h3>
                 <p className="mt-1 text-body font-medium text-ink">{entry.role}</p>
                 <p className="measure mt-4 text-body text-ink-2">{entry.summary}</p>
                 <ul className="dot-list measure mt-5 text-small text-ink-2">

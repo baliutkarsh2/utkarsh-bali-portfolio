@@ -1,4 +1,4 @@
-import { now, profile } from "@/content";
+import { profile } from "@/content";
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgCard } from "@/lib/og";
 
 export const size = OG_SIZE;
@@ -10,7 +10,7 @@ export default async function Image() {
     eyebrow: "Portfolio",
     title: profile.name,
     description: profile.tagline,
-    meta: [profile.education, now.org, "QualGent (YC X25)"],
+    meta: [profile.education, "Recurly", "QualGent (YC X25)"],
     portrait: "large",
   });
 }

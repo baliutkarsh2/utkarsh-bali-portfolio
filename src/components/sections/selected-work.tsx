@@ -9,6 +9,29 @@ import { ordinal } from "@/lib/utils";
 /** The home page shows the top three; the rest live on /projects. */
 const ROW_COUNT = 3;
 
+/** Spelled out, because the title is a sentence and a numeral there is a stat. */
+const WORDS = [
+  "No",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+];
+
+/** "Eight projects." Counted, never typed: a hand-written total goes stale. */
+const title =
+  orderedProjects.length < WORDS.length
+    ? `${WORDS[orderedProjects.length]} projects.`
+    : `${orderedProjects.length} projects.`;
+
 /**
  * Section 02 (§7.1, `#work`): the first three featured projects as rows —
  * index, name, tagline, "eyebrow · year", and the project's one number in
@@ -28,7 +51,7 @@ export function SelectedWork({ index = "02" }: { index?: string }) {
   const rows = featuredProjects.slice(0, ROW_COUNT);
 
   return (
-    <Section index={index} title="Seven projects." id="work" className="section-wide">
+    <Section index={index} title={title} id="work" className="section-wide">
       <ul className="rows">
         {rows.map((project, i) => (
           <li key={project.slug}>

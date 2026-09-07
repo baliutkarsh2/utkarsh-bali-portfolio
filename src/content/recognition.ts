@@ -12,7 +12,7 @@ export const achievements: Achievement[] = [
   {
     label: "NeurIPS submission in preparation on clinical hypothesis verification",
     detail:
-      "Certified 14 hypotheses with CLIP-H at 0.844 AUROC. Being prepared for a NeurIPS submission targeted for September 2026, with Purdue and Harvard Business School faculty.",
+      "Certified 14 hypotheses with CLIP-H at 0.844 AUROC. Being prepared for a NeurIPS submission, with Purdue and Harvard Business School faculty.",
     year: "2026",
     kind: "research",
     href: "/projects/clip-h",
@@ -47,7 +47,7 @@ export const achievements: Achievement[] = [
   {
     label: "Teaching assistant and workshop lead",
     detail:
-      "TA for CS 471 (AI) and TDM 101, guiding 300+ students. Led weekly Machine Learning @ Purdue workshops mentoring 200+ more on building and deploying production AI systems.",
+      "TA for CS 471 (AI) and TDM 101, guiding 300+ students. Led weekly Machine Learning @ Purdue workshops mentoring 200+ students on building and deploying production AI systems.",
     year: "2024 to 2026",
     kind: "community",
   },

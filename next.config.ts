@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  /**
+   * /experience was two sections that answered the same question /about
+   * answers, so it folded into it. A 308 rather than a 301: 308 is the one
+   * permanent redirect that is guaranteed not to rewrite the method, and the
+   * old URL has been linked from a résumé PDF that cannot be recalled.
+   *
+   * The fragment survives the redirect, so an old /experience link lands on
+   * the section that used to be that page rather than at the top of a longer
+   * one.
+   */
+  async redirects() {
+    return [{ source: "/experience", destination: "/about#experience", permanent: true }];
+  },
   // Same-document view transitions, Baseline since Oct 2025 (Chrome/Edge 111,
   // Firefox 144, Safari 18). Verified not to require React's experimental
   // channel: Next's bundled React exports ViewTransition and `react$` is
