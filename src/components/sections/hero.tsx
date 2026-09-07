@@ -1,11 +1,9 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { DotBoard } from "@/components/interactive/dot-board";
-import { Reveal } from "@/components/interactive/reveal";
 import { Button } from "@/components/ui/button";
 import { Led } from "@/components/ui/led";
-import { MissionLine } from "@/components/ui/mission-line";
-import { mission, now, profile } from "@/content";
+import { now, profile } from "@/content";
 import { portrait, portraitField96 } from "@/content/portrait";
 
 /** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
@@ -38,18 +36,22 @@ export function Hero() {
   return (
     <section id="home" aria-labelledby="hero-title" className="hero shell">
       <div className="hero-intro board-above flex flex-col items-start gap-4">
-        {/* Reveal lands data-in once the line is on screen (immediately, on
-            load) and the hairline draws over --dur-5. The caption is static. */}
-        <Reveal>
-          <MissionLine dots={7} text={mission} />
-        </Reveal>
-
-        <p className="hero-status meta flex flex-wrap items-center gap-x-3 gap-y-2 text-ink-3">
+        {/* The mission line used to sit above this: seven dots at the page
+            pitch and a drawing hairline, captioned "Connecting the dots...".
+            Its referent was the CSS lattice, and the lattice is gone -- a joke
+            whose setup has been deleted. Two stacked eyebrows over a display
+            heading was also the genre's own device, twice. The component and
+            the footer's use of it both stay. */}
+        {/* A plate caption, not a machine eyebrow. Mono uppercase tracked
+            small caps over a display heading is the single most-used device in
+            this genre; the printed equivalent is an italic line under the
+            impression, and the register mark carries the state. */}
+        <p className="hero-status caption flex flex-wrap items-center gap-x-3 gap-y-2 text-ink-3">
           <span className="flex items-center gap-2 text-ink-2">
             <Led state="live" label="Currently" />
             {now.status}
           </span>
-          <span aria-hidden="true">/</span>
+          <span aria-hidden="true">·</span>
           <span>{profile.location}</span>
         </p>
       </div>

@@ -511,6 +511,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A figure caption. The reading serif's italic, which is where a printed
+   plate puts a caption, and the replacement for every mono uppercase eyebrow
+   on the site. `meta` survives for genuine machine labels: plate numbers,
+   axis values, the colophon. */
+@utility caption {
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  letter-spacing: 0.004em;
+  text-transform: none;
+}
+
 @utility hairline {
   border-top: 1px solid var(--line);
 }
@@ -532,35 +545,24 @@
    it; and when `tap` grows the same link into a 44px centred box on a
    finger, the dots stay under the text instead of dropping to the bottom of
    the box. Keep the label vertically centred in whatever box carries this. */
+/* A real underline. A rule of dots at the page pitch reads as a coupon
+   perforation on paper, and it was drawing in the link colour under text set
+   in a Didone, which put a dotted line under hairlines that are themselves
+   thinner than the dots. One hairline, offset clear of the descenders, thicker
+   on hover so the affordance still moves. */
 @utility dot-underline {
-  --u: 0%;
-  --u-rest: 0%;
-  text-decoration: none;
-  background-image:
-    repeating-linear-gradient(
-      to right,
-      currentColor 0 1.5px,
-      transparent 1.5px var(--pitch)
-    ),
-    repeating-linear-gradient(
-      to right,
-      color-mix(in srgb, currentColor 50%, transparent) 0 1.5px,
-      transparent 1.5px var(--pitch)
-    );
-  background-size:
-    var(--u) 1.5px,
-    var(--u-rest) 1.5px;
-  background-repeat: no-repeat;
-  background-position: 0 calc(50% + 0.58em);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
   transition:
     color var(--dur-1) var(--ease-snap),
-    --u 220ms var(--ease-snap);
+    text-decoration-color var(--dur-2) var(--ease-snap),
+    text-decoration-thickness var(--dur-2) var(--ease-snap);
   &:hover,
   &:focus-visible {
-    --u: 100%;
-  }
-  .prose & {
-    --u-rest: 100%;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 2px;
   }
 }
 
@@ -586,6 +588,27 @@
     :root.js:not([data-motion="reduce"]) &:not([data-in]):not([data-in] *) {
       --dot-r: calc(0.45 * var(--pitch));
     }
+  }
+}
+
+/* The plate mark.
+   An intaglio plate is pressed into dampened paper and leaves its edge behind
+   as a debossed rectangle a little outside the image. It is the site's only
+   container: no cards, no panels, no boxes anywhere else. It is also the only
+   radius (2px, the bevel a plate edge has) and the only shadow (a 1px inner
+   highlight along the top, which is the light catching the deboss).
+   Drawn on a ::before at a negative inset, so it never touches layout and
+   cannot move anything. */
+@utility plate-mark {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--plate-inset, 18px));
+    border: 1px solid var(--rule-mid);
+    border-radius: var(--plate-radius);
+    box-shadow: inset 0 1px 0 rgba(20, 18, 14, 0.1);
+    pointer-events: none;
   }
 }
 

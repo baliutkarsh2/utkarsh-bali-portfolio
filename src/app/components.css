@@ -271,19 +271,24 @@
      A 6 px disc (4 px inside compact rows and the header nav via --led-size).
      The only circles on the site besides dots, because it is a dot. Colour is
      the state and it never transitions (§6 "LED colour" never animates). */
+  /* A register mark, not an LED. A glowing disc is a status light on a
+     device; a printer marks a sheet with a small square so successive plates
+     can be aligned, and that is what a "currently" mark is on a printed page.
+     Square, not round -- the only circles left on the site are dots in a
+     picture. Live is the second ink; off is an open mark. */
   .led {
     display: inline-block;
     flex: none;
-    width: var(--led-size, 6px);
-    height: var(--led-size, 6px);
-    border-radius: 50%;
-    background: var(--ink-3);
+    width: var(--led-size, 5px);
+    height: var(--led-size, 5px);
+    border: 1px solid var(--ink-3);
+    background: transparent;
     vertical-align: middle;
-    /* Baseline-align inside a flex row of text without moving the text. */
     transform: translateY(-0.1em);
   }
 
   .led[data-state="live"] {
+    border-color: var(--sun);
     background: var(--sun);
   }
 

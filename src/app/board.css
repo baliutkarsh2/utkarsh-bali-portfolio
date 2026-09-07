@@ -12,6 +12,29 @@
   --board-cols: var(--board-cols-lg, 96);
   --board-rows: var(--board-rows-lg, 120);
   position: relative;
+}
+
+/* Every figure carries its plate mark: the impression the plate edge leaves in
+   the sheet. The hero's is wider because its image bleeds toward the page edge
+   and a tight mark would read as a border rather than as an impression. */
+.board[data-mode="hero"],
+.board[data-mode="still"],
+.board[data-mode="text"] {
+  --plate-inset: 22px;
+}
+.board[data-mode="hero"]::before,
+.board[data-mode="still"]::before,
+.board[data-mode="text"]::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--plate-inset));
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--plate-radius);
+  box-shadow: inset 0 1px 0 rgba(20, 18, 14, 0.1);
+  pointer-events: none;
+}
+
+.board {
   display: block;
   margin: 0;
   width: calc(var(--board-cols) * var(--pitch));
@@ -140,12 +163,22 @@ noscript .board-fallback {
 
 /* The canvas is out of flow (absolute or fixed), so the caption is placed
    under the box explicitly rather than after it. */
+/* A plate caption, set the way a plate caption is set: below the impression,
+   not inside it, and in the reading serif's italic rather than a machine
+   readout. It clears the plate mark by its own inset plus a line, so the
+   deboss never runs through the words. */
 .board-caption {
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: 0.75rem;
+  margin-top: calc(var(--plate-inset, 0px) + 0.75rem);
   color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  letter-spacing: 0.004em;
+  text-transform: none;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
