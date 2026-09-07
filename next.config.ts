@@ -8,6 +8,28 @@ const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  /**
+   * The build directory, overridable from the environment.
+   *
+   * `.next` is a single shared directory, so two builds of this repo at once
+   * destroy each other: the running server's chunk hashes stop existing, every
+   * asset 500s, and the page renders with no stylesheet at all — which looks
+   * exactly like a CSS bug and is not one. That cost real time to diagnose
+   * once. Set NEXT_DIST_DIR to give a parallel build its own directory:
+   *
+   *   NEXT_DIST_DIR=.next-probe npm run build
+   *   NEXT_DIST_DIR=.next-probe npx next start -p 3260
+   *
+   * Unset — which is every real build, local and on Vercel — it is `.next`.
+   *
+   * One side effect to know about, because it is easy to commit by accident:
+   * Next rewrites `next-env.d.ts` and the `include` list in `tsconfig.json` to
+   * point at whatever directory it just built into. After a parallel build,
+   * `git checkout -- next-env.d.ts tsconfig.json` (or one ordinary build) puts
+   * them back. Committing them pointed at a scratch directory breaks the build
+   * for everyone else, since the directory does not exist anywhere but here.
+   */
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Both of these work around OneDrive's multi-lockfile detection. Do not remove.
   outputFileTracingRoot: projectRoot,
   turbopack: {

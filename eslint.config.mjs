@@ -16,6 +16,15 @@ import nextTypescript from "eslint-config-next/typescript";
 const displayFace = /font-display|text-numeral/.source;
 
 const eslintConfig = [
+  {
+    /**
+     * Build output. `next-config`'s default ignores cover `.next`, but not the
+     * parallel build directories `NEXT_DIST_DIR` creates (see next.config.ts) —
+     * and a single one of those adds 554 errors from generated code and fails
+     * `prebuild` for work that is nowhere near `src`.
+     */
+    ignores: [".next-*/**"],
+  },
   ...nextVitals,
   ...nextTypescript,
   {

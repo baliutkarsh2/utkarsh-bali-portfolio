@@ -30,7 +30,10 @@
 
 /* ─────────────────────────────────────────────────────────────
    1. Tokens
-   One dark theme. Contrast ratios are against the stated ground.
+   One theme: paper. The plate set below is not a second theme — it is the
+   surface the paper is pressed against, and it appears in exactly three
+   places: the arrival, the 404, and prefers-color-scheme: dark.
+   Contrast ratios are measured against the stated ground, never computed.
    ───────────────────────────────────────────────────────────── */
 :root {
   color-scheme: light;
@@ -99,7 +102,7 @@
   --scrim-blur: 0px;
 
   /* ── Z-index scale. Tailwind has no z namespace; use `z-(--z-header)`. ── */
-  --z-field: -1; /* the fixed lattice */
+  --z-field: -1; /* behind everything; nothing claims it now the lattice is gone */
   --z-board: 0; /* hero canvas */
   --z-content: 1; /* text over the board */
   --z-sticky: 30; /* case-study sub-bar, inspection panel */

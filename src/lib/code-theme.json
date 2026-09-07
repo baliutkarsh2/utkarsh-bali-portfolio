@@ -1,55 +1,80 @@
 {
-  "name": "board-dark",
-  "type": "dark",
-  "colors": { "editor.background": "#121214", "editor.foreground": "#F2F1EC" },
+  "name": "intaglio",
+  "type": "light",
+  "_why": "One ink. A printed technical book sets code in the text ink and distinguishes kinds with WEIGHT and ITALIC, not with hue — and this site is a printed artefact whose second ink is licensed to four places, none of them a code block. So bold is structure (keywords, constants, tags), italic is a name (functions, types) or an aside (comments), --ink-2 is a literal string and --ink-3 is punctuation and comments. Every colour here is a token from globals.css §1; keep them in sync. Ratios are against --ground-2 #f1ede6, which is the ground .prose pre paints: --ink 16.03:1, --ink-2 8.15:1, --ink-3 5.35:1. The theme this replaces was board-dark — #F2F1EC and pale pastels, which after the palette inverted were being set on paper and were illegible. Nothing rendered it, because /writing/[slug] builds zero pages today, which is exactly why it survived.",
+  "colors": { "editor.background": "#f1ede6", "editor.foreground": "#14120e" },
   "tokenColors": [
     {
       "scope": ["comment", "punctuation.definition.comment"],
-      "settings": { "foreground": "#8A8984", "fontStyle": "italic" }
+      "settings": { "foreground": "#67604f", "fontStyle": "italic" }
     },
     {
-      "scope": ["keyword", "storage", "storage.type", "keyword.control", "keyword.operator.new"],
-      "settings": { "foreground": "#E8B49A" }
+      "scope": [
+        "keyword",
+        "storage",
+        "storage.type",
+        "keyword.control",
+        "keyword.operator.new"
+      ],
+      "settings": { "foreground": "#14120e", "fontStyle": "bold" }
     },
     {
-      "scope": ["string", "string.quoted", "string.template", "constant.character"],
-      "settings": { "foreground": "#C9D3A0" }
+      "scope": [
+        "string",
+        "string.quoted",
+        "string.template",
+        "constant.character"
+      ],
+      "settings": { "foreground": "#4a453c" }
     },
     {
       "scope": ["constant.numeric", "constant.language", "constant.other"],
-      "settings": { "foreground": "#FF6A2B" }
+      "settings": { "foreground": "#14120e", "fontStyle": "bold" }
     },
     {
-      "scope": ["entity.name.function", "support.function", "meta.function-call"],
-      "settings": { "foreground": "#A9C7E0" }
+      "scope": [
+        "entity.name.function",
+        "support.function",
+        "meta.function-call"
+      ],
+      "settings": { "foreground": "#14120e", "fontStyle": "italic" }
     },
     {
-      "scope": ["entity.name.type", "entity.name.class", "support.type", "support.class"],
-      "settings": { "foreground": "#CDBDE8" }
+      "scope": [
+        "entity.name.type",
+        "entity.name.class",
+        "support.type",
+        "support.class"
+      ],
+      "settings": { "foreground": "#14120e", "fontStyle": "italic" }
     },
     {
       "scope": ["variable", "variable.other", "meta.definition.variable"],
-      "settings": { "foreground": "#F2F1EC" }
+      "settings": { "foreground": "#14120e" }
     },
     {
-      "scope": ["variable.parameter", "meta.object-literal.key", "support.variable.property"],
-      "settings": { "foreground": "#D6D5CF" }
+      "scope": [
+        "variable.parameter",
+        "meta.object-literal.key",
+        "support.variable.property"
+      ],
+      "settings": { "foreground": "#4a453c" }
     },
     {
       "scope": ["punctuation", "meta.brace", "keyword.operator"],
-      "settings": { "foreground": "#A6A5A0" }
+      "settings": { "foreground": "#67604f" }
     },
     {
       "scope": ["entity.name.tag", "entity.other.attribute-name"],
-      "settings": { "foreground": "#E8B49A" }
+      "settings": { "foreground": "#14120e", "fontStyle": "bold" }
     },
     {
       "scope": ["markup.inserted"],
-      "settings": { "foreground": "#C9D3A0" }
+      "settings": { "foreground": "#14120e", "fontStyle": "bold" }
     },
     {
       "scope": ["markup.deleted"],
-      "settings": { "foreground": "#F0A6B0" }
+      "settings": { "foreground": "#67604f", "fontStyle": "italic" }
     }
   ]
 }

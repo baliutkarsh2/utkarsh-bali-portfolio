@@ -1,7 +1,7 @@
 /**
  * Motion policy.
  *
- * There is one dark theme and no theme toggle, but motion has two switches:
+ * There is one theme and no theme toggle, but motion has two switches:
  * the operating system's reduced-motion setting and the palette's
  * "Reduce motion" action. Both are read here and nowhere else in JS; CSS
  * reads the same two signals through the `motion-ok` custom variant.

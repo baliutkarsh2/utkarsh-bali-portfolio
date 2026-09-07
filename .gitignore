@@ -3,6 +3,11 @@ node_modules
 
 # next.js
 .next
+# parallel builds (NEXT_DIST_DIR); see next.config.ts
+.next-*
+
+# python bytecode from the bake scripts
+scripts/__pycache__/
 out
 next-env.d.ts
 

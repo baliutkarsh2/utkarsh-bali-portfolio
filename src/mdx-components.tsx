@@ -4,16 +4,17 @@ import Image from "next/image";
 import { Children, isValidElement, type ComponentPropsWithoutRef } from "react";
 import { DotMask } from "@/components/ui/dot-mask";
 import { Reveal } from "@/components/interactive/reveal";
+import { Note } from "@/components/writing/note";
 
 /**
  * Required by @next/mdx. Maps MDX output onto the site's type system so a
  * post inherits the token scale instead of browser defaults.
  *
  * Nearly all of the styling is CSS: the `.prose` block in components.css
- * sets the body, the Geist 500 headings (with the anchors that
+ * sets the body in Source Serif, the Bodoni headings (with the anchors that
  * rehype-autolink-headings wraps around them as `a.heading-anchor`), the
- * dotted-at-rest links, the 2 px blockquote rule, and code on --ground-2
- * with the single dark theme's inline token colours. This file covers only
+ * underlined links, the 2 px blockquote rule, and code on --ground-2 with
+ * its inline token colours. This file covers only
  * what needs a real component: routing-aware links, images resolving
  * through a dot mask, a scroll container for wide tables, and two guards
  * (a second h1 in a body, a paragraph that is only a picture).
@@ -23,7 +24,8 @@ type ImgProps = ComponentPropsWithoutRef<"img">;
 
 /** A positive pixel count from an `<img width>`-style value, else undefined. */
 function toDimension(value: ImgProps["width"]): number | undefined {
-  const n = typeof value === "number" ? value : value ? Number(value) : Number.NaN;
+  const n =
+    typeof value === "number" ? value : value ? Number(value) : Number.NaN;
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
@@ -89,6 +91,14 @@ function MdxImage({ src = "", alt = "", title, width, height }: ImgProps) {
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
+    /**
+     * Marginalia, so a post can write <Note>…</Note> or
+     * <Note kind="quote">…</Note> at the point in the text the note answers,
+     * with no import. Its y-position is the flow's; the margin column it
+     * hangs in is `.column-note` in plates.css.
+     */
+    Note,
+
     a: ({ href = "", children, ...props }) => {
       if (/^https?:\/\//.test(href)) {
         return (
@@ -125,7 +135,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     // the check exact rather than a guess at the element name.
     p: ({ children, ...props }) => {
       const kids = Children.toArray(children);
-      if (kids.length === 1 && isValidElement(kids[0]) && kids[0].type === MdxImage) {
+      if (
+        kids.length === 1 &&
+        isValidElement(kids[0]) &&
+        kids[0].type === MdxImage
+      ) {
         return kids[0];
       }
       return <p {...props}>{children}</p>;
