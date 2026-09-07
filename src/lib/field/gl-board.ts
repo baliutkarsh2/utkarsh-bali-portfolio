@@ -99,21 +99,14 @@ const float LIFT = 0.55;
 const float INK_GAIN = 1.15;
 const float DEEP_FLOOR = 0.16;
 const float CULL_DIA = 0.30;
-// And a second floor, in DEVICE pixels rather than in cells.
-//
-// gl_PointSize below is clamped with max(1.0, ...) because a point smaller than
-// one pixel is not a smaller point, it is the same point drawn fainter or not
-// at all. That clamp quietly destroys the bottom of the tonal range: every mark
-// the transfer asks for at 0.4 px, 0.7 px and 0.95 px comes out at exactly one
-// pixel, so a whole band of distinct tones collapses into one flat value. That
-// is the grey haze the direction exists to avoid, and the absence of a mark is
-// what a highlight is made of -- so below one device pixel the honest answer is
-// bare paper.
-//
-// It binds at DPR 1 and at fine grids, which is exactly where the picture was
-// least clear, and it is what lets the cell grid get denser without the bottom
-// of the range turning to mush.
-const float MIN_DEVICE_PX = 1.0;
+// A mark smaller than one device pixel used to be culled, because before the
+// fragment stage resolved edge coverage it would have printed as a whole black
+// pixel -- §5.3.8's "a 0.9 px dot on a 1x panel is a grey pixel and nothing
+// else". Analytic coverage answers that at its root: such a mark now prints at
+// exactly its own area. So the floor is 0, and the only cull is CULL_DIA, the
+// one the direction actually asks for. At DPR 1 this was deleting 13.8% of the
+// drawn cells and they were, by construction, the lightest ones.
+const float MIN_DEVICE_PX = 0.0;
 const float INK_DIA_MAX = 1.42;   // sqrt(2): the diameter at which discs close
 const float BURNISH = 0.55;       // the cursor polishes a highlight into the plate
 // gl_PointSize cannot be anisotropic, so a mark cannot squash the way the
@@ -311,6 +304,12 @@ uniform vec3  uOff;
 uniform vec3  uBone;      // the ink the plate is worked in, before the pull
 
 out vec4 vColor;
+// The mark's true radius in device px, and the size of the square GL actually
+// rasterises. The fragment stage needs both to work out how much of each
+// boundary pixel the disc really covers; see the AA note over gl_PointSize.
+out float vRad;
+out float vSize;
+out float vDia;
 // xy = the stroke's unit tangent, z = its width as a fraction of the sprite.
 // z == 0 means "this mark is a disc".
 
@@ -389,7 +388,22 @@ void main() {
   // rasterise identically, so the density alternation is gone. What is left
   // is the lattice spacing alternating 2, 3, 2, 3 device px, which is a fixed
   // texture at the pixel scale rather than a beat at ten times it.
-  device = floor(device) + 0.5;
+  //
+  // ONLY WHERE IT IS NEEDED, and that qualifier is the whole of a second bug.
+  // When the device pitch is a whole number there is no phase variation to
+  // remove -- every cell centre already sits at the same place in the pixel
+  // grid -- and snapping does not fix anything, it MOVES every mark half a
+  // pixel, from a pixel corner to a pixel centre. At 100% with a 2px cell
+  // that is the difference between a 1.74px disc covering a 2x2 block of
+  // fragments and covering exactly one, so the entire tonal range collapses
+  // into a flat one-pixel stipple and the portrait washes out. It measured
+  // 0.1075 ink against 0.2001 at DPR 2: half the picture, gone.
+  //
+  // So: correct the phase only when the phase is wrong.
+  float devPitch = uPitch * uDpr;
+  if (abs(devPitch - floor(devPitch + 0.5)) > 0.01) {
+    device = floor(device) + 0.5;
+  }
   if (device.x < -uPitch * uDpr || device.y < -uPitch * uDpr ||
       device.x > uRes.x + uPitch * uDpr || device.y > uRes.y + uPitch * uDpr) {
     culled = true;
@@ -399,6 +413,9 @@ void main() {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // outside clip space
     gl_PointSize = 0.0;
     vColor = vec4(0.0);
+    vRad = 0.0;
+    vDia = 0.0;
+    vSize = 1.0;
     return;
   }
 
@@ -410,7 +427,38 @@ void main() {
   vec3 ink = mix(uBone, uInk, uPull);
   vColor = vec4(isDatum > 0.5 ? uSun : ink, 1.0);
 
-  gl_PointSize = max(1.0, dia * uPitch * uDpr * mix(FLIP_MIN, 1.0, abs(uFlip)));
+  // ── The mark, and the one pixel of margin its edge needs ──
+  //
+  // gl_PointSize used to be max(1.0, ...) with a hard discard outside r=0.5,
+  // and that is a correct hard-edged mark ONLY while a mark spans several
+  // fragments. At 100% on a 1x panel it does not: a cell is 2 device px, the
+  // realised diameters run 0.60 to 1.74 device px, and homeOf puts every centre
+  // exactly on a pixel centre. A GL point is a SQUARE of side gl_PointSize, so
+  // at any size under 2.0 centred on a pixel centre it covers exactly ONE
+  // fragment -- and the disc test keeps that fragment, because it is the middle
+  // of the disc. Every mark on the board therefore rasterised to one identical
+  // fully-inked pixel. Measured: 39,630 lit pixels, 100% of them at full alpha,
+  // all on one parity. The entire tonal range of the portrait was one bit, and
+  // that is what "washed out at 100%" was.
+  //
+  // The answer is not a bigger dot or a coarser grid, it is to stop throwing
+  // away the fraction. A boundary fragment is PART covered by the disc, and the
+  // honest thing to draw is that part. This is not the tone channel §5.3.1
+  // deletes -- no mark is mixed toward the ground by its luminance, every mark
+  // is still one ink at full strength, and value is still carried by AREA. It
+  // is the area, actually resolved, instead of the area rounded to a whole
+  // pixel. It is also exactly what the 2D floor has been doing all along: a
+  // canvas arc fill is antialiased, so until now the two renderers disagreed at
+  // DPR 1 and §8.7 says they must not.
+  //
+  // The sprite grows by 1.5 px so the ramp has somewhere to land, and vSize
+  // carries that padded size because a fragment shader cannot read gl_PointSize.
+  float squash = mix(FLIP_MIN, 1.0, abs(uFlip));
+  float diaPx = dia * uPitch * uDpr * squash;
+  vRad = 0.5 * diaPx;
+  vDia = diaPx;
+  vSize = max(2.0, diaPx + 1.5);
+  gl_PointSize = vSize;
   vec2 clip = device / uRes * 2.0 - 1.0;
   gl_Position = vec4(clip * vec2(1.0, -1.0), 0.0, 1.0);
 }
@@ -419,6 +467,9 @@ void main() {
 const DRAW_FS = /* glsl */ `#version 300 es
 precision highp float;
 in vec4 vColor;
+in float vRad;
+in float vSize;
+in float vDia;
 uniform float uAlpha;
 out vec4 outColor;
 
@@ -426,9 +477,25 @@ void main() {
   // Hard edges, no smoothing. An antialiased mark measures 0.2 to 0.5
   // crispness at these sizes and reads as mush. Ink either covers the paper or
   // it does not, and the grey is the optical average of the two.
-  vec2 d = gl_PointCoord - 0.5;
-  if (dot(d, d) > 0.25) discard;
-  outColor = vec4(vColor.rgb * uAlpha, uAlpha);
+  // How far this fragment's centre is from the mark's centre, in device px.
+  float dist = length(gl_PointCoord - 0.5) * vSize;
+  // The fraction of this pixel the disc covers: 1 well inside, 0 well outside,
+  // and the linear ramp between is a one-pixel box filter over the edge. Full
+  // ink, partial area -- an engraved mark smaller than a pixel is a lighter
+  // pixel, which is the whole of how a halftone carries tone at this scale.
+  float cover = clamp(vRad - dist + 0.5, 0.0, 1.0);
+  // A one-pixel box filter is the coverage of a straight EDGE, and a mark
+  // smaller than a pixel has no straight edge -- the ramp hands its centre
+  // fragment a full 1.0 when the disc's whole area is 0.79 of a pixel. So cap
+  // the coverage at the mark's actual ink mass, pi/4 d^2, which is exact for
+  // everything up to d = 1.128 px (where the disc first fills a pixel) and
+  // inert above it. Without this the faintest marks -- the highlights, the
+  // modelling on his cheek and brow -- print up to 27% too dark relative to
+  // the deepest ones, which is the tonal range closing from the light end.
+  cover = min(cover, 0.78539816 * vDia * vDia);
+  if (cover <= 0.0) discard;
+  float a = uAlpha * cover;
+  outColor = vec4(vColor.rgb * a, a);
 }
 `;
 

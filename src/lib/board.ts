@@ -317,7 +317,11 @@ const CULL_DIA = 0.3;
  * the picture was least clear — and it is what lets the grid get denser without
  * the bottom of the range turning to mush.
  */
-const MIN_DEVICE_PX = 1.0;
+/** Kept only so the two renderers read alike; see gl-board.ts's DRAW_FS for why
+ *  a sub-device-pixel mark no longer needs deleting. Canvas antialiases a fill,
+ *  so this floor was always doing less harm here than on the GPU -- but it was
+ *  still deleting the lightest marks on the board, which are the highlights. */
+const MIN_DEVICE_PX = 0.0;
 const INK_DIA_MAX = 1.42;
 const BURNISH = 0.55;
 
@@ -823,13 +827,27 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       // punched through every dark passage. The two renderers must not
       // disagree about where a mark is, so this is the same arithmetic done
       // in CSS space: to the device grid and back.
-      const snapX = (v: number) => (Math.floor(v * dpr) + 0.5) / dpr;
+      // Only where the device pitch is fractional; see gl-board.ts. On a whole
+      // number of device pixels per cell there is no phase to correct, and
+      // snapping would move every mark half a pixel off the grid it is already
+      // aligned to.
+      const devPitch = pitch * dpr;
+      const needsSnap = Math.abs(devPitch - Math.round(devPitch)) > 0.01;
+      const snapX = needsSnap
+        ? (v: number) => (Math.floor(v * dpr) + 0.5) / dpr
+        : (v: number) => v;
       if (di <= 1) {
         // The two smallest buckets are about a pixel across: a square is the
-        // same pixels as a disc that small at a fraction of the path cost,
-        // and never smaller than the 1 px lattice dot, so an unlit cell is
-        // exactly the field's own dot.
-        const s = Math.max(1, 2 * r);
+        // same pixels as a disc that small at a fraction of the path cost.
+        //
+        // Area-equivalent, and NOT floored at a whole pixel. A square of side d
+        // carries d^2 of ink where the disc it stands in for carries pi/4 d^2,
+        // so the side is scaled by sqrt(pi)/2 and the two are the same mass.
+        // The old Math.max(1, ...) is the 2D floor's version of the bug that
+        // washed out the GPU board at 100%: it prints every faint mark as a
+        // whole solid pixel, which is the light end of the range collapsing.
+        // Canvas resolves a sub-pixel fill honestly; let it.
+        const s = 0.8862269 * 2 * r;
         const h = s / 2;
         for (let q = start; q < end; q++) {
           const i = order[q];

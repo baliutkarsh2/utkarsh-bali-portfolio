@@ -467,7 +467,47 @@ export function DotBoard({
       const relayout = () => {
         pitch = readPitch();
         const cell = pitch / density;
-        const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+        // ── Never screen the plate at fewer than two device px per cell ──
+        //
+        // The field is a halftone, and a halftone needs room per cell to BE
+        // one: the dot has to be free to grow and shrink inside its cell, and
+        // the eye has to have neighbouring dots of different sizes to average.
+        // At 100% on a 1x panel a cell is 2 device px, which is the display's
+        // Nyquist limit for this screen ruling -- the tone comes out exactly
+        // right (measured: mean luminance 202.0 against 202.1 for the same
+        // board at 200%) and the DETAIL does not survive. His eyes, brows and
+        // mouth flatten into one grey slab. That is what "washed out at 100%"
+        // actually was: not too little ink, too little room for it.
+        //
+        // So on the GPU the canvas is backed at 2x whatever the display gives,
+        // and the compositor resolves it down. That is a supersample, and it
+        // is the same picture the 200% panel gets, which is the one that
+        // reads. It costs fill rate and nothing else -- the particle count,
+        // the transform feedback and every buffer are untouched, and this
+        // machine already draws the 2x framebuffer at a locked 60fps because
+        // that is simply what a DPR-2 visitor has always been served.
+        //
+        // On the GPU always: it pays per fragment, and this machine draws the
+        // 2x framebuffer at a locked 60fps because that is simply what a DPR-2
+        // visitor has always been served. On the 2D floor only where the board
+        // is drawn ONCE -- the device plates, the quarterly rule, the sky, the
+        // afterimage -- because there the extra rasterisation is a single
+        // one-shot cost and never a frame budget. An animating 2D board (the
+        // hero's fallback, the text boards) keeps native resolution: it pays
+        // per mark in path work, every frame, and 4x of that is 4x for real.
+        //
+        // dprCap still wins in both cases, so the governor can pull this back
+        // on a machine that cannot hold the frame.
+        const SUPERSAMPLE_MIN = 2;
+        const drawnOnce =
+          mode === "still" || mode === "afterimage" || !motion;
+        const native = window.devicePixelRatio || 1;
+        const dpr = Math.min(
+          renderer === "gpu" || drawnOnce
+            ? Math.max(native, SUPERSAMPLE_MIN)
+            : native,
+          dprCap,
+        );
         rect = figure.getBoundingClientRect();
         const snapX = Math.round(rect.left / pitch) * pitch;
         const snapY = Math.round(rect.top / pitch) * pitch;
