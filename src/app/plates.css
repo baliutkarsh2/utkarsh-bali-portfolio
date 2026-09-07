@@ -118,7 +118,9 @@
 .toc-row {
   position: relative;
   display: grid;
-  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--fig-col);
+  grid-template-columns:
+    var(--year-col) minmax(0, 1fr) var(--dev-col, 0)
+    var(--fig-col);
   align-items: start;
   padding-block: 1.5rem;
   /* The row is what an apparatus note returns to, and 6rem clears the 3.5rem
@@ -199,6 +201,44 @@
 .toc-fig {
   position: relative;
   z-index: 1;
+}
+
+/* ── The devices ──────────────────────────────────────────────────────────
+   A printer's device is a mark that stands for the press that made the book,
+   and it belongs in a contents page's margin. Each of these is a diagram of
+   what that project actually DOES -- Checkpoint's five suites with the fourth
+   stopping at row three, App Crawler's depth-first plunge -- drawn at the page
+   pitch, so the eight of them are made of exactly the same marks as his face.
+
+   The column only exists where there is room for it. Below 64rem it is zero
+   wide and the plate is not rendered at all, because eight 180px devices
+   would add 1,440px to a phone page that is already 3,000 long, and a mark
+   you have to scroll past is not a mark, it is an obstacle. */
+.toc-device {
+  display: none;
+}
+
+@media (width >= 64rem) {
+  .toc-row {
+    --dev-col: 9rem;
+  }
+
+  .toc-device {
+    display: block;
+    /* Hangs from the row's own top line, beside the title rather than beside
+       the standfirst, so a lead row and a plain row put their device at the
+       same height. */
+    padding-inline-end: var(--space-4);
+  }
+
+  /* The wiped tone stays and the border does not, which is the right pair
+     here: the tint says an area was pressed, and a full plate mark would
+     claim each device is a figure the page is ABOUT. On this page the eight
+     numerals are that, and the devices are marks in the margin beside them.
+     Both come from globals.css §plate-mark via board.css's own copy. */
+  .toc-device .board::before {
+    content: none;
+  }
 }
 
 .toc-year {

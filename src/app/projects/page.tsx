@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Numeral } from "@/components/ui/numeral";
+import { DotBoard } from "@/components/interactive/dot-board";
+import { deviceOf } from "@/content/plates";
 import { orderedProjects, statusLabel } from "@/content";
 
 export const metadata: Metadata = {
@@ -60,7 +62,9 @@ const REACH: Record<string, Reach> = {
  */
 const MARK_SERIES = ["*", "†", "‡", "§", "‖", "¶"];
 const markFor = (i: number) =>
-  MARK_SERIES[i % MARK_SERIES.length].repeat(Math.floor(i / MARK_SERIES.length) + 1);
+  MARK_SERIES[i % MARK_SERIES.length].repeat(
+    Math.floor(i / MARK_SERIES.length) + 1,
+  );
 
 /**
  * The Work index (§7.3), set as a contents page.
@@ -101,7 +105,9 @@ export default function ProjectsPage() {
   // The chronological axis. --t is 0 for the newest project and 1 for the
   // oldest; the CSS multiplies it by one indent step. Computed from the real
   // timestamps, so an unevenly spaced list stays unevenly spaced.
-  const times = orderedProjects.map((p) => Date.parse(`${p.sortDate}T00:00:00Z`));
+  const times = orderedProjects.map((p) =>
+    Date.parse(`${p.sortDate}T00:00:00Z`),
+  );
   const newest = Math.max(...times);
   const oldest = Math.min(...times);
   const span = newest - oldest || 1;
@@ -119,8 +125,8 @@ export default function ProjectsPage() {
         </p>
         <h1 className="mt-6 text-display-l text-ink">The work.</h1>
         <p className="measure mt-6 text-lede text-ink-2">
-          Five on agents, two in research, one with 3,000+ users. The column on the right
-          is what each one proved. The margin on the left is when.
+          Five on agents, two in research, one with 3,000+ users. The column on
+          the right is what each one proved. The margin on the left is when.
         </p>
       </header>
 
@@ -148,6 +154,8 @@ export default function ProjectsPage() {
             // the year rule beside it is the reason.
             const lead = year === currentYear;
             const t = (newest - times[i]) / span;
+
+            const device = deviceOf(project.slug);
 
             const meta = [
               project.eyebrow,
@@ -212,11 +220,37 @@ export default function ProjectsPage() {
                   </h2>
 
                   {lead && (
-                    <p className="toc-standfirst text-lede">{project.tagline}</p>
+                    <p className="toc-standfirst text-lede">
+                      {project.tagline}
+                    </p>
                   )}
 
                   <p className="toc-meta meta">{meta}</p>
                 </div>
+
+                {/* The project's own device: a small engraved diagram of the
+                    mechanism that project actually is, in the band between
+                    the reading column and the figures. The column was 360px
+                    of bare paper down all eight rows, and this is what it is
+                    for -- a printer's device is exactly the mark that belongs
+                    in a contents page's margin, and each one here is a
+                    picture of the thing rather than a logo for it.
+
+                    Hidden below 64rem: there is no band there to put it in,
+                    and eight 180px plates would add 1,440px to a phone page
+                    that is already long. The same device appears full size on
+                    the case study, which is where a phone reader meets it. */}
+                {device && (
+                  <div className="toc-device" aria-hidden="true">
+                    <DotBoard
+                      mode="still"
+                      source={device.id}
+                      alt=""
+                      fallback={device.still}
+                      className="device-board"
+                    />
+                  </div>
+                )}
 
                 {/* The figure and its reference mark, on one line and in that
                     order, so the mark reads as belonging to the number. The
