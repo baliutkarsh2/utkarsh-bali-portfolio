@@ -36,6 +36,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageFilter
+from scipy.ndimage import gaussian_filter
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "src/assets/sky/west-lafayette-2025-07-11.png"
@@ -46,12 +47,23 @@ URL = "https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/CURREN
 LAT, LON = 40.4237, -86.9212
 UTC = (2025, 7, 12, 3, 0, 0)
 
-SIZE = 1536          # the raster is square; the sky disc inscribes it
+# The raster is square and the sky disc inscribes it. CELLS is the grid the
+# field will be baked at, and it is the number every size below is expressed
+# in -- a star drawn 3 px across on a 1536 px raster is a star that does not
+# survive the cell mean, and the whole picture is stars.
+CELLS = 192
+PX_PER_CELL = 8
+SIZE = CELLS * PX_PER_CELL
 NAKED_EYE = 6.0      # what an eye actually resolves as a point
 FAINT = 10.0         # fainter than this contributes only to the glow
-SKY_L = 0.20         # the ink floor: dense, but never closed -- a black
+SKY_L = 0.21         # the ink floor: dense, but never closed -- a black
                      # rectangle is not a halftone, it is a mistake
-MILKY = 0.22         # how far the crowded regions lift the sky toward paper
+MILKY = 0.20         # how far the crowded regions lift the sky toward paper
+# Star radii in CELLS. Sirius is not four times Vega on a plate; the eye reads
+# magnitude as area over a narrow range, and a hole smaller than a cell is not
+# a hole at all -- it is a slightly paler cell, which is the one thing the cull
+# is there to prevent.
+R_MIN, R_MAX = 0.62, 2.30
 
 
 def julian(y, m, d, hh, mm, ss):
@@ -120,7 +132,7 @@ def main() -> None:
                 if row.get("proper"):
                     named[row["proper"]] = (math.degrees(alt), mag)
             else:
-                glow.append((x, y))
+                glow.append((x, y, 10.0 ** (-0.4 * mag)))
 
     print(f"{len(bright)} stars to magnitude {NAKED_EYE}, {len(glow)} fainter for the glow")
     for n in ("Vega", "Deneb", "Altair", "Arcturus", "Polaris", "Antares"):
@@ -128,21 +140,31 @@ def main() -> None:
             print(f"  {n:<9} altitude {named[n][0]:5.1f}°  mag {named[n][1]:.2f}")
 
     # The sky: ink everywhere, thinning where the faint stars crowd.
-    dens = np.zeros((SIZE, SIZE), np.float32)
-    for x, y in glow:
-        xi, yi = int(x), int(y)
-        if 0 <= xi < SIZE and 0 <= yi < SIZE:
-            dens[yi, xi] += 1.0
-    dens = np.asarray(Image.fromarray((np.clip(dens, 0, 8) / 8 * 255).astype(np.uint8))
-                      .filter(ImageFilter.GaussianBlur(radius=SIZE / 110)), np.float32) / 255.0
-    dens /= max(dens.max(), 1e-6)
+    #
+    # Accumulated on a COARSE grid and then blurred, not per pixel. At full
+    # resolution 48,000 points scattered over 2.4 million pixels is not a
+    # density, it is a dot pattern, and blurring it just makes blobs -- the
+    # first version of this looked like camouflage. Binning first is what makes
+    # it a field. Weighted by flux rather than by count, so a crowd of faint
+    # stars and one bright one are not the same thing.
+    BINS = 96
+    dens = np.zeros((BINS, BINS), np.float64)
+    for x, y, flux in glow:
+        bx, by = int(x * BINS / SIZE), int(y * BINS / SIZE)
+        if 0 <= bx < BINS and 0 <= by < BINS:
+            dens[by, bx] += flux
+    dens = gaussian_filter(dens.astype(np.float32), sigma=2.2, mode="nearest")
+    dens = np.asarray(Image.fromarray(dens, "F").resize((SIZE, SIZE), Image.BICUBIC), np.float32)
+    lo, hi = np.percentile(dens, 40), np.percentile(dens, 99.2)
+    dens = np.clip((dens - lo) / max(hi - lo, 1e-9), 0.0, 1.0) ** 0.85
     lum = np.full((SIZE, SIZE), SKY_L, np.float32) + MILKY * dens
 
     # The stars: holes of bare paper, area by magnitude the way an eye sees them.
     stars = Image.new("F", (SIZE, SIZE), 0.0)
     sp = stars.load()
     for x, y, mag in bright:
-        r = 0.9 + 2.9 * ((NAKED_EYE - mag) / (NAKED_EYE + 1.5)) ** 1.6
+        t = (NAKED_EYE - mag) / (NAKED_EYE + 1.5)
+        r = (R_MIN + (R_MAX - R_MIN) * t ** 1.7) * PX_PER_CELL
         x0, x1 = int(x - r - 2), int(x + r + 3)
         y0, y1 = int(y - r - 2), int(y + r + 3)
         for yy in range(max(0, y0), min(SIZE, y1)):
