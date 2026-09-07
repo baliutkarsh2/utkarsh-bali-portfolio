@@ -65,6 +65,33 @@ export function decodeField(field: BoardField): Uint8Array {
 const RELIGHT_BLUR = 6; // cells: the radius the slope is measured over
 
 /**
+ * The turn, shared by both renderers so they cannot disagree about where the
+ * plate is in its rotation.
+ *
+ * An engraver cuts a plate in reverse, because the sheet it prints is the
+ * plate's mirror. So the field is drawn reversed until the pull and the right
+ * way round after it — and it gets there by turning over, not by being swapped,
+ * because a swap is a jump cut and a turn is what actually happens at a press.
+ *
+ * This is the x scale of a plate rotating about a vertical axis: `cos(theta)`
+ * as theta runs from pi to 0. It is −1 while the plate is still a plate, passes
+ * through 0 edge-on at exactly `pull = 0.5`, and reaches +1 on the sheet.
+ *
+ * That midpoint is not a coincidence and it is load-bearing: `pull = 0.5` is
+ * also where dot-board steps the page palette from plate to paper. The one
+ * frame where the whole field collapses to a hairline is the frame the ground
+ * inverts under it, so the hardest cut on the site happens behind the one
+ * moment there is almost nothing on screen to see it with.
+ */
+export function flipOf(pull: number): number {
+  const u = Math.min(1, Math.max(0, (pull - 0.5) / (2 * FLIP_HALF) + 0.5));
+  return -Math.cos(Math.PI * u);
+}
+
+/** Half the width, in `pull`, of the turn. Outside it the plate is flat on. */
+const FLIP_HALF = 0.2;
+
+/**
  * How far the relight may push a dot's luminance, as a fraction of itself.
  *
  * Tuned against the picture, not by feel. At 0.38 the relit portrait keeps a
@@ -159,7 +186,13 @@ export function surfaceNormals(
   return { nx, ny };
 }
 
-export type BoardColors = { ink: string; sun: string; off: string };
+export type BoardColors = {
+  ink: string;
+  sun: string;
+  off: string;
+  /** The ink the plate is worked in, before the sheet is pulled. */
+  bone?: string;
+};
 
 export type BoardOptions = {
   mode: BoardMode;
@@ -200,6 +233,12 @@ export type Board = {
    * whether the pointer is a light or an adversary (see TEAR_SPEED).
    */
   pointer: (x: number | null, y: number | null, vx?: number, vy?: number) => void;
+  /**
+   * The pull. 0 is the plate: marks in bone on a near-black ground, and on the
+   * GPU path mirrored, because an intaglio plate is cut in reverse. 1 is the
+   * printed sheet. Only the arrival ever moves it.
+   */
+  setPull: (t: number) => void;
   /** Dispersal 0..1 (hero only). */
   scroll: (t: number) => void;
   /** Disable the pin bed (governor). Light stays. */
@@ -270,6 +309,42 @@ const CULL_DIA = 0.3;
 const INK_DIA_MAX = 1.42;
 const BURNISH = 0.55;
 
+/**
+ * The burin, and the stochastic screen that makes it possible.
+ *
+ * A ruled orthogonal grid of directional marks merges: every stroke in a row is
+ * collinear with its neighbours and they run together into scan lines, which is
+ * a topographic map rather than an engraving. Breaking the lattice by a third of
+ * a cell is what lets a stroke stay a stroke. It also kills the screen door and
+ * the beat against the display's own pixel grid, both of which are invisible on
+ * a dark ground and unavoidable on white.
+ *
+ * Where the surface gradient is weak its DIRECTION is noise, so the stroke
+ * blends toward a steady 22.5 degree hatch -- off every page rule and off the
+ * pixel diagonal. An engraver does the same thing in a flat passage.
+ */
+const JITTER = 0.34; // cells
+const BURIN_W = 0.46;
+const BURIN_LMAX = 1.7;
+const BURIN_NMIN = 0.1;
+const BURIN_HATCH = 0.3926991;
+const BURIN_FOLLOW = 0.42;
+/**
+ * The diameter at which a disc becomes a stroke. 0.72 of the realised coverage
+ * maximum (0.594, measured offline) is the deepest ~28% of the range; the
+ * 1.128 is 2/sqrt(pi), the same area-exact radius the transfer uses. An
+ * ABSOLUTE 0.72 here would fire zero strokes, because the deep floor caps
+ * coverage below it -- the feature would silently do nothing.
+ */
+const BURIN_DIA = 1.128 * Math.sqrt(0.72 * 0.594);
+
+/** Deterministic per-cell offset, matching jitterOf() in gl-board.ts. */
+function jitterOf(cx: number, cy: number): [number, number] {
+  const a = Math.sin(cx * 12.9898 + cy * 78.233) * 43758.5453;
+  const b = Math.sin(cx * 39.3468 + cy * 11.135) * 24634.6345;
+  return [((a - Math.floor(a)) - 0.5) * 2 * JITTER, ((b - Math.floor(b)) - 0.5) * 2 * JITTER];
+}
+
 const TONES = 8; // colour steps between --dot-off and --ink / --sun
 const DIAS = 16; // diameter steps, in cells, between 0 and INK_DIA_MAX
 /** Below this tone a cell is "the field": drawn only where a page dot is. */
@@ -335,8 +410,13 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   const rim = new Set(field.rim);
   // The face is relit from the pointer, so every dot needs to know which way
   // its patch of skin is facing. Costs one pass over the field at build time.
-  const relightable = opts.pointer && (opts.mode === "hero" || opts.mode === "still");
-  const normals = relightable ? surfaceNormals(bytes, W, H) : null;
+  // Normals used to be a relight-only luxury, so they were gated on the pointer
+  // being available. The burin's direction comes from them now, and the burin
+  // is the picture -- under reduced motion, where there is no pointer at all,
+  // gating them here would hand that visitor a flat hatch instead of one that
+  // follows his face.
+  const shaped = opts.mode === "hero" || opts.mode === "still";
+  const normals = shaped ? surfaceNormals(bytes, W, H) : null;
   const rand = rng(opts.seed ?? 11);
   const [cx0, cy0] = field.center;
   const [dx0, dy0] = field.datum;
@@ -404,19 +484,41 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   let dirty = true;
   let disposed = false;
 
-  const inkRGB = parseColor(opts.colors.ink, [242, 241, 236]);
-  const sunRGB = parseColor(opts.colors.sun, [255, 106, 43]);
-  const offRGB = parseColor(opts.colors.off, [35, 35, 38]);
+  const inkRGB = parseColor(opts.colors.ink, [20, 18, 14]);
+  const sunRGB = parseColor(opts.colors.sun, [168, 50, 27]);
+  const offRGB = parseColor(opts.colors.off, [231, 225, 214]);
+  // The ink the plate is worked in, before the sheet is pulled.
+  const boneRGB = parseColor(opts.colors.bone ?? "#efe9dc", [239, 233, 220]);
+  /** 0 while the plate is worked, 1 once the sheet is printed. */
+  let pull = 1;
   const palette: string[] = [];
-  for (let k = 0; k < 2; k++)
-    for (let t = 0; t < TONES; t++)
-      palette.push(mix(offRGB, k === 0 ? inkRGB : sunRGB, t / (TONES - 1)));
+  const rebuildPalette = () => {
+    palette.length = 0;
+    const mark: [number, number, number] = [
+      boneRGB[0] + (inkRGB[0] - boneRGB[0]) * pull,
+      boneRGB[1] + (inkRGB[1] - boneRGB[1]) * pull,
+      boneRGB[2] + (inkRGB[2] - boneRGB[2]) * pull,
+    ];
+    for (let k = 0; k < 2; k++)
+      for (let t = 0; t < TONES; t++)
+        palette.push(mix(offRGB, k === 0 ? mark : sunRGB, t / (TONES - 1)));
+  };
+  rebuildPalette();
 
   // The lattice: page dots sit at (k * pitch + 0.5), the top-left pixel of
   // each tile. Cells land on the same grid so an unlit cell and the field
   // beneath it are the same pixel.
-  const homeX = (i: number) => originX + gx[i] * pitch + 0.5;
-  const homeY = (i: number) => originY + gy[i] * pitch + 0.5;
+  // Jitter is baked once per cell rather than recomputed every frame: it is a
+  // property of the plate, not of the moment.
+  const jx = new Float32Array(n);
+  const jy = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const [a, b] = jitterOf(gx[i], gy[i]);
+    jx[i] = a;
+    jy[i] = b;
+  }
+  const homeX = (i: number) => originX + (gx[i] + jx[i]) * pitch + 0.5;
+  const homeY = (i: number) => originY + (gy[i] + jy[i]) * pitch + 0.5;
   const snap = (v: number) => Math.round((v - 0.5) / lattice) * lattice + 0.5;
 
   function layout(g: { width: number; height: number; originX: number; originY: number; pitch: number; lattice: number; dpr: number }) {
@@ -475,6 +577,21 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     dirty = true;
   }
 
+  /**
+   * The pull. 0 is the plate, 1 is the printed sheet. The 2D board cannot
+   * The palette is rebuilt rather than mixed per dot: sixteen entries against
+   * tens of thousands of marks. The geometric half of the inversion -- the
+   * turn -- is read from the same value in `draw`, so a single number carries
+   * the whole pull and the two halves cannot come apart.
+   */
+  function setPull(t: number) {
+    const next = Math.min(1, Math.max(0, t));
+    if (next === pull) return;
+    pull = next;
+    rebuildPalette();
+    dirty = true;
+  }
+
   function disablePush() {
     pushEnabled = false;
   }
@@ -487,6 +604,23 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     const c = ctx as CanvasRenderingContext2D;
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     c.clearRect(0, 0, width, height);
+
+    // The turn (see `flipOf`), about the box's own centre rather than the
+    // canvas's, because in hero mode the canvas is the whole viewport and the
+    // board is one column of it.
+    //
+    // This is the one place the 2D floor does something the GPU cannot:
+    // `gl_PointSize` is isotropic, so over there a foreshortened mark can only
+    // shrink, while a context scale squashes the marks themselves and the discs
+    // foreshorten into ellipses. A singular matrix draws nothing at all, so the
+    // edge-on frame is held at 2% rather than 0 -- which is the hairline the
+    // plate should read as anyway.
+    const flip = flipOf(pull);
+    if (flip !== 1) {
+      const f = Math.abs(flip) < 0.02 ? 0.02 * Math.sign(flip || -1) : flip;
+      const axis = originX + (W * pitch) / 2;
+      c.transform(f, 0, 0, 1, axis * (1 - f), 0);
+    }
 
     const elapsed = assembling ? now - assembleStart : Infinity;
     if (assembling && elapsed >= ASSEMBLE_MS) {
@@ -695,9 +829,56 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       // Must be the inverse of the bucket index above. The old mapping ran
       // DIA_MIN..DIA_MAX; the ink transfer runs 0..INK_DIA_MAX, and mixing the
       // two draws every dot at the wrong size.
-      const r = ((di / (DIAS - 1)) * INK_DIA_MAX * pitch) / 2;
+      const dia = (di / (DIAS - 1)) * INK_DIA_MAX;
+      const r = (dia * pitch) / 2;
       c.fillStyle = palette[k * TONES + ti];
       c.beginPath();
+
+      // ── The burin ──────────────────────────────────────────────────────
+      // In the deepest tones the disc becomes a short stroke laid along the
+      // local surface tangent, so the shadows hatch AROUND the form instead of
+      // stippling it. Every dot in this bucket is the same length and width, so
+      // one path with one lineWidth draws them all; only the direction is
+      // per-dot, which a path handles for free.
+      if (normals && dia >= BURIN_DIA && k === 0) {
+        const coverage = (dia / 1.128) * (dia / 1.128);
+        const len = Math.min(Math.max(coverage / BURIN_W, 1), BURIN_LMAX) * pitch;
+        c.lineWidth = BURIN_W * pitch;
+        c.lineCap = "round";
+        c.strokeStyle = palette[k * TONES + ti];
+        for (let q = start; q < end; q++) {
+          const i = order[q];
+          const nx = snx[i];
+          const ny = sny[i];
+          const nlen = Math.hypot(nx, ny);
+          // Where the gradient is weak its direction is noise, so the stroke
+          // falls back to a steady hatch rather than snapping to an axis and
+          // lining up with its neighbours.
+          const t = Math.min(1, Math.max(0, (nlen - BURIN_NMIN) / (BURIN_FOLLOW - BURIN_NMIN)));
+          const w = t * t * (3 - 2 * t);
+          const hx = Math.cos(BURIN_HATCH);
+          const hy = Math.sin(BURIN_HATCH);
+          let tx = hx;
+          let ty = hy;
+          if (nlen > 1e-4) {
+            const fx = -ny / nlen;
+            const fy = nx / nlen;
+            const sgn = fx * hx + fy * hy < 0 ? -1 : 1;
+            tx = hx + (fx * sgn - hx) * w;
+            ty = hy + (fy * sgn - hy) * w;
+            const m = Math.hypot(tx, ty) || 1;
+            tx /= m;
+            ty /= m;
+          }
+          const X = homeX(i) + px[i];
+          const Y = homeY(i) + py[i];
+          c.moveTo(X - (tx * len) / 2, Y - (ty * len) / 2);
+          c.lineTo(X + (tx * len) / 2, Y + (ty * len) / 2);
+        }
+        c.stroke();
+        continue;
+      }
+
       if (di <= 1) {
         // The two smallest buckets are about a pixel across: a square is the
         // same pixels as a disc that small at a fraction of the path cost,
@@ -762,6 +943,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
     assemble,
     settle,
     pointer,
+    setPull,
     scroll,
     disablePush,
     frame,

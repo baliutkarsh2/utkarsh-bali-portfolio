@@ -2,11 +2,18 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { BoardField } from "@/content/portrait-types";
-import { createBoard, TEAR_SPEED, type Board, type BoardMode } from "@/lib/board";
+import {
+  createBoard,
+  TEAR_SPEED,
+  type Board,
+  type BoardMode,
+} from "@/lib/board";
+import { fieldCaps } from "@/lib/field/gl";
 import { createGLBoard } from "@/lib/field/gl-board";
 import { motionAllowed, onMotionChange } from "@/lib/motion";
 
-type BoardStatus = "lattice" | "assembling" | "live" | "settled" | "static" | "fallback";
+type BoardStatus =
+  "lattice" | "assembling" | "live" | "settled" | "static" | "fallback";
 
 /** Which baked portrait a board shows. The field itself is loaded on the client. */
 export type PortraitSource = "hero" | "about" | "contact";
@@ -40,6 +47,42 @@ const SEEN_KEY = "board:seen";
  */
 const PORTRAIT_DENSITY = 2;
 const PHONE = "(width < 48rem)";
+
+/**
+ * The arrival, once per session, on the hero only.
+ *
+ * An intaglio plate is worked in the dark and cut in reverse, because the sheet
+ * it prints is its mirror. So the board assembles as a plate -- bone marks on a
+ * near-black ground, flipped -- and then the sheet is pulled.
+ *
+ * This half is the clock. The page half is globals.css section 11, which is a
+ * pair of states rather than a keyframe: `plate` remaps the palette dark and
+ * `sheet` warms the paper back up. The step between them is driven from here,
+ * on the frame the pull crosses PULL_MID, because it has to land on the *same*
+ * frame as the canvas mirror flip -- one event, not two clocks agreeing to
+ * three decimal places.
+ *
+ * Why it is a step and not a crossfade: the page starts bone on plate and ends
+ * ink on paper, the same two colours in opposite roles, so every continuous
+ * path between them passes through the point where the two meet. The best
+ * possible staged swap measures 4.18:1, under the floor; a simultaneous fade
+ * bottoms out near 1.03:1 with the h1 invisible for a tenth of a second. The
+ * marks are what carries the moment instead: half inked at the flip, they are
+ * mid grey against both grounds, so they are the one thing that does not jump.
+ *
+ * The <h1> is real text at full opacity from frame zero throughout, so the
+ * arrival never delays the largest contentful paint. Reduced motion, a return
+ * visit, or no WebGL all skip straight to the printed sheet.
+ */
+// Measured, not chosen: the field is fully inked at ~800 ms and dead still by
+// 950. Anything past that is a stare at a finished plate, so the pull begins
+// 300 ms after it settles -- long enough to read the plate as a whole object,
+// short enough that nothing waits.
+const PULL_FROM = 1250; // ms after assembly begins: the marks start to darken
+const PULL_TO = 1900; //  ms: the sheet is fully printed
+/** Where the plate becomes the sheet. The shader flips its mirror on the same value. */
+const PULL_MID = 0.5;
+const ARRIVAL_END = 2600;
 const FINE = "(hover: hover) and (pointer: fine)";
 /** Text mode waits for the sans to load before rasterising, but never longer than this. */
 const FONT_WAIT_MS = 1500;
@@ -75,18 +118,26 @@ const SOURCES: Record<PortraitSource, SourceSpec> = {
     rows: 120,
     colsSm: 64,
     rowsSm: 80,
-    load: () => import("@/content/portrait-field-96").then((m) => m.portraitField96),
-    loadSm: () => import("@/content/portrait-field-64").then((m) => m.portraitField64),
+    load: () =>
+      import("@/content/portrait-field-96").then((m) => m.portraitField96),
+    loadSm: () =>
+      import("@/content/portrait-field-64").then((m) => m.portraitField64),
   },
   about: {
     cols: 64,
     rows: 80,
-    load: () => import("@/content/portrait-field-about").then((m) => m.portraitFieldAbout),
+    load: () =>
+      import("@/content/portrait-field-about").then(
+        (m) => m.portraitFieldAbout,
+      ),
   },
   contact: {
     cols: 48,
     rows: 60,
-    load: () => import("@/content/portrait-field-contact").then((m) => m.portraitFieldContact),
+    load: () =>
+      import("@/content/portrait-field-contact").then(
+        (m) => m.portraitFieldContact,
+      ),
   },
 };
 
@@ -175,9 +226,10 @@ export function DotBoard({
     else delete figure.dataset.fixed;
     const readPitch = () => parseFloat(cssVar(figure, "--pitch", "6")) || 6;
     const colors = {
-      ink: cssVar(figure, "--ink", "#F2F1EC"),
-      sun: cssVar(figure, "--sun", "#FF6A2B"),
-      off: cssVar(figure, "--dot-off", "#232326"),
+      ink: cssVar(figure, "--ink", "#14120e"),
+      sun: cssVar(figure, "--sun", "#a8321b"),
+      off: cssVar(figure, "--dot-off", "rgba(20,18,14,0.06)"),
+      bone: cssVar(figure, "--bone", "#efe9dc"),
     };
     const phoneQuery = window.matchMedia(PHONE);
 
@@ -205,7 +257,8 @@ export function DotBoard({
       // cells that the 2D renderer draws in under a millisecond, and each GL
       // context is one more for Chrome to evict — it drops the oldest when a
       // page holds too many, which would blank the hero to animate a thumbnail.
-      const wantsGpu = motion && (mode === "hero" || mode === "text") && !forceCpu;
+      const wantsGpu =
+        motion && (mode === "hero" || mode === "text") && !forceCpu;
       if (!canvasRef.current) return null;
       // Recycle first, not just on the way down to 2D: after a context loss
       // the old element still owns a dead context, so retrying GL on it would
@@ -217,6 +270,13 @@ export function DotBoard({
         : null;
       let renderer = "gpu";
       if (!board) {
+        // A silent tier drop is the failure mode this whole ladder invites:
+        // everything still works, nobody sees an error, and the GPU path
+        // quietly stops being the one anybody actually gets. In development it
+        // says so, with the reason the capability probe gave.
+        if (wantsGpu && process.env.NODE_ENV !== "production") {
+          console.warn("[dot-board] GPU declined:", JSON.stringify(fieldCaps()));
+        }
         canvas = recycleCanvas(canvas);
         board = createBoard(canvas, field, options);
         renderer = "2d";
@@ -248,11 +308,13 @@ export function DotBoard({
       let continuous = false;
       let inside = false;
       let scrollRaf = 0;
+      let arrivalRaf = 0;
       let resizeRaf = 0;
       const canIdle = typeof window.requestIdleCallback === "function";
 
       const restText = () =>
-        restLabel ?? `${field.w} × ${field.h} · ${board.count.toLocaleString("en-US")} dots`;
+        restLabel ??
+        `${field.w} × ${field.h} · ${board.count.toLocaleString("en-US")} dots`;
       const cellText = (c: { x: number; y: number; L: number }) =>
         `x ${String(c.x).padStart(3, "0")} · y ${String(c.y).padStart(3, "0")} · ${c.L.toFixed(2)}`;
       const setReadout = (s: string) => {
@@ -407,9 +469,15 @@ export function DotBoard({
           // words beside the portrait is meant to move the light across the
           // face. Frames still stop the moment the pointer stops, so the cost
           // is paid only while something is actually changing.
-          const R = Math.max(LIGHT_CELLS * pitch, Math.hypot(rect.width, rect.height));
+          const R = Math.max(
+            LIGHT_CELLS * pitch,
+            Math.hypot(rect.width, rect.height),
+          );
           const near =
-            x > rect.left - R && x < rect.right + R && y > rect.top - R && y < rect.bottom + R;
+            x > rect.left - R &&
+            x < rect.right + R &&
+            y > rect.top - R &&
+            y < rect.bottom + R;
           if (!near) {
             if (inside) leave();
             return;
@@ -468,7 +536,10 @@ export function DotBoard({
         scrollRaf = requestAnimationFrame(() => {
           scrollRaf = 0;
           relayout();
-          const t = Math.min(1, Math.max(0, window.scrollY / (0.9 * window.innerHeight)));
+          const t = Math.min(
+            1,
+            Math.max(0, window.scrollY / (0.9 * window.innerHeight)),
+          );
           board.scroll(t);
           schedule();
         });
@@ -554,16 +625,59 @@ export function DotBoard({
             return;
           }
           pending = false;
-          board.assemble(performance.now());
+          const t0 = performance.now();
+          board.assemble(t0);
           setStatus("assembling");
           schedule();
+          if (mode === "hero") {
+            board.setPull(0);
+            const root = document.documentElement;
+            root.dataset.arrival = "plate";
+            const pull = () => {
+              if (disposed) {
+                delete root.dataset.arrival;
+                return;
+              }
+              const t = performance.now() - t0;
+              const p = Math.min(
+                1,
+                Math.max(0, (t - PULL_FROM) / (PULL_TO - PULL_FROM)),
+              );
+              const pull01 = p * p * (3 - 2 * p);
+              board.setPull(pull01);
+              // The board rests the moment it has nothing left to do, and by
+              // the time the pull begins the assembly is long finished -- so
+              // without this the ink changes and no frame is ever drawn to
+              // show it. schedule() is a no-op while the loop is already
+              // running, so the assembly is never double-stepped.
+              schedule();
+              // The one event. The palette steps on the frame the mirror
+              // releases, so the two halves of the inversion cannot disagree.
+              if (pull01 >= PULL_MID && root.dataset.arrival === "plate") {
+                root.dataset.arrival = "sheet";
+              }
+              if (t < ARRIVAL_END) arrivalRaf = requestAnimationFrame(pull);
+              else {
+                board.setPull(1);
+                schedule();
+                delete root.dataset.arrival;
+              }
+            };
+            arrivalRaf = requestAnimationFrame(pull);
+          }
         };
         begin = run;
-        idle = canIdle ? window.requestIdleCallback(run, { timeout: 1200 }) : window.setTimeout(run, 500);
+        idle = canIdle
+          ? window.requestIdleCallback(run, { timeout: 1200 })
+          : window.setTimeout(run, 500);
       }
 
       return () => {
         if (raf) cancelAnimationFrame(raf);
+        if (arrivalRaf) {
+          cancelAnimationFrame(arrivalRaf);
+          delete document.documentElement.dataset.arrival;
+        }
         if (scrollRaf) cancelAnimationFrame(scrollRaf);
         if (resizeRaf) cancelAnimationFrame(resizeRaf);
         if (idle !== undefined) {
@@ -577,7 +691,10 @@ export function DotBoard({
         window.removeEventListener("resize", onResize);
         window.removeEventListener("scroll", onScroll);
         document.removeEventListener("visibilitychange", onVisibility);
-        pointerTarget.removeEventListener("pointermove", onMove as EventListener);
+        pointerTarget.removeEventListener(
+          "pointermove",
+          onMove as EventListener,
+        );
         leaveTarget.removeEventListener("pointerleave", onLeave);
         board.dispose();
       };
@@ -599,7 +716,9 @@ export function DotBoard({
               () => undefined,
             )
           : Promise.resolve();
-      const timeout = new Promise<void>((resolve) => window.setTimeout(resolve, FONT_WAIT_MS));
+      const timeout = new Promise<void>((resolve) =>
+        window.setTimeout(resolve, FONT_WAIT_MS),
+      );
       const [{ textField }] = await Promise.all([
         import("@/lib/board-text"),
         Promise.race([ready, timeout]),
@@ -620,7 +739,8 @@ export function DotBoard({
      * capability probe runs on a throwaway one, so this is rare.
      */
     const recycleCanvas = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
-      if (!(canvas as HTMLCanvasElement & { poisoned?: boolean }).poisoned) return canvas;
+      if (!(canvas as HTMLCanvasElement & { poisoned?: boolean }).poisoned)
+        return canvas;
       const fresh = document.createElement("canvas");
       fresh.className = canvas.className;
       fresh.setAttribute("aria-hidden", "true");
@@ -641,7 +761,8 @@ export function DotBoard({
       losses += 1;
       if (losses > 1 || reason === "failed") forceCpu = true;
       const canvas = canvasRef.current;
-      if (canvas) (canvas as HTMLCanvasElement & { poisoned?: boolean }).poisoned = true;
+      if (canvas)
+        (canvas as HTMLCanvasElement & { poisoned?: boolean }).poisoned = true;
       setStatus("fallback");
       stop();
       boot();
@@ -679,7 +800,8 @@ export function DotBoard({
 
     // Hero and text: the field and the pixel grid follow the 48rem breakpoint
     // and must match the CSS box exactly, so a flip rebuilds the board.
-    const rebuilds = mode === "text" || Boolean(source && SOURCES[source].loadSm);
+    const rebuilds =
+      mode === "text" || Boolean(source && SOURCES[source].loadSm);
     const onBreakpoint = () => {
       stop();
       setStatus("lattice");
@@ -691,7 +813,9 @@ export function DotBoard({
     // screen, so it costs no request; asking for it before the print snapshot
     // covers engines that do not load lazy images for paper.
     const onBeforePrint = () => {
-      for (const img of figure.querySelectorAll<HTMLImageElement>("img.board-fallback")) {
+      for (const img of figure.querySelectorAll<HTMLImageElement>(
+        "img.board-fallback",
+      )) {
         img.loading = "eager";
       }
     };
@@ -721,7 +845,10 @@ export function DotBoard({
   // until the string is rasterised, so it shows the grid alone.
   const grid = `${box.cols * density} × ${box.rows * density}`;
   const rest =
-    restLabel ?? (count !== undefined ? `${grid} · ${count.toLocaleString("en-US")} dots` : grid);
+    restLabel ??
+    (count !== undefined
+      ? `${grid} · ${count.toLocaleString("en-US")} dots`
+      : grid);
 
   // The finished portrait, shown by CSS when the canvas cannot run and in
   // print. Out of layout and lazy on screen, so it is never requested there.

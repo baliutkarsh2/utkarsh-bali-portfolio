@@ -206,9 +206,17 @@ export function linked(
 /** Throws if the program did not link. Only call once `linked()` is true. */
 export function verify(gl: WebGL2RenderingContext, program: WebGLProgram): void {
   if (gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+  // The program log for a failed compile says "Vertex shader is not compiled"
+  // and nothing else, which names the shader and not one thing about the
+  // mistake. The line and the message are on the SHADERS, so collect those too
+  // — this is the only report anybody gets before the tier silently drops.
+  const shaders = (gl.getAttachedShaders(program) ?? [])
+    .map((shader) => gl.getShaderInfoLog(shader))
+    .filter((log) => log && log.trim().length > 0)
+    .join(" | ");
   const log = gl.getProgramInfoLog(program);
   gl.deleteProgram(program);
-  throw new Error(`WebGL: program failed to link — ${log}`);
+  throw new Error(`WebGL: program failed to link — ${log}${shaders ? ` — ${shaders}` : ""}`);
 }
 
 /** `uniform vec2  uOrigin;` -> `uOrigin`, over a shader's source text. */

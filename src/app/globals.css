@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "./board.css";
 @import "./components.css";
+@import "./constellation.css";
+@import "./plates.css";
+@import "./case.css";
 @import "./chrome.css";
 
 /* ─────────────────────────────────────────────────────────────
@@ -53,7 +56,12 @@
   /* ── Rules. Decorative geometry only; never text. ── */
   --line: rgba(20, 18, 14, 0.14); /* renders #dad8d4 */
   --rule-mid: rgba(20, 18, 14, 0.34); /* renders #acaaa6 — the plate mark */
-  --line-strong: rgba(20, 18, 14, 0.5); /* renders #878581, 3.47:1, non-text AA */
+  --line-strong: rgba(
+    20,
+    18,
+    14,
+    0.5
+  ); /* renders #878581, 3.47:1, non-text AA */
 
   /* ── The unlit dot. On paper this is bare paper, not a grey pip: the field
         carries value by ink AREA and a permanent grey lattice is the smudge. ── */
@@ -127,8 +135,18 @@
   /* ── Motion. The three easings are repeated literally in @theme below
         (section 2) because their names sit in Tailwind's `--ease-*` namespace
         and an alias there would be a self-reference. Keep both in sync. ── */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* settle: anything that lights or resolves */
-  --ease-snap: cubic-bezier(0.2, 0, 0, 1); /* commit: fills, LEDs, row hover, borders */
+  --ease-out: cubic-bezier(
+    0.16,
+    1,
+    0.3,
+    1
+  ); /* settle: anything that lights or resolves */
+  --ease-snap: cubic-bezier(
+    0.2,
+    0,
+    0,
+    1
+  ); /* commit: fills, LEDs, row hover, borders */
   --ease-page: cubic-bezier(0.65, 0, 0.35, 1); /* view transitions */
   --dur-1: 120ms; /* colour */
   --dur-2: 200ms; /* fills, LEDs */
@@ -224,7 +242,11 @@
      rendered size, which is the historical fix for a Didone's one screen
      failure: hairlines that vanish when set small. Bodoni is forbidden below
      21px — below that the workhorse takes over. */
-  --text-display-xl: clamp(4.25rem, min(12vw, 19vh), 11.5rem); /* the name only */
+  --text-display-xl: clamp(
+    4.25rem,
+    min(12vw, 19vh),
+    11.5rem
+  ); /* the name only */
   --text-display-xl--line-height: 0.86;
   --text-display-xl--letter-spacing: -0.015em;
   --text-display-xl--font-weight: 500;
@@ -239,7 +261,11 @@
   --text-display-m--letter-spacing: -0.006em;
   --text-display-m--font-weight: 500;
 
-  --text-display-s: clamp(1.5rem, 2.1vw, 1.875rem); /* row titles, taglines, standfirsts */
+  --text-display-s: clamp(
+    1.5rem,
+    2.1vw,
+    1.875rem
+  ); /* row titles, taglines, standfirsts */
   --text-display-s--line-height: 1.16;
   --text-display-s--letter-spacing: 0;
   --text-display-s--font-weight: 500;
@@ -264,11 +290,19 @@
 
   /* Bodoni Moda 700, lining tabular. Figures stack in a column on the work
      index and the case-study plate, so they have to align on the decimal. */
-  --text-numeral: clamp(2.5rem, 4.5vw, 3.75rem); /* 40 -> 60px, a figure in a row */
+  --text-numeral: clamp(
+    2.5rem,
+    4.5vw,
+    3.75rem
+  ); /* 40 -> 60px, a figure in a row */
   --text-numeral--line-height: 0.9;
   --text-numeral--letter-spacing: -0.02em;
   --text-numeral--font-weight: 700;
-  --text-numeral-l: clamp(3.5rem, 7.5vw, 6.5rem); /* 56 -> 104px, the figure that carries a page */
+  --text-numeral-l: clamp(
+    3.5rem,
+    7.5vw,
+    6.5rem
+  ); /* 56 -> 104px, the figure that carries a page */
   --text-numeral-l--line-height: 0.9;
   --text-numeral-l--letter-spacing: -0.02em;
   --text-numeral-l--font-weight: 700;
@@ -279,6 +313,17 @@
    Registration is what makes these animatable: an unregistered custom
    property flips at the midpoint instead of interpolating.
    ───────────────────────────────────────────────────────────── */
+/* The ground. The arrival (§11) steps the whole palette across the pull, on
+   purpose, but the second after the step warms the paper from --ground-3 up
+   to --ground — and unregistered, that warm would be one jump at its midpoint
+   rather than a settle. Nothing else on the site animates a colour token, so
+   this is the only colour registered. */
+@property --ground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #faf8f4;
+}
+
 /* Disc radius of a dot mask (image resolve). */
 @property --dot-r {
   syntax: "<length>";
@@ -362,7 +407,6 @@
     font-family: var(--font-display);
     font-optical-sizing: auto;
   }
-
 
   /* The lattice is gone, deliberately. A permanent grid of grey dots behind
      every page is exactly the smudge this direction exists to avoid: on paper
@@ -861,5 +905,92 @@
   .palette-row[data-active="true"] {
     outline: 2px solid Highlight;
     outline-offset: -2px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   11. The arrival
+   An intaglio plate is worked in the dark and cut in reverse, because the
+   sheet it prints is its mirror. So the board assembles as a plate — bone
+   marks on a near-black ground, flipped — and then the sheet is pulled.
+
+   This half is the page. The other half is the canvas (uPull / uMirror in
+   gl-board.ts, setPull in board.ts), driven off one clock in dot-board.tsx:
+   the pull runs 1250→1900 ms of a 2600 ms arrival.
+
+   **The ground and the type step. They do not cross-fade, and that is not a
+   shortcut — a cross-fade here cannot be made legible.** The page starts bone
+   on plate (15.21:1) and ends ink on paper (17.64:1): the same two colours in
+   opposite roles, so every continuous path between them passes through a
+   point where the two meet. Solve for the best case and it is 4.18:1, below
+   the 4.5 floor, and that is an *optimally* staged swap; a naive simultaneous
+   cross-fade bottoms out near 1.03:1, with the h1 genuinely invisible for
+   about a tenth of a second. Staggering does not rescue it in either order —
+   ground first leaves bone type on paper, type first leaves ink on plate. So
+   the swap happens between two frames and no frame is ever sampled mid-way.
+
+   The step is driven from JS rather than from a keyframe percentage, because
+   it has to land on the *same frame* as the canvas mirror flip — one event,
+   not two that agree to three decimal places. dot-board flips the attribute
+   the first frame its smoothstepped pull crosses 0.5, which is t≈1576 ms.
+
+   The marks are what carries the moment across: half inked at the flip, they
+   are mid-grey against both grounds, so they are the one thing that does not
+   jump. They go on darkening to full ink for another 324 ms, on paper. It
+   reads as the ink transferring, because that is what it is.
+
+   What softens the step is the second state: the paper arrives as
+   `--ground-3` and warms to `--ground` over a second, the sheet lifting
+   toward the light. Both are paper — ink measures 14.38:1 on the first and
+   17.64:1 on the last — so the settle is free.
+
+   The h1 is real text at full opacity throughout, bone on the plate and ink
+   on the sheet, so the arrival never delays the largest contentful paint and
+   never leaves the page's own heading invisible.
+
+   Once per session, set from JS. With JS off the attribute is never set and
+   the page is paper from the first byte. Under reduced motion the board draws
+   its settled frame and never enters the arrival branch at all, and §9's `*`
+   rule matches the root, so the warm is dropped too.
+   ───────────────────────────────────────────────────────────── */
+
+/* The plate. This is the same token remap the spoiled sheet uses in
+   plates.css §4 — a 404 is a sheet that never came off the plate, and this is
+   the plate it did not come off — and the two must not drift. Every ratio is
+   measured against #16140f. Remapping tokens rather than writing dark
+   overrides is what lets the header, the footer, the palette and the focus
+   ring come across without any of them knowing the arrival exists. */
+:root[data-arrival="plate"] {
+  --ground: #16140f; /* --plate */
+  --ground-2: #221f18; /* --plate-2 */
+  --ground-3: #2c2820;
+
+  --ink: #efe9dc; /* --bone,   15.21:1 */
+  --ink-2: #ada595; /* --bone-2,  7.53:1 */
+  --ink-3: #8f8878; /* --bone-3,  5.22:1 */
+
+  --line: rgba(239, 233, 220, 0.14);
+  --rule-mid: rgba(239, 233, 220, 0.3);
+  --line-strong: rgba(239, 233, 220, 0.45);
+  --dot-off: rgba(239, 233, 220, 0.08);
+
+  --sun: #e2673c; /* the screen vermilion: 5.47:1 here, where #a8321b is 2.2 */
+  --selection-fg: #16140f;
+}
+
+/* The sheet, still warming. --ground is registered in §3, so this is a settle
+   and not a second jump. It has to finish inside the arrival's own window --
+   dot-board drops the attribute at 2600 ms and the animation goes with it --
+   so it runs 1576→2576 ms, with 24 ms of slack. */
+:root[data-arrival="sheet"] {
+  animation: warm-the-sheet 1s var(--ease-out) both;
+}
+
+@keyframes warm-the-sheet {
+  from {
+    --ground: #e7e1d6; /* --ground-3 */
+  }
+  to {
+    --ground: #faf8f4; /* --ground */
   }
 }

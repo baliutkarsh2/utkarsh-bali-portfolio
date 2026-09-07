@@ -23,7 +23,7 @@
  */
 import type { BoardField } from "@/content/portrait-types";
 import type { Board, BoardOptions, Cell } from "@/lib/board";
-import { RELIGHT_GAIN, UNLIT, decodeField, surfaceNormals } from "@/lib/board";
+import { RELIGHT_GAIN, UNLIT, decodeField, flipOf, surfaceNormals } from "@/lib/board";
 import {
   context,
   fieldCaps,
@@ -101,6 +101,42 @@ const float DEEP_FLOOR = 0.16;
 const float CULL_DIA = 0.30;
 const float INK_DIA_MAX = 1.42;   // sqrt(2): the diameter at which discs close
 const float BURNISH = 0.55;       // the cursor polishes a highlight into the plate
+// gl_PointSize cannot be anisotropic, so a mark cannot squash the way the
+// spacing between marks does. Shrinking it with |uFlip| is the next best
+// reading of the same thing -- foreshortening -- and it is what keeps the
+// edge-on frame a hairline rather than a solid slab of ink.
+const float FLIP_MIN = 0.32;
+
+// — The burin ———————————————
+// In the deepest tones the disc becomes a short stroke laid along the local
+// surface TANGENT, so the shadows hatch AROUND the form instead of stippling
+// it. This is the difference between a mezzotint and a fax, and it is the one
+// thing here no template can produce, because the direction of every stroke
+// comes from the surface of his own face.
+//
+// The threshold is a fraction of the realised coverage range, not an absolute.
+// An absolute 0.72 fires ZERO strokes once the deep floor caps coverage at
+// 0.594: the feature silently does nothing and the picture quietly degrades to
+// the halftone it was meant to replace. Measured offline: p50 0.353, p72 0.475,
+// max 0.594.
+const float BURIN_AT = 0.72 * 0.594;
+const float BURIN_W = 0.46;       // stroke width, cells
+// 1.7, not the 2.6 the spec asked for. Stroke centres sit on the cell lattice,
+// so a stroke longer than about 1.7 cells reaches its neighbours and merges
+// with them: the first build of this produced scanlines across the torso and
+// concentric rectangles around the eye, which is a topographic map, not an
+// engraving. Marks have to stay marks.
+const float BURIN_LMAX = 1.7;     // stroke length cap, cells
+const float BURIN_NMIN = 0.10;    // below this the surface has no direction
+// Where the surface has a weak gradient its DIRECTION is noise, and every
+// stroke in a flat region snapped to the same axis and lined up. An engraver
+// does not follow the form into a flat passage either -- they lay a steady
+// hatch and let the form take over where there is form to follow. So the
+// tangent is blended toward a fixed hatch angle by how weak the normal is,
+// which also stops the loops closing into rings around a luminance extreme.
+const float BURIN_HATCH = 0.3926991;  // 22.5 degrees; off every page rule and
+                                      // off the pixel diagonal
+const float BURIN_FOLLOW = 0.42;      // |n| at which the surface fully wins
 
 uniform vec2  uOrigin;    // grid origin, CSS px
 uniform float uPitch;     // cell size, CSS px
@@ -115,6 +151,19 @@ uniform float uSettled;
 uniform float uTear;      // 0..1, how hard the pointer is tearing
 uniform vec2  uTearDir;   // unit vector, the pointer's direction of travel
 uniform vec2  uSunDir;    // where the light comes FROM, faded by distance
+uniform float uPull;      // 0 = the plate, 1 = the printed sheet
+// The turn. An engraver cuts a plate in reverse because the sheet it prints is
+// its mirror, so the field is drawn reversed until the pull and the right way
+// round after it -- and it gets there by TURNING OVER rather than by being
+// swapped, because a swap is a jump cut and a turn is the thing that actually
+// happens at a press. uFlip is the x scale of a plate rotating about a vertical
+// axis: cos(theta) as theta runs pi -> 0, so -1, through 0 edge on, to +1.
+uniform float uFlip;
+// The axis it turns on: the centre of the board's own box, in CSS px. Turning
+// about the CANVAS centre instead would swing the portrait clear across the
+// page and straight through the name, because in hero mode the canvas is the
+// whole viewport and the box is one column of it.
+uniform float uAxis;
 
 float easeOutExpo(float t) { return t >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * t); }
 
@@ -123,8 +172,26 @@ float smoothstep01(float a, float b, float x) {
   return t * t * (3.0 - 2.0 * t);
 }
 
-/** The dot's home in CSS px. Moves with the page; the scatter target does not. */
-vec2 homeOf(vec2 cell) { return uOrigin + cell * uPitch + 0.5; }
+/**
+ * The dot's home in CSS px. Moves with the page; the scatter target does not.
+ *
+ * The jitter is not decoration. A ruled orthogonal grid of marks is invisible
+ * on a dark ground and unavoidable on white: it shows a screen door, it beats
+ * against the display's own pixel grid, and worst of all it makes every
+ * directional stroke in a row collinear with its neighbours, so they merge into
+ * continuous scan lines instead of reading as separate marks. Breaking the
+ * lattice by a third of a cell is what turns a ruled screen into a stochastic
+ * one and lets a stroke stay a stroke.
+ */
+const float JITTER = 0.34;   // cells
+
+vec2 jitterOf(vec2 cell) {
+  float a = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+  float b = fract(sin(dot(cell, vec2(39.3468, 11.135))) * 24634.6345);
+  return (vec2(a, b) - 0.5) * 2.0 * JITTER;
+}
+
+vec2 homeOf(vec2 cell) { return uOrigin + (cell + jitterOf(cell)) * uPitch + 0.5; }
 
 /** Snap to the page lattice, the +0.5 convention of the CSS field tile. */
 vec2 snapToLattice(vec2 p) { return floor((p - 0.5) / uLattice + 0.5) * uLattice + 0.5; }
@@ -237,8 +304,12 @@ uniform float uDpr;
 uniform vec3  uInk;
 uniform vec3  uSun;
 uniform vec3  uOff;
+uniform vec3  uBone;      // the ink the plate is worked in, before the pull
 
 out vec4 vColor;
+// xy = the stroke's unit tangent, z = its width as a fraction of the sprite.
+// z == 0 means "this mark is a disc".
+out vec3 vStroke;
 
 ${COMMON}
 
@@ -272,8 +343,8 @@ void main() {
   // tone channel is gone: the ink is always full black, the paper always full
   // white, and the grey is an optical average of hard-edged marks. That is
   // what an engraving is, and why an engraving is not a smudge.
-  float ink = pow(max(L, DEEP_FLOOR), LIFT);
-  float coverage = pow(1.0 - ink, INK_GAIN);
+  float lifted = pow(max(L, DEEP_FLOOR), LIFT);
+  float coverage = pow(1.0 - lifted, INK_GAIN);
   // Light on paper is LESS ink. The pointer does not illuminate, it burnishes:
   // dots shrink, paper opens, and a highlight is polished into the plate.
   coverage *= 1.0 - BURNISH * f;
@@ -293,6 +364,10 @@ void main() {
 
   vec2 pos = home + aDisp;
   vec2 device = pos * uDpr;
+  // The turn, about the box's own axis. Applied here rather than in clip space
+  // so the off-screen test below sees where the mark actually lands.
+  float axis = uAxis * uDpr;
+  device.x = axis + (device.x - axis) * uFlip;
   if (device.x < -uPitch * uDpr || device.y < -uPitch * uDpr ||
       device.x > uRes.x + uPitch * uDpr || device.y > uRes.y + uPitch * uDpr) {
     culled = true;
@@ -307,24 +382,61 @@ void main() {
 
   // One ink, at full strength, always. The datum -- the catchlight in his eye
   // -- is the single mark on the page allowed to be the second ink.
-  vColor = vec4(isDatum > 0.5 ? uSun : uInk, 1.0);
-  gl_PointSize = max(1.0, dia * uPitch * uDpr);
-  gl_Position = vec4(device / uRes * 2.0 - 1.0, 0.0, 1.0) * vec4(1.0, -1.0, 1.0, 1.0);
+  // A plate is worked in the light and prints in the dark. Before the pull the
+  // marks are bone on a near-black plate; the pull crossfades them to ink while
+  // the page under them crossfades to paper, and the sheet comes off the press.
+  vec3 ink = mix(uBone, uInk, uPull);
+  vColor = vec4(isDatum > 0.5 ? uSun : ink, 1.0);
+
+  // Deep tones become burin strokes. gl_PointSize cannot be anisotropic, so
+  // the sprite is made square at the stroke's LENGTH and the fragment shader
+  // carves a capsule out of it. That costs one varying and no second draw
+  // call, where an instanced-quad pass would cost a whole second program and a
+  // second buffer for about a fifth of the marks.
+  float mark = dia;
+  vStroke = vec3(0.0);
+  float nlen = length(aNormal);
+  if (coverage >= BURIN_AT && isDatum < 0.5 && nlen > BURIN_NMIN) {
+    float len = clamp(coverage / BURIN_W, 1.0, BURIN_LMAX);
+    // Perpendicular to the normal: the stroke runs ALONG the surface, the way
+    // an engraver's burin follows the form rather than crossing it. Where the
+    // surface is nearly flat the normal has no trustworthy direction, so the
+    // stroke falls back to a steady hatch.
+    vec2 follow = vec2(-aNormal.y, aNormal.x) / max(nlen, 1e-4);
+    vec2 hatch = vec2(cos(BURIN_HATCH), sin(BURIN_HATCH));
+    float w = smoothstep(BURIN_NMIN, BURIN_FOLLOW, nlen);
+    vec2 tangent = normalize(mix(hatch, follow * sign(dot(follow, hatch)), w));
+    vStroke = vec3(tangent, BURIN_W / len);
+    mark = len;
+  }
+  gl_PointSize = max(1.0, mark * uPitch * uDpr * mix(FLIP_MIN, 1.0, abs(uFlip)));
+  vec2 clip = device / uRes * 2.0 - 1.0;
+  gl_Position = vec4(clip * vec2(1.0, -1.0), 0.0, 1.0);
 }
 `;
 
 const DRAW_FS = /* glsl */ `#version 300 es
 precision highp float;
 in vec4 vColor;
+in vec3 vStroke;
 uniform float uAlpha;
 out vec4 outColor;
 
 void main() {
-  // A hard-edged disc, no smoothing. Measured against the CSS lattice, this
-  // gives a crispness of 1.000 — every lit pixel fully covered — where an
-  // antialiased disc measures 0.2 to 0.5 and reads as mush at these sizes.
+  // Hard edges, no smoothing. An antialiased mark measures 0.2 to 0.5
+  // crispness at these sizes and reads as mush. Ink either covers the paper or
+  // it does not, and the grey is the optical average of the two.
   vec2 d = gl_PointCoord - 0.5;
-  if (dot(d, d) > 0.25) discard;
+  if (vStroke.z > 0.0) {
+    // A capsule laid along the tangent, carved out of a square sprite whose
+    // side is the stroke's own length.
+    vec2 t = vStroke.xy;
+    float halfW = vStroke.z * 0.5;
+    float along = clamp(dot(d, t), -0.5 + halfW, 0.5 - halfW);
+    if (distance(d, t * along) > halfW) discard;
+  } else if (dot(d, d) > 0.25) {
+    discard;
+  }
   outColor = vec4(vColor.rgb * uAlpha, uAlpha);
 }
 `;
@@ -339,6 +451,9 @@ const SHARED = [
   "uTear",
   "uTearDir",
   "uSunDir",
+  "uPull",
+  "uFlip",
+  "uAxis",
   "uOrigin", "uPitch", "uLattice", "uDensity", "uPointer",
   "uHasPointer", "uPush", "uScrollT", "uElapsed", "uSettled",
 ] as const;
@@ -539,6 +654,11 @@ function build(
   const ink = rgb(opts.colors.ink);
   const sun = rgb(opts.colors.sun);
   const off = rgb(opts.colors.off);
+  // The plate's own ink, before the sheet is pulled. Read from CSS so the
+  // palette lives in one place.
+  const bone = rgb(opts.colors.bone ?? "#efe9dc");
+  /** 0 while the plate is being worked, 1 once the sheet is printed. */
+  let pull = 1;
   const afterimage = opts.mode === "afterimage";
   const alpha = afterimage ? 0.45 : 1;
 
@@ -593,6 +713,9 @@ function build(
     gl.uniform1f(u.uTear, tearNow);
     gl.uniform2f(u.uTearDir, tearX, tearY);
     gl.uniform2f(u.uSunDir, sunX, sunY);
+    gl.uniform1f(u.uPull, pull);
+    gl.uniform1f(u.uFlip, flipOf(pull));
+    gl.uniform1f(u.uAxis, originX + (W * pitch) / 2);
   }
 
   /**
@@ -617,7 +740,7 @@ function build(
       uDraw = uniforms(
         gl,
         drawProgram,
-        [...SHARED, "uRes", "uDpr", "uInk", "uSun", "uOff", "uAlpha"],
+        [...SHARED, "uRes", "uDpr", "uInk", "uSun", "uOff", "uBone", "uAlpha"],
         [DRAW_VS, DRAW_FS],
       );
     } catch (error) {
@@ -698,6 +821,7 @@ function build(
     gl.uniform3fv(uDraw!.uInk, ink);
     gl.uniform3fv(uDraw!.uSun, sun);
     gl.uniform3fv(uDraw!.uOff, off);
+    gl.uniform3fv(uDraw!.uBone, bone);
     gl.uniform1f(uDraw!.uAlpha, alpha);
     gl.bindVertexArray(vaos[ping]);
     gl.drawArrays(gl.POINTS, 0, n);
@@ -753,6 +877,18 @@ function build(
       tear = k;
       tearX = vx / speed;
       tearY = vy / speed;
+    },
+
+    /**
+     * The pull. 0 is the plate -- bone marks, mirrored; 1 is the printed sheet.
+     * Crossing 0.5 flips the mirror, which is why the crossfade is staggered
+     * against the ground's in dot-board.tsx: a simultaneous inversion passes
+     * through a mid grey where nothing is legible.
+     */
+    setPull(t) {
+      const next = Math.min(1, Math.max(0, t));
+      if (next !== pull) wake(SETTLE_MS);
+      pull = next;
     },
 
     scroll(t) {
