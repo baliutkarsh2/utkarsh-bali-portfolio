@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/check-glyphs.mjs",
+    "prebuild": "node scripts/check-glyphs.mjs && eslint .",
     "build": "next build",
     "start": "next start",
     "lint": "eslint ."
