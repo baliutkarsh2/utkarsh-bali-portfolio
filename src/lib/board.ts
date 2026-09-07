@@ -306,6 +306,18 @@ const LIFT = 0.55;
 const INK_GAIN = 1.15;
 const DEEP_FLOOR = 0.16;
 const CULL_DIA = 0.3;
+/**
+ * A second floor, in DEVICE pixels rather than in cells, matching gl-board.ts.
+ *
+ * A mark under one device pixel cannot be drawn smaller than one device pixel:
+ * every tone the transfer asks for at 0.4, 0.7 and 0.95 px arrives at exactly
+ * one, and a whole band of the range collapses into one flat value. That is the
+ * grey haze the direction exists to avoid, and the absence of a mark is what a
+ * highlight is made of. It binds at DPR 1 and at fine grids — which is where
+ * the picture was least clear — and it is what lets the grid get denser without
+ * the bottom of the range turning to mush.
+ */
+const MIN_DEVICE_PX = 1.0;
 const INK_DIA_MAX = 1.42;
 const BURNISH = 0.55;
 
@@ -738,7 +750,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       // One ink: the datum is the only mark allowed to be the second.
       const tone = 1;
       if (datum) dia = 0.96 * density;
-      else if (dia < CULL_DIA) {
+      else if (dia < CULL_DIA || dia * pitch * dpr < MIN_DEVICE_PX) {
         bucketOf[i] = 65535;
         continue;
       }

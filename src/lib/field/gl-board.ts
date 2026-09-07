@@ -99,6 +99,21 @@ const float LIFT = 0.55;
 const float INK_GAIN = 1.15;
 const float DEEP_FLOOR = 0.16;
 const float CULL_DIA = 0.30;
+// And a second floor, in DEVICE pixels rather than in cells.
+//
+// gl_PointSize below is clamped with max(1.0, ...) because a point smaller than
+// one pixel is not a smaller point, it is the same point drawn fainter or not
+// at all. That clamp quietly destroys the bottom of the tonal range: every mark
+// the transfer asks for at 0.4 px, 0.7 px and 0.95 px comes out at exactly one
+// pixel, so a whole band of distinct tones collapses into one flat value. That
+// is the grey haze the direction exists to avoid, and the absence of a mark is
+// what a highlight is made of -- so below one device pixel the honest answer is
+// bare paper.
+//
+// It binds at DPR 1 and at fine grids, which is exactly where the picture was
+// least clear, and it is what lets the cell grid get denser without the bottom
+// of the range turning to mush.
+const float MIN_DEVICE_PX = 1.0;
 const float INK_DIA_MAX = 1.42;   // sqrt(2): the diameter at which discs close
 const float BURNISH = 0.55;       // the cursor polishes a highlight into the plate
 // gl_PointSize cannot be anisotropic, so a mark cannot squash the way the
@@ -342,7 +357,7 @@ void main() {
   float dia = min(1.128 * sqrt(max(coverage, 0.0)), INK_DIA_MAX);
   if (uScrollT > 0.0) dia *= 1.0 - uScrollT;
 
-  bool culled = dia < CULL_DIA;
+  bool culled = dia < CULL_DIA || dia * uPitch * uDpr < MIN_DEVICE_PX;
   if (isDatum > 0.5) {
     dia = 0.96 * uDensity;
     culled = false;

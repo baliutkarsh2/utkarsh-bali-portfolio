@@ -9,10 +9,11 @@ Run by hand; every output is committed. Vercel never runs this.
                                                # public/portrait/dots-96@2x.webp, dots-64@2x.webp, dots-about@2x.webp
     python scripts/bake-portrait.py --preview DIR   # also writes review PNGs
 
-Input: src/assets/portrait/utkarsh-cutout.png (RGBA, produced by scripts/segment.py
-from the original photograph, then cropped to the subject's bounding box; the
-crop origin in the original frame is in CUTOUT_ORIGIN.txt so the windows below
-can stay in original-photo coordinates).
+Input: src/assets/portrait/utkarsh-cutout.png (RGBA, lossless, produced by
+scripts/segment.py from the original photograph at its full resolution, then
+cropped to the subject's bounding box; the crop origin AND the source frame's
+size are in CUTOUT_ORIGIN.txt, which is what lets the windows below stay in the
+coordinates they were composed in whatever resolution the cutout is).
 
 The mapping (one formula shared with the renderer and the OG image, `ink_dia`):
   byte 0        outside the mask, nothing is drawn
@@ -34,13 +35,41 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
+try:
+    from scipy.ndimage import gaussian_filter
+except ImportError as exc:  # pragma: no cover - a hand-run script, not a build step
+    raise SystemExit(
+        "scipy is required for the float Gaussian in blur(): pip install scipy.\n"
+        "It is already a transitive dependency of the segmenter (rembg's alpha\n"
+        "matting goes through pymatting, which requires it)."
+    ) from exc
+
 ROOT = Path(__file__).resolve().parent.parent
 CUTOUT = ROOT / "src/assets/portrait/utkarsh-cutout.png"
 ORIGIN_FILE = ROOT / "src/assets/portrait/CUTOUT_ORIGIN.txt"
 CONTENT = ROOT / "src/content"
 PUBLIC = ROOT / "public/portrait"
 
-# Windows in original-photograph coordinates (1760 x 2374), all 4:5.
+# Windows in original-photograph coordinates, all 4:5.
+#
+# REFERENCE_FRAME is the coordinate system every window, every hint and every
+# "photograph pixels" radius below is written in: the 1760 x 2374 frame they
+# were composed on. The cutout is no longer that size -- it is segmented from
+# the 2350 x 3170 original -- so it records its own frame size next to its
+# origin and the bake divides the two to recover a scale, then multiplies at
+# the point of use. `window()` maps a crop through it; `sample()` maps the
+# three blur radii through it, so a radius given in photograph pixels still
+# covers the same piece of his face at any source resolution.
+#
+# The alternative, restating the crops in whatever resolution the cutout
+# happens to be, is the one that goes wrong silently: the numbers stop matching
+# the composition they were chosen for, and re-segmenting from a different scan
+# reframes the portrait with nothing failing to announce it. Pinning them to a
+# fixed reference frame leaves exactly one thing that has to be right, a single
+# ratio, and it is checkable -- downscale the new window onto the old one and
+# correlate. That was measured at 0.9918 on MAIN_CROP and 0.9952 on ABOUT_CROP
+# when the source went from 1760 to 2350 wide.
+REFERENCE_FRAME = (1760, 2374)
 MAIN_CROP = (600, 300, 1760, 1750)   # head, shoulders, the top of the arm
 ABOUT_CROP = (760, 340, 1400, 1140)  # the face, second angle for About
 # The eye catchlight in original coordinates, chosen once on a grid overlay of
@@ -183,32 +212,55 @@ INK = hex_rgb("#14120E")
 SUN = hex_rgb("#A8321B")  # vermilion, the second ink
 
 
-def load_cutout() -> tuple[Image.Image, tuple[int, int]]:
+def load_cutout() -> tuple[Image.Image, tuple[int, int], float]:
+    """The cutout, its origin in its own source frame, and how many source
+    pixels there are to one REFERENCE_FRAME pixel."""
     im = Image.open(CUTOUT).convert("RGBA")
-    ox, oy = (int(v) for v in ORIGIN_FILE.read_text().strip().split(","))
-    return im, (ox, oy)
+    lines = ORIGIN_FILE.read_text().strip().splitlines()
+    ox, oy = (int(v) for v in lines[0].split(","))
+    # A cutout from before the frame size was recorded is, by definition, one
+    # cut from the reference frame itself.
+    fw, fh = (int(v) for v in lines[1].split(",")) if len(lines) > 1 else REFERENCE_FRAME
+    scale = fw / REFERENCE_FRAME[0]
+    assert abs(fh / REFERENCE_FRAME[1] - scale) < 0.005 * scale, (
+        f"source frame {fw}x{fh} is not the reference frame's aspect: the windows would stretch"
+    )
+    return im, (ox, oy), scale
 
 
-def window(im: Image.Image, origin: tuple[int, int], crop: tuple[int, int, int, int]) -> Image.Image:
-    """Crop in original coordinates; areas outside the cutout are transparent."""
+def window(im: Image.Image, origin: tuple[int, int], crop: tuple[int, int, int, int], scale: float) -> Image.Image:
+    """Crop in REFERENCE_FRAME coordinates; areas outside the cutout are
+    transparent. `scale` maps the crop into the cutout's own resolution, so the
+    window frames the same region of the photograph whatever it was segmented
+    at -- there are just more pixels inside it."""
     ox, oy = origin
-    x0, y0, x1, y1 = crop
+    x0, y0, x1, y1 = (int(round(v * scale)) for v in crop)
     out = Image.new("RGBA", (x1 - x0, y1 - y0), (0, 0, 0, 0))
     out.paste(im, (ox - x0, oy - y0))
     return out
 
 
 def blur(a: np.ndarray, radius: float) -> np.ndarray:
-    """Gaussian blur of a float array. Pillow has no float kernel, so the array
-    is carried through 8-bit on its own min/max, which is ample for the low
-    frequencies every caller here wants."""
+    """Gaussian blur of a float array. `radius` is the standard deviation, in
+    the array's own pixels -- the same thing Pillow's GaussianBlur means by it.
+
+    This used to carry the array through an 8-bit image on its own min/max, on
+    the argument that 256 levels are ample for the low frequencies every caller
+    wants. Two callers are not low frequency and one of them is the point of
+    the whole script: the FINE unsharp runs at about one cell and the detail
+    map at a couple of cells, and the finer the grid the less low-frequency
+    they get. Worse, the round trip quantises to 1/255 of whatever range the
+    array happens to span, and `var` below spans almost nothing -- the local
+    standard deviation that drives the shadow normalisation was being computed
+    from a heavily quantised square.
+
+    `mode="nearest"` replicates the edge, which is what Pillow's box passes did:
+    zero-padding would drag every blur down toward black along the frame and
+    put a dark band around the window.
+    """
     if radius <= 0:
         return a.astype(np.float32).copy()
-    lo, hi = float(a.min()), float(a.max())
-    span = max(hi - lo, 1e-6)
-    img = Image.fromarray(np.clip((a - lo) / span * 255.0, 0, 255).astype(np.uint8))
-    out = np.asarray(img.filter(ImageFilter.GaussianBlur(radius=radius))).astype(np.float32) / 255.0
-    return out * span + lo
+    return gaussian_filter(a.astype(np.float32), sigma=float(radius), mode="nearest")
 
 
 def cell_mean(a: np.ndarray, cols: int, rows: int, mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -242,10 +294,21 @@ def sample(
     crop: tuple[int, int, int, int] = MAIN_CROP,
     center_hint: tuple[int, int] = CENTER_HINT,
     focal_strength: float = 1.0,
+    scale: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return (bytes per the mapping above, per-cell warmth) as rows x cols arrays."""
+    """Return (bytes per the mapping above, per-cell warmth) as rows x cols arrays.
+
+    `crop` and `center_hint` are in REFERENCE_FRAME coordinates; `win` is that
+    crop at the cutout's own resolution, `scale` source pixels to the reference
+    pixel. Radii written in cells need no conversion -- they ride on `pitch`.
+    The three written in photograph pixels are scaled here, at the point of
+    use, so their tuned values keep meaning the piece of the face they were
+    tuned on rather than silently shrinking when the source grows."""
     W, H = win.size
     pitch = W / cols
+    broad_radius = BROAD_RADIUS_PX * scale
+    adapt_radius = ADAPT_RADIUS_PX * scale
+    edge_band = max(3, int(EDGE_BAND_PX * scale))
     assert abs(H / rows - pitch) < 0.02 * pitch, "window aspect must match the grid"
 
     arr = np.asarray(win).astype(np.float32) / 255.0
@@ -254,8 +317,9 @@ def sample(
     inside = alpha > 0.5
 
     # 0. The focal map and the detail map: what this picture is about.
-    fx = (center_hint[0] - crop[0]) / W
-    fy = (center_hint[1] - crop[1]) / H
+    # Fractions of the window, so they do not depend on how many pixels it has.
+    fx = (center_hint[0] - crop[0]) / (crop[2] - crop[0])
+    fy = (center_hint[1] - crop[1]) / (crop[3] - crop[1])
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     dist = np.sqrt(((xx / W - fx) / FOCAL_RX) ** 2 + ((yy / H - fy) / FOCAL_RY) ** 2)
     focal = np.clip((1.0 - dist) / max(1.0 - FOCAL_HOLD, 1e-6), 0.0, 1.0) ** FOCAL_GAMMA
@@ -270,7 +334,7 @@ def sample(
 
     # 1. Two unsharp passes: the shape, then the features.
     if BROAD > 0:
-        lum = lum + BROAD * (lum - blur(lum, BROAD_RADIUS_PX))
+        lum = lum + BROAD * (lum - blur(lum, broad_radius))
     if FINE > 0:
         lum = lum + FINE * (lum - blur(lum, max(0.6, pitch * FINE_RADIUS_CELLS)))
     lum = np.clip(lum, 0, 1)
@@ -279,9 +343,9 @@ def sample(
     # standard deviation count masked-in pixels only, so the empty background
     # never drags the face's window down.
     if ADAPT > 0:
-        cover = np.maximum(blur(inside.astype(np.float32), ADAPT_RADIUS_PX), 1e-3)
-        mean = blur(np.where(inside, lum, 0.0), ADAPT_RADIUS_PX) / cover
-        var = blur(np.where(inside, (lum - mean) ** 2, 0.0), ADAPT_RADIUS_PX) / cover
+        cover = np.maximum(blur(inside.astype(np.float32), adapt_radius), 1e-3)
+        mean = blur(np.where(inside, lum, 0.0), adapt_radius) / cover
+        var = blur(np.where(inside, (lum - mean) ** 2, 0.0), adapt_radius) / cover
         sd = np.sqrt(np.maximum(var, 0.0))
         gain = np.minimum(ADAPT_SD / np.maximum(sd, ADAPT_FLOOR), ADAPT_MAX)
         target = ADAPT_MID * 0.5 + (1 - ADAPT_MID) * mean
@@ -310,7 +374,7 @@ def sample(
 
     # Silhouette: cells whose neighbourhood alpha is partial are on the outline.
     amask = Image.fromarray((alpha * 255).astype(np.uint8))
-    eroded = np.asarray(amask.filter(ImageFilter.MinFilter(int(EDGE_BAND_PX) | 1))).astype(np.float32) / 255.0
+    eroded = np.asarray(amask.filter(ImageFilter.MinFilter(edge_band | 1))).astype(np.float32) / 255.0
     edge = inside & (eroded < 0.5)
     norm = np.where(edge, np.maximum(norm, EDGE_FLOOR), norm)
 
@@ -514,12 +578,14 @@ def main() -> None:
     p.add_argument("--preview", help="directory for review PNGs")
     args = p.parse_args()
 
-    im, origin = load_cutout()
+    im, origin, scale = load_cutout()
     CONTENT.mkdir(exist_ok=True)
     PUBLIC.mkdir(parents=True, exist_ok=True)
 
-    main_win = window(im, origin, MAIN_CROP)
-    about_win = window(im, origin, ABOUT_CROP)
+    main_win = window(im, origin, MAIN_CROP, scale)
+    about_win = window(im, origin, ABOUT_CROP, scale)
+    print(f"cutout {im.size[0]}x{im.size[1]} {im.mode}, {scale:.4f} source px per reference px; "
+          f"main window {main_win.size[0]}x{main_win.size[1]}, about {about_win.size[0]}x{about_win.size[1]}")
 
     # Portrait grids are twice the page pitch in each direction (cells of
     # pitch / 2): 192 x 240 fills the same 96 x 120 box on the page lattice.
@@ -528,11 +594,11 @@ def main() -> None:
     # hierarchy device for a wide frame; once the frame IS the head there is no
     # hierarchy left to impose and the burn only compresses the tonal range the
     # engraving needs.
-    f96, w96 = sample(main_win, 192, 240, focal_strength=0.0)
-    f64, w64 = sample(main_win, 128, 160, focal_strength=0.0)
-    fab, wab = sample(about_win, 128, 160, ABOUT_CROP, CENTER_HINT, focal_strength=0.0)
-    fct, wct = sample(main_win, 96, 120, focal_strength=0.0)  # Contact afterimage
-    fog, _ = sample(main_win, OG_COLS, OG_ROWS, focal_strength=0.0)
+    f96, w96 = sample(main_win, 192, 240, focal_strength=0.0, scale=scale)
+    f64, w64 = sample(main_win, 128, 160, focal_strength=0.0, scale=scale)
+    fab, wab = sample(about_win, 128, 160, ABOUT_CROP, CENTER_HINT, focal_strength=0.0, scale=scale)
+    fct, wct = sample(main_win, 96, 120, focal_strength=0.0, scale=scale)  # Contact afterimage
+    fog, _ = sample(main_win, OG_COLS, OG_ROWS, focal_strength=0.0, scale=scale)
 
     # The name passes over the board's top-left corner at >= 80rem: it must be sky.
     assert not f96[:48, :48].any(), "top-left quarter of the hero field must be empty sky (move MAIN_CROP)"
