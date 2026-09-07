@@ -428,6 +428,44 @@
     z-index: var(--z-content);
   }
 
+  /* ── Optical size is an ANGULAR judgement, not a metric one ──────────
+     `font-optical-sizing: auto` feeds the CSS font-size straight into the
+     `opsz` axis, so the name at 171px asked Bodoni Moda for opsz 171, which
+     clamps to the axis maximum of 96. That is an optical size cut for a
+     letter you read from across a room -- its hairlines are proportionally
+     at their very thinnest, because at that physical size they still measure
+     something. On a screen they do not. Measured at DPR 1: at opsz 96 the U
+     loses its right stem entirely, the t loses its crossbar, the a and the B
+     break open, and the s has a white wedge through it. The owner's words
+     were "half of some letters is not visible", and he was describing this.
+
+     The fix is not a heavier weight -- that flattens the Didone contrast that
+     is the whole reason to set a Didone. It is to ask for the optical size
+     the type is actually being READ at. 171 CSS px at arm's length subtends
+     roughly what 34pt does on paper held at 40cm, so that is what we ask for.
+     Every step below is chosen the same way, and the axis then stops tracking
+     a number that means nothing on a display.
+
+     Bodoni is forbidden under 21px (an eslint rule enforces it), so no step
+     here goes below its own honest reading size. ── */
+  .text-display-xl,
+  .text-display-l {
+    font-optical-sizing: none;
+    font-variation-settings: "opsz" 34;
+  }
+
+  .text-display-m {
+    font-optical-sizing: none;
+    font-variation-settings: "opsz" 30;
+  }
+
+  .text-display-s,
+  .text-numeral-l,
+  .text-numeral {
+    font-optical-sizing: none;
+    font-variation-settings: "opsz" 26;
+  }
+
   ::selection {
     background: var(--selection-bg);
     color: var(--selection-fg);
