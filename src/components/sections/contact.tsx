@@ -2,10 +2,9 @@ import { ArrowUpRight } from "lucide-react";
 import { CopyEmail } from "@/components/interactive/copy-email";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { profile, socials } from "@/content";
-import { colophonNote } from "@/content/colophon";
 import { recentPosts } from "@/lib/writing";
 
-const TITLE = "I finish at Purdue in December.";
+const TITLE = "Get in touch";
 
 /**
  * The close of every page: the title, the address as one click-to-copy
@@ -21,7 +20,7 @@ const TITLE = "I finish at Purdue in December.";
  * rendered. The figure is decorative (`alt=""` gives it aria-hidden) and
  * runs no loop.
  *
- * Signature kept: every page passes its own `index`; the home's is "04".
+ * `index` is only the SectionSpy's hook now; nothing renders it.
  */
 export function Contact({ index }: { index?: string }) {
   // The close now renders once, on the home page, which always passes an index.
@@ -38,12 +37,10 @@ export function Contact({ index }: { index?: string }) {
       className="contact shell section-y"
     >
       <div className="section-head contact-head">
-        {sectionIndex && (
-          <span className="meta text-ink-3" aria-hidden="true">
-            {sectionIndex}
-          </span>
-        )}
-        <h2 id="contact-title" className="text-display-m font-medium text-balance text-ink">
+        <h2
+          id="contact-title"
+          className="text-display-m font-medium text-balance text-ink"
+        >
           {TITLE}
         </h2>
       </div>
@@ -107,7 +104,6 @@ export function Contact({ index }: { index?: string }) {
           it. */}
       <div className="colophon">
         <div className="colophon-rule" />
-        <p className="colophon-note">{colophonNote}</p>
       </div>
     </section>
   );

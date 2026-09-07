@@ -52,7 +52,6 @@
   --year-col: 3.25rem; /* "2026" in 13px tabular mono, right-aligned */
   --rule-gap: 1.25rem; /* rule to the flush-left row */
   --step: 0rem; /* the chronological indent's full travel */
-  --fig-col: 7.5rem;
 }
 
 .toc-list {
@@ -77,38 +76,13 @@
 @media (width >= 48rem) {
   .toc {
     --step: 2.5rem;
-    --fig-col: 10rem;
   }
 }
 
 @media (width >= 80rem) {
   .toc {
     --step: 4.5rem;
-    --fig-col: 13rem;
   }
-}
-
-/* The column heads, above the list and outside it: they name the two axes so
-   the figures column does not have to be guessed at. */
-.toc-head {
-  display: grid;
-  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--fig-col);
-  align-items: end;
-  padding-bottom: 0.75rem;
-  color: var(--ink-3);
-}
-
-.toc-head > :first-child {
-  padding-inline-end: 0.85rem;
-  text-align: right;
-}
-
-.toc-head > :nth-child(2) {
-  padding-inline-start: var(--rule-gap);
-}
-
-.toc-head > :last-child {
-  text-align: right;
 }
 
 /* ── A row ────────────────────────────────────────────────────────────────
@@ -118,9 +92,7 @@
 .toc-row {
   position: relative;
   display: grid;
-  grid-template-columns:
-    var(--year-col) minmax(0, 1fr) var(--dev-col, 0)
-    var(--fig-col);
+  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--dev-col, 0);
   align-items: start;
   padding-block: 1.5rem;
   /* The row is what an apparatus note returns to, and 6rem clears the 3.5rem
@@ -149,16 +121,6 @@
   }
 }
 
-.toc-row[data-weight="lead"] {
-  padding-block: 1.75rem 2rem;
-}
-
-@media (width >= 48rem) {
-  .toc-row[data-weight="lead"] {
-    padding-block: 2.25rem 2.5rem;
-  }
-}
-
 /* The row's own hairline starts where the row starts, so the rules step
    rightward down the page and the chronology is legible even in the
    furniture. It never crosses the year column, which keeps the date rule
@@ -168,9 +130,7 @@
   position: absolute;
   inset-block-start: 0;
   inset-inline-end: 0;
-  inset-inline-start: calc(
-    var(--year-col) + var(--rule-gap) + var(--t, 0) * var(--step)
-  );
+  inset-inline-start: calc(var(--year-col) + var(--rule-gap));
   height: 1px;
   background: var(--line);
 }
@@ -194,13 +154,6 @@
 .toc-row:hover::after,
 .toc-row:focus-within::after {
   opacity: 1;
-}
-
-.toc-year,
-.toc-body,
-.toc-fig {
-  position: relative;
-  z-index: 1;
 }
 
 /* ── The quarterly rule ───────────────────────────────────────────────────
@@ -290,7 +243,7 @@
 
 .toc-body {
   min-width: 0;
-  padding-inline-start: calc(var(--rule-gap) + var(--t, 0) * var(--step));
+  padding-inline-start: var(--rule-gap);
   padding-inline-end: 1.5rem;
 }
 
@@ -323,247 +276,11 @@
   color: var(--ink-3);
 }
 
-/* ── The figures ──────────────────────────────────────────────────────────
-   Right-aligned, so the column has one clean edge and the raggedness is all
-   in the heights. Three sizes, set here rather than in the JSX: <Numeral> is
-   the only thing allowed to name the display face, and it offers two sizes,
-   so the third comes from the composition. Every size is far above the 21px
-   floor the face has.
-
-   A flex line rather than a text line, and for one reason: the mark has to
-   hang at the top of a figure that is 26px on one row and 68px on the next.
-   On a text baseline the only tools are `vertical-align: super` and a raise
-   in em, and both are relative to a font-size the mark does not share with
-   the numeral — the same offset that superscripts a 26px figure leaves a
-   68px one with a mark at its ankle, which is what the first cut of this
-   looked like. `align-items: flex-start` is the whole fix: the mark's top
-   edge is the numeral's top edge, at every size, for free. */
-.toc-fig {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-}
-
-.toc-fig .numeral {
-  color: var(--ink);
-  /* The figure you clicked is the thing that survives the page change: this
-     name is shared with the same figure on the case study, bled off its right
-     edge, so the number travels and everything else crossfades under it. The
-     ident arrives inline on the row (--vt-fig: metric-<slug>), which is the
-     only part of it that cannot be written in a stylesheet. Unset it computes
-     to `none` and the page simply crossfades whole. */
-  view-transition-name: var(--vt-fig);
-}
-
-/* ── The reference marks ──────────────────────────────────────────────────
-   A superscript mark, and no label. Eight labels set as 11px ragged mono
-   under eight numerals were eight blocks of grey noise on the quietest page
-   on the site, and they were the only thing standing between the right-hand
-   column and being purely a skyline of figures. The labels are all at the
-   foot of the list now, as an apparatus, and each figure carries the mark
-   that points at its note.
-
-   Three things this rule has to guarantee, in order of how expensive they
-   are to get wrong:
-
-   1. THE NUMERALS STAY FLUSH RIGHT. The mark sits in a fixed slot after the
-      figure — the width of two mono characters, which is the widest mark in
-      the series — so a row marked `**` and a row marked `*` push their
-      numerals left by exactly the same amount. Sized to the mark rather than
-      to the numeral, so the whole column moves in by 16px and nothing else
-      about the composition changes; in particular --fig-col is untouched and
-      the empty middle column keeps every pixel it had.
-
-   2. THE ROW HEIGHT DOES NOT MOVE. The mark's box is 13px × 1.35 tall, far
-      shorter than the shortest of the three figures, and it is a flex item
-      aligned to the top rather than a raised inline box — so it can neither
-      grow the line nor push the figure down. Nothing here is animated,
-      nothing arrives late, nothing has a cold state. CLS 0.0000.
-
-   3. IT IS REACHABLE. The mark is inside .toc-fig, which is already above
-      the row's stretch-link overlay, so it takes its own clicks; on a coarse
-      pointer a pseudo-element gives it 45px of hit area without giving it a
-      45px box.
-
-   `padding-block-start` is the last piece of the fit: flush with the numeral's
-   own top edge the mark reads as a second character of the number, and a
-   third of the mark's height down it reads as hung off it. */
-.toc-mark {
-  position: relative;
-  flex: 0 0 auto;
-  width: 2ch; /* two IBM Plex Mono characters: the widest mark, `††` */
-  padding-block-start: 0.34em;
-  margin-inline-start: 0.2rem;
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: var(--text-data);
-  line-height: var(--text-data--line-height);
-  letter-spacing: 0;
-  text-align: left;
-  color: var(--ink-3);
-  text-decoration: none;
-  transition: color var(--dur-1) var(--ease-snap);
-}
-
-/* The mark comes up to full ink with its row — on hover, on focus, and when
-   the apparatus has just sent the reader back to it, so the return says which
-   of the eight figures it meant. Colour only: nothing here may take up space
-   it did not take up before. */
-.toc-row:hover .toc-mark,
-.toc-row:target .toc-mark,
-.toc-mark:hover,
-.toc-mark:focus-visible {
-  color: var(--ink);
-}
-
-/* A finger-sized target that is not a finger-sized box. `tap` grows the
-   element itself, which for an inline-block on a line with a 26px numeral
-   means a 44px line box and a taller row — the one thing this mark is not
-   allowed to do. An absolutely positioned pseudo-element inside it reaches
-   the same 45px of hit area and takes part in no layout at all. */
-@media (pointer: coarse) {
-  .toc-mark::after {
-    content: "";
-    position: absolute;
-    inset: -1rem;
-  }
-}
-
-.toc-row[data-reach="people"] .numeral {
-  font-size: clamp(2.75rem, 5vw, 4.25rem); /* 44 → 68px */
-}
-
-.toc-row[data-reach="system"] .numeral {
-  font-size: clamp(2.125rem, 3.4vw, 2.875rem); /* 34 → 46px */
-}
-
-.toc-row[data-reach="bench"] .numeral {
-  font-size: clamp(1.625rem, 2.4vw, 2rem); /* 26 → 32px */
-}
-
-/* ── The apparatus ────────────────────────────────────────────────────────
-   The eight labels, together, at the foot of the list, under the short rule a
-   compositor sets above a footnote block — the *linea*, which is short on
-   purpose: a full-measure rule reads as the end of the page, and the notes
-   are not the end of the page, they are the bottom of the list.
-
-   The block starts where the row titles start, so the apparatus hangs off the
-   same left edge as the thing it annotates, and each note's mark hangs back
-   out to that edge while its text is indented past the lemma. Every
-   continuation line lands under the label, never under the figure.
-   ─────────────────────────────────────────────────────────────────────── */
-.toc-apparatus {
-  --note-mark: 1.35rem;
-  --note-lemma: 4.25rem;
-  --note-hang: calc(var(--note-mark) + var(--note-lemma));
-  margin-block-start: 2.75rem;
-  margin-inline-start: calc(var(--year-col) + var(--rule-gap));
-  padding-block-start: 1.1rem;
-  position: relative;
-}
-
-/* The linea: 6rem of rule at the block's own left edge. --line-strong, the
-   same ink as the date rule down the margin, because they are the same kind
-   of mark — one says where the list is measured from, this says where it
-   stops. */
-.toc-apparatus::before {
-  content: "";
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-start: 0;
-  width: 6rem;
-  height: 1px;
-  background: var(--line-strong);
-}
-
-.toc-apparatus-head {
-  margin: 0 0 1.1rem;
-  color: var(--ink-3);
-}
-
-.toc-notes {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Mark, lemma, reading — the three parts of an apparatus entry, set as one
-   run of inline flow rather than as a grid, so that a note which wraps wraps
-   like a footnote instead of like a table cell. The two fixed slots do the
-   aligning; the negative indent pulls the first line back out to the block's
-   left edge, which is what makes the marks a column. */
-.toc-note {
-  padding-inline-start: var(--note-hang);
-  text-indent: calc(-1 * var(--note-hang));
-  font-size: var(--text-small);
-  line-height: 1.5;
-  color: var(--ink-2);
-  scroll-margin-block-start: 6rem;
-  outline: none;
-}
-
-.toc-note + .toc-note {
-  margin-block-start: 0.5rem;
-}
-
-.toc-note-back {
-  color: var(--ink-3);
-  text-decoration: none;
-  transition: color var(--dur-1) var(--ease-snap);
-}
-
-.toc-note-back:hover,
-.toc-note-back:focus-visible {
-  color: var(--ink);
-}
-
-.toc-note-mark {
-  display: inline-block;
-  width: var(--note-mark);
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: var(--text-meta);
-  text-indent: 0;
-}
-
-/* The lemma. Mono at 13px rather than the display face, because at this size
-   the display face is forbidden and because here the figure is genuinely a
-   readout: the thing that tells you which note this is. Tabular, so the eight
-   of them make an edge down the left of the labels. */
-.toc-note-lemma {
-  display: inline-block;
-  width: var(--note-lemma);
-  text-indent: 0;
-  color: var(--ink-2);
-}
-
-.toc-note-text {
-  text-indent: 0;
-}
-
-/* The note you have just arrived at. Colour only — a note that changed size
-   when it became the target would move the seven notes under it, which is a
-   layout shift caused by a link, which is the one shift no gate would catch
-   because it needs a click to happen. */
-.toc-note:target,
-.toc-note:target .toc-note-lemma,
-.toc-note:target .toc-note-back {
-  color: var(--ink);
-}
-
-/* ── Below 48rem the two axes have nowhere to go. The indent collapses to
-      zero (--step is 0 there), the figure moves under the title, and the
-      year keeps its place against the rule: the chronology survives as the
-      order of the list and the rule that ties it together. ── */
+/* ── Below 48rem the year keeps its place against the rule and the body
+      takes the rest. The chronology survives as the order of the list. ── */
 @media (width < 48rem) {
-  .toc-row,
-  .toc-head {
+  .toc-row {
     grid-template-columns: var(--year-col) minmax(0, 1fr);
-  }
-
-  /* Two columns, so the head's third label has nowhere to be. */
-  .toc-head > :last-child {
-    display: none;
   }
 
   .toc-body {
@@ -576,40 +293,6 @@
   .toc-standfirst {
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
-  }
-
-  /* The figure joins the reading column rather than hanging off the right
-     edge of a 358px screen. `justify-content`, not `text-align`: the figure
-     line is a flex line now, so it hangs the mark at the numeral's cap. */
-  .toc-fig {
-    grid-column: 2;
-    margin-block-start: 1rem;
-    justify-content: flex-start;
-  }
-
-  .toc-row[data-reach="people"] .numeral {
-    font-size: 2.5rem;
-  }
-  .toc-row[data-reach="system"] .numeral {
-    font-size: 2rem;
-  }
-  .toc-row[data-reach="bench"] .numeral {
-    font-size: 1.625rem;
-  }
-
-  /* The apparatus loses its indent — 72px of a 358px measure is a quarter of
-     the page given to nothing — and the lemma stops being a column and
-     becomes what it is in a footnote, the first word of the note. The mark
-     still hangs, because the mark is the whole tie back to the figure. */
-  .toc-apparatus {
-    --note-lemma: 0rem;
-    --note-hang: var(--note-mark);
-    margin-inline-start: 0;
-  }
-
-  .toc-note-lemma {
-    width: auto;
-    padding-inline-end: 0.6rem;
   }
 }
 

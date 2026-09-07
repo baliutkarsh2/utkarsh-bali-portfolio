@@ -2,12 +2,11 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Project } from "@/content";
-import { CloseFigure } from "@/components/project/number-plate";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { deviceOf } from "@/content/plates";
 import { Reveal } from "@/components/interactive/reveal";
 import { DotMask } from "@/components/ui/dot-mask";
-import { CODA, MOVEMENTS, collationOf, hasCoda } from "@/lib/corpus";
+import { CODA, MOVEMENTS, hasCoda } from "@/lib/corpus";
 import { ordinal } from "@/lib/utils";
 
 /**
@@ -33,7 +32,6 @@ import { ordinal } from "@/lib/utils";
  */
 
 /** I … V. The movements are hung in the margin, so they are numbered like one. */
-const ROMAN = ["I", "II", "III", "IV", "V"] as const;
 
 /**
  * The first sentence, and everything after it.
@@ -136,8 +134,11 @@ export function ProjectBody({ project }: { project: Project }) {
         {impact.rest && (
           <p className="movement-copy text-body">{impact.rest}</p>
         )}
-        {/* The argument returns to its number. */}
-        <CloseFigure project={project} />
+        {/* No reprise of the number here. It is already in the masthead, set
+            large, and the standfirst two lines up says it again in a sentence
+            -- so the page was making the same claim three times before the
+            reader reached the bottom of it. Once, at the top, where it says
+            what the project is for. */}
       </Movement>
 
       {coda && (
@@ -154,9 +155,14 @@ export function ProjectBody({ project }: { project: Project }) {
 }
 
 /**
- * One movement: the running head in the margin (roman numeral over the title,
- * sticky at ≥ 64rem so the reader always knows where they are without a bar
- * across the top of the page), the standfirst, and the body.
+ * One section: the running head in the margin, sticky at >= 64rem so the
+ * reader always knows where they are without a bar across the top of the
+ * page, then the standfirst and the body.
+ *
+ * The head used to carry a roman numeral over the title -- I, II, III, IV, V
+ * down a 200-word case study. It is gone. Five sections do not need numbering
+ * to be followed, and setting them in roman said nothing about the work
+ * except that the page would like to be taken for a book.
  *
  * `data-section-index` / `data-section-title` are kept: the header's SectionSpy
  * reads them and writes "III HOW IT WORKS" into the chrome, which is the same
@@ -181,14 +187,11 @@ function Movement({
     <section
       id={id}
       aria-labelledby={headingId}
-      data-section-index={ROMAN[n]}
+      data-section-index={String(n + 1)}
       data-section-title={title}
       className="movement sheet-row shell"
     >
       <div className="movement-head">
-        <span className="movement-numeral text-display-s" aria-hidden="true">
-          {ROMAN[n]}
-        </span>
         <h2 id={headingId} className="movement-title meta">
           {title}
         </h2>
@@ -256,44 +259,34 @@ function Schematic({ project }: { project: Project }) {
 }
 
 /**
- * The colophon: stack, collation, links, and the NDA note where there is one,
- * at the foot of the plate where an imprint goes.
+ * The foot of a case study: what it was built with, the links, and the NDA
+ * note where there is one.
  *
  * This is what the sticky rail was. A rail that follows 198 words down a page
  * is empty for most of them, and it cost three headings, a column of the grid
  * and 20rem of every wide screen to say six words of stack. The stack is one
  * line of data here, and the links are links.
  *
- * Two lines of Plex sit together at the top: the materials named, then the
- * sheet collated. Under them the links — or, where there are none, the
- * cancelled plate that says why.
+ * There was a second line under the stack: a rare-book collation formula,
+ * "Plate II · V movements · 3 stages · 5 materials · 272 words · Pulled
+ * 07.IX.2026", every term counted off the project's own record. It was
+ * accurate and it told a reader nothing they had come for -- a word count of
+ * the page they are already on, in roman, is the site admiring itself. Gone,
+ * along with the heading over it, which said "Colophon" where it meant
+ * "built with".
  */
 export function ProjectColophon({ project }: { project: Project }) {
-  const collation = collationOf(project.slug);
-
   return (
     <section
       className="colophon sheet-row shell"
       aria-labelledby="colophon-title"
     >
       <h2 id="colophon-title" className="movement-title meta">
-        Colophon
+        Built with
       </h2>
 
       <div>
         <p className="colophon-stack data">{project.stack.join("  ·  ")}</p>
-
-        {collation && (
-          /* The collation formula: every value counted off this project's own
-             record in src/lib/corpus.ts, at module scope, once per build. The
-             separators are drawn in CSS with empty alt text, so the line is
-             painted as a formula and announced as a list of terms. */
-          <p className="colophon-collation">
-            {collation.terms.map((term) => (
-              <span key={term}>{term}</span>
-            ))}
-          </p>
-        )}
 
         {project.links.length > 0 ? (
           <ul className="colophon-links">

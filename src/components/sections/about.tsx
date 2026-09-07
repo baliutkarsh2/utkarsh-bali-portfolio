@@ -30,9 +30,6 @@ export function About() {
       className="section section-first shell"
     >
       <div className="section-head">
-        <span className="meta text-ink-3" aria-hidden="true">
-          01
-        </span>
         <h1
           id="about-title"
           className="text-display-l font-medium text-balance text-ink"
@@ -57,8 +54,6 @@ export function About() {
           mode="still"
           source="about"
           alt={portrait.alt}
-          caption
-          restLabel="64 × 80 · second angle"
           fallback={portrait.fallback.about}
           className="about-board"
           gpu
@@ -68,7 +63,10 @@ export function About() {
           className="about-specs"
           rows={[
             { term: "Education", value: profile.educationDetail },
-            { term: "At Purdue", value: `${profile.enrolled} to ${profile.graduation}` },
+            {
+              term: "At Purdue",
+              value: `${profile.enrolled} to ${profile.graduation}`,
+            },
             { term: "GPA", value: profile.gpa },
             { term: "Based in", value: profile.location },
           ]}

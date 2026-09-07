@@ -35,7 +35,7 @@ export default function AboutPage() {
       <About />
       <Constellation
         index="02"
-        title="Where I’ve worked."
+        title="Where I’ve worked"
         readout="Experience"
         id="experience"
       />

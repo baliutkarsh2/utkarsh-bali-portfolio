@@ -23,9 +23,11 @@ export const metadata: Metadata = {
  * line of publisher / date / read time beneath the rule, which is where a
  * broadside puts its imprint. Nothing else above the fold.
  *
- * `n = 1` is said out loud in the masthead, in the register this site keeps
- * for counts and axis values. It is the honest thing to say and it stops the
- * page pretending to be a library.
+ * The masthead used to read "Writing · n = 1", and under the fold a sentence
+ * explained that the page points at the essay rather than reprinting it "so
+ * the piece keeps its own readers and its own statistics". Both are gone. A
+ * reader can see there is one essay, and a page that stops to justify its own
+ * design is talking about itself instead of the writing.
  *
  * The composition does not change when a second essay arrives: the newest
  * becomes the lead, everything behind it lists under the fold in the
@@ -41,7 +43,7 @@ export default function WritingPage() {
   if (!lead) {
     return (
       <header className="shell pt-24 pb-16 md:pt-28">
-        <p className="data text-ink-3">Writing · n = 0</p>
+        <p className="meta text-ink-3">Writing</p>
         <h1 className="mt-6 text-display-l text-ink">Nothing published yet.</h1>
         <p className="broadside-note caption">
           The first essay is being written.
@@ -71,7 +73,7 @@ export default function WritingPage() {
             rows here, so it collapses to a single row and stretches it to the
             plate's full height, pushing the title 600px down the sheet. */}
         <div className="broadside-type">
-          <p className="data text-ink-3">Writing · n = {posts.length}</p>
+          <p className="meta text-ink-3">Writing</p>
 
           {/* The essay's title is the page's h1, because the essay is the
             page. The masthead line above says which room you are in. */}
@@ -118,12 +120,6 @@ export default function WritingPage() {
       </header>
 
       <div className="shell broadside pb-8">
-        <p className="broadside-note caption">
-          {posts.length === 1
-            ? "One essay, published where it was written. This page points at it rather than reprinting it, so the piece keeps its own readers and its own statistics."
-            : "Published where they were written. This page points at them rather than reprinting them, so each piece keeps its own readers and its own statistics."}
-        </p>
-
         {rest.length > 0 && (
           <ul className="broadside-rest">
             {rest.map((post) => (

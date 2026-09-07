@@ -1,12 +1,20 @@
 import { Constellation } from "@/components/sections/constellation";
 import { Contact } from "@/components/sections/contact";
 import { Hero } from "@/components/sections/hero";
-import { NumbersBoard } from "@/components/sections/numbers-board";
 import { SelectedWork } from "@/components/sections/selected-work";
 
 /**
- * Home (§7.1): the plate, three numbers, the top three projects, the
- * constellation full-bleed, and the close. There is one essay and it lives on
+ * Home: the plate, the top three projects, the constellation full-bleed, and
+ * the close.
+ *
+ * There was a "Three numbers" board between the plate and the work -- the YC
+ * ranking, a failure rate and an AUROC, set large, above the projects they
+ * came from. It is gone. Pulling three figures out of eight case studies and
+ * setting them at display size is the page telling you what to be impressed
+ * by before it has told you what the work is; each of those numbers is still
+ * on the project it belongs to, next to the sentence that makes it mean
+ * something. The section numbering went with it, for the same reason a list
+ * of three does not need to count itself out loud. There is one essay and it lives on
  * Medium, so it is a line in the close rather than a section of its own.
  * About, experience and the full index live on their own routes.
  *
@@ -32,16 +40,14 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <NumbersBoard />
-      <SelectedWork index="01" />
+      <SelectedWork />
       <Constellation
         variant="chart"
-        index="02"
-        title="Where the work went."
+        title="Where the work went"
         readout="Trajectory"
         id="trajectory"
       />
-      <Contact index="03" />
+      <Contact />
     </>
   );
 }

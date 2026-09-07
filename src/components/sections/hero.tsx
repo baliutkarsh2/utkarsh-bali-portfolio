@@ -4,7 +4,7 @@ import { DotBoard } from "@/components/interactive/dot-board";
 import { Button } from "@/components/ui/button";
 import { Led } from "@/components/ui/led";
 import { now, profile } from "@/content";
-import { portrait, portraitField96 } from "@/content/portrait";
+import { portrait } from "@/content/portrait";
 
 /** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
 const [firstName, ...restOfName] = profile.name.split(" ");
@@ -63,32 +63,39 @@ export function Hero() {
       {/* Two block spans rather than a <br>: the whitespace text node between
           them keeps textContent "Utkarsh Bali" for assistive tech and crawlers
           while the blocks break the line. */}
-      <h1 id="hero-title" className="hero-name board-above text-display-xl text-ink">
+      <h1
+        id="hero-title"
+        className="hero-name board-above text-display-xl text-ink"
+      >
         <span className="block">{firstName}</span>{" "}
         {surname && <span className="block">{surname}</span>}
       </h1>
 
       {/* Column 2 from 80rem, directly under the name below that. The figure
           box is the layout anchor; the canvas is fixed behind the page. The
-          board loads its field on the client (its own cached chunk); only
-          the count crosses the boundary, for the caption's first frame. */}
+          board loads its field on the client, in its own cached chunk.
+
+          No caption. It read "288 × 360 · 51,747 dots" at rest and
+          "x 003 · y 012 · 0.42" under the pointer -- the machine describing
+          its own output, under a picture of a person. */}
       <DotBoard
         mode="hero"
         source="hero"
         alt={portrait.alt}
-        caption
-        count={portraitField96.count}
         fallback={portrait.fallback.hero}
         mobileFallback={portrait.fallback.phone}
         className="hero-board"
       />
 
       <div className="hero-copy board-above">
-        <p className="max-w-[34ch] text-display-s text-ink">{profile.tagline}</p>
+        <p className="max-w-[34ch] text-display-s text-ink">
+          {profile.tagline}
+        </p>
 
         <p className="mt-5 max-w-[34ch] text-lede text-ink-2">
           Recurly, summer 2026. Before that, agent infrastructure at{" "}
-          <span className="text-ink">QualGent</span> (YC X25). Co-founder and CTO of{" "}
+          <span className="text-ink">QualGent</span> (YC X25). Co-founder and
+          CTO of{" "}
           <Link
             href="/projects/checkpoint"
             className="dot-underline text-ink"

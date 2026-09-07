@@ -27,8 +27,10 @@ type Tracked = {
 };
 
 /** The index is optional: an index page's close carries a title alone. */
-function readoutText(index: string, title: string): string {
-  return [index, title].filter(Boolean).join(" ").toUpperCase();
+/** The section's name and nothing else. It used to read "02 SELECTED WORK",
+ *  and the number was never the part that told you where you were. */
+function readoutText(_index: string, title: string): string {
+  return title.toUpperCase();
 }
 
 /**

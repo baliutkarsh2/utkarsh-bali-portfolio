@@ -10,8 +10,10 @@ import {
   type Project,
 } from "@/content";
 import { Gallery } from "@/components/project/gallery";
-import { PlateFigure } from "@/components/project/number-plate";
-import { ProjectBody, ProjectColophon } from "@/components/project/project-body";
+import {
+  ProjectBody,
+  ProjectColophon,
+} from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
 import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
 
@@ -83,46 +85,14 @@ export async function generateMetadata({
  * JavaScript-off both render exactly what everyone else sees — the only moving
  * parts left are the shared image masks, which resolve themselves in CSS.
  */
-export default async function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
+export default async function ProjectPage({
+  params,
+}: PageProps<"/projects/[slug]">) {
   const { slug } = await params;
   const project = getProject(slug);
   if (!project) notFound();
 
   const adjacent = adjacentProjects(slug);
-
-  /**
-   * The catchword.
-   *
-   * Before a book was bound, the last page of every gathering carried one word,
-   * alone at the bottom right: the first word of the page that followed. It was
-   * not for the reader. It was for the binder, who had a table of loose sheets
-   * and needed to know which one came next — and it is the single most beautiful
-   * piece of machinery in the history of the printed book, because it is a
-   * page's own statement about where it belongs in a sequence.
-   *
-   * This site has exactly that: `orderedProjects` is one fixed collated order,
-   * `adjacentProjects` wraps at both ends, and the route is called The Plate
-   * Book. So every sheet carries the first word of the next sheet's opening
-   * sentence, taken from `problem` — the same string the Problem movement's
-   * standfirst is cut from, so the word a reader is promised here is literally
-   * the word they meet there.
-   *
-   * It is generated from the content and therefore *cannot go stale*: reorder
-   * the projects, or rewrite an opening line, and all eight catchwords follow
-   * on the next build. There is no copy to maintain and no place to put a wrong
-   * one.
-   *
-   * Two of the eight come out as a bare single letter — "I" and "A" — and that
-   * is not a bug to be fixed. A real catchword is whatever the next page starts
-   * with, and a single letter hanging alone in the corner of a sheet is exactly
-   * what one looks like.
-   *
-   * Trailing punctuation only: a leading quote or bracket is part of the word as
-   * the next page sets it, and the binder would have copied it.
-   */
-  const catchword = adjacent
-    ? adjacent.next.problem.trim().split(/\s+/)[0].replace(/[.,;:!?)\]”’"']+$/u, "")
-    : "";
 
   const spec = [
     project.eyebrow,
@@ -165,21 +135,34 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
               {project.name}
             </h1>
             <p className="frontis-tagline text-lede">{project.tagline}</p>
+            {/* The number, said once, in the masthead, at the size of the
+                other facts about the project.
+
+                It used to be a screen of its own: the metric set in Bodoni at
+                display-l and bled off the right edge of the sheet, the only
+                element on the site permitted to leave the page, with the
+                label under it in italic. On this project that meant "Top 10%"
+                a foot tall above a case study whose own Impact section says
+                "We didn't get an interview." A figure given a whole screen is
+                the page insisting on being impressive before it has been
+                useful, and the reader has to scroll past it to reach the
+                work. */}
+            <p className="frontis-metric meta">
+              {project.metric} {project.metricLabel}
+            </p>
           </div>
         </header>
 
-        <PlateFigure project={project} />
-
         <ProjectBody project={project} />
 
-        {project.media && project.media.length > 0 && <Gallery media={project.media} />}
+        {project.media && project.media.length > 0 && (
+          <Gallery media={project.media} />
+        )}
 
         <ProjectColophon project={project} />
       </article>
 
-      {adjacent && (
-        <ProjectNav prev={adjacent.prev} next={adjacent.next} catchword={catchword} />
-      )}
+      {adjacent && <ProjectNav prev={adjacent.prev} next={adjacent.next} />}
     </>
   );
 }
@@ -207,8 +190,18 @@ function buildSchema(project: Project) {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: siteConfig.url },
-        { "@type": "ListItem", position: 2, name: "Work", item: absoluteUrl("/projects") },
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: siteConfig.url,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Work",
+          item: absoluteUrl("/projects"),
+        },
         { "@type": "ListItem", position: 3, name: project.name, item: url },
       ],
     },

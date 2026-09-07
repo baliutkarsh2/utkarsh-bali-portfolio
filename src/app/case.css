@@ -146,42 +146,12 @@
     max-width: var(--plate-lede);
   }
 
-  /* ═══ The figure that bleeds ══════════════════════════════════════════════
-     The headline metric, set very large and pushed past the sheet's right edge
-     into the trim. `overflow-x: clip` is deliberate rather than `hidden`: clip
-     does not make a scroll container, so the page never gains a horizontal
-     scrollbar and no sticky descendant anywhere is re-parented to it. The
-     vertical axis stays visible so a Didone's overshoot is not shaved.
-
-     The bleed is 0.06em and it is measured, not chosen. The right side bearing
-     of the terminal glyph across the eight metrics runs from 0.049em ("+") to
-     exactly 0 ("0.844"), so anything past about 0.06em stops trimming paper and
-     starts eating the figure: at 0.16em, which is where this started, "0.844"
-     lost the whole of its last 4 and "~3x" lost half its x. At 0.06em the
-     largest bite out of any glyph is about a tenth of it — the number runs past
-     the type area by 100px and off the trim by a hair, and every metric still
-     reads. The whole figure is repeated, unbled, at the close of Impact.
-     ─────────────────────────────────────────────────────────────────────── */
-  .figure-bleed {
-    overflow-x: clip;
-    padding-block: var(--space-6) 0;
-  }
-
-  @media (width >= 48rem) {
-    .figure-bleed {
-      padding-block-start: var(--space-8);
-    }
-  }
-
-  .figure-hero {
-    margin: 0;
-    text-align: right;
-  }
-
-  .figure-cap {
-    margin-block: var(--space-2) 0;
-    text-align: right;
-    color: var(--ink-2);
+  /* The headline number, in the masthead's own machine grammar. It used to be
+     a display-l numeral bled off the right edge of the sheet with a screen to
+     itself; see the note in the route. */
+  .frontis-metric {
+    margin-block-start: 1.25rem;
+    color: var(--ink-3);
   }
 
   /* ═══ Movements ═══════════════════════════════════════════════════════════ */
@@ -405,18 +375,6 @@
      Impact ends on the frontispiece figure, whole this time and inside the type
      column. The number the page opened on is the number it closes on.
      ─────────────────────────────────────────────────────────────────────── */
-  .close-figure {
-    margin: var(--space-6) 0 0;
-    padding-block-start: var(--space-5);
-    border-top: 1px solid var(--line-strong);
-    max-width: var(--plate-lede);
-  }
-
-  .close-figure figcaption {
-    margin-block-start: var(--space-2);
-    color: var(--ink-2);
-  }
-
   /* ═══ Colophon ════════════════════════════════════════════════════════════
      Stack, links and the NDA note at the foot of the plate, where an imprint
      goes. This is what the sticky rail was, minus the stickiness and minus its
@@ -605,22 +563,12 @@
     color: var(--ink-3);
   }
 
-  /* ═══ The foot of the plate ═══════════════════════════════════════════════
-     The catchword, with prev and next demoted to the machinery underneath it.
-
-     Before a book was bound, the last page of every gathering carried one word
-     alone at the bottom right: the first word of the page that came next. It
-     was not for the reader — it was for the binder, who had a table of loose
-     sheets and had to know the order. This site has exactly that structure
-     (`orderedProjects` is one fixed collated order and `adjacentProjects` wraps
-     at both ends), so every sheet carries the first word of the next sheet's
-     opening sentence, generated from the content and therefore never stale.
-
-     The two navigation rows used to be the loudest thing here: two project
+  /* ═══ The foot ════════════════════════════════════════════════════════════
+     Prev and next, as a mono label and a name. They used to be two project
      names at reading size, restating a quarter of the work index under a page
-     of 198 words. They do the same navigational work at half the height as a
-     mono label and a name, which frees the one display mark on the foot of the
-     sheet to be the catchword.
+     of 198 words; they do the same navigational work at half the height like
+     this. A third element used to outrank them — the catchword; see the note
+     in project-nav.tsx for what it was and why it went.
      ─────────────────────────────────────────────────────────────────────── */
   .plate-foot {
     display: grid;
@@ -631,10 +579,9 @@
     padding-block: var(--space-4) var(--space-10);
   }
 
-  /* Stacked rather than spread: two short mono lines read as one block of data,
-     which is what leaves the corner to the catchword. Spread across the foot
-     they compete with it for the right-hand edge, and at 390px the longer name
-     ("LLM Multi-Agent QA System") would have to wrap into it. */
+  /* Stacked rather than spread: two short mono lines read as one block of
+     data. Spread across the foot, at 390px the longer name ("LLM Multi-Agent
+     QA System") would have to wrap. */
   .foot-rows {
     display: grid;
     row-gap: var(--space-1);
@@ -659,46 +606,6 @@
   .plate-foot .foot-label {
     flex: none;
     color: var(--ink-3);
-  }
-
-  /* The catchword itself. Display italic at 21px — Bodoni's floor exactly, and
-     the smallest the display face is allowed anywhere on this site, which is
-     right for a word that is a mark rather than a heading. It hangs at the
-     bottom right of the sheet because that is where a binder's eye goes.
-
-     --ink, not --ink-2: it is not a caption on the navigation, it is the sheet's
-     own statement about what follows it. No underline at rest; the affordance
-     arrives on hover and focus, so the resting page shows one word alone in the
-     corner and nothing else.
-
-     `justify-content: flex-end` is inert until `tap` turns this into a 44px
-     inline-flex box on a finger — without it a one-letter catchword ("I", "A")
-     would sit centred 22px in from the edge it is supposed to hang off.
-     ─────────────────────────────────────────────────────────────────────── */
-  .catchword {
-    justify-self: end;
-    align-self: end;
-    justify-content: flex-end;
-    font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-style: italic;
-    font-weight: 500;
-    font-size: 1.3125rem;
-    line-height: 1.1;
-    color: var(--ink);
-    text-decoration-line: underline;
-    text-decoration-color: transparent;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.16em;
-    transition:
-      text-decoration-color var(--dur-2) var(--ease-snap),
-      text-decoration-thickness var(--dur-2) var(--ease-snap);
-  }
-
-  .catchword:hover,
-  .catchword:focus-visible {
-    text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
-    text-decoration-thickness: 2px;
   }
 }
 
@@ -730,28 +637,7 @@
 /* ═══ The two figure sizes ══════════════════════════════════════════════════
    Deliberately unlayered. <Numeral> carries `text-numeral-l`, a Tailwind
    utility, and the utilities layer beats the components layer whatever the
-   selector specificity is; an unlayered rule beats both. These are the only two
-   places on the site where a figure is not one of the two scale steps, and they
-   are the two ends of the same argument: the frontispiece, and its reprise.
-   Both stay far above the 21px floor the display face is allowed at.
-   ═════════════════════════════════════════════════════════════════════════ */
-.figure-hero .numeral {
-  /* Larger than --text-numeral-l: this is the one figure that carries a page,
-     and the size is what makes the bleed read as a decision rather than a
-     mistake. 21vw is what keeps the longest metric ("Top 10%", 4.227em of
-     advance) inside a 320px screen once the bleed is taken off it.
-     -0.06em is the bleed; see the note in case.css §figure. */
-  font-size: clamp(4.5rem, 21vw, 14rem);
-  margin-inline-end: -0.06em;
-  /* The other half of the morph from the contents page; the ident is written
-     on .figure-bleed by number-plate.tsx. Absent, this computes to `none` and
-     the navigation is the plain crossfade it was. */
-  view-transition-name: var(--vt-fig);
-}
-
-.close-figure .numeral {
-  font-size: clamp(3.25rem, 6vw, 5.5rem);
-}
+   selector specificity is;
 
 /* ── The device ───────────────────────────────────────────────────────────
    The project's own mark, in the movement about the mechanism it draws. The
@@ -784,18 +670,6 @@
    allowed to break across a page.
    ═════════════════════════════════════════════════════════════════════════ */
 @media print {
-  /* On paper the figure joins the type area: the shell padding it was escaping
-     on screen is what lines its right edge up with the caption under it. */
-  .figure-bleed {
-    overflow-x: visible;
-    padding-inline: var(--shell-pad);
-  }
-
-  .figure-hero .numeral {
-    margin-inline-end: 0;
-    font-size: 4.5rem;
-  }
-
   .movement-head {
     position: static;
   }
@@ -808,32 +682,14 @@
   .stage,
   .plate-figure,
   .plate-grid > li,
-  .close-figure,
   .cancel,
   .colophon,
   .plate-foot {
     break-inside: avoid;
   }
 
-  /* ── The catchword is the one element on this site that GAINS meaning on
-     paper. On screen it is a nice mark and a second route to the next case
-     study; printed and put down on a table next to seven other sheets, it is
-     the thing that says which sheet follows this one — which is the entire
-     reason catchwords were ever set. So it prints, at full size, hanging in the
-     corner, with the sheet ending directly under it rather than five rems of
-     empty paper later. Nothing here hides it and nothing may: no `display:
-     none`, no colour it cannot hold, no reliance on a hover state.
-
-     Its href is internal, so globals' print rule that spells out external URLs
-     after a link does not fire on it — the word prints alone, as a catchword
-     must. ─────────────────────────────────────────────────────────────────── */
   .plate-foot {
     padding-block-end: 0;
-  }
-
-  .catchword {
-    color: var(--ink);
-    text-decoration-color: transparent;
   }
 
   /* No orphaned running head: a movement's numeral and name go with its

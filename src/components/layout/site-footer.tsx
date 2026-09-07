@@ -1,24 +1,20 @@
 import Link from "next/link";
 import { CopyEmail } from "@/components/interactive/copy-email";
 import { profile, socials } from "@/content";
-import { imprintLines } from "@/content/colophon";
 import { MissionLine } from "@/components/ui/mission-line";
 import { Reveal } from "@/components/interactive/reveal";
 
 /**
- * Server component. Three rows on the shell under a top hairline:
- *  1. the last line, "Connecting the dots" and three real dots with a hairline
- *     drawn through them (the site's ellipsis), with the identity right-aligned;
- *  2. the links;
- *  3. the imprint.
+ * Server component. Two rows on the shell under a top hairline: the last line
+ * with the identity right-aligned, then the links.
  *
- * The imprint replaced a colophon that was a stack of tool names — "Next 16 on
- * Vercel", which is the single most common line in the genre and says nothing
- * about the object it is printed on. A printer's imprint says when the sheet
- * was pulled, which state of the plate it is, how many cells the plate carries,
- * what angle the screen is ruled at, how many inks went through the press and
- * which edge the sheet was laid to. Every one of those is true here, and three
- * of them are read from the bake rather than typed (src/content/colophon.ts).
+ * There used to be a third row -- a printer's imprint giving the date in roman
+ * numerals, the state of the plate, the cell count, the screen angle and which
+ * edge the sheet was laid to. Every line of it was true and not one of them was
+ * for the reader. A visitor wants to know who this is, what he built and how to
+ * reach him; a footer that instead performs the metaphor the site is built on
+ * is the site talking to itself. It is gone, and so is the sentence about the
+ * plate that used to close the home page.
  */
 export function SiteFooter() {
   return (
@@ -95,13 +91,6 @@ export function SiteFooter() {
           </ul>
         </nav>
 
-        <p className="footer-imprint meta">
-          {imprintLines().map((line) => (
-            <span key={line} className="footer-imprint-line">
-              {line}
-            </span>
-          ))}
-        </p>
       </div>
     </footer>
   );

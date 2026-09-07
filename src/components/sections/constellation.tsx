@@ -393,10 +393,6 @@ function dateline(lane: Lane): string {
   return `Work dated ${span}`;
 }
 
-const employerLanes = lanes.filter((l) => l.kind === "employer");
-const ventureLanes = lanes.filter((l) => l.kind === "venture");
-const independentLane = lanes.find((l) => l.kind === "independent");
-
 type ConstellationProps = {
   /**
    * `record` (/about §02) — the plate, its caption, the numbered key, and the
@@ -409,7 +405,8 @@ type ConstellationProps = {
    */
   variant?: "record" | "chart";
   /** The section index in its page's own numbering. */
-  index: string;
+  /** Only the SectionSpy's hook; never rendered. */
+  index?: string;
   title: string;
   /** The fragment id. /about keeps `experience`: /experience 308s to it. */
   id: string;
@@ -425,7 +422,7 @@ type ConstellationProps = {
  */
 export function Constellation({
   variant = "record",
-  index,
+  index = "",
   title,
   id,
   readout,
@@ -449,9 +446,6 @@ export function Constellation({
     >
       <div className={bleed ? "shell" : undefined}>
         <div className="section-head">
-          <span className="meta text-ink-3" aria-hidden="true">
-            {index}
-          </span>
           <h2
             id={headingId}
             className="text-display-m font-medium text-balance text-ink"
@@ -599,22 +593,21 @@ export function Constellation({
             lines up with the section title above it rather than with the
             plate's edge. Same words either way; only the last sentence knows
             which page it is on, because on / there is no key below to point
-            at and the marks are the only way in. */}
+            at and the marks are the only way in.
+
+            It is a legend, and it used to be six sentences: which lanes were
+            employers, which company employed nobody "and so carries no band",
+            that dates are accurate to the month "under a ±15 day bar". All
+            true, none of it needed to read the chart. What a legend owes a
+            reader is what the marks mean. */}
         <figcaption className={cn("cn-caption", bleed && "shell")}>
           <span className="caption measure block text-ink-2">
-            {sentenceCase(word(inDateOrder.length))} projects on the month each
-            one landed, against {word(lanes.length)} lanes:{" "}
-            {word(employerLanes.length)} employers with a dated record;{" "}
-            {ventureLanes.map((l) => l.name).join(", ")}, my own company, which
-            employed nobody and so carries no band; and the{" "}
-            {word(independentLane?.points.length ?? 0)} builds that answered to
-            nobody, which sit in the Independent lane. A band of ink dots is a
-            job; a mark is a project. Dates are accurate to the month and no
-            further, so every mark sits at the middle of its month under a ±15
-            day bar. Filled is shipped, half-filled is ongoing, open is
-            research. The vermilion rule is today.{" "}
+            {sentenceCase(word(inDateOrder.length))} projects, on the month each
+            one landed. A band is a job; a mark is a project. Filled is shipped,
+            half-filled is ongoing, open is research, and the vermilion rule is
+            today.{" "}
             {bleed
-              ? "Every mark is a link to what it was."
+              ? "Every mark is a link."
               : "The numbered list below is the key."}
           </span>
         </figcaption>

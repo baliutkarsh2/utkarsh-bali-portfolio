@@ -265,7 +265,7 @@ const OTHERS: PlateSpec[] = [
     id: "rule-quarters",
     field: "quarterlyRule",
     title: "The quarterly rule",
-    subject: "Projects per quarter, Q4 2024 to Q2 2026, as ink area",
+    subject: "Projects per quarter, Q4 2024 to Q2 2026",
     alt:
       "A register strip: seven quarters from the last months of 2024 to the middle of 2026, " +
       "each band carrying ink in proportion to the number of projects begun in it. The " +
@@ -281,7 +281,7 @@ const OTHERS: PlateSpec[] = [
     id: "sky",
     field: "skyField",
     title: "The sky over West Lafayette",
-    subject: "11 July 2025, 23:00 — 2,307 stars, punched out of the ink",
+    subject: "11 July 2025, 23:00 — 2,307 stars",
     alt:
       "The night sky over West Lafayette at eleven o'clock on the eleventh of July 2025, " +
       "engraved as a dot field: a solid disc of ink with 2,307 stars showing through as " +
