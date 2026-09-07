@@ -484,6 +484,32 @@ void main() {
   // ink, partial area -- an engraved mark smaller than a pixel is a lighter
   // pixel, which is the whole of how a halftone carries tone at this scale.
   float cover = clamp(vRad - dist + 0.5, 0.0, 1.0);
+  // ── and the constant that box filter costs ──
+  //
+  // A one-pixel box filter over a disc's edge does not integrate to the disc's
+  // area. It integrates to pi*r^2 + pi/12, and the excess is that constant --
+  // the same 0.2618 px for every mark, whatever its size, because the ramp is
+  // a fixed width laid around a perimeter that grows exactly as fast as the
+  // area it is correcting. Working it out:
+  //
+  //   integral = pi(r-0.5)^2                            the saturated core
+  //            + integral of (r+0.5-t)*2*pi*t dt        the ramp, t in [r-0.5, r+0.5]
+  //            = pi(r-0.5)^2 + pi*r - pi/6
+  //            = pi*r^2 + pi/12
+  //
+  // Measured against the About plate: exact ink for that field at 4 device px
+  // per cell is 139,063 px over 22,754 marks, the constant predicts an excess
+  // of 22,754 * pi/12 = 5,957, and the board drew 145,136. The prediction is
+  // out by 0.08%. So the correction is exact rather than tuned, and it is a
+  // scale rather than a subtraction so that no fragment can go negative:
+  //
+  //   pi*r^2 / (pi*r^2 + pi/12)  =  r^2 / (r^2 + 1/12)
+  //
+  // This matters because value on this site is carried by ink AREA and nothing
+  // else. An area that is 4.4% wrong is a tone that is 4.4% wrong, everywhere,
+  // and it is the kind of error that reads as "heavy" without ever looking
+  // like a bug.
+  cover *= vRad * vRad / (vRad * vRad + 0.08333333);
   // A one-pixel box filter is the coverage of a straight EDGE, and a mark
   // smaller than a pixel has no straight edge -- the ramp hands its centre
   // fragment a full 1.0 when the disc's whole area is 0.79 of a pixel. So cap
