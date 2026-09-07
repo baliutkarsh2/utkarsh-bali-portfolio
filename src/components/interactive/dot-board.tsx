@@ -15,8 +15,31 @@ import { motionAllowed, onMotionChange } from "@/lib/motion";
 type BoardStatus =
   "lattice" | "assembling" | "live" | "settled" | "static" | "fallback";
 
-/** Which baked portrait a board shows. The field itself is loaded on the client. */
-export type PortraitSource = "hero" | "about" | "contact";
+/**
+ * Which baked field a board shows. The field itself is loaded on the client.
+ *
+ * Three of these are the portrait; the rest are plates -- the project devices,
+ * the clinical screens, the quarterly rule, the sky. They are the same
+ * material and the same renderer, and `src/content/plates.ts` is where their
+ * captions, boxes and dot counts are stated once.
+ */
+export type PortraitSource =
+  | "hero"
+  | "about"
+  | "contact"
+  | "device-recurly"
+  | "device-checkpoint"
+  | "device-clip-h"
+  | "device-crawler"
+  | "device-qualgent"
+  | "device-qa"
+  | "device-clinical"
+  | "device-wallex"
+  | "clinical-voice"
+  | "clinical-tasks"
+  | "clinical-vitals"
+  | "rule-quarters"
+  | "sky";
 
 export type DotBoardProps = {
   mode: BoardMode;
@@ -37,6 +60,24 @@ export type DotBoardProps = {
   /** Hero only: the image used below 48rem. */
   mobileFallback?: string;
   className?: string;
+  /**
+   * Ask for the GPU renderer on a board that would otherwise take the 2D floor.
+   *
+   * A settled board normally stays on the 2D canvas: it draws one frame and
+   * never animates, so a GL context and a shader compile buy nothing and cost
+   * a context slot Chrome may later evict from a board that DOES animate. That
+   * reasoning is right for a thumbnail and wrong for a portrait, because the
+   * two renderers do not draw the same mark. `gl.POINTS` with a hard `discard`
+   * is binary coverage; `arc()` is antialiased. Measured on the live About
+   * plate: **only 23% of its ink was fully opaque** and the other 77% was
+   * grey, which is most of why that page read softer than the home page at the
+   * same density.
+   *
+   * So it is opt-in rather than a mode rule: one portrait per page can afford
+   * a context, and a page carrying eight small device plates must not ask for
+   * eight.
+   */
+  gpu?: boolean;
 };
 
 const SEEN_KEY = "board:seen";
@@ -112,7 +153,36 @@ type SourceSpec = Box & {
   load: () => Promise<BoardField>;
   /** Hero only: the field below 48rem. */
   loadSm?: () => Promise<BoardField>;
+  /**
+   * Cells per lattice step, where it is not the portrait's.
+   *
+   * The portraits share PORTRAIT_DENSITY because they are re-baked together
+   * and check-density.mjs locks that one number to the bake's. A plate is a
+   * different picture at a different grid -- a 48 x 60 device in a 24 x 30 box
+   * is density 2 whatever the portrait is doing -- and riding the portrait's
+   * constant would silently rescale every plate on the site the next time the
+   * face is re-baked finer. The board draws `field.w / density` lattice cells
+   * wide; if this and the field disagree the plate overflows its box and
+   * nothing fails, which is the exact bug check-density.mjs exists for.
+   */
+  density?: number;
 };
+
+/** A plate: one field module, one export, one box. */
+const plate = (
+  cols: number,
+  rows: number,
+  load: () => Promise<BoardField>,
+): SourceSpec => ({ cols, rows, load, density: PLATE_DENSITY });
+
+/**
+ * Every plate is baked at two cells to the lattice step. It is the grid at
+ * which a 48-cell device still resolves a rank of marks and a 192-cell sky
+ * still resolves a star, and it is stated in scripts/bake-art.py as the
+ * bakers' default; src/content/plates.ts records it per plate and
+ * scripts/check-plates.mjs compares the two.
+ */
+const PLATE_DENSITY = 2;
 
 /**
  * The fields stay on the client side of the server boundary: each is its own
@@ -148,6 +218,55 @@ const SOURCES: Record<PortraitSource, SourceSpec> = {
         (m) => m.portraitFieldContact,
       ),
   },
+
+  // The eight project devices. One module, one chunk: eight 48 x 60 fields is
+  // 31 KB of base64 against the hero portrait's 138, so splitting them would
+  // buy eight requests to save nothing.
+  "device-recurly": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceRecurly),
+  ),
+  "device-checkpoint": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceCheckpoint),
+  ),
+  "device-clip-h": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceClipH),
+  ),
+  "device-crawler": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceCrawler),
+  ),
+  "device-qualgent": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceQualgent),
+  ),
+  "device-qa": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceQa),
+  ),
+  "device-clinical": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceClinical),
+  ),
+  "device-wallex": plate(24, 30, () =>
+    import("@/content/plate-devices").then((m) => m.deviceWallex),
+  ),
+
+  // The three clinical screens, engraved from the committed screenshots.
+  "clinical-voice": plate(30, 64, () =>
+    import("@/content/plate-clinical").then((m) => m.clinicalVoice),
+  ),
+  "clinical-tasks": plate(30, 64, () =>
+    import("@/content/plate-clinical").then((m) => m.clinicalTasks),
+  ),
+  "clinical-vitals": plate(30, 64, () =>
+    import("@/content/plate-clinical").then((m) => m.clinicalVitals),
+  ),
+
+  // The register strip: projects per quarter, counted from projects.ts.
+  "rule-quarters": plate(120, 4, () =>
+    import("@/content/plate-rule").then((m) => m.quarterlyRule),
+  ),
+
+  // The sky over West Lafayette. The one plate on the site made mostly of ink.
+  sky: plate(96, 96, () =>
+    import("@/content/sky-field").then((m) => m.skyField),
+  ),
 };
 
 const TEXT_BOX: Required<Box> = { cols: 96, rows: 40, colsSm: 64, rowsSm: 28 };
@@ -158,8 +277,9 @@ function cssVar(el: Element, name: string, fallback: string): string {
   return v || fallback;
 }
 
-function densityOf(mode: BoardMode): number {
-  return mode === "text" ? 1 : PORTRAIT_DENSITY;
+function densityOf(mode: BoardMode, source: PortraitSource | undefined): number {
+  if (mode === "text") return 1;
+  return (source && SOURCES[source].density) || PORTRAIT_DENSITY;
 }
 
 function boxOf(mode: BoardMode, source: PortraitSource | undefined): Box {
@@ -192,6 +312,7 @@ export function DotBoard({
   fallback,
   mobileFallback,
   className,
+  gpu = false,
 }: DotBoardProps) {
   const figureRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -204,7 +325,7 @@ export function DotBoard({
   useEffect(() => onMotionChange(() => setMotionEpoch((n) => n + 1)), []);
 
   const box = boxOf(mode, source);
-  const density = densityOf(mode);
+  const density = densityOf(mode, source);
 
   useEffect(() => {
     const figure = figureRef.current;
@@ -267,7 +388,9 @@ export function DotBoard({
       // context is one more for Chrome to evict — it drops the oldest when a
       // page holds too many, which would blank the hero to animate a thumbnail.
       const wantsGpu =
-        motion && (mode === "hero" || mode === "text") && !forceCpu;
+        motion &&
+        (mode === "hero" || mode === "text" || (gpu && mode === "still")) &&
+        !forceCpu;
       if (!canvasRef.current) return null;
       // Recycle first, not just on the way down to 2D: after a context loss
       // the old element still owns a dead context, so retrying GL on it would
@@ -300,7 +423,13 @@ export function DotBoard({
       let visible = true;
       let hidden = document.hidden;
       // The governor pins the DPR cap below the display's; relayout applies it.
-      let dprCap = 2;
+      // Three, not two. On a DPR-3 panel a cap of 2 backs the canvas at 2x and
+      // lets the compositor upscale it 1.5x to fill the CSS box -- and every
+      // mark here is a hard-edged disc, so that upscale is a blur applied to
+      // precisely the thing the renderer works hardest to keep crisp. The
+      // governor below still drops the cap on sustained slow frames, so this
+      // raises the ceiling without removing the floor.
+      let dprCap = 3;
       let pitch = readPitch();
       let bleed = 0;
       let rect = figure.getBoundingClientRect();
@@ -414,12 +543,12 @@ export function DotBoard({
             pushDisabled = true;
             board.disablePush();
           }
-        } else if (!recovered && dprCap < 2 && ++fastFrames >= FAST_RECOVER) {
+        } else if (!recovered && dprCap < 3 && ++fastFrames >= FAST_RECOVER) {
           // A second and a half of smooth frames: the stall was transient.
           // Once only, so a board that is genuinely at the edge of the budget
           // settles at 1.5x instead of oscillating and relaying out forever.
           recovered = true;
-          dprCap = 2;
+          dprCap = 3;
           slowFrames = 0;
           fastFrames = 0;
           relayout();
@@ -607,6 +736,13 @@ export function DotBoard({
         // a fine pointer keeps its light; the loop only runs while it moves.
         board.drawSettled();
         setStatus("static");
+        // A GL board cannot draw until its two programs have linked, and
+        // drawSettled() is one call with nothing to retry it -- so on the GPU
+        // path the first frame lands on an empty canvas and stays empty
+        // forever. frame() reports "more" while the driver is still compiling,
+        // so one scheduled loop carries it across and stops by itself the
+        // moment it is ready. Bounded, and it costs the 2D floor nothing.
+        if (renderer === "gpu") schedule();
         if (mode === "still" && fine && motion) {
           board.settle();
           setStatus("settled");
@@ -845,7 +981,7 @@ export function DotBoard({
       printQuery.removeEventListener("change", onPrintQuery);
       stop();
     };
-  }, [mode, source, text, caption, restLabel, density, motionEpoch]);
+  }, [mode, source, text, caption, restLabel, density, motionEpoch, gpu]);
 
   const decorative = alt === "";
   // The caption's resting text is in the HTML from the first frame; the

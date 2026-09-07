@@ -434,6 +434,138 @@
     color: var(--ink-2);
   }
 
+  /* ── The collation line ──────────────────────────────────────────────────
+     A rare-book catalogue does not describe a volume, it collates it: one
+     formula stating the physical make-up of the object in hand, so that another
+     cataloguer holding a different copy can tell whether anything is missing.
+     This is that formula for the sheet just read, and every value in it is
+     counted off the project's own record at module scope in src/lib/corpus.ts —
+     the plate number from the collated order, the movements from the sections
+     the page renders, the stages from `architecture`, the materials from the
+     stack, the words from the prose, and the date of this impression.
+
+     Roman for the plate and the movements, arabic for the counts. That is the
+     convention and it carries information: the roman numbers are positions in a
+     structure and the arabic ones are quantities of things.
+
+     Set in Plex at the machine-label size rather than with the `meta` utility,
+     because the separators have to be generated: `content: "·" / ""` paints the
+     middot and gives it empty alt text, so the line reads as a formula and is
+     announced as a list of terms rather than as a run of full stops. Same
+     grammar as `.spec-line` at the head of the sheet — the two ends of the
+     plate describe it in the same voice.
+     ──────────────────────────────────────────────────────────────────────── */
+  .colophon-collation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    margin: var(--space-2) 0 0;
+    max-width: var(--plate-lede);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: var(--text-meta);
+    line-height: 1.55;
+    letter-spacing: var(--text-meta--letter-spacing);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+  }
+
+  .colophon-collation > span + span::before {
+    content: "·" / "";
+    margin-inline-end: 0.5rem;
+    color: var(--rule-mid);
+  }
+
+  /* ── The cancelled plate ─────────────────────────────────────────────────
+     Three of the eight projects have no link, and where the links row goes on
+     the other five this goes instead: a small empty plate, scored through.
+
+     A printer closing an edition takes a burin to the copper so that no further
+     impressions can be pulled, and then often prints the cancelled plate once
+     more as the record that the edition is closed. It is exactly the right
+     object for work under NDA, because the reason there is no screenshot is the
+     same reason a cancelled plate makes no prints. It says closed, not missing.
+
+     The strokes are ruled at ±22.5°, which is the site's own screen angle
+     (§5.3.3 — deliberately not 45°, which aligns with the pixel diagonal and
+     with every rule on the page). The cancellation is cut at the angle the
+     plate was screened at.
+
+     Drawn as inline SVG rather than as two rotated borders: a rotated border is
+     a box that has to be clipped back to the plate, and it stops being a line
+     at all in forced colours. Two <path>s with a real stroke print, scale, and
+     take a system colour.
+     ──────────────────────────────────────────────────────────────────────── */
+  .cancel {
+    /* Clears the plate mark's 10px outset above the copper. */
+    margin: calc(var(--space-4) + 10px) 0 0;
+    max-width: var(--plate-lede);
+  }
+
+  /* The copper. 168px at ≥48rem; the full column on a phone, where 168px in the
+     middle of a 350px measure reads as a thumbnail of nothing. The viewBox does
+     the rest: the aspect ratio is fixed, so the strokes hold 22.5° at every
+     width, and the intrinsic size is known before paint, so nothing shifts. */
+  .cancel-well {
+    --plate-inset: 10px;
+    display: block;
+    width: 100%;
+  }
+
+  @media (width >= 48rem) {
+    .cancel-well {
+      width: 168px;
+    }
+  }
+
+  .cancel-plate {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .cancel-ground {
+    fill: var(--ground-2);
+  }
+
+  /* Full-strength ink, and a fixed physical width: a burin cuts the same groove
+     whatever size the plate is, so the stroke does not scale with the box. */
+  .cancel-stroke {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* Plex micro (10px) — the plan's smallest step, which exists for exactly this:
+     a machine's note about the object, under the object. Not `meta`, because
+     `meta` is 11px and this is the one label on the sheet that is subordinate to
+     a figure rather than naming a section. Separators generated with empty alt
+     text, as everywhere else on this page. */
+  .cancel-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    /* Clears the plate mark's 10px outset below the copper. */
+    margin-block-start: calc(var(--space-2) + 10px);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.625rem;
+    line-height: 1.4;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .cancel-note > span + span::before {
+    content: "·" / "";
+    margin-inline-end: 0.5rem;
+    color: var(--rule-mid);
+  }
+
   .colophon-links {
     display: flex;
     flex-wrap: wrap;
@@ -474,34 +606,124 @@
   }
 
   /* ═══ The foot of the plate ═══════════════════════════════════════════════
-     Previous and next as two lines of data, not two more rows of the site's
-     list component. The whole reason the old footer was heavy is that it
-     restated two projects at display size under a page of 198 words.
+     The catchword, with prev and next demoted to the machinery underneath it.
+
+     Before a book was bound, the last page of every gathering carried one word
+     alone at the bottom right: the first word of the page that came next. It
+     was not for the reader — it was for the binder, who had a table of loose
+     sheets and had to know the order. This site has exactly that structure
+     (`orderedProjects` is one fixed collated order and `adjacentProjects` wraps
+     at both ends), so every sheet carries the first word of the next sheet's
+     opening sentence, generated from the content and therefore never stale.
+
+     The two navigation rows used to be the loudest thing here: two project
+     names at reading size, restating a quarter of the work index under a page
+     of 198 words. They do the same navigational work at half the height as a
+     mono label and a name, which frees the one display mark on the foot of the
+     sheet to be the catchword.
      ─────────────────────────────────────────────────────────────────────── */
   .plate-foot {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2) var(--space-6);
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-4);
+    align-items: end;
     border-top: 1px solid var(--line);
     padding-block: var(--space-4) var(--space-10);
   }
 
-  .plate-foot a {
+  /* Stacked rather than spread: two short mono lines read as one block of data,
+     which is what leaves the corner to the catchword. Spread across the foot
+     they compete with it for the right-hand edge, and at 390px the longer name
+     ("LLM Multi-Agent QA System") would have to wrap into it. */
+  .foot-rows {
+    display: grid;
+    row-gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .foot-row {
     display: inline-flex;
     align-items: baseline;
     gap: 0.5rem;
+    justify-self: start;
+    min-width: 0;
     color: var(--ink-2);
     transition: color var(--dur-1) var(--ease-snap);
   }
 
-  .plate-foot a:hover,
-  .plate-foot a:focus-visible {
+  .foot-row:hover,
+  .foot-row:focus-visible {
     color: var(--ink);
   }
 
   .plate-foot .foot-label {
+    flex: none;
     color: var(--ink-3);
+  }
+
+  /* The catchword itself. Display italic at 21px — Bodoni's floor exactly, and
+     the smallest the display face is allowed anywhere on this site, which is
+     right for a word that is a mark rather than a heading. It hangs at the
+     bottom right of the sheet because that is where a binder's eye goes.
+
+     --ink, not --ink-2: it is not a caption on the navigation, it is the sheet's
+     own statement about what follows it. No underline at rest; the affordance
+     arrives on hover and focus, so the resting page shows one word alone in the
+     corner and nothing else.
+
+     `justify-content: flex-end` is inert until `tap` turns this into a 44px
+     inline-flex box on a finger — without it a one-letter catchword ("I", "A")
+     would sit centred 22px in from the edge it is supposed to hang off.
+     ─────────────────────────────────────────────────────────────────────── */
+  .catchword {
+    justify-self: end;
+    align-self: end;
+    justify-content: flex-end;
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.3125rem;
+    line-height: 1.1;
+    color: var(--ink);
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+    transition:
+      text-decoration-color var(--dur-2) var(--ease-snap),
+      text-decoration-thickness var(--dur-2) var(--ease-snap);
+  }
+
+  .catchword:hover,
+  .catchword:focus-visible {
+    text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* ═══ Forced colours ════════════════════════════════════════════════════════
+   The cancelled plate is the one thing on this route that is a drawing rather
+   than text, and forced colours would otherwise force the copper's fill to
+   CanvasText — a solid black rectangle with two invisible strokes across it,
+   which is the opposite of the mark. `forced-color-adjust: none` on the <svg>
+   inherits to both the ground and the strokes, and the two system colours are
+   then set explicitly: bare Canvas for the plate, CanvasText for the burin.
+
+   The plate mark around it is a border and is forced to CanvasText on its own,
+   which is correct. The caption is real text and needs nothing.
+   ═════════════════════════════════════════════════════════════════════════ */
+@media (forced-colors: active) {
+  .cancel-plate {
+    forced-color-adjust: none;
+  }
+
+  .cancel-ground {
+    fill: Canvas;
+  }
+
+  .cancel-stroke {
+    stroke: CanvasText;
   }
 }
 
@@ -521,6 +743,10 @@
      -0.06em is the bleed; see the note in case.css §figure. */
   font-size: clamp(4.5rem, 21vw, 14rem);
   margin-inline-end: -0.06em;
+  /* The other half of the morph from the contents page; the ident is written
+     on .figure-bleed by number-plate.tsx. Absent, this computes to `none` and
+     the navigation is the plain crossfade it was. */
+  view-transition-name: var(--vt-fig);
 }
 
 .close-figure .numeral {
@@ -560,9 +786,31 @@
   .plate-figure,
   .plate-grid > li,
   .close-figure,
+  .cancel,
   .colophon,
   .plate-foot {
     break-inside: avoid;
+  }
+
+  /* ── The catchword is the one element on this site that GAINS meaning on
+     paper. On screen it is a nice mark and a second route to the next case
+     study; printed and put down on a table next to seven other sheets, it is
+     the thing that says which sheet follows this one — which is the entire
+     reason catchwords were ever set. So it prints, at full size, hanging in the
+     corner, with the sheet ending directly under it rather than five rems of
+     empty paper later. Nothing here hides it and nothing may: no `display:
+     none`, no colour it cannot hold, no reliance on a hover state.
+
+     Its href is internal, so globals' print rule that spells out external URLs
+     after a link does not fire on it — the word prints alone, as a catchword
+     must. ─────────────────────────────────────────────────────────────────── */
+  .plate-foot {
+    padding-block-end: 0;
+  }
+
+  .catchword {
+    color: var(--ink);
+    text-decoration-color: transparent;
   }
 
   /* No orphaned running head: a movement's numeral and name go with its

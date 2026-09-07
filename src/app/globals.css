@@ -683,7 +683,21 @@
    radius (2px, the bevel a plate edge has) and the only shadow (a 1px inner
    highlight along the top, which is the light catching the deboss).
    Drawn on a ::before at a negative inset, so it never touches layout and
-   cannot move anything. */
+   cannot move anything.
+
+   ── The wiped tone ──
+   The rectangle INSIDE the mark is not bare paper. A plate is inked and then
+   wiped, and the sheet comes off the press a hair darker everywhere the plate
+   touched it — so the mark is not a drawn border, it is the boundary of an
+   area that was pressed. One flat --ground-2, edge to edge, ending exactly on
+   the debossed line, on a second pseudo-element behind the content.
+
+   `z-index: -1` puts it behind the element's own children while staying inside
+   the nearest stacking context (`main > *` is z: --z-content, so each section
+   is its own). It paints above that context's background and below everything
+   in it, which is why no consumer may sit on an opaque ancestor — verified on
+   the home portrait, the About face, .cn-plot on both constellations,
+   .plate-figure and the plate grid on a case study. */
 @utility plate-mark {
   position: relative;
   &::before {
@@ -695,6 +709,33 @@
     box-shadow: inset 0 1px 0 rgba(20, 18, 14, 0.1);
     pointer-events: none;
   }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: calc(-1 * var(--plate-inset, 18px));
+    z-index: -1;
+    background: var(--ground-2);
+    border-radius: var(--plate-radius);
+    pointer-events: none;
+  }
+}
+
+/* board.css hand-rolls the same mark on the three figure modes of `.board`
+   (it predates this utility and is owned by dot-board.tsx). The wiped tone
+   belongs to every plate mark on the sheet, including the two largest ones —
+   the home portrait and the About face — so it is struck here for those three
+   modes at their own inset. If board.css ever adopts `plate-mark`, delete
+   this block; it exists only because the mark is written twice. */
+.board[data-mode="hero"]::after,
+.board[data-mode="still"]::after,
+.board[data-mode="text"]::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--plate-inset));
+  z-index: -1;
+  background: var(--ground-2);
+  border-radius: var(--plate-radius);
+  pointer-events: none;
 }
 
 /* Row-wide click target without nesting <a> inside <a>. Interactive
@@ -947,6 +988,35 @@
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }
+
+  /* The swelled rule under the home colophon is a background, and forced
+     colours flattens every background to Canvas — measured: #67604f becomes
+     #000 on #000 and the rule disappears entirely. It is the mark that says a
+     colophon starts here, so it comes back in system ink.
+
+     The chop is the same problem in SVG: a 1px --line ring and a 10%-ink
+     deboss arc, both of which forced colours has nothing to keep. The ring and
+     the initials come back as CanvasText; the deboss highlight does not,
+     because a highlight inside a two-colour palette is a second ring. The
+     wiped plate tone is deliberately NOT re-asserted — it is texture, not
+     meaning, and the plate mark's own 1px border already becomes CanvasText. */
+  .colophon-rule {
+    background: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .chop-mark {
+    forced-color-adjust: none;
+  }
+  .chop-ring {
+    stroke: CanvasText;
+  }
+  .chop-deboss {
+    stroke: Canvas;
+  }
+  .chop-initials {
+    fill: CanvasText;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1033,5 +1103,66 @@
   }
   to {
     --ground: #faf8f4; /* --ground */
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   12. The second plate, in register
+
+   A two-colour intaglio is two pulls. The black plate is inked, wiped and
+   pulled; the sheet is laid back on the press against the lay edges, and the
+   second plate is brought down on top of it. It cannot arrive at the same
+   instant as the first, and the whole craft of a two-colour print is that it
+   arrives in the RIGHT PLACE — registered to marks the printer struck on both
+   plates for exactly that purpose.
+
+   So the sheet loads carrying only the black plate, and every vermilion mark
+   registers a beat later: 3px up and left, at zero, until 460ms, then 200ms to
+   settle into place. That is the only reason the second ink is rationed to four
+   places — it is a second pass through the press, not a highlighter.
+
+   ── The contract ──
+   Put `data-sun` on an element that is drawn in the second ink and is part of
+   the printed image. Nothing else is needed: the attribute is the whole API,
+   it composes with any layout, and it needs no JavaScript, so a visitor with
+   scripting off sees the register too.
+
+   Expected carriers, and only these:
+     · `.cn-today`   — the TODAY rule on the constellation, on / and /about
+                       (owned by constellation.*; this rule is written so that
+                        adding the attribute there is the entire change).
+     · any future mark that is genuinely a second pull.
+
+   NOT carriers, deliberately: the register square on a current item (.led) and
+   the status LED are register marks, which are struck on the plate itself and
+   are therefore part of the first pull; the focus ring and ::selection are the
+   browser's, not the press's, and a control that waits 460ms to show focus is
+   broken. The datum in his eye is drawn on the canvas and lands with the field.
+
+   `translate`, not `transform`: an independent property so a carrier that
+   already positions itself with a transform is not clobbered by this. Both
+   animated properties are compositor-only, so this costs no layout and CLS
+   stays 0. It is bounded and self-terminating — 200ms, `both`, no iteration —
+   so an idle page after 660ms is drawing nothing.
+
+   Reduced motion gets the finished state with no animation at all: the rule
+   lives inside `motion-ok`, so under either motion switch the declaration is
+   never applied and the mark is simply in place at frame zero. (§9's
+   `animation: none !important` is a second belt for the same trouser.)
+   ───────────────────────────────────────────────────────────── */
+[data-sun] {
+  @variant motion-ok {
+    animation: register 200ms var(--ease-out) 460ms both;
+  }
+}
+
+@keyframes register {
+  from {
+    translate: -3px -3px;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
   }
 }

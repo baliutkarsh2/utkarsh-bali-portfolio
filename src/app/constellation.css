@@ -22,6 +22,24 @@
    Colour carries no information here. Lanes are told apart by position and
    label, status by the shape of a mark. The one --sun element is `.cn-today`,
    this chart's single licence for the second ink.
+
+   Two things print rather than animate, and both are things a PRESS does:
+
+   THE PULL. An etching press does not show you a print all at once — the bed
+   travels under the roller and the sheet emerges edge first. So on the one
+   frame the plate enters view, a hard edge crosses it at about 1500 CSS px/s
+   and everything behind that edge is simply THERE: hairlines, bands, marks,
+   year rules, the plate mark itself. Nothing fades, nothing slides, nothing
+   staggers. It is one `clip-path` and it runs once. Because the chart
+   transposes below 48rem the pull transposes with it: down the block axis on
+   a phone, across the inline axis above it.
+
+   THE REGISTER. Four crosshairs just inside the plate mark's corners are the
+   marks a printer lays so a second plate can be laid onto the first, and the
+   vermilion TODAY rule terminates in a tick at each end — those are the
+   SECOND plate's marks. The site's four-place licence for the second ink is
+   an argument about two-colour printing, and this is where it is drawn
+   instead of asserted.
    ───────────────────────────────────────────────────────────────────────── */
 
 @layer components {
@@ -90,6 +108,16 @@
        shell only has 1.25rem of padding on a phone. */
     --plate-inset: 12px;
 
+    /* The roller's clip box. It bleeds past the plate mark — `--plate-inset`
+       plus that mark's own 1 px border, plus a pixel of slack — so the mark
+       is printed by the same pass rather than sitting outside it, and so the
+       last frame of the pull clips nothing that the settled plate shows. */
+    --cn-bleed: calc(-1 * (var(--plate-inset) + 3px));
+    /* Duration is distance ÷ 1500 CSS px/s, stepped by breakpoint because CSS
+       cannot divide a length by a speed. Here the pull runs down the block
+       axis over the header band plus the track: 7rem + 40rem ≈ 750 px. */
+    --cn-pull-dur: 500ms;
+
     display: grid;
     grid-template-columns: var(--cn-axis-w) repeat(var(--lanes), minmax(0, 1fr));
     grid-template-rows: var(--cn-head-h) var(--cn-track-h);
@@ -128,6 +156,92 @@
   .cn-today {
     height: 2px;
     background: var(--sun);
+  }
+
+  /* The second plate's register marks. The four black crosshairs below are
+     the first plate's; a printer lays a matching pair on the second so the
+     two impressions land on top of each other. The vermilion rule terminates
+     in one at each end, which is what makes the four-place licence for this
+     ink legible as a fact about two-colour printing rather than a house rule.
+     5 px, perpendicular, centred on the rule it belongs to. */
+  .cn-today::before,
+  .cn-today::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -1.5px;
+    width: 1px;
+    height: 5px;
+    background: var(--sun);
+  }
+
+  .cn-today::after {
+    left: auto;
+    right: 0;
+  }
+
+  /* ═══ The first plate's register marks ═════════════════════════════════════
+     Four crosshairs just inside the corners of the plate mark, each two 1 px
+     `--line` rules — the same hairline the year rules are drawn in, because
+     they are the same plate. Out of flow, so the grid never sees them; they
+     are inside the roller's clip box, so they print with the pass. */
+  .cn-register {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .cn-reg {
+    /* Half the length of each arm, and how far inside the plate mark's own
+       corner the crosshair's centre sits. */
+    --cn-reg-arm: 5px;
+    --cn-reg-in: 8px;
+    --cn-reg-o: calc(var(--cn-reg-in) - var(--plate-inset) - var(--cn-reg-arm));
+
+    position: absolute;
+    width: calc(2 * var(--cn-reg-arm) + 1px);
+    height: calc(2 * var(--cn-reg-arm) + 1px);
+  }
+
+  .cn-reg::before,
+  .cn-reg::after {
+    content: "";
+    position: absolute;
+    background: var(--line);
+  }
+
+  .cn-reg::before {
+    left: 0;
+    right: 0;
+    top: var(--cn-reg-arm);
+    height: 1px;
+  }
+
+  .cn-reg::after {
+    top: 0;
+    bottom: 0;
+    left: var(--cn-reg-arm);
+    width: 1px;
+  }
+
+  .cn-reg[data-corner="tl"],
+  .cn-reg[data-corner="tr"] {
+    top: var(--cn-reg-o);
+  }
+
+  .cn-reg[data-corner="bl"],
+  .cn-reg[data-corner="br"] {
+    bottom: var(--cn-reg-o);
+  }
+
+  .cn-reg[data-corner="tl"],
+  .cn-reg[data-corner="bl"] {
+    left: var(--cn-reg-o);
+  }
+
+  .cn-reg[data-corner="tr"],
+  .cn-reg[data-corner="br"] {
+    right: var(--cn-reg-o);
   }
 
   /* ═══ Lane labels ══════════════════════════════════════════════════════════
@@ -482,9 +596,14 @@
       --cn-lane-h: 4.25rem;
       --cn-axis-h: 2.5rem;
       --plate-inset: 20px;
+      /* The pull runs across now, over a plate about 700 px wide at this
+         width. The two steps below carry it out to 1440. */
+      --cn-pull-dur: 480ms;
 
       grid-template-columns: var(--cn-label-w) minmax(0, 1fr);
-      grid-template-rows: repeat(var(--lanes), var(--cn-lane-h)) var(--cn-axis-h);
+      grid-template-rows: repeat(var(--lanes), var(--cn-lane-h)) var(
+          --cn-axis-h
+        );
       margin-top: var(--space-5);
     }
 
@@ -507,6 +626,23 @@
 
     .cn-today {
       width: 2px;
+    }
+
+    /* The rule lies down, so its register ticks do too: the ends are now the
+       top and the bottom of the plate. */
+    .cn-today::before,
+    .cn-today::after {
+      top: 0;
+      bottom: auto;
+      left: -1.5px;
+      right: auto;
+      width: 5px;
+      height: 1px;
+    }
+
+    .cn-today::after {
+      top: auto;
+      bottom: 0;
     }
 
     .cn-lane-label {
@@ -667,6 +803,15 @@
       background-image: none;
     }
 
+    /* The TODAY rule's own register ticks. They carry no information the rule
+       does not, but a rule that loses its terminals in High Contrast reads as
+       a stray hairline rather than as a mark. */
+    .cn-today::before,
+    .cn-today::after {
+      forced-color-adjust: none;
+      background: CanvasText;
+    }
+
     .cn-lane[data-bar]::before {
       opacity: 0.45;
     }
@@ -678,6 +823,10 @@
      1.5 rem the chart puts between its lane labels and the plot, so the two
      type columns share one left edge. */
   @media (width >= 64rem) {
+    .cn-plot {
+      --cn-pull-dur: 640ms; /* ≈ 960 px of plate */
+    }
+
     .cn-record-entry {
       grid-template-columns: var(--cn-margin) minmax(0, 1fr);
       row-gap: 0;
@@ -691,6 +840,82 @@
          chart's plot area, whose lane labels pad by the same 1.5 rem inside
          the same 10.5 rem. Measured: both at x=256 on a 1440 screen. */
       padding-right: var(--space-3);
+    }
+  }
+
+  @media (width >= 80rem) {
+    .cn-plot {
+      /* Measured: 1406 px of clip box at 1440 wide, which is 1562 px/s. */
+      --cn-pull-dur: 900ms;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     THE PULL — the sheet leaves the rollers.
+     ═════════════════════════════════════════════════════════════════════════
+
+     Three things make this cost nothing it should not cost.
+
+     `screen and` is on the media query, not a print override further down: a
+     sheet coming off a press is a screen event, and gating it here means the
+     printed page has no clipped plate to un-clip and no specificity fight.
+
+     The cold state is the CLIPPED one and it is gated on `:root.js` as well as
+     on both motion switches, so the finished plate is what a visitor without
+     JavaScript, and a visitor who asked for less motion, gets before the first
+     paint — same geometry, same ink, no arrival. Nothing here touches layout,
+     so CLS is unmoved either way.
+
+     `backwards`, not `forwards`. The animation ends and the element goes back
+     to having no `clip-path` at all, which matters for one concrete reason: a
+     mark at the edge of the plate draws a focus ring 3 px outside itself, and
+     a permanent clip box would cut it. The last frame already shows
+     everything the settled plate shows, so the hand-back is invisible.
+
+     `data-in` comes from <Reveal>, which sets it exactly once and unobserves —
+     so the sequence is bounded and self-terminating for free, and there is no
+     second pull to schedule. Idle costs zero frames. */
+  @media screen and (prefers-reduced-motion: no-preference) {
+    :root.js:not([data-motion="reduce"]) .cn-sheet:not([data-in]) .cn-plot {
+      /* Inked plate, not yet through the rollers. */
+      clip-path: inset(var(--cn-bleed) var(--cn-bleed) 100% var(--cn-bleed));
+    }
+
+    :root.js:not([data-motion="reduce"]) .cn-sheet[data-in] .cn-plot {
+      /* Linear, because a roller turns at one speed. */
+      animation: cn-pull-y var(--cn-pull-dur) linear backwards;
+    }
+
+    /* The second plate registers onto the FIRST, not onto the document.
+       globals.css fires `register` 460 ms after load, which is right for a
+       mark that is on screen at load and wrong for this one: the chart is
+       below the fold on both routes, so the vermilion had always finished
+       registering long before the roller printed the black under it, and the
+       whole point of the beat was lost. Re-time it against the sheet's own
+       arrival — `data-in` lands once, when the plate comes into view — so the
+       sequence a visitor actually sees is the black plate pulled, and then the
+       second plate laid onto it. The keyframe, the distance and the duration
+       are still globals'; only the clock moves. Before `data-in` the second
+       ink is simply not on the sheet yet. */
+    :root.js:not([data-motion="reduce"]) .cn-sheet:not([data-in]) [data-sun] {
+      animation: none;
+      opacity: 0;
+    }
+
+    :root.js:not([data-motion="reduce"]) .cn-sheet[data-in] [data-sun] {
+      animation: register 200ms var(--ease-out) 760ms both;
+    }
+
+    /* Above 48rem the chart transposes and so does the pull: the bed travels
+       under the roller along the inline axis instead of the block one. */
+    @media (width >= 48rem) {
+      :root.js:not([data-motion="reduce"]) .cn-sheet:not([data-in]) .cn-plot {
+        clip-path: inset(var(--cn-bleed) 100% var(--cn-bleed) var(--cn-bleed));
+      }
+
+      :root.js:not([data-motion="reduce"]) .cn-sheet[data-in] .cn-plot {
+        animation-name: cn-pull-x;
+      }
     }
   }
 
@@ -712,5 +937,34 @@
       margin-inline: 0;
       padding-inline: 0;
     }
+  }
+}
+
+/* One pass of the roller, on whichever axis the chart is drawn on. The edge
+   is hard because a roller's is: nothing behind it fades in, nothing slides,
+   and there is no stagger — the marks are simply already printed when the
+   edge has gone past them. Both end on the bleed rather than on zero, so the
+   plate mark comes through with the impression instead of being cropped off
+   it. Unlayered on purpose: @keyframes are not affected by @layer, and every
+   other keyframe on this site is declared the same way. */
+@keyframes cn-pull-y {
+  from {
+    clip-path: inset(var(--cn-bleed) var(--cn-bleed) 100% var(--cn-bleed));
+  }
+  to {
+    clip-path: inset(
+      var(--cn-bleed) var(--cn-bleed) var(--cn-bleed) var(--cn-bleed)
+    );
+  }
+}
+
+@keyframes cn-pull-x {
+  from {
+    clip-path: inset(var(--cn-bleed) 100% var(--cn-bleed) var(--cn-bleed));
+  }
+  to {
+    clip-path: inset(
+      var(--cn-bleed) var(--cn-bleed) var(--cn-bleed) var(--cn-bleed)
+    );
   }
 }

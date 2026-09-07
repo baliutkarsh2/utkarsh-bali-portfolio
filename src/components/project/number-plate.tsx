@@ -1,8 +1,13 @@
+import type { CSSProperties } from "react";
 import { Numeral } from "@/components/ui/numeral";
 import type { Project } from "@/content";
 
 type FigureProps = {
   project: Pick<Project, "metric" | "metricLabel">;
+};
+
+type PlateFigureProps = {
+  project: Pick<Project, "slug" | "metric" | "metricLabel">;
 };
 
 /**
@@ -25,9 +30,24 @@ type FigureProps = {
  * The figure is --ink, like every figure on the site. Vermilion is licensed to
  * four places and none of them is a case study.
  */
-export function PlateFigure({ project }: FigureProps) {
+export function PlateFigure({ project }: PlateFigureProps) {
   return (
-    <div className="figure-bleed">
+    /* The number you clicked is the thing that survives the change. The
+       contents page gives the same figure `view-transition-name:
+       metric-<slug>`, so navigating from the index morphs THAT numeral into
+       this bled one and crossfades everything else under it -- the number is
+       the argument of both pages and the only object with a continuous
+       identity across them.
+
+       It goes on the frontispiece figure and NOT on the reprise at the close
+       of Impact: two elements sharing one view-transition-name makes the
+       browser skip the whole transition rather than degrade it. `.figure-hero`
+       in case.css is the selector precisely because it excludes
+       `.close-figure`. */
+    <div
+      className="figure-bleed"
+      style={{ "--vt-fig": `metric-${project.slug}` } as CSSProperties}
+    >
       <p className="figure-hero">
         <Numeral value={project.metric} size="l" />
       </p>

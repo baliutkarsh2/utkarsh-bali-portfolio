@@ -23,6 +23,11 @@ import { projects } from "./projects";
 
 const decimal = new Intl.NumberFormat("en-US");
 
+/** Small counts are spelled out: the colophon is prose, and prose does not
+ *  set a figure for a number you can say. Anything past this stays a numeral. */
+const WORDS = "zero one two three four five six seven eight nine ten eleven twelve".split(" ");
+const spell = (n: number) => WORDS[n] ?? decimal.format(n);
+
 /* ── Roman numerals ──────────────────────────────────────────────────────────
    For the state and the month only. The day and the year stay arabic: a whole
    date in roman is a puzzle, and an imprint is a record, not a riddle. */
@@ -77,5 +82,5 @@ export const colophonNote =
   `The field is not a picture of a print but a drawing, remade on each visit, and under a fine ` +
   `pointer it burnishes: the marks shrink, the paper opens, and a highlight is polished into the ` +
   `plate the way a burnisher opens one in copper. ` +
-  `Set in Bodoni Moda and Source Serif 4 with IBM Plex Mono kept for data, composed around ` +
-  `${projects.length} projects and their dates, and pulled as an open edition.`;
+  `Set in Bodoni Moda and Source Serif 4, with IBM Plex Mono kept for data; composed around ` +
+  `${spell(projects.length)} projects and the dates they actually happened on; pulled as an open edition.`;

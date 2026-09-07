@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "eslint . && node scripts/check-tokens.mjs && node scripts/check-tracked.mjs && node scripts/check-density.mjs",
+    "prebuild": "eslint . && node scripts/check-tokens.mjs && node scripts/check-tracked.mjs && node scripts/check-density.mjs && node scripts/check-plates.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -12,6 +12,7 @@
     "check:density": "node scripts/check-density.mjs",
     "check:tokens": "node scripts/check-tokens.mjs",
     "check:tracked": "node scripts/check-tracked.mjs",
+    "check:plates": "node scripts/check-plates.mjs",
     "check:screen": "python scripts/check-screen.py"
   },
   "dependencies": {

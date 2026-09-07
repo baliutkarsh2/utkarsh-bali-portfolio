@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { CopyEmail } from "@/components/interactive/copy-email";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { profile, socials } from "@/content";
+import { colophonNote } from "@/content/colophon";
 import { recentPosts } from "@/lib/writing";
 
 const TITLE = "I finish at Purdue in December.";
@@ -94,6 +95,19 @@ export function Contact({ index }: { index?: string }) {
 
       <div className="contact-board">
         <DotBoard mode="afterimage" source="contact" alt="" />
+      </div>
+
+      {/* The colophon. Every interior route ends on the footer's imprint, which
+          is the machine version of these facts in eleven-pixel mono; the home
+          page is the title page, and a title page carries the real thing — a
+          book's colophon, in prose, in the reading face, saying how the object
+          in your hands was made. It is the last thing on the sheet before the
+          trim, and it exists here only. Text and every figure in it come from
+          src/content/colophon.ts, which reads the bake rather than repeating
+          it. */}
+      <div className="colophon">
+        <div className="colophon-rule" />
+        <p className="colophon-note">{colophonNote}</p>
       </div>
     </section>
   );

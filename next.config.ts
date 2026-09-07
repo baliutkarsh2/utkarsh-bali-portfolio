@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import createMDX from "@next/mdx";
@@ -5,6 +6,40 @@ import type { NextConfig } from "next";
 import codeTheme from "./src/lib/code-theme.json" with { type: "json" };
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * The state number in the footer's imprint (src/content/colophon.ts).
+ *
+ * A print's *state* is how many times the plate has been pulled and reworked;
+ * for this site that is the commit count, which git already keeps. Read here
+ * rather than in a generated file so there is no new build step, no new
+ * dependency, no Python and nothing to commit — `env` inlines the value at
+ * build time and the footer reads it as a plain string.
+ *
+ * STATE_FLOOR is the last state recorded by hand, and the value is the MAX of
+ * the two, for a reason worth writing down: a CI clone is usually shallow, so
+ * `git rev-list --count HEAD` there answers "how many commits were fetched",
+ * not "how many commits exist" — on Vercel that is a single digit. Taking the
+ * max means the number is exact locally, never wrong by orders of magnitude in
+ * CI, and never goes backwards. Raise the floor when it drifts far enough to
+ * bother you; it is a floor, not a cache.
+ */
+const STATE_FLOOR = 52;
+
+function pressState(): string {
+  try {
+    const out = execFileSync("git", ["rev-list", "--count", "HEAD"], {
+      cwd: projectRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const n = Number.parseInt(out.trim(), 10);
+    if (Number.isFinite(n) && n > STATE_FLOOR) return String(n);
+  } catch {
+    // No git, no repository, or a build image without either: use the floor.
+  }
+  return String(STATE_FLOOR);
+}
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -30,6 +65,8 @@ const nextConfig: NextConfig = {
    * for everyone else, since the directory does not exist anywhere but here.
    */
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  /** The plate's state, for the imprint. See pressState() above. */
+  env: { PRESS_STATE: pressState() },
   // Both of these work around OneDrive's multi-lockfile detection. Do not remove.
   outputFileTracingRoot: projectRoot,
   turbopack: {

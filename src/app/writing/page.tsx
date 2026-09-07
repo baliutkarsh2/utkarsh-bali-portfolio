@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { DotBoard } from "@/components/interactive/dot-board";
+import { plateById } from "@/content/plates";
 import { formatPostDate, publishedPosts } from "@/lib/writing";
 
 export const metadata: Metadata = {
@@ -33,6 +35,7 @@ export const metadata: Metadata = {
  */
 export default function WritingPage() {
   const posts = publishedPosts();
+  const sky = plateById.get("sky")!;
   const [lead, ...rest] = posts;
 
   if (!lead) {
@@ -40,7 +43,9 @@ export default function WritingPage() {
       <header className="shell pt-24 pb-16 md:pt-28">
         <p className="data text-ink-3">Writing · n = 0</p>
         <h1 className="mt-6 text-display-l text-ink">Nothing published yet.</h1>
-        <p className="broadside-note caption">The first essay is being written.</p>
+        <p className="broadside-note caption">
+          The first essay is being written.
+        </p>
       </header>
     );
   }
@@ -60,27 +65,56 @@ export default function WritingPage() {
   return (
     <>
       <header className="shell broadside pt-24 pb-6 md:pt-28">
-        <p className="data text-ink-3">
-          Writing · n = {posts.length}
-        </p>
+        {/* The type is one grid child so the plate beside it can be the other.
+            Without the wrapper the figure has to span rows it cannot name --
+            `grid-row: 1 / -1` resolves against the EXPLICIT grid, which has no
+            rows here, so it collapses to a single row and stretches it to the
+            plate's full height, pushing the title 600px down the sheet. */}
+        <div className="broadside-type">
+          <p className="data text-ink-3">Writing · n = {posts.length}</p>
 
-        {/* The essay's title is the page's h1, because the essay is the
+          {/* The essay's title is the page's h1, because the essay is the
             page. The masthead line above says which room you are in. */}
-        <h1 className="broadside-title mt-8 text-display-l">{title}</h1>
+          <h1 className="broadside-title mt-8 text-display-l">{title}</h1>
 
-        {lead.summary && (
-          <p className="broadside-standfirst text-lede">{lead.summary}</p>
-        )}
+          {lead.summary && (
+            <p className="broadside-standfirst text-lede">{lead.summary}</p>
+          )}
 
-        <hr className="broadside-rule" />
+          <hr className="broadside-rule" />
 
-        <div className="broadside-imprint meta">
-          <p>{external ? external.publisher : "Here"}</p>
-          <p>
-            <time dateTime={lead.date}>{formatPostDate(lead.date)}</time>
-          </p>
-          <p>{lead.readingMinutes} min read</p>
+          <div className="broadside-imprint meta">
+            <p>{external ? external.publisher : "Here"}</p>
+            <p>
+              <time dateTime={lead.date}>{formatPostDate(lead.date)}</time>
+            </p>
+            <p>{lead.readingMinutes} min read</p>
+          </div>
         </div>
+
+        {/* The plate: the sky that was actually over him the night this was
+            published, computed from a catalogue for that place and that hour.
+            It earns the page rather than filling it -- the essay is about a
+            quiet mind, God, family and infinity, and this is the only object
+            on the site that is a picture of the thing the words are about.
+
+            It is also the site's one INVERTED plate. Every other picture here
+            is ink emerging from bare paper; this is a solid field of ink with
+            2,307 stars punched out of it as holes of paper. Same screen, same
+            transfer, opposite polarity -- which is why it belongs beside the
+            portrait rather than looking like a different site. */}
+        <figure className="broadside-plate">
+          <DotBoard
+            mode="still"
+            source={sky.id}
+            alt={sky.alt}
+            fallback={sky.still}
+            className="sky-board"
+          />
+          <figcaption className="caption">
+            {sky.title}. {sky.subject}.
+          </figcaption>
+        </figure>
       </header>
 
       <div className="shell broadside pb-8">
@@ -96,7 +130,11 @@ export default function WritingPage() {
               <li key={post.slug}>
                 <h2 className="broadside-rest-title text-display-s font-medium">
                   {post.external ? (
-                    <a href={post.href} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={post.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {post.title}
                       <span className="sr-only"> (opens in a new tab)</span>
                     </a>
@@ -106,8 +144,8 @@ export default function WritingPage() {
                 </h2>
                 <p className="broadside-rest-meta meta">
                   {post.external ? post.external.publisher : "Here"} ·{" "}
-                  <time dateTime={post.date}>{formatPostDate(post.date)}</time> ·{" "}
-                  {post.readingMinutes} min read
+                  <time dateTime={post.date}>{formatPostDate(post.date)}</time>{" "}
+                  · {post.readingMinutes} min read
                   {post.draft ? " · Draft" : ""}
                 </p>
               </li>

@@ -5,6 +5,7 @@ import type { Project } from "@/content";
 import { CloseFigure } from "@/components/project/number-plate";
 import { Reveal } from "@/components/interactive/reveal";
 import { DotMask } from "@/components/ui/dot-mask";
+import { CODA, MOVEMENTS, collationOf, hasCoda } from "@/lib/corpus";
 import { ordinal } from "@/lib/utils";
 
 /**
@@ -59,20 +60,25 @@ export function ProjectBody({ project }: { project: Project }) {
   // takes its standfirst the same way every other movement does: the first
   // sentence of the first learning, with the remainder of that learning and
   // the rest of the list under it. Nothing is repeated and nothing is dropped.
-  const coda = learnings.length > 0 ? splitLead(learnings[0]) : null;
+  //
+  // `hasCoda` and the four titles come from src/lib/corpus.ts rather than being
+  // written here, because the colophon's collation line counts the movements
+  // this page renders. One statement, two consumers: a movement cannot be
+  // removed from the page and go on being counted underneath it.
+  const coda = hasCoda(project) ? splitLead(learnings[0]) : null;
   const codaRest = coda ? [coda.rest, ...learnings.slice(1)].filter(Boolean) : [];
 
   return (
     <div className="movements">
-      <Movement n={0} title="Problem" id="problem" lead={problem.lead}>
+      <Movement n={0} title={MOVEMENTS[0]} id="problem" lead={problem.lead}>
         {problem.rest && <p className="movement-copy text-body">{problem.rest}</p>}
       </Movement>
 
-      <Movement n={1} title="Approach" id="approach" lead={approach.lead}>
+      <Movement n={1} title={MOVEMENTS[1]} id="approach" lead={approach.lead}>
         {approach.rest && <p className="movement-copy text-body">{approach.rest}</p>}
       </Movement>
 
-      <Movement n={2} title="How it works" id="built" lead={how.lead}>
+      <Movement n={2} title={MOVEMENTS[2]} id="built" lead={how.lead}>
         {how.rest && <p className="movement-copy text-body">{how.rest}</p>}
         <Schematic project={project} />
         {project.cover && (
@@ -92,14 +98,14 @@ export function ProjectBody({ project }: { project: Project }) {
         )}
       </Movement>
 
-      <Movement n={3} title="Impact" id="impact" lead={impact.lead}>
+      <Movement n={3} title={MOVEMENTS[3]} id="impact" lead={impact.lead}>
         {impact.rest && <p className="movement-copy text-body">{impact.rest}</p>}
         {/* The argument returns to its number. */}
         <CloseFigure project={project} />
       </Movement>
 
       {coda && (
-        <Movement n={4} title="What I’d do differently" id="learnings" lead={coda.lead}>
+        <Movement n={4} title={CODA} id="learnings" lead={coda.lead}>
           {codaRest.map((item) => (
             <p key={item} className="movement-copy text-body">
               {item}
@@ -212,15 +218,21 @@ function Schematic({ project }: { project: Project }) {
 }
 
 /**
- * The colophon: stack, links, and the NDA note where there is one, at the foot
- * of the plate where an imprint goes.
+ * The colophon: stack, collation, links, and the NDA note where there is one,
+ * at the foot of the plate where an imprint goes.
  *
  * This is what the sticky rail was. A rail that follows 198 words down a page
  * is empty for most of them, and it cost three headings, a column of the grid
  * and 20rem of every wide screen to say six words of stack. The stack is one
  * line of data here, and the links are links.
+ *
+ * Two lines of Plex sit together at the top: the materials named, then the
+ * sheet collated. Under them the links — or, where there are none, the
+ * cancelled plate that says why.
  */
 export function ProjectColophon({ project }: { project: Project }) {
+  const collation = collationOf(project.slug);
+
   return (
     <section className="colophon sheet-row shell" aria-labelledby="colophon-title">
       <h2 id="colophon-title" className="movement-title meta">
@@ -232,7 +244,19 @@ export function ProjectColophon({ project }: { project: Project }) {
           {project.stack.join("  ·  ")}
         </p>
 
-        {project.links.length > 0 && (
+        {collation && (
+          /* The collation formula: every value counted off this project's own
+             record in src/lib/corpus.ts, at module scope, once per build. The
+             separators are drawn in CSS with empty alt text, so the line is
+             painted as a formula and announced as a list of terms. */
+          <p className="colophon-collation">
+            {collation.terms.map((term) => (
+              <span key={term}>{term}</span>
+            ))}
+          </p>
+        )}
+
+        {project.links.length > 0 ? (
           <ul className="colophon-links">
             {project.links.map((link) => (
               <li key={link.href}>
@@ -249,6 +273,8 @@ export function ProjectColophon({ project }: { project: Project }) {
               </li>
             ))}
           </ul>
+        ) : (
+          <CancelledPlate />
         )}
 
         {project.confidential && (
@@ -259,5 +285,67 @@ export function ProjectColophon({ project }: { project: Project }) {
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * PLATE CANCELLED.
+ *
+ * Three of the eight projects carry no link at all, and until now that read as
+ * a missing field: the row where every other case study has a "Source" or a
+ * "Watch the demo" was simply not there, and absence is indistinguishable from
+ * oversight.
+ *
+ * A printer closing an edition takes a burin to the copper and scores the plate
+ * through, so that no further impressions can ever be pulled from it. The
+ * cancelled plate is then kept and often printed *once more*, cancelled, as the
+ * record that the edition is closed. That is exactly the right object here,
+ * because the reason there is no screenshot is the same reason a cancelled plate
+ * makes no prints: the work exists, the plate exists, and nothing more comes off
+ * it. It says "closed", not "missing".
+ *
+ * The strokes are ruled at ±22.5°, which is not a picked angle: it is this
+ * site's own screen angle (§5.3.3 — not 45°, which aligns with the pixel
+ * diagonal and with every rule on the page). The cancellation is cut at the
+ * angle the plate was screened at.
+ *
+ * Rendered on the *absence of a link*, never on the `confidential` flag: the
+ * mark has to be a consequence of the record, so it can never appear as
+ * decoration beside a working link. On the five projects that have one, this
+ * function is not called at all.
+ *
+ * The caption is real DOM text in a real <figcaption> and is deliberately not
+ * aria-hidden. "Under NDA" is a fact about the work and it stays crawlable,
+ * announced, and selectable; the drawing above it is the only part that is
+ * decorative, and it is the only part marked so.
+ */
+function CancelledPlate() {
+  return (
+    <figure className="cancel">
+      {/* 168 × 104 with the strokes struck corner-to-edge through the centre.
+          tan(22.5°) × 84 = 34.79, so a line through (84, 52) at 22.5° leaves
+          the plate at y = 52 ± 34.79 on the left and right edges — the full
+          width of the copper, which is how far a burin goes. */}
+      <span className="cancel-well plate-mark">
+        <svg
+          className="cancel-plate"
+          viewBox="0 0 168 104"
+          width="168"
+          height="104"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect className="cancel-ground" x="0" y="0" width="168" height="104" />
+          <path className="cancel-stroke" d="M0 17.21 L168 86.79" />
+          <path className="cancel-stroke" d="M0 86.79 L168 17.21" />
+        </svg>
+      </span>
+
+      <figcaption className="cancel-note">
+        <span>Plate cancelled</span>
+        <span>NDA</span>
+        <span>No impressions</span>
+      </figcaption>
+    </figure>
   );
 }

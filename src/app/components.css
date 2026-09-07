@@ -26,6 +26,20 @@
   }
 }
 
+/* The chop coming down. `scale`, not `transform: scale()`, so nothing an
+   author puts on the same element is clobbered; compositor-only, so the press
+   costs no layout. */
+@keyframes chop-strike {
+  from {
+    opacity: 0;
+    scale: 1.06;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
 @layer components {
   /* Shared: a 1.5 px dot in one pitch-square tile. The spine and the progress
      row repeat it along one axis; underlines (which animate their
@@ -646,6 +660,68 @@
   }
   .copy-email[data-state="copied"] .copy-email-label {
     color: var(--ink);
+  }
+
+  /* ── The chop (src/components/interactive/copy-email.tsx) ────────────────
+     A blind stamp: no ink at all, only pressure. It is drawn with the plate
+     mark's own two strokes and nothing else — a 1px --line ring, and the
+     deboss (`inset 0 1px 0 rgba(20,18,14,.10)` on the rectangular mark) as the
+     same circle one pixel lower, showing only across the top where a pressed
+     edge catches the light. The initials sit in --rule-mid, the tone of an
+     uninked impression rather than of a printed letter.
+
+     It is in the DOM from the first byte and only its opacity changes, so
+     striking it cannot move anything: CLS stays 0 whether or not anyone ever
+     copies the address. Nothing here is the accessible feedback; the live
+     region in the component is, and it is untouched.
+     ─────────────────────────────────────────────────────────────────────── */
+  .chop {
+    display: inline-flex;
+    flex: none;
+    align-self: center;
+    opacity: 0;
+  }
+
+  .copy-email[data-chop] .chop {
+    opacity: 1;
+  }
+
+  .chop-mark {
+    display: block;
+    overflow: visible;
+  }
+
+  .chop-ring,
+  .chop-deboss {
+    fill: none;
+    stroke-width: 1;
+  }
+
+  .chop-ring {
+    stroke: var(--line);
+  }
+
+  .chop-deboss {
+    stroke: rgba(20, 18, 14, 0.1);
+  }
+
+  .chop-initials {
+    fill: var(--rule-mid);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+  }
+
+  /* Only the instance that was clicked presses; every other one, and every
+     later page in the session, simply has it. Bounded, `both`, one iteration:
+     280 ms after the click the page is drawing nothing again. Under either
+     motion switch this rule is never applied and the chop just appears, which
+     is the finished state and is decided in CSS. */
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion="reduce"]) .copy-email[data-chop="struck"] .chop {
+      animation: chop-strike 280ms var(--ease-out) both;
+    }
   }
 
   /* ═══ Prose ═════════════════════════════════════════════════════════════════
@@ -1305,6 +1381,55 @@
     .contact-board {
       grid-column: 9 / span 4;
     }
+  }
+
+  /* ── The colophon (home only; see contact.tsx) ───────────────────────────
+     A book's colophon, set the way a book's colophon is set: a swelled rule,
+     then a short justified paragraph in the reading face at 15px, hyphenated,
+     on a 34rem measure. It is the one justified block on the site, and it is
+     justified because that is what the form is — a settled, finished block of
+     type at the back of the object, not a caption and not a footnote.
+
+     --ink-3 measures 5.89:1 on the paper, above the 4.5 floor for text this
+     size. Oldstyle figures because the numbers in it are read inside sentences
+     rather than aligned in a column; the mono lining figures the rest of the
+     site uses would stand up out of the line like a receipt.
+     ─────────────────────────────────────────────────────────────────────── */
+  .colophon {
+    grid-column: 1 / -1;
+    max-width: 34rem;
+    margin-top: var(--space-10);
+  }
+
+  /* Thin at the ends, full weight through the middle: a swelled rule, the mark
+     a printer sets under a colophon. Clipped rather than rounded — the site has
+     one radius and it belongs to the plate mark. */
+  .colophon-rule {
+    width: 9rem;
+    height: 4px;
+    background: var(--ink-3);
+    clip-path: polygon(
+      0 50%,
+      10% 12%,
+      50% 0,
+      90% 12%,
+      100% 50%,
+      90% 88%,
+      50% 100%,
+      10% 88%
+    );
+  }
+
+  .colophon-note {
+    margin: var(--space-3) 0 0;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.62;
+    color: var(--ink-3);
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+    font-variant-numeric: oldstyle-nums proportional-nums;
   }
 
   /* ── Toolkit: a table, not a scoreboard. Five hairlined rows in the

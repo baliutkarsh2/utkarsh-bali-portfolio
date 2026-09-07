@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import type { BoardField } from "@/content/portrait-types";
 import { createBoard } from "@/lib/board";
 import { motionAllowed, onMotionChange } from "@/lib/motion";
@@ -35,6 +35,18 @@ import { motionAllowed, onMotionChange } from "@/lib/motion";
  * where a 2D context cannot be had, the figure is set in type instead
  * (`.spoiled-fallback` in plates.css); the box does not change size either
  * way, so nothing moves.
+ *
+ * PULL IT AGAIN. The plate is a button, and pressing it brings the press down
+ * again: the assembly advances to the next entry in FREEZES and stops again,
+ * still short, and the readout counts the attempt. The increments shrink, so
+ * the sequence is visibly asymptotic — it converges around 574 ms of an 1100
+ * ms assembly and the last cells never arrive. That is the joke and it is
+ * also true: no amount of pressure fixes a spoiled plate.
+ *
+ * It costs one draw per click and nothing else. There is no rAF, no easing
+ * and no tween, in either motion mode — a press coming down is a discrete
+ * event, not an animation, so reduced motion and full motion do the same
+ * thing here and the site's zero-idle-frames rule is untouched.
  */
 
 /**
@@ -69,6 +81,27 @@ const FONT_WAIT_MS = 1200;
  * of the plate.
  */
 const FREEZE_MS = 400;
+
+/**
+ * Where the press stops on each successive pull, in ms into the same 1100 ms
+ * assembly. The first press-again advances 66 ms — six per cent of the whole
+ * pull — and every one after it advances 0.62 of the increment before it, so
+ * the series converges at 400 + 66/(1 − 0.62) ≈ 574 and the plate is done
+ * moving long before it is done printing.
+ *
+ * Seven is the cap, and it is not arbitrary either: by PULL VII the increment
+ * is six milliseconds, which is under half a frame at 60 Hz. A pull that
+ * cannot change a pixel is not a pull, so the press stops offering one.
+ *
+ * board.ts starts each cell growing at `600 × (0.55·dist + 0.25·(1−L) +
+ * 0.2·rand)` and takes 500 ms to grow it, so the last cells of this glyph
+ * begin at about 545 ms and finish at about 1045. At 564 they have barely
+ * started. The edges of the sheet never take.
+ */
+const FREEZES = [FREEZE_MS, 466, 507, 532, 548, 558, 564];
+
+/** The attempt, as a printer would number it. One entry per FREEZES entry. */
+const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII"];
 
 /** Below this the glyph's coverage is not ink, it is the edge of the paper. */
 const INK_FLOOR = 0.1;
@@ -207,6 +240,36 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
   const [motionEpoch, setMotionEpoch] = useState(0);
   useEffect(() => onMotionChange(() => setMotionEpoch((n) => n + 1)), []);
 
+  /**
+   * Which pull this is, 1-based. State, because it is on the page in words;
+   * `freezeRef` carries the same fact to the draw loop, which must not be
+   * torn down and rebuilt to learn it — a rebuild would restart the assembly
+   * from zero and the pulls would stop being cumulative.
+   */
+  const [attempt, setAttempt] = useState(1);
+  const freezeRef = useRef(FREEZES[0]);
+  /** Set by the running board; the click handler's one call into it. */
+  const pullRef = useRef<(() => void) | null>(null);
+  /**
+   * The press exists. False without JavaScript and false where the 2D context
+   * could not be had — in both of those the figure is type, and a button over
+   * a piece of type would be a lie. It costs no layout either way: the button
+   * is absolutely positioned over the plate.
+   */
+  const [pressable, setPressable] = useState(false);
+
+  const spent = attempt >= FREEZES.length;
+
+  const pull = useCallback(() => {
+    if (spent) return;
+    const next = attempt + 1;
+    freezeRef.current = FREEZES[next - 1];
+    setAttempt(next);
+    // One draw. No rAF, no tween, no easing, in either motion mode: the press
+    // came down, and that is a state change rather than an animation.
+    pullRef.current?.();
+  }, [attempt, spent]);
+
   useEffect(() => {
     const figure = figureRef.current;
     const canvas = canvasRef.current;
@@ -228,9 +291,11 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
       const board = createBoard(canvas, field, { mode: "still", colors, pointer: false });
       if (!board) {
         figure.dataset.plate = "fallback";
+        setPressable(false);
         return null;
       }
       figure.dataset.plate = "spoiled";
+      setPressable(true);
 
       let raf = 0;
       let t0 = 0;
@@ -261,7 +326,10 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
       // itself, which is the whole mechanism: clamp it and the picture stops.
       board.assemble(0);
 
-      const draw = (elapsed: number) => board.frame(Math.min(elapsed, FREEZE_MS));
+      // The clamp is read fresh on every draw rather than closed over, which
+      // is the whole of "pull it again": the click moves the clamp and asks
+      // for one frame, and this board never learns that anything happened.
+      const draw = (elapsed: number) => board.frame(Math.min(elapsed, freezeRef.current));
 
       const loop = (now: number) => {
         raf = 0;
@@ -270,7 +338,13 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
         const elapsed = now - t0;
         draw(elapsed);
         // No `more` check and no finish: there is no state after this one.
-        if (elapsed < FREEZE_MS) raf = requestAnimationFrame(loop);
+        if (elapsed < freezeRef.current) raf = requestAnimationFrame(loop);
+      };
+
+      // `Infinity` clamps to whatever the current freeze is, which is what a
+      // press does: it comes down all the way, and the plate stops it.
+      pullRef.current = () => {
+        if (!disposed) draw(Infinity);
       };
 
       // Synchronous, not coalesced into the next frame: reallocating the
@@ -282,7 +356,7 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
         relayout();
         // Whatever the clock says now, clamped: a resize repaints the same
         // spoiled sheet at the new size, it does not restart the press.
-        draw(t0 ? performance.now() - t0 : FREEZE_MS);
+        draw(t0 ? performance.now() - t0 : Infinity);
       };
 
       relayout();
@@ -291,14 +365,16 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
       if (motion) {
         raf = requestAnimationFrame(loop);
       } else {
-        // Reduced motion: the finished state is the frozen one, drawn once.
-        t0 = performance.now() - FREEZE_MS;
-        draw(FREEZE_MS);
+        // Reduced motion: the finished state is the frozen one, drawn once —
+        // at whichever pull the visitor has reached, so a click still lands.
+        t0 = performance.now() - freezeRef.current;
+        draw(Infinity);
       }
 
       return () => {
         if (raf) cancelAnimationFrame(raf);
         window.removeEventListener("resize", onResize);
+        pullRef.current = null;
         board.dispose();
       };
     };
@@ -332,6 +408,7 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
       if (disposed || gen !== generation) return;
       if (!field) {
         figure.dataset.plate = "fallback";
+        setPressable(false);
         return;
       }
       stop = start(field);
@@ -357,38 +434,77 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
   }, [text, motionEpoch]);
 
   return (
-    <figure
-      ref={figureRef}
-      className="spoiled-plate plate-face"
-      data-plate="lattice"
-      aria-hidden="true"
-      style={
-        {
-          "--plate-cols-lg": BOX.cols,
-          "--plate-rows-lg": BOX.rows,
-          "--plate-cols-sm": BOX.colsSm,
-          "--plate-rows-sm": BOX.rowsSm,
-        } as CSSProperties
-      }
-    >
-      <canvas ref={canvasRef} aria-hidden="true" className="spoiled-canvas" />
-
-      {/* The register mark: the cross a printer looks at to see whether the
-          sheet came through square. It sits in the margin the plate mark
-          makes, outside the image, where a real one does. */}
-      <svg
-        className="spoiled-register"
-        width="19"
-        height="19"
-        viewBox="0 0 19 19"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        aria-hidden="true"
+    <>
+      {/* The figure is no longer aria-hidden, because it contains the press.
+          Everything inside it that is a picture still is: the canvas and the
+          register mark carry their own. */}
+      <figure
+        ref={figureRef}
+        className="spoiled-plate plate-face"
+        data-plate="lattice"
+        style={
+          {
+            "--plate-cols-lg": BOX.cols,
+            "--plate-rows-lg": BOX.rows,
+            "--plate-cols-sm": BOX.colsSm,
+            "--plate-rows-sm": BOX.rowsSm,
+          } as CSSProperties
+        }
       >
-        <circle cx="9.5" cy="9.5" r="5.5" />
-        <path d="M9.5 0v19M0 9.5h19" />
-      </svg>
-    </figure>
+        <canvas ref={canvasRef} aria-hidden="true" className="spoiled-canvas" />
+
+        {/* The plate IS the button. It is rendered only once a board is
+            actually running — without JavaScript, and where the canvas could
+            not be had, this page is type and there is no press to work — and
+            it is absolutely positioned over the image, so it takes no layout
+            in either case and CLS cannot move.
+
+            aria-disabled rather than disabled at the cap: a disabled button
+            leaves the tab order and the visitor never learns why the press
+            stopped answering. This one stays reachable and its name says. */}
+        {pressable && (
+          <button
+            type="button"
+            className="spoiled-pull"
+            data-spent={spent ? "" : undefined}
+            aria-disabled={spent || undefined}
+            onClick={pull}
+          >
+            <span className="sr-only">
+              {spent
+                ? "The plate is spoiled. No further pull will take."
+                : "Pull the sheet again"}
+            </span>
+          </button>
+        )}
+
+        {/* The register mark: the cross a printer looks at to see whether the
+            sheet came through square. It sits in the margin the plate mark
+            makes, outside the image, where a real one does. */}
+        <svg
+          className="spoiled-register"
+          width="19"
+          height="19"
+          viewBox="0 0 19 19"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+          aria-hidden="true"
+        >
+          <circle cx="9.5" cy="9.5" r="5.5" />
+          <path d="M9.5 0v19M0 9.5h19" />
+        </svg>
+      </figure>
+
+      {/* The press docket, under the sheet. It is rendered on the server too,
+          at PULL I, so its box exists on the first paint and hydration adds
+          no line — the live region only ever announces a change a visitor
+          asked for. Without JavaScript it is still true: the page loaded, the
+          plate did not take, and that was pull one. */}
+      <p className="spoiled-readout meta" aria-live="polite">
+        Pull {NUMERALS[attempt - 1]} ·{" "}
+        {spent ? "the plate is spoiled" : "the plate didn’t take"}
+      </p>
+    </>
   );
 }

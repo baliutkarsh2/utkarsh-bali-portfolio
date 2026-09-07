@@ -89,6 +89,41 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   if (!project) notFound();
 
   const adjacent = adjacentProjects(slug);
+
+  /**
+   * The catchword.
+   *
+   * Before a book was bound, the last page of every gathering carried one word,
+   * alone at the bottom right: the first word of the page that followed. It was
+   * not for the reader. It was for the binder, who had a table of loose sheets
+   * and needed to know which one came next — and it is the single most beautiful
+   * piece of machinery in the history of the printed book, because it is a
+   * page's own statement about where it belongs in a sequence.
+   *
+   * This site has exactly that: `orderedProjects` is one fixed collated order,
+   * `adjacentProjects` wraps at both ends, and the route is called The Plate
+   * Book. So every sheet carries the first word of the next sheet's opening
+   * sentence, taken from `problem` — the same string the Problem movement's
+   * standfirst is cut from, so the word a reader is promised here is literally
+   * the word they meet there.
+   *
+   * It is generated from the content and therefore *cannot go stale*: reorder
+   * the projects, or rewrite an opening line, and all eight catchwords follow
+   * on the next build. There is no copy to maintain and no place to put a wrong
+   * one.
+   *
+   * Two of the eight come out as a bare single letter — "I" and "A" — and that
+   * is not a bug to be fixed. A real catchword is whatever the next page starts
+   * with, and a single letter hanging alone in the corner of a sheet is exactly
+   * what one looks like.
+   *
+   * Trailing punctuation only: a leading quote or bracket is part of the word as
+   * the next page sets it, and the binder would have copied it.
+   */
+  const catchword = adjacent
+    ? adjacent.next.problem.trim().split(/\s+/)[0].replace(/[.,;:!?)\]”’"']+$/u, "")
+    : "";
+
   const spec = [
     project.eyebrow,
     project.org ?? "Independent",
@@ -142,7 +177,9 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         <ProjectColophon project={project} />
       </article>
 
-      {adjacent && <ProjectNav prev={adjacent.prev} next={adjacent.next} />}
+      {adjacent && (
+        <ProjectNav prev={adjacent.prev} next={adjacent.next} catchword={catchword} />
+      )}
     </>
   );
 }

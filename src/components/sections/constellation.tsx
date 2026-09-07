@@ -1,6 +1,7 @@
 import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
 import { experiences, projects, statusLabel } from "@/content";
+import { Reveal } from "@/components/interactive/reveal";
 import { cn } from "@/lib/utils";
 import type { Experience, Project, ProjectStatus } from "@/content";
 
@@ -34,6 +35,22 @@ import type { Experience, Project, ProjectStatus } from "@/content";
       project status by the shape of its mark (filled shipped, half-filled
       ongoing, open research). The single vermilion element on this screen is
       the TODAY rule, which is the one --sun licence this chart holds.
+
+   4. The one thing that moves is a thing a PRESS does. The plate arrives by
+      being PRINTED: a hard roller edge crosses it once, at about 1500 CSS
+      px/s, and everything behind that edge is already there. It is a single
+      `clip-path` keyframe in constellation.css, fired by <Reveal> — which
+      lands `data-in` once and unobserves, so the sequence is bounded and
+      self-terminating without this component owning a clock. Not one word is
+      inside the clip that is not also outside it: the section head and the
+      caption sit outside the plate entirely, so nothing that reads as type
+      is ever animated. Without JavaScript, or under either motion switch,
+      the CSS never clips at all and the finished plate is the first paint.
+
+      The four crosshairs inside the plate mark's corners and the ticks on
+      the ends of the TODAY rule are register marks — the first plate's and
+      the second plate's. `data-sun` on the vermilion pair is where the
+      second plate is told it may arrive a beat after the black one.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const DAY = 86_400_000;
@@ -53,7 +70,9 @@ const MONTHS = [
   "December",
 ];
 
-const MONTH_INDEX = new Map(MONTHS.map((name, i) => [name.slice(0, 3).toLowerCase(), i]));
+const MONTH_INDEX = new Map(
+  MONTHS.map((name, i) => [name.slice(0, 3).toLowerCase(), i]),
+);
 
 /**
  * Build-time "now". /about is statically rendered, so the TODAY rule is the
@@ -180,7 +199,9 @@ const GLYPH: Record<ProjectStatus, "filled" | "half" | "open"> = {
  */
 function employerFor(org: string | undefined): Experience | undefined {
   if (!org) return undefined;
-  return experiences.find((e) => org === e.company || org.startsWith(`${e.company} `));
+  return experiences.find(
+    (e) => org === e.company || org.startsWith(`${e.company} `),
+  );
 }
 
 /** "Purdue University" → "purdue-university", for the record's heading ids. */
@@ -200,7 +221,8 @@ function splitName(name: string): { head: string; tail: string } {
 
 /** Ascending, oldest first, so the numbering runs with the time axis. */
 const inDateOrder: Project[] = [...projects].sort(
-  (a, b) => a.sortDate.localeCompare(b.sortDate) || a.name.localeCompare(b.name),
+  (a, b) =>
+    a.sortDate.localeCompare(b.sortDate) || a.name.localeCompare(b.name),
 );
 
 const lanes: Lane[] = (() => {
@@ -276,7 +298,9 @@ const lanes: Lane[] = (() => {
       lane.sortKey = Math.max(lane.sortKey, centre);
       // A lane with no employment record borrows its role from the work that
       // sits in it, de-duplicated: "Independent build · Solo product build".
-      const roles = lane.points.map((p) => p.role).filter((r, j, all) => all.indexOf(r) === j);
+      const roles = lane.points
+        .map((p) => p.role)
+        .filter((r, j, all) => all.indexOf(r) === j);
       lane.role = roles.join(" · ");
     }
   });
@@ -362,7 +386,10 @@ function dateline(lane: Lane): string {
   if (lane.dates) return lane.dates;
   const months = lane.points.map((p) => p.shortWhen);
   if (months.length === 0) return "";
-  const span = months.length === 1 ? months[0] : `${months[0]} to ${months[months.length - 1]}`;
+  const span =
+    months.length === 1
+      ? months[0]
+      : `${months[0]} to ${months[months.length - 1]}`;
   return `Work dated ${span}`;
 }
 
@@ -425,7 +452,10 @@ export function Constellation({
           <span className="meta text-ink-3" aria-hidden="true">
             {index}
           </span>
-          <h2 id={headingId} className="text-display-m font-medium text-balance text-ink">
+          <h2
+            id={headingId}
+            className="text-display-m font-medium text-balance text-ink"
+          >
             {title}
           </h2>
         </div>
@@ -433,92 +463,136 @@ export function Constellation({
 
       <figure className={cn("cn", bleed && "cn-full")}>
         <div className="cn-frame">
-        <div
-          className="cn-plot plate-mark"
-          style={{ "--lanes": lanes.length } as CSSProperties}
-        >
-          {/* The rules layer spans every lane and sits under the marks. */}
-          <div className="cn-grid" aria-hidden="true">
-            {yearRules.map((rule) => (
-              <span
-                key={rule.year}
-                className="cn-rule"
-                style={{ "--t": rule.at } as CSSProperties}
-              />
-            ))}
-            <span className="cn-today" style={{ "--t": todayAt } as CSSProperties} />
-          </div>
+          {/* The bed under the roller. <Reveal> lands `data-in` here once, and
+            the pull is one keyframe on the plate inside it — see "THE PULL"
+            in constellation.css. The wrapper is a plain block, so it changes
+            no box: the plate's own top margin collapses through it exactly as
+            it collapsed through .cn-frame before. */}
+          <Reveal className="cn-sheet">
+            <div
+              className="cn-plot plate-mark"
+              style={{ "--lanes": lanes.length } as CSSProperties}
+            >
+              {/* The rules layer spans every lane and sits under the marks. */}
+              <div className="cn-grid" aria-hidden="true">
+                {yearRules.map((rule) => (
+                  <span
+                    key={rule.year}
+                    className="cn-rule"
+                    style={{ "--t": rule.at } as CSSProperties}
+                  />
+                ))}
+                {/* `data-sun` is the second plate. The rule and its two end ticks
+                are one element, so the ticks register with it. */}
+                <span
+                  className="cn-today"
+                  data-sun=""
+                  style={{ "--t": todayAt } as CSSProperties}
+                />
+              </div>
 
-          {lanes.map((lane, i) => {
-            const place = { "--row": i + 1, "--col": i + 2 } as CSSProperties;
-            return (
-              <Fragment key={lane.key}>
-                <div className="cn-lane-label" style={place}>
-                  <span className="cn-lane-name text-small font-medium text-ink">
-                    {lane.head}
-                    {lane.tail && <span className="cn-lane-tail"> {lane.tail}</span>}
-                  </span>
-                </div>
+              {/* The first plate's register marks: four crosshairs just inside
+              the corners of the plate mark, where a printer lays them so a
+              second plate can be squared onto the first. Absolutely
+              positioned, so the grid never counts them as a cell. */}
+              <div className="cn-register" aria-hidden="true">
+                <span className="cn-reg" data-corner="tl" />
+                <span className="cn-reg" data-corner="tr" />
+                <span className="cn-reg" data-corner="bl" />
+                <span className="cn-reg" data-corner="br" />
+              </div>
 
-                <div
-                  className="cn-lane"
-                  data-bar={lane.interval ? "" : undefined}
-                  style={
-                    {
-                      ...place,
-                      ...(lane.interval
-                        ? { "--b0": at(lane.interval.start), "--b1": at(lane.interval.end) }
-                        : {}),
-                    } as CSSProperties
-                  }
-                >
-                  {lane.points.map((point) => (
-                    <Link
-                      key={point.slug}
-                      className="cn-mark"
-                      href={`/projects/${point.slug}`}
-                      style={{ "--t0": at(point.low), "--t1": at(point.high) } as CSSProperties}
+              {lanes.map((lane, i) => {
+                const place = {
+                  "--row": i + 1,
+                  "--col": i + 2,
+                } as CSSProperties;
+                return (
+                  <Fragment key={lane.key}>
+                    <div className="cn-lane-label" style={place}>
+                      <span className="cn-lane-name text-small font-medium text-ink">
+                        {lane.head}
+                        {lane.tail && (
+                          <span className="cn-lane-tail"> {lane.tail}</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div
+                      className="cn-lane"
+                      data-bar={lane.interval ? "" : undefined}
+                      style={
+                        {
+                          ...place,
+                          ...(lane.interval
+                            ? {
+                                "--b0": at(lane.interval.start),
+                                "--b1": at(lane.interval.end),
+                              }
+                            : {}),
+                        } as CSSProperties
+                      }
                     >
-                      {/* Text, not an aria-label. The accessible name is the
+                      {lane.points.map((point) => (
+                        <Link
+                          key={point.slug}
+                          className="cn-mark"
+                          href={`/projects/${point.slug}`}
+                          style={
+                            {
+                              "--t0": at(point.low),
+                              "--t1": at(point.high),
+                            } as CSSProperties
+                          }
+                        >
+                          {/* Text, not an aria-label. The accessible name is the
                           same string either way, but real text is also the
                           anchor text a crawler reads and the name a find-on-
                           page hits — and on / the plate stands alone, so a
                           mark whose name lived only in an attribute would be
                           eight links to eight untitled pages. */}
-                      <span className="sr-only">{point.label}</span>
-                      <span className="cn-err" aria-hidden="true" />
-                      <span className="cn-glyph" data-glyph={GLYPH[point.status]} aria-hidden="true" />
-                      <span className="cn-num meta" aria-hidden="true">
-                        {point.n}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </Fragment>
-            );
-          })}
+                          <span className="sr-only">{point.label}</span>
+                          <span className="cn-err" aria-hidden="true" />
+                          <span
+                            className="cn-glyph"
+                            data-glyph={GLYPH[point.status]}
+                            aria-hidden="true"
+                          />
+                          <span className="cn-num meta" aria-hidden="true">
+                            {point.n}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </Fragment>
+                );
+              })}
 
-          <div className="cn-axis" aria-hidden="true">
-            <span className="cn-tick data" style={{ "--t": "0%" } as CSSProperties}>
-              {firstYear}
-            </span>
-            {yearRules.map((rule) => (
-              <span
-                key={rule.year}
-                className="cn-tick data"
-                style={{ "--t": rule.at } as CSSProperties}
-              >
-                {rule.year}
-              </span>
-            ))}
-            <span
-              className="cn-today-label meta"
-              style={{ "--t": todayAt } as CSSProperties}
-            >
-              Today
-            </span>
-          </div>
-        </div>
+              <div className="cn-axis" aria-hidden="true">
+                <span
+                  className="cn-tick data"
+                  style={{ "--t": "0%" } as CSSProperties}
+                >
+                  {firstYear}
+                </span>
+                {yearRules.map((rule) => (
+                  <span
+                    key={rule.year}
+                    className="cn-tick data"
+                    style={{ "--t": rule.at } as CSSProperties}
+                  >
+                    {rule.year}
+                  </span>
+                ))}
+                <span
+                  className="cn-today-label meta"
+                  style={{ "--t": todayAt } as CSSProperties}
+                >
+                  Today
+                </span>
+              </div>
+            </div>
+          </Reveal>
         </div>
 
         {/* The caption carries its own `shell` when the plate is bled, so it
@@ -528,15 +602,17 @@ export function Constellation({
             at and the marks are the only way in. */}
         <figcaption className={cn("cn-caption", bleed && "shell")}>
           <span className="caption measure block text-ink-2">
-            {sentenceCase(word(inDateOrder.length))} projects on the month each one landed,
-            against {word(lanes.length)} lanes: {word(employerLanes.length)} employers with
-            a dated record; {ventureLanes.map((l) => l.name).join(", ")}, my own company,
-            which employed nobody and so carries no band; and the{" "}
-            {word(independentLane?.points.length ?? 0)} builds that answered to nobody,
-            which sit in the Independent lane. A band of ink dots is a job; a mark is a
-            project. Dates are accurate to the month and no further, so every mark sits at
-            the middle of its month under a ±15 day bar. Filled is shipped, half-filled is
-            ongoing, open is research. The vermilion rule is today.{" "}
+            {sentenceCase(word(inDateOrder.length))} projects on the month each
+            one landed, against {word(lanes.length)} lanes:{" "}
+            {word(employerLanes.length)} employers with a dated record;{" "}
+            {ventureLanes.map((l) => l.name).join(", ")}, my own company, which
+            employed nobody and so carries no band; and the{" "}
+            {word(independentLane?.points.length ?? 0)} builds that answered to
+            nobody, which sit in the Independent lane. A band of ink dots is a
+            job; a mark is a project. Dates are accurate to the month and no
+            further, so every mark sits at the middle of its month under a ±15
+            day bar. Filled is shipped, half-filled is ongoing, open is
+            research. The vermilion rule is today.{" "}
             {bleed
               ? "Every mark is a link to what it was."
               : "The numbered list below is the key."}
@@ -546,33 +622,42 @@ export function Constellation({
 
       {variant === "record" && (
         <>
-      <h3 className="cn-sub caption text-ink-3">
-        The {word(inDateOrder.length)} projects, in date order
-      </h3>
-      <ol className="cn-index">
-        {inDateOrder.map((project, i) => {
-          const lane = lanes.find((l) => l.points.some((p) => p.slug === project.slug));
-          return (
-            <li key={project.slug}>
-              <Link className="cn-index-link" href={`/projects/${project.slug}`}>
-                <span className="cn-index-gutter" aria-hidden="true">
-                  <span className="cn-index-n meta">{i + 1}</span>
-                  <span className="cn-glyph" data-glyph={GLYPH[project.status]} />
-                </span>
-                <span className="cn-index-name text-body font-medium text-ink">
-                  {project.name}
-                </span>
-                <span className="cn-index-meta data text-ink-3">
-                  {monthLabel(project.sortDate)} · {lane?.name ?? INDEPENDENT} ·{" "}
-                  {statusLabel[project.status]}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
+          <h3 className="cn-sub caption text-ink-3">
+            The {word(inDateOrder.length)} projects, in date order
+          </h3>
+          <ol className="cn-index">
+            {inDateOrder.map((project, i) => {
+              const lane = lanes.find((l) =>
+                l.points.some((p) => p.slug === project.slug),
+              );
+              return (
+                <li key={project.slug}>
+                  <Link
+                    className="cn-index-link"
+                    href={`/projects/${project.slug}`}
+                  >
+                    <span className="cn-index-gutter" aria-hidden="true">
+                      <span className="cn-index-n meta">{i + 1}</span>
+                      <span
+                        className="cn-glyph"
+                        data-glyph={GLYPH[project.status]}
+                      />
+                    </span>
+                    <span className="cn-index-name text-body font-medium text-ink">
+                      {project.name}
+                    </span>
+                    <span className="cn-index-meta data text-ink-3">
+                      {monthLabel(project.sortDate)} ·{" "}
+                      {lane?.name ?? INDEPENDENT} ·{" "}
+                      {statusLabel[project.status]}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
 
-      {/* The record. The plate is the ten-second scan; this is what you read
+          {/* The record. The plate is the ten-second scan; this is what you read
           after it. Laid on the plan's margin grammar (§5.5): the employer,
           the role and the dateline hang in a margin column the width of the
           chart's own lane-label gutter, which leaves the measure clear for the
@@ -586,68 +671,81 @@ export function Constellation({
           exist nowhere else on this site. Same for two of the three Recurly
           items and the Spring Research Conference line. Nothing here is
           summarised, truncated or rewritten. */}
-      <h3 className="cn-sub caption text-ink-3">The record, lane by lane</h3>
-      <ol className="cn-record">
-        {lanes.map((lane) => {
-          const headingId = `lane-${slugify(lane.key)}`;
-          return (
-            <li key={lane.key}>
-              <article className="cn-record-entry" aria-labelledby={headingId}>
-                <div className="cn-record-margin">
-                  <h4
-                    id={headingId}
-                    className="cn-record-name text-small font-medium text-ink"
+          <h3 className="cn-sub caption text-ink-3">
+            The record, lane by lane
+          </h3>
+          <ol className="cn-record">
+            {lanes.map((lane) => {
+              const headingId = `lane-${slugify(lane.key)}`;
+              return (
+                <li key={lane.key}>
+                  <article
+                    className="cn-record-entry"
+                    aria-labelledby={headingId}
                   >
-                    {lane.name}
-                  </h4>
-                  {lane.role && (
-                    <p className="cn-record-role text-small text-ink-2">{lane.role}</p>
-                  )}
-                  {dateline(lane) && (
-                    <p className="cn-record-when data text-ink-3">{dateline(lane)}</p>
-                  )}
-                  {lane.location && (
-                    <p className="cn-record-where data text-ink-3">{lane.location}</p>
-                  )}
-                </div>
+                    <div className="cn-record-margin">
+                      <h4
+                        id={headingId}
+                        className="cn-record-name text-small font-medium text-ink"
+                      >
+                        {lane.name}
+                      </h4>
+                      {lane.role && (
+                        <p className="cn-record-role text-small text-ink-2">
+                          {lane.role}
+                        </p>
+                      )}
+                      {dateline(lane) && (
+                        <p className="cn-record-when data text-ink-3">
+                          {dateline(lane)}
+                        </p>
+                      )}
+                      {lane.location && (
+                        <p className="cn-record-where data text-ink-3">
+                          {lane.location}
+                        </p>
+                      )}
+                    </div>
 
-                <div className="cn-record-body">
-                  {/* The standfirst. An employer's is its own summary; a lane
+                    <div className="cn-record-body">
+                      {/* The standfirst. An employer's is its own summary; a lane
                       with no employment record says so here, in the same slot,
                       so the entry never renders as a gap. */}
-                  <p className="cn-record-lede text-lede text-ink">
-                    {lane.summary || lane.note}
-                  </p>
+                      <p className="cn-record-lede text-lede text-ink">
+                        {lane.summary || lane.note}
+                      </p>
 
-                  {lane.bullets.length > 0 && (
-                    <ul className="cn-record-list dot-list text-body text-ink-2">
-                      {lane.bullets.map((bullet) => (
-                        <li key={bullet}>{bullet}</li>
-                      ))}
-                    </ul>
-                  )}
+                      {lane.bullets.length > 0 && (
+                        <ul className="cn-record-list dot-list text-body text-ink-2">
+                          {lane.bullets.map((bullet) => (
+                            <li key={bullet}>{bullet}</li>
+                          ))}
+                        </ul>
+                      )}
 
-                  {/* No employment record means no bullets to print, so the
+                      {/* No employment record means no bullets to print, so the
                       lane prints the work that put it on the chart instead:
                       each project and its own one line, from projects.ts. The
                       numbered key above already links every one of them, so
                       these are text and not a third link to the same page. */}
-                  {lane.bullets.length === 0 && lane.points.length > 0 && (
-                    <ul className="cn-record-list dot-list text-body text-ink-2">
-                      {lane.points.map((point) => (
-                        <li key={point.slug}>
-                          <b className="font-medium text-ink">{point.name}</b>{" "}
-                          {point.tagline}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </article>
-            </li>
-          );
-        })}
-      </ol>
+                      {lane.bullets.length === 0 && lane.points.length > 0 && (
+                        <ul className="cn-record-list dot-list text-body text-ink-2">
+                          {lane.points.map((point) => (
+                            <li key={point.slug}>
+                              <b className="font-medium text-ink">
+                                {point.name}
+                              </b>{" "}
+                              {point.tagline}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </article>
+                </li>
+              );
+            })}
+          </ol>
         </>
       )}
     </section>

@@ -39,6 +39,13 @@
    The heights are unequal on purpose: rows from the current year carry a
    standfirst, older rows carry a title and one machine line. A contents page
    thins as it recedes.
+
+   FOOT   the eight labels that used to sit under the eight figures, as one
+          critical apparatus under a short rule. The figures column is worth
+          having only if it is figures; a superscript reference mark carries
+          the reader from a number to its note and the note carries them
+          back, which is a contract print has kept for four centuries and
+          which needs no JavaScript to keep here.
    ───────────────────────────────────────────────────────────────────────── */
 
 .toc {
@@ -114,6 +121,24 @@
   grid-template-columns: var(--year-col) minmax(0, 1fr) var(--fig-col);
   align-items: start;
   padding-block: 1.5rem;
+  /* The row is what an apparatus note returns to, and 6rem clears the 3.5rem
+     fixed header with a hand's width to spare at every viewport. It also
+     carries tabindex="-1", which is programmatically focusable and never a
+     tab stop — so the outline below only ever fires for a pointer or a
+     script, never for someone tabbing through the list. */
+  scroll-margin-block-start: 6rem;
+  outline: none;
+}
+
+/* Where the reader came back to, and where they are. The fill is the row's
+   own hover ground, so the return uses a signal the page already has; nothing
+   here changes a box. */
+.toc-row:target::after {
+  opacity: 1;
+}
+
+.toc-row:target .toc-year {
+  color: var(--ink);
 }
 
 @media (width >= 48rem) {
@@ -141,7 +166,9 @@
   position: absolute;
   inset-block-start: 0;
   inset-inline-end: 0;
-  inset-inline-start: calc(var(--year-col) + var(--rule-gap) + var(--t, 0) * var(--step));
+  inset-inline-start: calc(
+    var(--year-col) + var(--rule-gap) + var(--t, 0) * var(--step)
+  );
   height: 1px;
   background: var(--line);
 }
@@ -234,14 +261,105 @@
    in the heights. Three sizes, set here rather than in the JSX: <Numeral> is
    the only thing allowed to name the display face, and it offers two sizes,
    so the third comes from the composition. Every size is far above the 21px
-   floor the face has. */
+   floor the face has.
+
+   A flex line rather than a text line, and for one reason: the mark has to
+   hang at the top of a figure that is 26px on one row and 68px on the next.
+   On a text baseline the only tools are `vertical-align: super` and a raise
+   in em, and both are relative to a font-size the mark does not share with
+   the numeral — the same offset that superscripts a 26px figure leaves a
+   68px one with a mark at its ankle, which is what the first cut of this
+   looked like. `align-items: flex-start` is the whole fix: the mark's top
+   edge is the numeral's top edge, at every size, for free. */
 .toc-fig {
-  text-align: right;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
 }
 
 .toc-fig .numeral {
-  display: block;
   color: var(--ink);
+  /* The figure you clicked is the thing that survives the page change: this
+     name is shared with the same figure on the case study, bled off its right
+     edge, so the number travels and everything else crossfades under it. The
+     ident arrives inline on the row (--vt-fig: metric-<slug>), which is the
+     only part of it that cannot be written in a stylesheet. Unset it computes
+     to `none` and the page simply crossfades whole. */
+  view-transition-name: var(--vt-fig);
+}
+
+/* ── The reference marks ──────────────────────────────────────────────────
+   A superscript mark, and no label. Eight labels set as 11px ragged mono
+   under eight numerals were eight blocks of grey noise on the quietest page
+   on the site, and they were the only thing standing between the right-hand
+   column and being purely a skyline of figures. The labels are all at the
+   foot of the list now, as an apparatus, and each figure carries the mark
+   that points at its note.
+
+   Three things this rule has to guarantee, in order of how expensive they
+   are to get wrong:
+
+   1. THE NUMERALS STAY FLUSH RIGHT. The mark sits in a fixed slot after the
+      figure — the width of two mono characters, which is the widest mark in
+      the series — so a row marked `**` and a row marked `*` push their
+      numerals left by exactly the same amount. Sized to the mark rather than
+      to the numeral, so the whole column moves in by 16px and nothing else
+      about the composition changes; in particular --fig-col is untouched and
+      the empty middle column keeps every pixel it had.
+
+   2. THE ROW HEIGHT DOES NOT MOVE. The mark's box is 13px × 1.35 tall, far
+      shorter than the shortest of the three figures, and it is a flex item
+      aligned to the top rather than a raised inline box — so it can neither
+      grow the line nor push the figure down. Nothing here is animated,
+      nothing arrives late, nothing has a cold state. CLS 0.0000.
+
+   3. IT IS REACHABLE. The mark is inside .toc-fig, which is already above
+      the row's stretch-link overlay, so it takes its own clicks; on a coarse
+      pointer a pseudo-element gives it 45px of hit area without giving it a
+      45px box.
+
+   `padding-block-start` is the last piece of the fit: flush with the numeral's
+   own top edge the mark reads as a second character of the number, and a
+   third of the mark's height down it reads as hung off it. */
+.toc-mark {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2ch; /* two IBM Plex Mono characters: the widest mark, `††` */
+  padding-block-start: 0.34em;
+  margin-inline-start: 0.2rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-data);
+  line-height: var(--text-data--line-height);
+  letter-spacing: 0;
+  text-align: left;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease-snap);
+}
+
+/* The mark comes up to full ink with its row — on hover, on focus, and when
+   the apparatus has just sent the reader back to it, so the return says which
+   of the eight figures it meant. Colour only: nothing here may take up space
+   it did not take up before. */
+.toc-row:hover .toc-mark,
+.toc-row:target .toc-mark,
+.toc-mark:hover,
+.toc-mark:focus-visible {
+  color: var(--ink);
+}
+
+/* A finger-sized target that is not a finger-sized box. `tap` grows the
+   element itself, which for an inline-block on a line with a 26px numeral
+   means a 44px line box and a taller row — the one thing this mark is not
+   allowed to do. An absolutely positioned pseudo-element inside it reaches
+   the same 45px of hit area and takes part in no layout at all. */
+@media (pointer: coarse) {
+  .toc-mark::after {
+    content: "";
+    position: absolute;
+    inset: -1rem;
+  }
 }
 
 .toc-row[data-reach="people"] .numeral {
@@ -256,11 +374,114 @@
   font-size: clamp(1.625rem, 2.4vw, 2rem); /* 26 → 32px */
 }
 
-.toc-fig-label {
-  margin-block-start: 0.6rem;
+/* ── The apparatus ────────────────────────────────────────────────────────
+   The eight labels, together, at the foot of the list, under the short rule a
+   compositor sets above a footnote block — the *linea*, which is short on
+   purpose: a full-measure rule reads as the end of the page, and the notes
+   are not the end of the page, they are the bottom of the list.
+
+   The block starts where the row titles start, so the apparatus hangs off the
+   same left edge as the thing it annotates, and each note's mark hangs back
+   out to that edge while its text is indented past the lemma. Every
+   continuation line lands under the label, never under the figure.
+   ─────────────────────────────────────────────────────────────────────── */
+.toc-apparatus {
+  --note-mark: 1.35rem;
+  --note-lemma: 4.25rem;
+  --note-hang: calc(var(--note-mark) + var(--note-lemma));
+  margin-block-start: 2.75rem;
+  margin-inline-start: calc(var(--year-col) + var(--rule-gap));
+  padding-block-start: 1.1rem;
+  position: relative;
+}
+
+/* The linea: 6rem of rule at the block's own left edge. --line-strong, the
+   same ink as the date rule down the margin, because they are the same kind
+   of mark — one says where the list is measured from, this says where it
+   stops. */
+.toc-apparatus::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 6rem;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.toc-apparatus-head {
+  margin: 0 0 1.1rem;
   color: var(--ink-3);
-  text-align: right;
-  text-wrap: pretty;
+}
+
+.toc-notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mark, lemma, reading — the three parts of an apparatus entry, set as one
+   run of inline flow rather than as a grid, so that a note which wraps wraps
+   like a footnote instead of like a table cell. The two fixed slots do the
+   aligning; the negative indent pulls the first line back out to the block's
+   left edge, which is what makes the marks a column. */
+.toc-note {
+  padding-inline-start: var(--note-hang);
+  text-indent: calc(-1 * var(--note-hang));
+  font-size: var(--text-small);
+  line-height: 1.5;
+  color: var(--ink-2);
+  scroll-margin-block-start: 6rem;
+  outline: none;
+}
+
+.toc-note + .toc-note {
+  margin-block-start: 0.5rem;
+}
+
+.toc-note-back {
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease-snap);
+}
+
+.toc-note-back:hover,
+.toc-note-back:focus-visible {
+  color: var(--ink);
+}
+
+.toc-note-mark {
+  display: inline-block;
+  width: var(--note-mark);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-meta);
+  text-indent: 0;
+}
+
+/* The lemma. Mono at 13px rather than the display face, because at this size
+   the display face is forbidden and because here the figure is genuinely a
+   readout: the thing that tells you which note this is. Tabular, so the eight
+   of them make an edge down the left of the labels. */
+.toc-note-lemma {
+  display: inline-block;
+  width: var(--note-lemma);
+  text-indent: 0;
+  color: var(--ink-2);
+}
+
+.toc-note-text {
+  text-indent: 0;
+}
+
+/* The note you have just arrived at. Colour only — a note that changed size
+   when it became the target would move the seven notes under it, which is a
+   layout shift caused by a link, which is the one shift no gate would catch
+   because it needs a click to happen. */
+.toc-note:target,
+.toc-note:target .toc-note-lemma,
+.toc-note:target .toc-note-back {
+  color: var(--ink);
 }
 
 /* ── Below 48rem the two axes have nowhere to go. The indent collapses to
@@ -290,14 +511,13 @@
     line-height: var(--text-body--line-height);
   }
 
+  /* The figure joins the reading column rather than hanging off the right
+     edge of a 358px screen. `justify-content`, not `text-align`: the figure
+     line is a flex line now, so it hangs the mark at the numeral's cap. */
   .toc-fig {
     grid-column: 2;
     margin-block-start: 1rem;
-    text-align: left;
-  }
-
-  .toc-fig-label {
-    text-align: left;
+    justify-content: flex-start;
   }
 
   .toc-row[data-reach="people"] .numeral {
@@ -308,6 +528,21 @@
   }
   .toc-row[data-reach="bench"] .numeral {
     font-size: 1.625rem;
+  }
+
+  /* The apparatus loses its indent — 72px of a 358px measure is a quarter of
+     the page given to nothing — and the lemma stops being a column and
+     becomes what it is in a footnote, the first word of the note. The mark
+     still hangs, because the mark is the whole tie back to the figure. */
+  .toc-apparatus {
+    --note-lemma: 0rem;
+    --note-hang: var(--note-mark);
+    margin-inline-start: 0;
+  }
+
+  .toc-note-lemma {
+    width: auto;
+    padding-inline-end: 0.6rem;
   }
 }
 
@@ -327,6 +562,49 @@
 
 .broadside {
   display: block;
+}
+
+/* ── The plate on the broadside ───────────────────────────────────────────
+   /writing carried one essay and the largest rectangle of bare paper on the
+   site: at 1440 everything right of x=830 and below the masthead was empty,
+   522 x 520 of nothing. The sky over West Lafayette on the night the essay
+   was published now sits in it.
+
+   It is a figure in the masthead's own grid rather than a block under it,
+   because a broadside is one composition -- title, standfirst, imprint and
+   plate on one sheet -- and stacking it would have made the page a list of
+   two things. Below 64rem there is no second column to put it in, so it
+   falls under the imprint at the full measure, which is what a broadside
+   does on a narrower sheet.
+
+   The board sizes itself from its own field (96 x 96 lattice cells) and caps
+   at the column, so the square never drives the layout. */
+.broadside-plate {
+  margin: var(--space-6) 0 0;
+}
+
+.broadside-plate .caption {
+  margin-block-start: var(--space-3);
+  max-width: 30ch;
+  color: var(--ink-3);
+}
+
+@media (width >= 64rem) {
+  /* Two children, so the plate needs no row arithmetic: the type is one
+     block and the plate is the other. */
+  .broadside {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(40vw, 30rem);
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .broadside-plate {
+    margin: 0;
+    /* Hangs from the masthead's own top line rather than from the title's
+       cap, so the plate and the eyebrow start together. */
+    padding-block-start: var(--space-2);
+  }
 }
 
 .broadside-title {
@@ -798,6 +1076,61 @@ html:has(.spoiled) {
   pointer-events: none;
 }
 
+/* ── The press ────────────────────────────────────────────────────────────
+   The plate is the button: pressing it brings the press down again and the
+   assembly advances a little further into a pull it will never finish. It is
+   absolutely positioned over the image and carries no box of its own, so it
+   costs nothing in layout and the figure is exactly the size it was.
+
+   It exists only where a board is actually running — spoiled-plate.tsx
+   renders it on the same condition that shows the canvas — so the type
+   fallback and the no-JavaScript page never carry a control that does
+   nothing. The ring sits in the margin between the image and the plate mark,
+   which is where a printer's own thumb would be. */
+.spoiled-pull {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Not `disabled`: a disabled button leaves the tab order and the visitor
+   never finds out why the press stopped answering. */
+.spoiled-pull[data-spent] {
+  cursor: default;
+}
+
+.spoiled-pull:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+/* ── The press docket ─────────────────────────────────────────────────────
+   Which pull this is, and what came of it. Plex, because it is data — the
+   same argument the figure itself makes. It is in the markup from the server
+   at PULL I, so its line exists on the first paint and nothing below it moves
+   when the count changes.
+
+   The colour shift on hover and focus is the only hint that the plate is
+   live: it is a colour transition, not motion, and it is the register this
+   site already answers a pointer in. */
+.spoiled-readout {
+  margin-block-start: calc(var(--mark-inset, 1.5rem) + var(--space-3));
+  color: var(--ink-3);
+  transition: color var(--dur-1) var(--ease-snap);
+}
+
+.spoiled-plate:has(.spoiled-pull:hover:not([data-spent])) ~ .spoiled-readout,
+.spoiled-plate:has(.spoiled-pull:focus-visible) ~ .spoiled-readout {
+  color: var(--ink);
+}
+
 /* The plate mark: the edge of the copper pressed into the sheet. Wider than
    the standard inset because the register mark hangs in the margin it
    makes. */
@@ -830,8 +1163,11 @@ html:has(.spoiled) {
   display: none;
 }
 
+/* `:has`, not the adjacent sibling it used to be: the figure's next sibling
+   is the press docket now, and the type fallback is authored ABOVE the figure
+   so that whichever of the two is showing, the docket lands under it. */
 :root:not(.js) .spoiled-fallback,
-.spoiled-plate[data-plate="fallback"] + .spoiled-fallback {
+.spoiled:has(.spoiled-plate[data-plate="fallback"]) .spoiled-fallback {
   display: block;
 }
 
@@ -859,8 +1195,10 @@ html:has(.spoiled) {
   pointer-events: none;
 }
 
+/* The docket now carries the plate mark's clearance, so the copy only has to
+   clear the docket. */
 .spoiled-copy {
-  margin-block-start: calc(var(--mark-inset, 1.5rem) + var(--space-6));
+  margin-block-start: var(--space-5);
 }
 
 .spoiled-title {

@@ -61,6 +61,7 @@ export function About() {
           restLabel="64 × 80 · second angle"
           fallback={portrait.fallback.about}
           className="about-board"
+          gpu
         />
 
         <SpecList

@@ -43,6 +43,26 @@ const REACH: Record<string, Reach> = {
 };
 
 /**
+ * The printer's reference marks, in the order a compositor sets them: star,
+ * dagger, double dagger, section, parallel, pilcrow — then the whole series
+ * again doubled, which is how the tradition extends past six. Eight projects
+ * take `*  †  ‡  §  ‖  ¶  **  ††`.
+ *
+ * Generated rather than listed so that a ninth project gets `‡‡` instead of
+ * an empty mark, which is exactly the kind of silence a hardcoded array of
+ * eight buys you the day the content changes. The figure column's mark slot
+ * (plates.css) is two mono characters wide, so the series is safe out to
+ * twelve; past that this page wants pagination more than it wants a mark.
+ *
+ * A mark and not a digit, because a superscript numeral beside a figure set
+ * in lining figures does not read as a reference — the eye takes it for part
+ * of the number. That is the whole reason the series exists in print.
+ */
+const MARK_SERIES = ["*", "†", "‡", "§", "‖", "¶"];
+const markFor = (i: number) =>
+  MARK_SERIES[i % MARK_SERIES.length].repeat(Math.floor(i / MARK_SERIES.length) + 1);
+
+/**
  * The Work index (§7.3), set as a contents page.
  *
  * Two axes, both read off the data, and between them they answer the only
@@ -62,6 +82,15 @@ const REACH: Record<string, Reach> = {
  * Row heights are unequal on purpose. The current year carries a standfirst;
  * everything older carries a title and one machine line. A contents page
  * thins as it recedes, and the year rule beside it explains why.
+ *
+ * Each figure carries a superscript reference mark instead of its label. The
+ * labels are all together at the foot of the list, as a critical apparatus —
+ * eight blocks of ragged 11px grey under eight numerals were the noisiest
+ * thing on the quietest page on the site, and the skyline only reads as a
+ * skyline if it is figures and nothing else. The marks are real anchors to
+ * real note ids and every note links back, so the apparatus is navigable by
+ * keyboard and works with scripting switched off, which is what a printed
+ * apparatus has always done.
  *
  * Server component, no rail, nothing that animates: every project route and
  * every figure is in the HTML with JavaScript switched off.
@@ -98,8 +127,8 @@ export default function ProjectsPage() {
       <div className="shell toc pb-4">
         {/* The column heads name the two axes, so the figures column does not
             have to be guessed at. Decorative for a screen reader: every row
-            already says its own year, and every figure is followed by the
-            label that says what it measures. */}
+            already says its own year, and every figure's reference mark
+            carries the label that says what it measures. */}
         <div className="toc-head meta" aria-hidden="true">
           <span>Year</span>
           <span>Project</span>
@@ -132,10 +161,33 @@ export default function ProjectsPage() {
             return (
               <li
                 key={project.slug}
+                /* The apparatus returns here, to the row, not to the mark.
+                   Measured at 390: a phone row is 294px tall with the figure
+                   at the bottom of it, so landing on the mark itself put the
+                   project's own name 63px above the top of the screen — a
+                   return that shows you the number and not what it belongs
+                   to. The row lands whole at every width. `tabindex="-1"`
+                   is what moves the reading cursor with the scroll rather
+                   than only the viewport. */
+                id={`fig-${project.slug}`}
+                tabIndex={-1}
                 className="toc-row"
                 data-weight={lead ? "lead" : "plain"}
                 data-reach={reach}
-                style={{ "--t": t.toFixed(4) } as CSSProperties}
+                style={
+                  {
+                    "--t": t.toFixed(4),
+                    // The figure's view-transition name, inherited down to
+                    // .toc-fig .numeral (plates.css). Written as a custom
+                    // property rather than as a style on <Numeral> because
+                    // <Numeral> is shared by six routes and takes no style
+                    // prop; a custom ident substitutes into
+                    // `view-transition-name` exactly like any other value,
+                    // and if it is ever missing the property falls back to
+                    // its initial `none` rather than erroring.
+                    "--vt-fig": `metric-${project.slug}`,
+                  } as CSSProperties
+                }
               >
                 {/* The year is data, not decoration: it is read, and it is
                     the label on the axis the row's indent is measured
@@ -166,14 +218,62 @@ export default function ProjectsPage() {
                   <p className="toc-meta meta">{meta}</p>
                 </div>
 
+                {/* The figure and its reference mark, on one line and in that
+                    order, so the mark reads as belonging to the number. The
+                    mark's own accessible name carries the label, because a
+                    figure read aloud as "0.844" and nothing else has lost the
+                    only thing that made it worth setting. */}
                 <div className="toc-fig">
                   <Numeral value={project.metric} size="m" />
-                  <p className="toc-fig-label meta">{project.metricLabel}</p>
+                  <a className="toc-mark" href={`#note-${project.slug}`}>
+                    <span aria-hidden="true">{markFor(i)}</span>
+                    <span className="sr-only">
+                      Note {i + 1}: {project.metricLabel}
+                    </span>
+                  </a>
                 </div>
               </li>
             );
           })}
         </ol>
+
+        {/* ── The apparatus ────────────────────────────────────────────────
+            Eight notes under a short rule at the foot of the list, in the
+            order of the list, each opening with the mark that points at it
+            and with its own figure as the lemma. The lemma is what makes a
+            note that someone lands on cold — from a link, or scrolled to on a
+            phone where the figure it belongs to is three screens up — still
+            say what it is about. It is also exactly the form a critical
+            apparatus has had for four hundred years: mark, lemma, reading. */}
+        <section className="toc-apparatus" aria-labelledby="figure-notes">
+          <h2 id="figure-notes" className="toc-apparatus-head meta">
+            What the figures measure
+          </h2>
+
+          <ol className="toc-notes">
+            {orderedProjects.map((project, i) => (
+              <li
+                key={project.slug}
+                id={`note-${project.slug}`}
+                tabIndex={-1}
+                className="toc-note"
+              >
+                <a className="toc-note-back" href={`#fig-${project.slug}`}>
+                  <span className="toc-note-mark" aria-hidden="true">
+                    {markFor(i)}
+                  </span>
+                  <span className="toc-note-lemma data">{project.metric}</span>
+                  {/* The trailing space is load-bearing: the lemma's fixed
+                      width is what sets the gap to the label, so there is no
+                      text node between the two for a screen reader to break
+                      on. Without it the note is read as one run-on word. */}
+                  <span className="sr-only">{", back to the figure. "}</span>
+                </a>
+                <span className="toc-note-text">{project.metricLabel}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
       </div>
     </>
   );

@@ -12,7 +12,7 @@ import { orderedProjects, type Project } from "@/content";
  * cataloguer, holding a different copy, can tell whether anything is missing.
  *
  *   PLATE III · V MOVEMENTS · 3 STAGES · 6 MATERIALS · 1 FIGURE · 241 WORDS ·
- *   PULLED 2026-09-07
+ *   PULLED 07.IX.2026
  *
  * Every value here is counted off the project's own record. Nothing is written,
  * nothing is chosen, and there is no field anywhere in src/content for a human
@@ -111,7 +111,21 @@ function figureCount(project: Project): number {
 }
 
 /** The date the impression was taken. One clock read, for the whole build. */
-const PULLED = new Date().toISOString().slice(0, 10);
+/**
+ * The date this impression was taken, in the imprint's own form.
+ *
+ * It used to be an ISO date, which put TWO formats for the same word on one
+ * sheet: the footer's imprint says `PULLED 07.IX.2026` and this said
+ * `PULLED 2026-09-07`, six inches apart. A printed object states its date once,
+ * one way. The imprint's form wins because it is the older convention and
+ * because this line is a rare-book collation formula, which is exactly the
+ * register that writes a month in Roman.
+ */
+const PULLED = (() => {
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${day}.${roman(d.getMonth() + 1)}.${d.getFullYear()}`;
+})();
 
 export type Collation = {
   /** The formula, term by term, so the separator can be drawn in CSS and never

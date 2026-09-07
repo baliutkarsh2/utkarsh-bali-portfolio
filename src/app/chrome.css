@@ -449,11 +449,29 @@
     color: var(--ink);
   }
 
-  .footer-colophon {
+  /* ── The imprint ──
+     The printer's line in the trim: three machine lines under a hairline, in
+     the mono face because every value on them is data. They are set as blocks
+     inside one paragraph rather than as three paragraphs because they are one
+     statement about one object, and a long line is allowed to wrap the way an
+     imprint wraps on a narrow sheet — 1.7 leading so a wrapped line is still
+     read as one line of the three rather than as a fourth. */
+  .footer-imprint {
     margin: var(--space-6) 0 0;
     padding-top: var(--space-3);
     border-top: 1px solid var(--line);
     color: var(--ink-3);
+    line-height: 1.7;
+  }
+
+  /* A hanging indent, which is what an imprint does on a narrow sheet: line 2
+     runs to 66 characters and wraps on a phone, and without this the
+     continuation sits flush left at the same leading as the line breaks and
+     reads as a fourth line rather than as the tail of the second. */
+  .footer-imprint-line {
+    display: block;
+    padding-left: 1.4em;
+    text-indent: -1.4em;
   }
 
   /* ── Command palette ──────────────────────────────────────── */

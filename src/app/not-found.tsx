@@ -38,20 +38,30 @@ export const metadata: Metadata = {
  * pages. A printer sets one in the margin to check the sheet came through
  * square. This one did not.
  *
- * No cleverness beyond the metaphor: a lost visitor wants the way out, so the
- * two links are the first focusable things in the page.
+ * The one thing on the page that answers is the plate itself. Press it and
+ * the press comes down again: the assembly advances a little further, stops
+ * short again, and the docket under the sheet counts the attempt. The
+ * increments shrink, so it is visibly asymptotic — the plate is spoiled, and
+ * no amount of pressure fixes a spoiled plate. It is the only joke on the
+ * site that is also true, and it costs one canvas draw per press.
+ *
+ * A lost visitor wants the way out, so the two links stay one tab stop behind
+ * the press and nothing else on the page is focusable.
  */
 export default function NotFound() {
   return (
     <section className="spoiled shell" aria-labelledby="not-found-title">
       <p className="sr-only">Error 404: page not found.</p>
 
-      <SpoiledPlate />
       {/* Without JavaScript, or where the canvas cannot run, the figure is
-          set in type in the same place at the same size. */}
+          set in type in the same place at the same size. It is authored above
+          the plate rather than below it because only one of the two is ever
+          displayed, and SpoiledPlate now prints the press docket immediately
+          after itself — this way the docket lands under whichever one showed. */}
       <p className="spoiled-fallback" aria-hidden="true">
         404
       </p>
+      <SpoiledPlate />
 
       <div className="spoiled-copy">
         <h1 id="not-found-title" className="spoiled-title text-display-m text-balance">
