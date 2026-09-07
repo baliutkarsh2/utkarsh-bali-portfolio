@@ -398,11 +398,16 @@ def main() -> None:
 
     # Portrait grids are twice the page pitch in each direction (cells of
     # pitch / 2): 192 x 240 fills the same 96 x 120 box on the page lattice.
-    f96, w96 = sample(main_win, 192, 240)
-    f64, w64 = sample(main_win, 128, 160)
+    # focal_strength 0 on every main-window field now, matching About. The
+    # focal plateau dodges the head and burns everything outside it, which is a
+    # hierarchy device for a wide frame; once the frame IS the head there is no
+    # hierarchy left to impose and the burn only compresses the tonal range the
+    # engraving needs.
+    f96, w96 = sample(main_win, 192, 240, focal_strength=0.0)
+    f64, w64 = sample(main_win, 128, 160, focal_strength=0.0)
     fab, wab = sample(about_win, 128, 160, ABOUT_CROP, CENTER_HINT, focal_strength=0.0)
-    fct, wct = sample(main_win, 96, 120)  # the Contact afterimage: a 48 x 60 box
-    f48, w48 = sample(main_win, 48, 60)
+    fct, wct = sample(main_win, 96, 120, focal_strength=0.0)  # Contact afterimage
+    f48, w48 = sample(main_win, 48, 60, focal_strength=0.0)
 
     # The name passes over the board's top-left corner at >= 80rem: it must be sky.
     assert not f96[:48, :48].any(), "top-left quarter of the hero field must be empty sky (move MAIN_CROP)"
