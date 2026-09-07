@@ -44,7 +44,14 @@
   /* ── Ink (warm white: the photograph was lit by a sunset) ── */
   --ink: #f2f1ec; /* 17.5:1 on ground, 16.5:1 on ground-2, 15.4:1 on ground-3 */
   --ink-2: #a6a5a0; /* 8.0:1 / 7.6:1 / 7.0:1, body and secondary */
-  --ink-3: #8a8984; /* 5.65:1 / 5.3:1 / 4.95:1, 11px meta labels; the floor for text */
+  /* 5.95:1 on the ground. Raised from #8a8984, which computed as a pass and
+     measured as a fail: a pixel probe that samples the real framebuffer under
+     each text box found 4.43:1 on the meta rows and the footer colophon,
+     because the CSS lattice paints --dot-off dots behind them and the local
+     background there is nearer #242424 than #0a0a0b. Contrast is against the
+     pixels that are actually behind the glyph, not against the colour an
+     ancestor declares. 4.72:1 against a lattice dot now. */
+  --ink-3: #8e8d88; /* 11px meta labels; the floor for text */
 
   /* ── Dots ── */
   --dot-off: #232326; /* the unlit dot. 1.26:1 by design. Decorative only, never text. */

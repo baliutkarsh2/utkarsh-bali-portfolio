@@ -23,7 +23,7 @@
  */
 import type { BoardField } from "@/content/portrait-types";
 import type { Board, BoardOptions, Cell } from "@/lib/board";
-import { UNLIT, decodeField } from "@/lib/board";
+import { RELIGHT_GAIN, UNLIT, decodeField, surfaceNormals } from "@/lib/board";
 import {
   context,
   fieldCaps,
@@ -65,6 +65,7 @@ const A_DELAY = 3;
 const A_SCATTER = 4;
 const A_DISP = 5;
 const A_VEL = 6;
+const A_NORMAL = 7;
 
 /**
  * Everything both shaders need to agree on. These are the constants from
@@ -76,6 +77,7 @@ const float DIA_MAX = 2.0;
 const float UNLIT = 0.05;
 const float FIELD_TONE = 0.04;
 const float GROW_MS = 500.0;
+const float RELIGHT_GAIN = ${RELIGHT_GAIN.toFixed(4)};
 
 uniform vec2  uOrigin;    // grid origin, CSS px
 uniform float uPitch;     // cell size, CSS px
@@ -89,6 +91,7 @@ uniform float uElapsed;   // ms since assemble(), or -1 when not assembling
 uniform float uSettled;
 uniform float uTear;      // 0..1, how hard the pointer is tearing
 uniform vec2  uTearDir;   // unit vector, the pointer's direction of travel
+uniform vec2  uSunDir;    // where the light comes FROM, faded by distance
 
 float easeOutExpo(float t) { return t >= 1.0 ? 1.0 : 1.0 - pow(2.0, -10.0 * t); }
 
@@ -204,6 +207,7 @@ layout(location = ${A_FLAGS})   in float aFlags;
 layout(location = ${A_DELAY})   in float aDelay;
 layout(location = ${A_SCATTER}) in vec2  aScatter;
 layout(location = ${A_DISP})    in vec2  aDisp;
+layout(location = ${A_NORMAL})  in vec2  aNormal;
 
 uniform vec2  uRes;      // device px
 uniform float uDpr;
@@ -223,9 +227,19 @@ void main() {
   float grow = growOf(aDelay, isDatum);
 
   bool unlit = aLum < UNLIT;
+
+  // The relight, on the dot's own luminance and before the pointer's light.
+  // Clamped at UNLIT from below: a lit dot that fell through would stop being
+  // part of the portrait and become a lattice dot, which reads as a hole.
+  // The rim is left flat -- see surfaceNormals in board.ts for why.
+  float lum = aLum;
+  if (!unlit && isSun < 0.5) {
+    lum = clamp(aLum * (1.0 + RELIGHT_GAIN * dot(aNormal, uSunDir)), UNLIT, 1.0);
+  }
+
   // An unlit cell under the light lifts to exactly UNLIT, which routes it into
   // the lit branch at full ink tone: the mask's dark interior glows faintly.
-  float L = unlit ? (f > 0.0 ? UNLIT : 0.0) : min(1.0, aLum + 0.25 * f);
+  float L = unlit ? (f > 0.0 ? UNLIT : 0.0) : min(1.0, lum + 0.25 * f);
 
   float dia;
   float tone;
@@ -306,6 +320,7 @@ void main() { unused = vec4(0.0); }
 const SHARED = [
   "uTear",
   "uTearDir",
+  "uSunDir",
   "uOrigin", "uPitch", "uLattice", "uDensity", "uPointer",
   "uHasPointer", "uPush", "uScrollT", "uElapsed", "uSettled",
 ] as const;
@@ -380,7 +395,10 @@ function build(
   let n = 0;
   for (let i = 0; i < bytes.length; i++) if (bytes[i] > 0) n++;
 
-  const staticData = new Float32Array(n * 7); // home.xy, lum, flags, delay, scatter.xy
+  const relightable = opts.pointer && (opts.mode === "hero" || opts.mode === "still");
+  const normals = relightable ? surfaceNormals(bytes, W, H) : null;
+  // home.xy, lum, flags, delay, scatter.xy, normal.xy
+  const staticData = new Float32Array(n * 9);
   const cellIndex = new Int32Array(W * H).fill(-1);
   const gxArr = new Uint16Array(n);
   const gyArr = new Uint16Array(n);
@@ -408,7 +426,7 @@ function build(
         const ang = rand() * Math.PI * 2;
         const len = 60 + rand() * 200;
 
-        const o = k * 7;
+        const o = k * 9;
         staticData[o] = i;
         staticData[o + 1] = j;
         staticData[o + 2] = L;
@@ -416,6 +434,10 @@ function build(
         staticData[o + 4] = delay;
         staticData[o + 5] = Math.cos(ang) * len;
         staticData[o + 6] = Math.sin(ang) * len - 40;
+        if (normals && !sun) {
+          staticData[o + 7] = normals.nx[j * W + i];
+          staticData[o + 8] = normals.ny[j * W + i];
+        }
 
         gxArr[k] = i;
         gyArr[k] = j;
@@ -454,7 +476,7 @@ function build(
     const vao = must(gl.createVertexArray(), "createVertexArray");
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, staticBuffer);
-    const stride = 7 * 4;
+    const stride = 9 * 4;
     gl.enableVertexAttribArray(A_HOME);
     gl.vertexAttribPointer(A_HOME, 2, gl.FLOAT, false, stride, 0);
     gl.enableVertexAttribArray(A_LUM);
@@ -465,6 +487,8 @@ function build(
     gl.vertexAttribPointer(A_DELAY, 1, gl.FLOAT, false, stride, 16);
     gl.enableVertexAttribArray(A_SCATTER);
     gl.vertexAttribPointer(A_SCATTER, 2, gl.FLOAT, false, stride, 20);
+    gl.enableVertexAttribArray(A_NORMAL);
+    gl.vertexAttribPointer(A_NORMAL, 2, gl.FLOAT, false, stride, 28);
     gl.bindBuffer(gl.ARRAY_BUFFER, state[i]);
     gl.enableVertexAttribArray(A_DISP);
     gl.vertexAttribPointer(A_DISP, 2, gl.FLOAT, false, 16, 0);
@@ -520,6 +544,8 @@ function build(
   let tearNow = 0;
   let tearX = 0;
   let tearY = 0;
+  let sunX = 0;
+  let sunY = 0;
   let scrollT = 0;
   let assembling = false;
   let assembleStart = 0;
@@ -548,6 +574,7 @@ function build(
     gl.uniform1f(u.uSettled, settled ? 1 : 0);
     gl.uniform1f(u.uTear, tearNow);
     gl.uniform2f(u.uTearDir, tearX, tearY);
+    gl.uniform2f(u.uSunDir, sunX, sunY);
   }
 
   /**
@@ -594,6 +621,24 @@ function build(
 
     // Read once per frame, then decay, exactly as board.ts does: a pointer
     // that stops moving stops tearing in about a fifth of a second.
+    // The sun: the direction the light comes from, one direction for the whole
+    // face, faded out past a board and a half. board.ts computes this the same
+    // way and the two must not drift.
+    sunX = 0;
+    sunY = 0;
+    if (normals && pointerX !== null && pointerY !== null && lightEnabled) {
+      const dx = pointerX - (originX + (W * pitch) / 2);
+      const dy = pointerY - (originY + (H * pitch) / 2);
+      const d = Math.hypot(dx, dy);
+      const reach = Math.hypot(W * pitch, H * pitch) * 0.5;
+      if (d > 1) {
+        const u = Math.min(1, Math.max(0, (d - reach) / reach));
+        const fade = 1 - u * u * (3 - 2 * u);
+        sunX = (dx / d) * fade;
+        sunY = (dy / d) * fade;
+      }
+    }
+
     tearNow = pointerX !== null && pointerY !== null ? tear : 0;
     if (physics) tear = tear < 0.01 ? 0 : tear * TEAR_DECAY;
     if (tearNow > 0) wake(SETTLE_MS);

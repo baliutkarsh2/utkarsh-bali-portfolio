@@ -401,7 +401,13 @@ export function DotBoard({
         if (fixed) {
           // Read on the document while fixed, but a pointer beyond the light's
           // reach of the box changes nothing, so it schedules nothing.
-          const R = LIGHT_CELLS * pitch;
+          // Wide enough for the relight, not just for the light. The light
+          // reaches 18 cells; the sun that shades the face reaches one board
+          // diagonal from its centre, because moving the cursor across the
+          // words beside the portrait is meant to move the light across the
+          // face. Frames still stop the moment the pointer stops, so the cost
+          // is paid only while something is actually changing.
+          const R = Math.max(LIGHT_CELLS * pitch, Math.hypot(rect.width, rect.height));
           const near =
             x > rect.left - R && x < rect.right + R && y > rect.top - R && y < rect.bottom + R;
           if (!near) {
