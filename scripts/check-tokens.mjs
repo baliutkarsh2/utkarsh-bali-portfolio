@@ -15,9 +15,9 @@
  *
  *   node scripts/check-tokens.mjs
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const CSS_DIR = join(ROOT, "src", "app");
@@ -29,6 +29,34 @@ const fail = (rule, detail) => failures.push({ rule, detail });
 const cssFiles = readdirSync(CSS_DIR)
   .filter((name) => name.endsWith(".css"))
   .map((name) => [name, readFileSync(join(CSS_DIR, name), "utf8")]);
+
+/**
+ * Everything that can name a colour, not only the stylesheets.
+ *
+ * The hue rule used to read `src/app/*.css` and nothing else, and that gap is
+ * exactly how `src/lib/og.tsx` drifted an entire identity behind: it carried
+ * #0A0A0B, #F2F1EC and #FF6A2B -- the retired accent -- straight through a
+ * palette inversion. Satori resolves no CSS variables, so every token in that
+ * file is a literal, and nothing was looking at literals. The share card is the
+ * first thing anyone sees of this site, on every Slack and every timeline.
+ *
+ * src/content is excluded: it is baked data, not design.
+ */
+function colourBearing(dir, out = []) {
+  for (const name of readdirSync(dir)) {
+    if (name === "content" || name.startsWith(".")) continue;
+    const full = join(dir, name);
+    if (statSync(full).isDirectory()) colourBearing(full, out);
+    else if (/\.(css|tsx?|json|svg)$/.test(name)) {
+      out.push([
+        relative(ROOT, full).split(sep).join("/"),
+        readFileSync(full, "utf8"),
+      ]);
+    }
+  }
+  return out;
+}
+const colourFiles = colourBearing(join(ROOT, "src"));
 
 const globals = readFileSync(GLOBALS, "utf8");
 
@@ -62,9 +90,9 @@ function chromaAndHue(hex) {
   return { chroma: c, hue };
 }
 
-for (const [file, css] of cssFiles) {
+for (const [file, css] of colourFiles) {
   for (const [, token, hex] of css.matchAll(
-    /(--[\w-]+):\s*(#[0-9a-fA-F]{6})\b/g,
+    /([\w$.-]+)\s*[:=]\s*"?(#[0-9a-fA-F]{6})\b/g,
   )) {
     const { chroma, hue } = chromaAndHue(hex);
     if (chroma < CHROMA_LIMIT) continue;
@@ -204,5 +232,5 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  "check-tokens: one hue, one radius, no tone channel, Bodoni above its floor.",
+  `check-tokens: ${colourFiles.length} colour-bearing files — one hue, one radius, no tone channel, Bodoni above its floor.`,
 );
