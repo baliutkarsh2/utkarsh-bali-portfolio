@@ -78,6 +78,36 @@ ABOUT_CROP = (760, 340, 1400, 1140)  # the face, second angle for About
 DATUM_HINT = (1162, 693)
 CENTER_HINT = (1250, 800)
 
+# The grid.
+#
+# Each field fills a box measured in PAGE-LATTICE cells, at DENSITY cells to
+# the lattice step in each direction: the field is box x DENSITY, drawn with
+# cells of pitch / DENSITY, and it covers exactly the same piece of the page at
+# any density. Everything below derives from these, so raising the density is
+# one number rather than a table of grids to keep in step.
+#
+# THIS NUMBER IS SHARED WITH THE PAGE. PORTRAIT_DENSITY in
+# src/components/interactive/dot-board.tsx is the same quantity: the board
+# sizes its cells as pitch / PORTRAIT_DENSITY while the box is sized in CSS
+# from the lattice. If the two disagree the portrait is drawn at
+# DENSITY / PORTRAIT_DENSITY times its box and overflows it, and no typecheck,
+# lint or build says a word. `node scripts/check-density.mjs` is the lock for
+# exactly that, and the two constants must move in the same commit.
+DENSITY = 3
+HERO_BOX = (96, 120)     # portrait-field-96,  home hero at >= 48rem
+PHONE_BOX = (64, 80)     # portrait-field-64,  home below 48rem
+ABOUT_BOX = (64, 80)     # portrait-field-about
+CONTACT_BOX = (48, 60)   # portrait-field-contact, the afterimage
+
+# Device pixels per PAGE cell in the committed stills. This is held fixed
+# rather than the cell size, so a still keeps its pixel dimensions -- and so
+# its size on the page -- when the density changes. The cell size is the
+# quotient, and it gets smaller as the grid gets finer, which is the point.
+HERO_STILL_PX = 12       # 96 x 12 = 1152 px wide, the @2x hero still
+PHONE_STILL_PX = 10      # 64 x 10 = 640
+ABOUT_STILL_PX = 10
+PREVIEW_PX = 7           # the review PNGs, 1x and only ever looked at
+
 # Tone curve, tuned by eye on the real photograph with scripts/tune-portrait.py.
 #
 # The photograph is backlit by a sunset, so the face sits in shadow: one global
@@ -523,13 +553,12 @@ def render(
             v = int(field[j, i])
             if v == 0:
                 continue
-            jx, jy = jitter_of(i, j)
-            X, Y = (i + 0.5 + jx) * k, (j + 0.5 + jy) * k
+            X, Y = (i + 0.5) * k, (j + 0.5) * k
             if (i, j) == datum:
                 # The one vermilion mark on the sheet, composited afterwards so
                 # it sits in its own ink rather than in the ink mask.
                 datum_dia = 0.96 * density
-                datum_xy = ((i + 0.5 + jx) * cell_px, (j + 0.5 + jy) * cell_px)
+                datum_xy = ((i + 0.5) * cell_px, (j + 0.5) * cell_px)
                 continue
             dia = ink_dia(v / 255)
             if dia == 0.0:
@@ -587,46 +616,58 @@ def main() -> None:
     print(f"cutout {im.size[0]}x{im.size[1]} {im.mode}, {scale:.4f} source px per reference px; "
           f"main window {main_win.size[0]}x{main_win.size[1]}, about {about_win.size[0]}x{about_win.size[1]}")
 
-    # Portrait grids are twice the page pitch in each direction (cells of
-    # pitch / 2): 192 x 240 fills the same 96 x 120 box on the page lattice.
     # focal_strength 0 on every main-window field now, matching About. The
     # focal plateau dodges the head and burns everything outside it, which is a
     # hierarchy device for a wide frame; once the frame IS the head there is no
     # hierarchy left to impose and the burn only compresses the tonal range the
     # engraving needs.
-    f96, w96 = sample(main_win, 192, 240, focal_strength=0.0, scale=scale)
-    f64, w64 = sample(main_win, 128, 160, focal_strength=0.0, scale=scale)
-    fab, wab = sample(about_win, 128, 160, ABOUT_CROP, CENTER_HINT, focal_strength=0.0, scale=scale)
-    fct, wct = sample(main_win, 96, 120, focal_strength=0.0, scale=scale)  # Contact afterimage
+    hero = (HERO_BOX[0] * DENSITY, HERO_BOX[1] * DENSITY)
+    phone = (PHONE_BOX[0] * DENSITY, PHONE_BOX[1] * DENSITY)
+    about = (ABOUT_BOX[0] * DENSITY, ABOUT_BOX[1] * DENSITY)
+    contact = (CONTACT_BOX[0] * DENSITY, CONTACT_BOX[1] * DENSITY)
+    print(f"density {DENSITY}: hero {hero[0]}x{hero[1]}, phone {phone[0]}x{phone[1]}, "
+          f"about {about[0]}x{about[1]}, contact {contact[0]}x{contact[1]}; hero cell "
+          f"{main_win.size[0] / hero[0]:.3f} source px "
+          f"({main_win.size[0] / hero[0] / scale:.3f} photograph px)")
+    f96, w96 = sample(main_win, *hero, focal_strength=0.0, scale=scale)
+    f64, w64 = sample(main_win, *phone, focal_strength=0.0, scale=scale)
+    fab, wab = sample(about_win, *about, ABOUT_CROP, CENTER_HINT, focal_strength=0.0, scale=scale)
+    fct, wct = sample(main_win, *contact, focal_strength=0.0, scale=scale)  # Contact afterimage
     fog, _ = sample(main_win, OG_COLS, OG_ROWS, focal_strength=0.0, scale=scale)
 
     # The name passes over the board's top-left corner at >= 80rem: it must be sky.
-    assert not f96[:48, :48].any(), "top-left quarter of the hero field must be empty sky (move MAIN_CROP)"
-    assert not f64[:32, :32].any(), "top-left quarter of the phone field must be empty sky"
+    # A quarter of the box on each axis, in whatever cells the density gives.
+    q96, q64 = HERO_BOX[0] // 4 * DENSITY, PHONE_BOX[0] // 4 * DENSITY
+    assert not f96[:q96, :q96].any(), "top-left quarter of the hero field must be empty sky (move MAIN_CROP)"
+    assert not f64[:q64, :q64].any(), "top-left quarter of the phone field must be empty sky"
 
-    d96 = find_datum(f96, to_cell(DATUM_HINT, MAIN_CROP, 192))
-    d64 = find_datum(f64, to_cell(DATUM_HINT, MAIN_CROP, 128))
-    dab = find_datum(fab, to_cell(DATUM_HINT, ABOUT_CROP, 128))
-    dct = find_datum(fct, to_cell(DATUM_HINT, MAIN_CROP, 96))
+    d96 = find_datum(f96, to_cell(DATUM_HINT, MAIN_CROP, hero[0]))
+    d64 = find_datum(f64, to_cell(DATUM_HINT, MAIN_CROP, phone[0]))
+    dab = find_datum(fab, to_cell(DATUM_HINT, ABOUT_CROP, about[0]))
+    dct = find_datum(fct, to_cell(DATUM_HINT, MAIN_CROP, contact[0]))
     dog = find_datum(fog, to_cell(DATUM_HINT, MAIN_CROP, OG_COLS))
-    c96 = to_cell(CENTER_HINT, MAIN_CROP, 192)
-    c64 = to_cell(CENTER_HINT, MAIN_CROP, 128)
-    cab = to_cell(CENTER_HINT, ABOUT_CROP, 128)
-    cct = to_cell(CENTER_HINT, MAIN_CROP, 96)
+    c96 = to_cell(CENTER_HINT, MAIN_CROP, hero[0])
+    c64 = to_cell(CENTER_HINT, MAIN_CROP, phone[0])
+    cab = to_cell(CENTER_HINT, ABOUT_CROP, about[0])
+    cct = to_cell(CENTER_HINT, MAIN_CROP, contact[0])
 
     # The OG field needs no rim set: on the card the sun is the datum alone.
     r96, r64, rab = rim_indices(f96, w96), rim_indices(f64, w64), rim_indices(fab, wab)
     rct = rim_indices(fct, wct)
 
-    (CONTENT / "portrait-field-96.ts").write_text(ts_module("portraitField96", f96, d96, c96, r96, "Hero at >= 48rem: a 96 x 120 lattice box at double density. Window MAIN_CROP of the photograph."))
-    (CONTENT / "portrait-field-64.ts").write_text(ts_module("portraitField64", f64, d64, c64, r64, "Hero below 48rem: a 64 x 80 box at double density."))
-    (CONTENT / "portrait-field-contact.ts").write_text(ts_module("portraitFieldContact", fct, dct, cct, rct, "The Contact afterimage: the hero window at half its size, a 48 x 60 box at double density."))
-    (CONTENT / "portrait-field-about.ts").write_text(ts_module("portraitFieldAbout", fab, dab, cab, rab, "About: the face only, second angle. Window ABOUT_CROP, a 64 x 80 box at double density."))
+    (CONTENT / "portrait-field-96.ts").write_text(ts_module("portraitField96", f96, d96, c96, r96, f"Hero at >= 48rem: a {HERO_BOX[0]} x {HERO_BOX[1]} lattice box at density {DENSITY}. Window MAIN_CROP of the photograph."))
+    (CONTENT / "portrait-field-64.ts").write_text(ts_module("portraitField64", f64, d64, c64, r64, f"Hero below 48rem: a {PHONE_BOX[0]} x {PHONE_BOX[1]} box at density {DENSITY}."))
+    (CONTENT / "portrait-field-contact.ts").write_text(ts_module("portraitFieldContact", fct, dct, cct, rct, f"The Contact afterimage: the hero window at half its size, a {CONTACT_BOX[0]} x {CONTACT_BOX[1]} box at density {DENSITY}."))
+    (CONTENT / "portrait-field-about.ts").write_text(ts_module("portraitFieldAbout", fab, dab, cab, rab, f"About: the face only, second angle. Window ABOUT_CROP, a {ABOUT_BOX[0]} x {ABOUT_BOX[1]} box at density {DENSITY}."))
 
     count = int((f96 >= UNLIT * 255).sum())
     (CONTENT / "portrait-meta.ts").write_text(
-        "/** GENERATED by scripts/bake-portrait.py. Do not edit. Lit cells of the hero field (192 x 240, a 96 x 120 box at double density). */\n"
+        "/** GENERATED by scripts/bake-portrait.py. Do not edit. */\n"
+        f"/** Lit cells of the hero field ({hero[0]} x {hero[1]}, a {HERO_BOX[0]} x {HERO_BOX[1]} box at density {DENSITY}). */\n"
         f"export const DOT_COUNT = {count};\n"
+        "/** Cells per page-lattice step the fields were baked at. Must equal PORTRAIT_DENSITY in\n"
+        " *  src/components/interactive/dot-board.tsx; scripts/check-density.mjs is the lock. */\n"
+        f"export const PORTRAIT_FIELD_DENSITY = {DENSITY};\n"
     )
 
     # OG: [x, y, r, kind] in grid units; kind 1 = the datum, the one vermilion
@@ -657,9 +698,9 @@ def main() -> None:
         f"  w: {OG_COLS},\n  h: {OG_ROWS},\n  dots: {json.dumps(og, separators=(',', ':'))},\n}};\n"
     )
 
-    render(f96, d96, set(r96), 6, True, density=2).save(PUBLIC / "dots-96@2x.webp", quality=90, method=6)
-    render(f64, d64, set(r64), 5, True).save(PUBLIC / "dots-64@2x.webp", quality=90, method=6)
-    render(fab, dab, set(rab), 5, True).save(PUBLIC / "dots-about@2x.webp", quality=90, method=6)
+    render(f96, d96, set(r96), HERO_STILL_PX / DENSITY, True, density=DENSITY).save(PUBLIC / "dots-96@2x.webp", quality=90, method=6)
+    render(f64, d64, set(r64), PHONE_STILL_PX / DENSITY, True, density=DENSITY).save(PUBLIC / "dots-64@2x.webp", quality=90, method=6)
+    render(fab, dab, set(rab), ABOUT_STILL_PX / DENSITY, True, density=DENSITY).save(PUBLIC / "dots-about@2x.webp", quality=90, method=6)
 
     print(f"96 field: {count} lit, datum {d96}, center {c96}, rim {len(r96)}")
     print(f"64 field: {int((f64 >= UNLIT * 255).sum())} lit, datum {d64}")
@@ -674,10 +715,10 @@ def main() -> None:
     if args.preview:
         out = Path(args.preview)
         out.mkdir(parents=True, exist_ok=True)
-        render(f96, d96, set(r96), 3.5, False).save(out / "bake-96.png")
-        render(f64, d64, set(r64), 4.5, False).save(out / "bake-64.png")
-        render(fab, dab, set(rab), 4.5, False).save(out / "bake-about.png")
-        render(fct, dct, set(rct), 4.5, False).save(out / "bake-contact.png")
+        render(f96, d96, set(r96), PREVIEW_PX / DENSITY, False, density=DENSITY).save(out / "bake-96.png")
+        render(f64, d64, set(r64), 9 / DENSITY, False, density=DENSITY).save(out / "bake-64.png")
+        render(fab, dab, set(rab), 9 / DENSITY, False, density=DENSITY).save(out / "bake-about.png")
+        render(fct, dct, set(rct), 9 / DENSITY, False, density=DENSITY).save(out / "bake-contact.png")
         print("previews in", out)
 
 

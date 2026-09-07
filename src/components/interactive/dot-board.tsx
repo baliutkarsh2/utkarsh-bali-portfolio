@@ -45,7 +45,16 @@ const SEEN_KEY = "board:seen";
  * (scripts/bake-portrait.py), so a 192 x 240 field fills a 96 x 120 lattice
  * box. Text mode rasterises at the lattice itself.
  */
-const PORTRAIT_DENSITY = 2;
+// Three, not two. The field is baked at box x DENSITY, so this is the cell
+// count of every portrait on the site, and it is the single biggest lever on
+// how clear his face is: 22,990 dots to 51,747, and detail carried at a fixed
+// PHYSICAL radius up 12.5% at a third of a page cell. Measured against the
+// bake, not chosen -- scripts/check-density.mjs fails the build if this number
+// and the bake's disagree, because a field baked at one density and drawn at
+// another renders the portrait at the wrong SIZE and every type check still
+// passes: BoardField carries its own w and h, so a 288x360 field is exactly as
+// well-typed as a 192x240 one.
+const PORTRAIT_DENSITY = 3;
 const PHONE = "(width < 48rem)";
 
 /**
