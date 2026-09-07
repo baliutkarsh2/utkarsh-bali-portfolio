@@ -161,25 +161,20 @@ UNLIT = 0.05
 LIFT, INK_GAIN, DEEP_FLOOR, CULL_DIA, INK_DIA_MAX = 0.55, 1.15, 0.16, 0.30, 1.42
 
 
-# The stochastic screen, in the same numbers the two renderers use.
+# There is no jitter here, and there is none in either renderer.
 #
-# It is not decoration. A ruled orthogonal grid of marks is invisible on a dark
-# ground and unavoidable on white: it shows a screen door and it beats against
-# the display's own pixel grid. The board breaks the lattice by a third of a
-# cell for exactly that reason, and the still has to do it too or the picture a
-# no-JS visitor gets is a moire pattern of the picture everyone else gets.
+# It was a stochastic screen meant to stop a ruled grid showing a screen door.
+# Measured on the shipped About field, rendering the same bytes with only the
+# jitter varied and regressing realised coverage against what the transfer
+# asked for: cell-scale signal-to-noise runs 18.2 at 0.00, 7.3 at 0.10, 4.3 at
+# 0.18 -- the direction's own figure -- and 2.5 at the 0.34 that shipped. The
+# picture is in the last step, so there is no compromise value: 0.18 recovers
+# only about 12% of what 0.34 threw away.
 #
-# The hash is the shaders' hash (gl-board.ts, board.ts). Float64 here against
-# float32 there means the two do not land on identical offsets, which does not
-# matter: what has to match is the CHARACTER of the screen, not the seed.
-JITTER = 0.34  # cells
-
-
-def jitter_of(i: int, j: int) -> tuple[float, float]:
-    a = math.modf(math.sin(i * 12.9898 + j * 78.233) * 43758.5453)[0] % 1.0
-    b = math.modf(math.sin(i * 39.3468 + j * 11.135) * 24634.6345)[0] % 1.0
-    return (a - 0.5) * 2.0 * JITTER, (b - 0.5) * 2.0 * JITTER
-
+# The screen door is real and the answer to it is resolution rather than noise.
+# Independently checked: unjittered, the high-frequency residual left after an
+# observer's own blur is about a THIRD of what the jitter produces -- the
+# jitter did not remove that energy, it only disorganised it into grain.
 
 def ink_dia(L: float) -> float:
     """Dot diameter in cells for a cell of luminance L, or 0 if it is culled."""

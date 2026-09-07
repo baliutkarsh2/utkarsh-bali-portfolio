@@ -495,8 +495,6 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   // The lattice: page dots sit at (k * pitch + 0.5), the top-left pixel of
   // each tile. Cells land on the same grid so an unlit cell and the field
   // beneath it are the same pixel.
-  // Jitter is baked once per cell rather than recomputed every frame: it is a
-  // property of the plate, not of the moment.
   const homeX = (i: number) => originX + gx[i] * pitch + 0.5;
   const homeY = (i: number) => originY + gy[i] * pitch + 0.5;
   const snap = (v: number) => Math.round((v - 0.5) / lattice) * lattice + 0.5;
