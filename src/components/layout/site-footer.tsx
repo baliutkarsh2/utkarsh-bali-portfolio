@@ -91,8 +91,8 @@ export function SiteFooter() {
         </nav>
 
         <p className="footer-colophon meta">
-          © {new Date().getFullYear()} {profile.name} · Next 16 on Vercel · Geist, Geist Mono,
-          Doto · {dotCount} dots
+          © {new Date().getFullYear()} {profile.name} · Next 16 on Vercel · Bodoni Moda, Source
+          Serif, IBM Plex Mono · {dotCount} dots
         </p>
       </div>
     </footer>

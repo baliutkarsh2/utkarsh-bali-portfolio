@@ -21,8 +21,12 @@ const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
 /**
  * The first screen (§7.1). Everything here is in the HTML on frame one and
  * nothing in it moves: the name is the LCP element on every viewport, plain
- * text in Geist 500, and the only things that animate are dots — the mission
+ * text in Bodoni 500, and the only things that animate are dots — the mission
  * line's hairline drawing in and the portrait assembling on the board.
+ *
+ * The name is at full opacity from frame zero THROUGHOUT the arrival — bone on
+ * the plate, ink on the sheet — which is why the arrival can invert the whole
+ * palette under it without ever delaying the largest contentful paint.
  *
  * The status LED is the one --sun element of this screen (the portrait's rim
  * and datum are the light source, not UI, and do not count).

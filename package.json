@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "eslint .",
+    "prebuild": "eslint . && node scripts/check-tokens.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "check:shaders": "node scripts/check-shaders.mjs"
+    "check:shaders": "node scripts/check-shaders.mjs",
+    "check:tokens": "node scripts/check-tokens.mjs"
   },
   "dependencies": {
     "@mdx-js/loader": "3.1.1",

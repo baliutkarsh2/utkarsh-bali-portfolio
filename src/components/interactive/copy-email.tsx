@@ -62,7 +62,7 @@ async function copyText(text: string, source: HTMLElement | null): Promise<boole
 }
 
 /**
- * The address is real text in Geist 500 display-m; the address is the
+ * The address is real text in Bodoni display-m; the address is the
  * button. The meta label beside it is the only thing that changes, with no
  * transition (it is information, and words never animate). It is a polite
  * live region and a sibling of the button, not a child: a button's children

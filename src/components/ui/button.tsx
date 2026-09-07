@@ -18,7 +18,7 @@ type ButtonProps = {
 const isExternalHref = (href: string) => /^(https?:|mailto:|tel:)/.test(href);
 
 /**
- * Three registers, one shape: 2.75rem, radius 0, Geist 500 small. Primary
+ * Three registers, one shape: 2.75rem, radius 0, Bodoni 500 small. Primary
  * fills --ink; secondary is a --line-strong hairline box; text is the dotted
  * underline. The element is chosen by what it does: <Link> for a route,
  * <a> for another origin or a mailto:, <button> for an action.

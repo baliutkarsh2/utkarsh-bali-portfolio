@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type SectionProps = {
-  /** "01", "02" … Geist Mono meta in --ink-3, never Doto (a 24 px dot face is off-pitch). */
+  /** "01", "02" … IBM Plex Mono meta in --ink-3. Data only; never a sentence. */
   index: string;
   title: string;
   /**

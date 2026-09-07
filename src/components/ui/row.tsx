@@ -9,7 +9,7 @@ type RowProps = {
   index?: string;
   /** Gutter content that is data, not decoration (a year): rendered and read. */
   gutter?: ReactNode;
-  /** The row's name in display-s (Geist 500). Pass text, or your own heading. */
+  /** The row's name in display-s (Bodoni 500). Pass text, or your own heading. */
   title: ReactNode;
   /** One line under the title, small --ink-2. */
   subtitle?: ReactNode;

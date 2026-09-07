@@ -15,9 +15,11 @@ import { metrics } from "@/content";
  * are words and never move. The accent figure ("Top 10%") is the one --sun
  * element of this screen.
  *
- * Doto may only set DOT_GLYPHS; a value with any other character falls back to
- * Geist display-m rather than rendering tofu (the dev-mode throw in <Numeral>
- * is for content bugs, and this keeps production honest too).
+ * The figures set in Bodoni Moda at 700 with lining tabular numerals. They used
+ * to set in Doto, a hand-subset of twenty-three glyphs, which meant every metric
+ * on the site had to be spellable in `0123456789.,%<>~+xKTop` and a prebuild
+ * script failed the build when it was not. A Didone has the whole alphabet, so a
+ * metric can now say whatever it honestly says.
  */
 export function NumbersBoard() {
   return (

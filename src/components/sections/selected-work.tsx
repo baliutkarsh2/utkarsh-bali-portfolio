@@ -35,7 +35,7 @@ const title =
 /**
  * Section 02 (§7.1, `#work`): the first three featured projects as rows —
  * index, name, tagline, "eyebrow · year", and the project's one number in
- * Doto on the right with its label beneath. The whole row is the link; the
+ * Bodoni on the right with its label beneath. The whole row is the link; the
  * name carries `view-transition-name: project-{slug}` so it morphs into the
  * case-study masthead. No LED and no accent here: the figures are --ink, so
  * the numbers board above keeps the screen's one --sun element.

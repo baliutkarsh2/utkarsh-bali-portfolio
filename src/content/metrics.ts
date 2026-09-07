@@ -9,8 +9,9 @@
  *
  * These three are three different KINDS of proof: someone else's judgement,
  * production scale, and research rigour. Each links to where it is earned.
- * Every value must be set from the Doto subset (DOT_GLYPHS in src/lib/fonts.ts);
- * the prebuild check fails otherwise.
+ * A value used to have to be spellable in the Doto subset, and a prebuild check
+ * failed the build when it was not. Bodoni has the whole alphabet: say what the
+ * number honestly says.
  */
 export type Metric = {
   value: string;
