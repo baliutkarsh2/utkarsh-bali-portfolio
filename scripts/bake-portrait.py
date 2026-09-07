@@ -102,6 +102,26 @@ UNLIT = 0.05
 LIFT, INK_GAIN, DEEP_FLOOR, CULL_DIA, INK_DIA_MAX = 0.55, 1.15, 0.16, 0.30, 1.42
 
 
+# The stochastic screen, in the same numbers the two renderers use.
+#
+# It is not decoration. A ruled orthogonal grid of marks is invisible on a dark
+# ground and unavoidable on white: it shows a screen door and it beats against
+# the display's own pixel grid. The board breaks the lattice by a third of a
+# cell for exactly that reason, and the still has to do it too or the picture a
+# no-JS visitor gets is a moire pattern of the picture everyone else gets.
+#
+# The hash is the shaders' hash (gl-board.ts, board.ts). Float64 here against
+# float32 there means the two do not land on identical offsets, which does not
+# matter: what has to match is the CHARACTER of the screen, not the seed.
+JITTER = 0.34  # cells
+
+
+def jitter_of(i: int, j: int) -> tuple[float, float]:
+    a = math.modf(math.sin(i * 12.9898 + j * 78.233) * 43758.5453)[0] % 1.0
+    b = math.modf(math.sin(i * 39.3468 + j * 11.135) * 24634.6345)[0] % 1.0
+    return (a - 0.5) * 2.0 * JITTER, (b - 0.5) * 2.0 * JITTER
+
+
 def ink_dia(L: float) -> float:
     """Dot diameter in cells for a cell of luminance L, or 0 if it is culled."""
     coverage = (1.0 - min(max(L, DEEP_FLOOR), 1.0) ** LIFT) ** INK_GAIN
@@ -404,29 +424,89 @@ def render(
     on the sheet that is vermilion.
     """
     rows, cols = field.shape
-    ss = 2
     W, H = int(cols * cell_px), int(rows * cell_px)
-    img = Image.new("RGBA", (W * ss, H * ss), (0, 0, 0, 0) if transparent else (*PAPER, 255))
-    d = ImageDraw.Draw(img)
+
+    # AREA HAS TO BE EXACT HERE, and it was not.
+    #
+    # This still is what a visitor sees with JavaScript off, what the printer
+    # prints, and what forced-colors shows. It is the bottom rung of the tier
+    # ladder, and section 8.7 of the direction says every rung must agree --
+    # which is precisely the kind of claim nothing checks, so it drifted. The
+    # old renderer drew each dot with PIL's `ellipse`, whose bounding box is
+    # ENDPOINT-INCLUSIVE: asking for a disc of diameter D paints D + 1 pixels
+    # across. At these sizes that is not a rounding error. Measured against the
+    # exact pi/4 * d^2, a dot came out 1.11x too large at 20px and 3.5x too
+    # large at 1.2px, and the 2x supersample this used only halved it. The
+    # stills were systematically darker than the board they stand in for --
+    # about 20% at a 6px cell and 65% at 5px.
+    #
+    # So the mask is drawn at 8x with the endpoint corrected, then box-filtered
+    # down. BOX is an exact area average, which is what coverage means; LANCZOS
+    # rings and would put a pale halo around every dot. At 8x the smallest dot
+    # the transfer can emit (CULL_DIA 0.30 cells, 5px cells) is 12 device px,
+    # where the corrected box measures within 1% of exact.
+    #
+    # An "L" mask rather than RGBA: 8x of a 960 x 1200 field is 74 MB in one
+    # channel and 295 MB in four.
+    ss = 8
     k = cell_px * ss
+    mask = Image.new("L", (W * ss, H * ss), 0)
+    d = ImageDraw.Draw(mask)
+    datum_dia = 0.0
+    datum_xy = (0.0, 0.0)
     for j in range(rows):
         for i in range(cols):
             v = int(field[j, i])
             if v == 0:
                 continue
-            L = v / 255
+            jx, jy = jitter_of(i, j)
+            X, Y = (i + 0.5 + jx) * k, (j + 0.5 + jy) * k
             if (i, j) == datum:
-                dia, col = 0.96 * density, SUN
-            else:
-                dia = ink_dia(L)
-                if dia == 0.0:
-                    continue  # below resolution is haze; bare paper is a highlight
-                col = INK
+                # The one vermilion mark on the sheet, composited afterwards so
+                # it sits in its own ink rather than in the ink mask.
+                datum_dia = 0.96 * density
+                datum_xy = ((i + 0.5 + jx) * cell_px, (j + 0.5 + jy) * cell_px)
+                continue
+            dia = ink_dia(v / 255)
+            if dia == 0.0:
+                continue  # below resolution is haze; bare paper is a highlight
             r = dia * k / 2
-            X, Y = (i + 0.5) * k, (j + 0.5) * k
-            a = int(255 * alpha_scale)
-            d.ellipse((X - r, Y - r, X + r, Y + r), fill=(*col, a))
-    return img.resize((W, H), Image.LANCZOS)
+            d.ellipse((X - r, Y - r, X + r - 1, Y + r - 1), fill=255)
+    ink_cov = np.asarray(mask.resize((W, H), Image.BOX), dtype=np.float32) / 255.0
+    del mask
+
+    # The datum, drawn analytically at final resolution: one dot, and it is the
+    # only mark allowed a second colour, so it must not go through the ink mask.
+    sun_cov = np.zeros((H, W), np.float32)
+    if datum_dia > 0.0:
+        r = datum_dia * cell_px / 2
+        cx, cy = datum_xy
+        N = 8
+        x0, x1 = max(0, int(cx - r - 1)), min(W, int(cx + r + 2))
+        y0, y1 = max(0, int(cy - r - 1)), min(H, int(cy + r + 2))
+        if x1 > x0 and y1 > y0:
+            off = (np.arange(N) + 0.5) / N
+            xs = (np.arange(x0, x1)[:, None] + off[None, :]).ravel()
+            ys = (np.arange(y0, y1)[:, None] + off[None, :]).ravel()
+            inside = ((ys[:, None] - cy) ** 2 + (xs[None, :] - cx) ** 2) <= r * r
+            sun_cov[y0:y1, x0:x1] = inside.reshape(y1 - y0, N, x1 - x0, N).mean(axis=(1, 3))
+
+    ink_cov = np.maximum(ink_cov - sun_cov, 0.0)
+    alpha = np.clip((ink_cov + sun_cov) * alpha_scale, 0.0, 1.0)
+    ink_rgb = np.array(INK, np.float32)
+    sun_rgb = np.array(SUN, np.float32)
+    total = ink_cov + sun_cov
+    with np.errstate(invalid="ignore", divide="ignore"):
+        wsun = np.where(total > 0, sun_cov / np.maximum(total, 1e-6), 0.0)[..., None]
+    colour = ink_rgb * (1.0 - wsun) + sun_rgb * wsun
+
+    if transparent:
+        out = np.dstack([colour, alpha[..., None] * 255.0])
+    else:
+        paper = np.array(PAPER, np.float32)
+        rgb = paper * (1.0 - alpha[..., None]) + colour * alpha[..., None]
+        out = np.dstack([rgb, np.full((H, W, 1), 255.0, np.float32)])
+    return Image.fromarray(np.clip(out + 0.5, 0, 255).astype(np.uint8), "RGBA")
 
 
 def main() -> None:
