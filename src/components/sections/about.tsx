@@ -37,7 +37,7 @@ export function About() {
           id="about-title"
           className="text-display-l font-medium text-balance text-ink"
         >
-          Always building.
+          Started with quadcopters.
         </h1>
       </div>
 

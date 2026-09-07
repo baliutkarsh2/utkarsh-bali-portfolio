@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Contact } from "@/components/sections/contact";
 import { ProgressRow } from "@/components/interactive/progress-row";
 import { Tag, TagRow } from "@/components/ui/tag";
 import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
@@ -135,7 +134,6 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
       </article>
 
       {/* A post has no numbered sections, so the close is the first. */}
-      <Contact index="01" />
     </>
   );
 }

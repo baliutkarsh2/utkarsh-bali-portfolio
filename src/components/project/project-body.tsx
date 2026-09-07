@@ -6,14 +6,6 @@ import type { Project } from "@/content";
 import { ordinal } from "@/lib/utils";
 
 /**
- * How many numbered sections the body renders for a project. The page uses
- * it to number what follows (Contact).
- */
-export function projectSectionCount(project: Pick<Project, "learnings">): number {
-  return project.learnings && project.learnings.length > 0 ? 6 : 5;
-}
-
-/**
  * The case-study body (§7.4.5): six numbered hairline blocks on the copy
  * columns. Each block is a `section` carrying `data-section-index` and
  * `data-section-title`, so the header readout follows the reader through

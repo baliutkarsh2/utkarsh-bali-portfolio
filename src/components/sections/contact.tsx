@@ -1,8 +1,10 @@
+import { ArrowUpRight } from "lucide-react";
 import { CopyEmail } from "@/components/interactive/copy-email";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { profile, socials } from "@/content";
+import { recentPosts } from "@/lib/writing";
 
-const TITLE = "Building something? Let\u2019s talk.";
+const TITLE = "I finish at Purdue in December.";
 
 /**
  * The close of every page: the title, the address as one click-to-copy
@@ -21,9 +23,10 @@ const TITLE = "Building something? Let\u2019s talk.";
  * Signature kept: every page passes its own `index`; the home's is "04".
  */
 export function Contact({ index }: { index?: string }) {
-  // No default: an index page (Work, Writing) numbers its rows from 01, so a
-  // close numbered 01 beneath them would be the second on that screen.
+  // The close now renders once, on the home page, which always passes an index.
   const sectionIndex = index ?? "";
+  // One essay, published on Medium. One line, not a section of its own.
+  const [essay] = recentPosts(1);
 
   return (
     <section
@@ -67,6 +70,26 @@ export function Contact({ index }: { index?: string }) {
               </li>
             ))}
         </ul>
+
+        {essay && (
+          <p className="mt-8 text-small text-ink-2">
+            Also{" "}
+            <a
+              href={essay.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dot-underline tap text-ink"
+            >
+              an essay
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+            <ArrowUpRight
+              className="inline-block size-[0.9em] align-[-0.1em] text-ink-3"
+              aria-hidden="true"
+            />{" "}
+            on {essay.external?.publisher ?? "the web"}: {essay.title}.
+          </p>
+        )}
       </div>
 
       <div className="contact-board">

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Experience } from "@/components/sections/experience";
 import { Recognition } from "@/components/sections/recognition";
-import { Contact } from "@/components/sections/contact";
 
 export const metadata: Metadata = {
   title: "Experience",
@@ -21,7 +20,6 @@ export default function ExperiencePage() {
     <>
       <Experience />
       <Recognition />
-      <Contact index="03" />
     </>
   );
 }

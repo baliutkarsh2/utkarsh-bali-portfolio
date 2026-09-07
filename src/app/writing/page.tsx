@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Contact } from "@/components/sections/contact";
 import { Row } from "@/components/ui/row";
 import { Tag } from "@/components/ui/tag";
 import { formatPostDate, publishedPosts } from "@/lib/writing";
@@ -79,8 +78,6 @@ export default function WritingPage() {
         )}
       </div>
 
-      {/* The index has no numbered sections, so the close is the first. */}
-      <Contact />
     </>
   );
 }

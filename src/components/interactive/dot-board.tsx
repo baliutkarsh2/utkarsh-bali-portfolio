@@ -232,8 +232,11 @@ export function DotBoard({
         if (fixed) {
           bleed = 0;
           board.layout({
-            width: window.innerWidth,
-            height: window.innerHeight,
+            // The layout viewport, not innerWidth: that includes a classic
+            // scrollbar, so the canvas would be wider than the box `inset: 0`
+            // gives it and the two would disagree on the first frame.
+            width: document.documentElement.clientWidth,
+            height: document.documentElement.clientHeight,
             originX: snapX,
             originY: snapY,
             pitch: cell,

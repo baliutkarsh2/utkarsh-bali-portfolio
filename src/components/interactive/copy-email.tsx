@@ -69,7 +69,7 @@ async function copyText(text: string, source: HTMLElement | null): Promise<boole
  * are presentational, so a status inside it would be flattened into the
  * button's name and never announced.
  */
-export function CopyEmail({ email }: { email: string }) {
+export function CopyEmail({ email, size = "large" }: { email: string; size?: "large" | "small" }) {
   const [state, setState] = useState<CopyState>("rest");
   const addressRef = useRef<HTMLSpanElement>(null);
   const timer = useRef<number | null>(null);
@@ -95,9 +95,16 @@ export function CopyEmail({ email }: { email: string }) {
   }
 
   return (
-    <div className="copy-email" data-state={state}>
+    <div className="copy-email" data-state={state} data-size={size}>
       <button type="button" className="copy-email-button tap" onClick={onClick}>
-        <span ref={addressRef} className="copy-email-address text-display-m font-medium text-ink">
+        <span
+          ref={addressRef}
+          className={
+            size === "small"
+              ? "copy-email-address text-small font-medium text-ink"
+              : "copy-email-address text-display-m font-medium text-ink"
+          }
+        >
           {email}
         </span>
         <span className="sr-only">, copy to clipboard</span>

@@ -6,7 +6,7 @@ export const profile = {
   initials: "UB",
   role: "Software engineer",
   tagline:
-    "I build agent infrastructure, developer tools, and products people actually use.",
+    "I build the infrastructure agents run on, and the thing that breaks them before a user does.",
   email: "baliutkarsh2@gmail.com",
   location: "West Lafayette, IN",
   education: "Purdue University, CS + AI",
@@ -31,13 +31,17 @@ export const socials: Social[] = [
 
 /**
  * The site is multi-page: every nav item is a route except Contact, which
- * anchors to the shared closing section on the homepage and therefore works
- * from anywhere. Route links take aria-current="page".
+ * anchors to the closing section on the homepage and therefore works from
+ * anywhere. Route links take aria-current="page".
+ *
+ * Writing is deliberately not here. There is one post and it lives on Medium,
+ * so a nav item would lead to a page that leads off the site. The route, the
+ * feed and the MDX pipeline all still exist, the footer still links it, and
+ * the day a second post lands here this is a one-line change.
  */
 export const navItems: { label: string; href: string }[] = [
   { label: "About", href: "/about" },
   { label: "Work", href: "/projects" },
-  { label: "Writing", href: "/writing" },
   { label: "Experience", href: "/experience" },
   { label: "Contact", href: "/#contact" },
 ];

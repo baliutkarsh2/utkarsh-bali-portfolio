@@ -417,8 +417,14 @@
     }
   }
 
+  /* The close lives once, on the home page; every other route ends here, so
+     the address sits above the links as one small click-to-copy line. */
+  .footer-address {
+    margin-top: var(--space-5);
+  }
+
   .footer-links {
-    margin-top: var(--space-6);
+    margin-top: var(--space-4);
   }
 
   .footer-links-list {

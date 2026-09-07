@@ -12,16 +12,14 @@ import {
 } from "@/content";
 import { Gallery } from "@/components/project/gallery";
 import { NumberPlate } from "@/components/project/number-plate";
-import { ProjectBody, ProjectRail, projectSectionCount } from "@/components/project/project-body";
+import { ProjectBody, ProjectRail } from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
-import { Contact } from "@/components/sections/contact";
 import { ProgressRow } from "@/components/interactive/progress-row";
 import { Reveal } from "@/components/interactive/reveal";
 import { DotMask } from "@/components/ui/dot-mask";
 import { Led } from "@/components/ui/led";
 import { SpecList } from "@/components/ui/spec-list";
 import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
-import { ordinal } from "@/lib/utils";
 
 /** Unknown slugs 404 instead of being rendered on demand. */
 export const dynamicParams = false;
@@ -177,8 +175,6 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         </div>
       )}
 
-      {/* Numbered after the body's last section, as on every page. */}
-      <Contact index={ordinal(projectSectionCount(project))} />
     </>
   );
 }

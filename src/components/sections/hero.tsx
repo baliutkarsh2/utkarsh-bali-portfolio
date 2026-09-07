@@ -81,9 +81,8 @@ export function Hero() {
         <p className="max-w-[34ch] text-display-s text-ink">{profile.tagline}</p>
 
         <p className="mt-5 max-w-[34ch] text-lede text-ink-2">
-          Most recently a software engineering intern at Recurly. Before that, agent
-          infrastructure at <span className="text-ink">QualGent</span> (YC X25). Co-founder
-          and CTO of{" "}
+          Recurly, summer 2026. Before that, agent infrastructure at{" "}
+          <span className="text-ink">QualGent</span> (YC X25). Co-founder and CTO of{" "}
           <Link
             href="/projects/checkpoint"
             className="dot-underline text-ink"
@@ -91,7 +90,7 @@ export function Hero() {
           >
             Checkpoint
           </Link>
-          .
+          . Purdue CS + AI, done in December.
         </p>
 
         <div className="hero-actions mt-8 flex flex-wrap items-center gap-3">

@@ -81,8 +81,10 @@ export function FieldLight() {
     // CSS box is set from the same numbers as the bitmap, so it is never
     // stretched where 100vh and the visible viewport disagree.
     const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
+      // The layout viewport: the canvas is fixed at inset 0, so this is the
+      // box CSS gives it, and innerWidth would be a scrollbar wider.
+      width = document.documentElement.clientWidth;
+      height = document.documentElement.clientHeight;
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(width * dpr));
       canvas.height = Math.max(1, Math.round(height * dpr));

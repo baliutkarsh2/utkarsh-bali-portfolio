@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CopyEmail } from "@/components/interactive/copy-email";
 import { profile, socials } from "@/content";
 import { DOT_COUNT } from "@/content/portrait";
 import { MissionLine } from "@/components/ui/mission-line";
@@ -34,6 +35,12 @@ export function SiteFooter() {
             <p>{profile.education}</p>
             <p>{profile.location}</p>
           </div>
+        </div>
+
+        {/* The close lives once, on the home page. Every other route ends
+            here, so the address has to be reachable from the footer. */}
+        <div className="footer-address">
+          <CopyEmail email={profile.email} size="small" />
         </div>
 
         <nav aria-label="Footer" className="footer-links">

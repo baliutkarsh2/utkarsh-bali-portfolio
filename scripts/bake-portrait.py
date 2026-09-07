@@ -77,6 +77,26 @@ TOE = 0.06       # floor under every lit cell
 EDGE_BAND_PX = 18      # silhouette band in photograph pixels
 EDGE_FLOOR = 0.42  # silhouette cells are forced to at least this luminance
 UNLIT = 0.05
+
+# ── Focal hierarchy ───────────────────────────────────────────────────────
+# A uniform halftone has no subject. In this frame the white tee is the
+# brightest, most detailed thing and the face is not, so the eye goes to his
+# shoulder. A portrait photographer burns the shirt and dodges the face; this
+# does the same, and then drives DENSITY by importance so flat ground falls
+# back to the page lattice while the face keeps every cell.
+#
+# FOCAL_HOLD is a plateau, not a peak: everything inside it is the subject and
+# is never thinned. A simple 1-d cone made the cheeks as sparse as the tee,
+# which is prettier and less clear — the wrong trade for a portrait.
+FOCAL_RX, FOCAL_RY = 0.72, 0.60   # ellipse radii, fractions of the window
+FOCAL_HOLD = 0.42                 # inside this, importance is 1
+FOCAL_GAMMA = 0.9
+DODGE = 0.16      # lift local contrast inside the plateau
+BURN = 0.48       # roll off highlights outside it
+BURN_KNEE = 0.68
+W_DETAIL = 0.80   # importance from local high-pass energy
+W_FOCAL = 0.50    # importance from the focal map
+IMP_CUT = 0.92    # importance at which a cell is certain to keep full density
 # Share of lit cells that carry the sunset. Opening up the shadows raised the
 # lit count by about 40%, and at a flat 2% the rim stopped reading as a light
 # on an edge and started reading as orange blocks on the hand and the shoulder.
@@ -146,7 +166,14 @@ def cell_mean(a: np.ndarray, cols: int, rows: int, mask: np.ndarray) -> tuple[np
     return out, cov
 
 
-def sample(win: Image.Image, cols: int, rows: int) -> tuple[np.ndarray, np.ndarray]:
+def sample(
+    win: Image.Image,
+    cols: int,
+    rows: int,
+    crop: tuple[int, int, int, int] = MAIN_CROP,
+    center_hint: tuple[int, int] = CENTER_HINT,
+    focal_strength: float = 1.0,
+) -> tuple[np.ndarray, np.ndarray]:
     """Return (bytes per the mapping above, per-cell warmth) as rows x cols arrays."""
     W, H = win.size
     pitch = W / cols
@@ -156,6 +183,21 @@ def sample(win: Image.Image, cols: int, rows: int) -> tuple[np.ndarray, np.ndarr
     rgb, alpha = arr[..., :3], arr[..., 3]
     lum = 0.2126 * rgb[..., 0] + 0.7152 * rgb[..., 1] + 0.0722 * rgb[..., 2]
     inside = alpha > 0.5
+
+    # 0. The focal map and the detail map: what this picture is about.
+    fx = (center_hint[0] - crop[0]) / W
+    fy = (center_hint[1] - crop[1]) / H
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    dist = np.sqrt(((xx / W - fx) / FOCAL_RX) ** 2 + ((yy / H - fy) / FOCAL_RY) ** 2)
+    focal = np.clip((1.0 - dist) / max(1.0 - FOCAL_HOLD, 1e-6), 0.0, 1.0) ** FOCAL_GAMMA
+    # A window that is already nothing but face has no hierarchy to impose:
+    # every cell is the subject, so dodge, burn and thinning are all off and it
+    # keeps the uniform density a close-up wants.
+    focal = 1.0 - focal_strength * (1.0 - focal)
+    detail = np.abs(lum - blur(lum, max(1.0, pitch * 1.6)))
+    detail = blur(detail, max(1.5, pitch * 2.2))
+    if inside.any():
+        detail = np.clip(detail / max(float(np.percentile(detail[inside], 96)), 1e-6), 0, 1)
 
     # 1. Two unsharp passes: the shape, then the features.
     if BROAD > 0:
@@ -186,6 +228,14 @@ def sample(win: Image.Image, cols: int, rows: int) -> tuple[np.ndarray, np.ndarr
     norm = np.power(norm, GAMMA)
     if CONTRAST != 1.0:
         norm = np.clip(0.5 + (norm - 0.5) * CONTRAST, 0, 1)
+    # Dodge and burn. The face gets its local contrast lifted; everything
+    # outside the plateau gives up its highlights, so the tee stops competing.
+    if DODGE > 0 and focal_strength > 0:
+        norm = np.clip(norm + DODGE * focal * (norm - blur(norm, max(2.0, pitch * 6.0))), 0, 1)
+    if BURN > 0 and focal_strength > 0:
+        over = np.clip(norm - BURN_KNEE, 0, 1)
+        norm = np.where(norm > BURN_KNEE, BURN_KNEE + over * (1.0 - BURN * (1.0 - focal)), norm)
+
     if TOE > 0:
         norm = TOE + (1 - TOE) * norm
 
@@ -201,10 +251,30 @@ def sample(win: Image.Image, cols: int, rows: int) -> tuple[np.ndarray, np.ndarr
 
     values, cover = cell_mean(norm, cols, rows, inside)
     warmth, _ = cell_mean(warmth_px, cols, rows, inside)
+    det_c, _ = cell_mean(detail, cols, rows, inside)
+    foc_c, _ = cell_mean(focal, cols, rows, inside)
+    edge_c, _ = cell_mean(edge.astype(np.float32), cols, rows, inside)
     keep = cover > 0.5
     out = np.zeros((rows, cols), np.uint8)
     out[keep] = np.maximum(1, np.round(np.clip(values[keep], 0, 1) * 255).astype(np.uint8))
     warmth = np.where(keep, warmth, 0.0).astype(np.float32)
+
+    # Importance drives density, not tone. A cell that loses is demoted to
+    # "inside but unlit" (bytes 1..12), which the renderer already draws only
+    # where a page dot is — so the flat ground thins to the lattice and the
+    # face keeps every cell. The face and the silhouette are never thinned.
+    #
+    # The demotion is dithered with interleaved gradient noise, not
+    # thresholded: a hard cut flips whole regions at once and punches visible
+    # holes in the hair and the tee, which reads as damage rather than air.
+    imp = np.clip(W_DETAIL * det_c + W_FOCAL * foc_c, 0, 1)
+    imp = np.maximum(imp, edge_c)
+    imp = np.maximum(imp, foc_c)
+    if focal_strength > 0:
+        jj, ii = np.mgrid[0:rows, 0:cols].astype(np.float32)
+        ign = np.modf(52.9829189 * np.modf(0.06711056 * ii + 0.00583715 * jj)[0])[0]
+        thin = keep & (ign > np.clip(imp / IMP_CUT, 0, 1)) & (edge_c <= 0.15)
+        out[thin] = np.minimum(out[thin], 12)
     # Feather the bottom eight rows to unlit so the figure sits on the board
     # rather than being cut by it.
     for k in range(8):
@@ -257,7 +327,22 @@ def ts_module(name: str, field: np.ndarray, datum: tuple[int, int], center: tupl
     )
 
 
-def render(field: np.ndarray, datum: tuple[int, int], rim: set[int], cell_px: float, transparent: bool, alpha_scale: float = 1.0) -> Image.Image:
+def render(
+    field: np.ndarray,
+    datum: tuple[int, int],
+    rim: set[int],
+    cell_px: float,
+    transparent: bool,
+    alpha_scale: float = 1.0,
+    density: int = 2,
+) -> Image.Image:
+    """The settled frame, drawn the way the browser draws it.
+
+    `density` must match the field's: the renderer only draws an unlit cell
+    where a page dot is (board.ts, the FIELD_TONE cull), so drawing every one
+    here would put dots in the fallback image that the live board never shows,
+    and inflate the WebP by a third.
+    """
     rows, cols = field.shape
     ss = 2
     W, H = int(cols * cell_px), int(rows * cell_px)
@@ -273,7 +358,9 @@ def render(field: np.ndarray, datum: tuple[int, int], rim: set[int], cell_px: fl
             if (i, j) == datum:
                 dia, col = 0.96, SUN
             elif L < UNLIT:
-                dia, col = 0.18, DOT_OFF
+                if density > 1 and (i % density or j % density):
+                    continue
+                dia, col = 0.18 * density, DOT_OFF
             else:
                 dia = 0.18 + 0.78 * L
                 col = SUN if (j * cols + i) in rim else INK
@@ -300,7 +387,7 @@ def main() -> None:
     # pitch / 2): 192 x 240 fills the same 96 x 120 box on the page lattice.
     f96, w96 = sample(main_win, 192, 240)
     f64, w64 = sample(main_win, 128, 160)
-    fab, wab = sample(about_win, 128, 160)
+    fab, wab = sample(about_win, 128, 160, ABOUT_CROP, CENTER_HINT, focal_strength=0.0)
     fct, wct = sample(main_win, 96, 120)  # the Contact afterimage: a 48 x 60 box
     f48, w48 = sample(main_win, 48, 60)
 
@@ -350,7 +437,7 @@ def main() -> None:
         f"  w: 48,\n  h: 60,\n  dots: {json.dumps(og, separators=(',', ':'))},\n}};\n"
     )
 
-    render(f96, d96, set(r96), 6, True).save(PUBLIC / "dots-96@2x.webp", quality=90, method=6)
+    render(f96, d96, set(r96), 6, True, density=2).save(PUBLIC / "dots-96@2x.webp", quality=90, method=6)
     render(f64, d64, set(r64), 5, True).save(PUBLIC / "dots-64@2x.webp", quality=90, method=6)
     render(fab, dab, set(rab), 5, True).save(PUBLIC / "dots-about@2x.webp", quality=90, method=6)
 

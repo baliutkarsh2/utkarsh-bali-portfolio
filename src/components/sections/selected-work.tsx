@@ -28,7 +28,7 @@ export function SelectedWork({ index = "02" }: { index?: string }) {
   const rows = featuredProjects.slice(0, ROW_COUNT);
 
   return (
-    <Section index={index} title="Selected work" id="work" className="section-wide">
+    <Section index={index} title="Seven projects." id="work" className="section-wide">
       <ul className="rows">
         {rows.map((project, i) => (
           <li key={project.slug}>
