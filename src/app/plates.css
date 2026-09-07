@@ -203,6 +203,33 @@
   z-index: 1;
 }
 
+/* ── The quarterly rule ───────────────────────────────────────────────────
+   A band of ink at the page pitch under the standfirst, ten cells tall and
+   the full measure wide, whose local density is the number of projects that
+   landed in that quarter. It reads as a printed rule of graded weight rather
+   than as a chart, which is the point: nobody counts it, they see the shape
+   of two years.
+
+   Full measure and no plate mark. A mark would make it a figure; it is
+   furniture, and furniture is what separates a masthead from a list. */
+.toc-rule {
+  margin: var(--space-6) 0 0;
+  max-width: 46rem;
+}
+
+/* No mark and no wiped tone. Both say "a plate was pressed here", and this is
+   not a plate: it is a rule, and a rule sits ON the sheet. The tone reads as a
+   panel the moment the thing inside it is furniture rather than a picture. */
+.toc-rule .board::before,
+.toc-rule .board::after {
+  content: none;
+}
+
+.toc-rule .caption {
+  margin-block-start: var(--space-2);
+  color: var(--ink-3);
+}
+
 /* ── The devices ──────────────────────────────────────────────────────────
    A printer's device is a mark that stands for the press that made the book,
    and it belongs in a contents page's margin. Each of these is a diagram of

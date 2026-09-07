@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { Numeral } from "@/components/ui/numeral";
 import { DotBoard } from "@/components/interactive/dot-board";
-import { deviceOf } from "@/content/plates";
+import { deviceOf, plateById } from "@/content/plates";
 import { orderedProjects, statusLabel } from "@/content";
 
 export const metadata: Metadata = {
@@ -116,6 +116,7 @@ export default function ProjectsPage() {
   const firstYear = new Date(oldest).getUTCFullYear().toString();
 
   const years = orderedProjects.map((p) => p.sortDate.slice(0, 4));
+  const rule = plateById.get("rule-quarters");
 
   return (
     <>
@@ -128,6 +129,31 @@ export default function ProjectsPage() {
           Five on agents, two in research, one with 3,000+ users. The column on
           the right is what each one proved. The margin on the left is when.
         </p>
+
+        {/* The register strip the direction asked for in §6 and nobody built:
+            a rule whose ink thickens where the work landed. Seven quarters,
+            Q4 2024 to Q2 2026, counted off the real dates -- the plan claimed
+            ten, and the data says seven, so the script reads the dates rather
+            than the claim.
+
+            It is a rule and not a chart. You read it the way you read a
+            printed rule of graded weight: the eye takes the shape of the
+            year, not seven numbers. The hole is Q1 2025, the one quarter in
+            two years with nothing in it, and it is the loudest thing on the
+            band precisely because it is the absence of a mark -- which is
+            what a highlight is on this whole site. */}
+        {rule && (
+          <figure className="toc-rule">
+            <DotBoard
+              mode="still"
+              source={rule.id}
+              alt={rule.alt}
+              fallback={rule.still}
+              className="rule-board"
+            />
+            <figcaption className="caption">{rule.subject}.</figcaption>
+          </figure>
+        )}
       </header>
 
       <div className="shell toc pb-4">
