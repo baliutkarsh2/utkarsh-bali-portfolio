@@ -11,7 +11,8 @@
     "check:shaders": "node scripts/check-shaders.mjs",
     "check:density": "node scripts/check-density.mjs",
     "check:tokens": "node scripts/check-tokens.mjs",
-    "check:tracked": "node scripts/check-tracked.mjs"
+    "check:tracked": "node scripts/check-tracked.mjs",
+    "check:screen": "python scripts/check-screen.py"
   },
   "dependencies": {
     "@mdx-js/loader": "3.1.1",
