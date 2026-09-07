@@ -159,6 +159,22 @@ noscript .board-fallback {
   }
 }
 
+/* Forced colours (Windows high contrast). A canvas is a bitmap the forced
+   palette cannot reach, so the dots keep their own greys against a background
+   the user has overridden — which is exactly the contrast they asked the OS to
+   fix. The WebP is a single image, so `forced-color-adjust` leaves it alone and
+   it reads as a picture rather than as broken UI. */
+@media (forced-colors: active) {
+  .board-canvas,
+  .field,
+  .field-light {
+    display: none;
+  }
+  .board-fallback {
+    display: block;
+  }
+}
+
 /* Print (§4.9): the canvas goes, the WebP prints at 50 %. */
 @media print {
   .board-canvas {

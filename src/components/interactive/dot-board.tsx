@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { BoardField } from "@/content/portrait-types";
 import { createBoard, type Board, type BoardMode } from "@/lib/board";
+import { createGLBoard } from "@/lib/field/gl-board";
 import { motionAllowed, onMotionChange } from "@/lib/motion";
 
 type BoardStatus = "lattice" | "assembling" | "live" | "settled" | "static" | "fallback";
@@ -147,12 +148,17 @@ export function DotBoard({
 
   useEffect(() => {
     const figure = figureRef.current;
-    const canvas = canvasRef.current;
-    if (!figure || !canvas) return;
+    if (!figure || !canvasRef.current) return;
 
     let disposed = false;
     let generation = 0;
     let cleanup: (() => void) | null = null;
+    // Set once the GPU path has proved it cannot be trusted on this page: a
+    // failed setup, or a context the driver took away. The rebuild after the
+    // first loss is allowed to try again; a second loss pins the 2D board for
+    // the life of the page rather than flickering between the two.
+    let losses = 0;
+    let forceCpu = false;
 
     // The board's state lives on the figure as data-board, written
     // imperatively: it changes on the animation's own schedule, and a React
@@ -177,15 +183,49 @@ export function DotBoard({
 
     /** Everything after the field is known. Returns its own teardown. */
     const start = (field: BoardField): (() => void) | null => {
-      const board: Board | null = createBoard(canvas, field, {
-        mode,
-        colors,
-        pointer: fine && motion,
-      });
+      const options = { mode, colors, pointer: fine && motion };
+      // The GPU field first, the 2D canvas as the floor. Both satisfy the same
+      // `Board` contract and draw the same picture; `createGLBoard` returns
+      // null for no WebGL2, a software renderer, a clamped point size, or any
+      // error during setup, and each of those has to land on the 2D board
+      // rather than on a black rectangle.
+      //
+      // A canvas only ever gives out one kind of context: once it has held a
+      // WebGL2 one, `getContext("2d")` is null on that element forever. The
+      // capability question is therefore settled on a throwaway canvas inside
+      // `fieldCaps()`, so a "no" never touches this one. The remaining case is
+      // a context that was created and then failed during setup — that element
+      // is spent, so swap in a fresh canvas before falling back.
+      //
+      // Reduced motion and the afterimage draw one settled frame and never
+      // animate again, so a GL context and a 35 ms shader compile would buy
+      // nothing and cost a context slot Chrome may later evict from a board
+      // that does animate.
+      // Only the two full-viewport boards. The rail boards are a few hundred
+      // cells that the 2D renderer draws in under a millisecond, and each GL
+      // context is one more for Chrome to evict — it drops the oldest when a
+      // page holds too many, which would blank the hero to animate a thumbnail.
+      const wantsGpu = motion && (mode === "hero" || mode === "text") && !forceCpu;
+      if (!canvasRef.current) return null;
+      // Recycle first, not just on the way down to 2D: after a context loss
+      // the old element still owns a dead context, so retrying GL on it would
+      // fail every time and the one permitted rebuild would be spent for
+      // nothing.
+      let canvas = recycleCanvas(canvasRef.current);
+      let board: Board | null = wantsGpu
+        ? createGLBoard(canvas, field, options, onLost)
+        : null;
+      let renderer = "gpu";
+      if (!board) {
+        canvas = recycleCanvas(canvas);
+        board = createBoard(canvas, field, options);
+        renderer = "2d";
+      }
       if (!board) {
         setStatus("fallback");
         return null;
       }
+      figure.dataset.renderer = renderer;
 
       let raf = 0;
       let visible = true;
@@ -521,6 +561,41 @@ export function DotBoard({
     const stop = () => {
       cleanup?.();
       cleanup = null;
+    };
+
+    /**
+     * A canvas hands out one kind of context for its whole life: once it has
+     * held a WebGL2 one, `getContext("2d")` is null on that element forever.
+     * So the element is replaced before the 2D board is asked for a context.
+     * Only a canvas that actually took a WebGL context is spent, and the
+     * capability probe runs on a throwaway one, so this is rare.
+     */
+    const recycleCanvas = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
+      if (!(canvas as HTMLCanvasElement & { poisoned?: boolean }).poisoned) return canvas;
+      const fresh = document.createElement("canvas");
+      fresh.className = canvas.className;
+      fresh.setAttribute("aria-hidden", "true");
+      canvas.replaceWith(fresh);
+      canvasRef.current = fresh;
+      return fresh;
+    };
+
+    /**
+     * The GPU path gave up after starting. The visitor sees the finished WebP
+     * while this rebuilds, which is the whole point of preventing the default
+     * on a lost context: a lost context is recoverable, a black rectangle is
+     * not. A program that failed to link will fail again, so that goes to the
+     * 2D board immediately.
+     */
+    const onLost = (reason: "lost" | "failed") => {
+      if (disposed) return;
+      losses += 1;
+      if (losses > 1 || reason === "failed") forceCpu = true;
+      const canvas = canvasRef.current;
+      if (canvas) (canvas as HTMLCanvasElement & { poisoned?: boolean }).poisoned = true;
+      setStatus("fallback");
+      stop();
+      boot();
     };
 
     // The field follows the breakpoint, chosen here rather than in React
