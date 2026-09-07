@@ -1,46 +1,38 @@
-import { DOT_GLYPHS } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
 type NumeralProps = {
-  /** The figure as text: "0.844", "Top 10%", "<1%". Every glyph must be in DOT_GLYPHS. */
+  /** The figure as text: "0.844", "Top 10%", "<1%", "~3x". */
   value: string;
-  /** Two sizes only, both multiples of the pitch: 10× (m) and 20× (l). */
+  /** Two sizes: `m` for a figure in a row, `l` for the one that carries a page. */
   size: "m" | "l";
-  /** Sets the figure in --sun. At most one per viewport (rule 3). */
+  /** Sets the figure in the accent ink. Rationed; see the palette. */
   accent?: boolean;
-  /** Warm 400 → 700 on `data-in`. Off for figures that swap in place (inspection panel). */
-  warm?: boolean;
   as?: "span" | "p" | "dd";
 };
 
 /**
- * The only component on the site that sets Doto (`.numeral` in
- * components.css is the single `--font-dot` rule). Doto sets numbers; Geist
- * sets words, so a glyph outside DOT_GLYPHS is a content bug, not a styling
- * one, and is thrown at render in development where the stack points at the
- * caller. Production renders whatever it is given: `scripts/check-glyphs.mjs`
- * runs the same check against src/content before the build.
+ * A figure, set in Bodoni Moda at 700 with lining tabular numerals.
  *
- * The value is real text. The weight warm-up is purely visual; the stagger
- * comes from `--i` set by a wrapping <Reveal stagger>, which inherits to here.
+ * This used to be the one component that set Doto, a 2 KB hand-subset of
+ * twenty-three glyphs. That subset was a cage: every metric on the site had to
+ * be spellable in `0123456789.,%<>~+xKTop`, a prebuild script failed the build
+ * when it was not, and this component threw in development for the same reason.
+ * A Didone has the whole alphabet and a proper set of lining figures, so the
+ * cage, the script and the throw are all gone — a metric can now say whatever it
+ * honestly says.
+ *
+ * `lining-nums tabular-nums` is not cosmetic: figures stack in a column on the
+ * work index and in the case-study plate, and they have to align on the decimal.
  */
-export function Numeral({ value, size, accent = false, warm = true, as: Tag = "span" }: NumeralProps) {
-  if (process.env.NODE_ENV !== "production") {
-    for (const glyph of value) {
-      if (!DOT_GLYPHS.includes(glyph)) {
-        throw new Error(
-          `<Numeral value="${value}">: "${glyph}" is not in DOT_GLYPHS ("${DOT_GLYPHS}"). ` +
-            "Doto sets numbers only; put words in Geist.",
-        );
-      }
-    }
-  }
-
+export function Numeral({ value, size, accent = false, as: Tag = "span" }: NumeralProps) {
   return (
     <Tag
-      className={cn("numeral", size === "l" ? "text-dot-l" : "text-dot-m", accent ? "text-sun" : "text-ink")}
+      className={cn(
+        "numeral lining-nums tabular-nums",
+        size === "l" ? "text-numeral-l" : "text-numeral",
+        accent ? "text-accent" : "text-ink",
+      )}
       data-size={size}
-      data-warm={warm ? "" : undefined}
       data-accent={accent ? "" : undefined}
     >
       {value}

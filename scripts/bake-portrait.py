@@ -109,9 +109,10 @@ def hex_rgb(h: str) -> tuple[int, int, int]:
     return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4))  # type: ignore[return-value]
 
 
-INK = hex_rgb("#F2F1EC")
-SUN = hex_rgb("#FF6A2B")
-DOT_OFF = hex_rgb("#232326")
+# Ink on paper. These must match the CSS tokens in src/app/globals.css.
+PAPER = hex_rgb("#FAF8F4")
+INK = hex_rgb("#14120E")
+SUN = hex_rgb("#A8321B")  # vermilion, the second ink
 
 
 def load_cutout() -> tuple[Image.Image, tuple[int, int]]:
@@ -275,14 +276,21 @@ def sample(
         ign = np.modf(52.9829189 * np.modf(0.06711056 * ii + 0.00583715 * jj)[0])[0]
         thin = keep & (ign > np.clip(imp / IMP_CUT, 0, 1)) & (edge_c <= 0.15)
         out[thin] = np.minimum(out[thin], 12)
-    # Feather the bottom eight rows to unlit so the figure sits on the board
-    # rather than being cut by it.
+    # Feather the bottom eight rows so the figure sits on the sheet rather than
+    # being cut by it.
+    #
+    # It used to feather toward UNLIT, because on a dark ground an unlit cell is
+    # invisible. On paper the polarity is the opposite: the renderer maps low
+    # luminance to HEAVY ink, so fading toward unlit printed a solid black bar
+    # along the bottom edge -- the loudest thing on the page. The figure has to
+    # fade toward the PAPER, which is maximum luminance.
     for k in range(8):
         j = rows - 1 - k
-        f = k / 8
+        f = k / 8  # 0 at the very bottom row, 1 at the eighth row up
         row = out[j]
         lit = row > 0
-        out[j][lit] = np.maximum(1, (row[lit].astype(np.float32) * f).astype(np.uint8))
+        v = row[lit].astype(np.float32)
+        out[j][lit] = np.clip(v + (255.0 - v) * (1.0 - f), 1, 255).astype(np.uint8)
     return out, warmth
 
 
@@ -338,15 +346,21 @@ def render(
 ) -> Image.Image:
     """The settled frame, drawn the way the browser draws it.
 
-    `density` must match the field's: the renderer only draws an unlit cell
-    where a page dot is (board.ts, the FIELD_TONE cull), so drawing every one
-    here would put dots in the fallback image that the live board never shows,
-    and inflate the WebP by a third.
+    Ink on paper: one ink at full strength, value carried by dot AREA alone.
+    These five constants are the renderer's (src/lib/board.ts and
+    src/lib/field/gl-board.ts) and the three copies must not drift, or the
+    image a no-JS visitor sees is not the picture the board draws.
+
+    The rim is no longer an accent. On a dark ground it was a light source and
+    earned the second ink; on paper there is no light, so the rim prints in the
+    same ink as everything else and the catchlight in his eye is the only mark
+    on the sheet that is vermilion.
     """
+    LIFT, INK_GAIN, DEEP_FLOOR, CULL_DIA, INK_DIA_MAX = 0.55, 1.15, 0.16, 0.30, 1.42
     rows, cols = field.shape
     ss = 2
     W, H = int(cols * cell_px), int(rows * cell_px)
-    img = Image.new("RGBA", (W * ss, H * ss), (0, 0, 0, 0) if transparent else (10, 10, 11, 255))
+    img = Image.new("RGBA", (W * ss, H * ss), (0, 0, 0, 0) if transparent else (*PAPER, 255))
     d = ImageDraw.Draw(img)
     k = cell_px * ss
     for j in range(rows):
@@ -356,14 +370,13 @@ def render(
                 continue
             L = v / 255
             if (i, j) == datum:
-                dia, col = 0.96, SUN
-            elif L < UNLIT:
-                if density > 1 and (i % density or j % density):
-                    continue
-                dia, col = 0.18 * density, DOT_OFF
+                dia, col = 0.96 * density, SUN
             else:
-                dia = 0.18 + 0.78 * L
-                col = SUN if (j * cols + i) in rim else INK
+                coverage = (1.0 - max(L, DEEP_FLOOR) ** LIFT) ** INK_GAIN
+                dia = min(1.128 * math.sqrt(coverage), INK_DIA_MAX)
+                if dia < CULL_DIA:
+                    continue  # below resolution is haze; bare paper is a highlight
+                col = INK
             r = dia * k / 2
             X, Y = (i + 0.5) * k, (j + 0.5) * k
             a = int(255 * alpha_scale)

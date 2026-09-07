@@ -2,14 +2,18 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
 
 /**
- * Doto sets numbers and nothing else (spec §3): `<Numeral>` is the only
- * component allowed to reach the dot face, through the `.numeral` class in
- * components.css and the two `text-dot-*` size utilities. Any other file that
- * names `font-dot` or `text-dot-` in a string is putting a word in Doto. The
- * two exemptions are the component itself and the font loader that declares
- * the `--font-dot-src` variable it resolves through.
+ * An architectural lock, not a guideline.
+ *
+ * The display face is a Didone, and a Didone's one failure mode on screen is
+ * that its hairlines vanish when it is set small. The design forbids it below
+ * 21px, which in practice means: nothing outside <Numeral> may name the display
+ * family or a numeral size utility, because doing so is how a 13px caption ends
+ * up in Bodoni and turns to lace on a 1x Windows panel.
+ *
+ * The rule this replaces guarded a 23-glyph subset font that no longer exists.
+ * Same shape, real reason.
  */
-const dotFace = /font-dot|text-dot-/.source;
+const displayFace = /font-display|text-numeral/.source;
 
 const eslintConfig = [
   ...nextVitals,
@@ -21,12 +25,12 @@ const eslintConfig = [
       "no-restricted-syntax": [
         "error",
         {
-          selector: `Literal[value=/${dotFace}/]`,
-          message: "Doto is set only by <Numeral> (src/components/ui/numeral.tsx).",
+          selector: `Literal[value=/${displayFace}/]`,
+          message: "The display face is set only by <Numeral> (src/components/ui/numeral.tsx); Bodoni is forbidden below 21px.",
         },
         {
-          selector: `TemplateElement[value.raw=/${dotFace}/]`,
-          message: "Doto is set only by <Numeral> (src/components/ui/numeral.tsx).",
+          selector: `TemplateElement[value.raw=/${displayFace}/]`,
+          message: "The display face is set only by <Numeral> (src/components/ui/numeral.tsx); Bodoni is forbidden below 21px.",
         },
       ],
     },

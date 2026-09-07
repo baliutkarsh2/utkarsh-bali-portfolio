@@ -49,49 +49,25 @@
   }
 
   /* ═══ Numeral ═══════════════════════════════════════════════════════════════
-     The only rule on the site that names `--font-dot`. Doto's own dot pitch is
-     0.1em, and both `text-dot-*` sizes are 10× / 20× the page pitch, so the
-     figure's dots sit on the lattice. Weight is dot size: 400 is a pinprick,
-     700 is the lit figure. Both `font-weight` and `font-variation-settings` are
-     transitioned (addendum A4): Chromium animates the axis, WebKit the weight.
-     Advance widths are identical at every weight, so the warm-up never reflows.
+     A figure, set in the display Didone at 700 with lining tabular numerals.
+     Tabular is not cosmetic: figures stack in a column on the work index and
+     the case-study plate and have to align on the decimal.
+
+     This used to set Doto, and to warm 400 -> 700 on reveal because Doto's
+     advance widths are weight-invariant. A Didone's are not, so the warm-up
+     would reflow — and a figure that changes weight is a departures board,
+     which is a screen. Printed figures do not animate. The whole warm-up,
+     including its cold state and its two motion-gated rules, is gone.
      ───────────────────────────────────────────────────────────────────────── */
   .numeral {
     display: inline-block;
-    font-family: var(--font-dot);
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
     font-weight: 700;
-    font-variation-settings:
-      "ROND" 100,
-      "wght" 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    letter-spacing: 0;
+    font-variant-numeric: lining-nums tabular-nums;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
     white-space: nowrap;
-    -webkit-font-smoothing: antialiased;
-    transition-property: font-weight, font-variation-settings;
-    transition-duration: var(--dur-4);
-    transition-timing-function: var(--ease-out);
-    transition-delay: calc(var(--i, 0) * var(--stagger) + var(--delay, 0ms));
-  }
-
-  /* Cold state: only when JS is running and motion is allowed. Without JS the
-     figure renders lit at 700 (a hidden heading is worse than a static one);
-     under reduced motion it is lit from the first frame. Specificity: the lit
-     rule below is (0,6,0), this one is (0,5,0), so `data-in` always wins. */
-  @media (prefers-reduced-motion: no-preference) {
-    :root.js:not([data-motion="reduce"]) .numeral[data-warm] {
-      font-weight: 400;
-      font-variation-settings:
-        "ROND" 100,
-        "wght" 400;
-    }
-    :root.js:not([data-motion="reduce"])
-      :is(.numeral[data-warm][data-in], [data-in] .numeral[data-warm]) {
-      font-weight: 700;
-      font-variation-settings:
-        "ROND" 100,
-        "wght" 700;
-    }
   }
 
   /* ═══ Row ═══════════════════════════════════════════════════════════════════

@@ -253,12 +253,26 @@ function mix(a: [number, number, number], b: [number, number, number], t: number
   return `rgb(${r} ${g} ${bl})`;
 }
 
+/**
+ * Ink on paper. Every value measured offline before it was written; the same
+ * constants appear in src/lib/field/gl-board.ts and the two must not drift.
+ *
+ * LIFT is not optional: straight inversion crushes the hair and the shadow
+ * side to solid and loses the eye. DEEP_FLOOR holds the 27% of the mask below
+ * UNLIT, which is otherwise the largest single cause of mud. 1.128 is 2/sqrt(pi),
+ * the radius whose disc area equals the coverage. A dot below CULL_DIA is grey
+ * haze, and the absence of a dot is a highlight.
+ */
+const LIFT = 0.55;
+const INK_GAIN = 1.15;
+const DEEP_FLOOR = 0.16;
+const CULL_DIA = 0.3;
+const INK_DIA_MAX = 1.42;
+const BURNISH = 0.55;
+
 const TONES = 8; // colour steps between --dot-off and --ink / --sun
-const DIAS = 16; // diameter steps, in cells, between DIA_MIN and DIA_MAX
-const DIA_MIN = 0.18;
-const DIA_MAX = 2.0; // the datum is 0.96 of the lattice, two cells at double density
+const DIAS = 16; // diameter steps, in cells, between 0 and INK_DIA_MAX
 /** Below this tone a cell is "the field": drawn only where a page dot is. */
-const FIELD_TONE = 0.04;
 const ASSEMBLE_MS = 1100;
 const GROW_MS = 500;
 // Critically damped: the pair below has real eigenvalues (modulus ~0.7), so a
@@ -603,41 +617,35 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
         L1 = L1 < UNLIT ? UNLIT : L1 > 1 ? 1 : L1;
       }
       const L = unlit ? (f > 0 ? UNLIT : 0) : Math.min(1, L1 + 0.25 * f);
-      let dia: number;
-      let tone: number;
-      if (datum) {
-        dia = 0.96 * density;
-        tone = 1;
-      } else if (L < UNLIT && f === 0) {
-        dia = DIA_MIN * density;
-        tone = 0;
-      } else {
-        const base = DIA_MIN + 0.78 * L;
-        dia = DIA_MIN + (base - DIA_MIN) * grow;
-        dia *= 1 + 0.35 * f;
-        tone = grow;
-        if (t > 0) {
-          dia = dia + (DIA_MIN - dia) * t;
-          tone *= 1 - Math.min(1, Math.max(0, (t - 0.6) / 0.4));
-        }
-      }
-      // A cell with no tone is the field itself: at double density only the
-      // cells that sit on a page dot are drawn, at the page dot's size, so the
-      // unlit part of the portrait is pixel-identical to the lattice around it.
-      if (!datum && tone < FIELD_TONE) {
-        if (density > 1 && (gx[i] % density !== 0 || gy[i] % density !== 0)) {
-          bucketOf[i] = 65535;
-          continue;
-        }
-        dia = DIA_MIN * density;
-        tone = 0;
+
+      // Ink, not light. Value is carried by AREA alone; the tone channel is
+      // gone. On a dark ground luminance was encoded twice, in tone and in
+      // diameter, and tone did most of the perceptual work -- invert the ground
+      // and that same formula gives mid-grey dots on near-white, which the eye
+      // integrates into one flat grey. The ink is always full black now, the
+      // paper always full white, and the grey is an optical average of
+      // hard-edged marks.
+      const inked = Math.pow(Math.max(L, DEEP_FLOOR), LIFT);
+      let coverage = Math.pow(1 - inked, INK_GAIN);
+      // Light on paper is LESS ink: the pointer burnishes a highlight into the
+      // plate rather than lighting it.
+      coverage *= 1 - BURNISH * f;
+      coverage *= grow;
+      let dia = Math.min(1.128 * Math.sqrt(Math.max(coverage, 0)), INK_DIA_MAX);
+      if (t > 0) dia *= 1 - t;
+      // One ink: the datum is the only mark allowed to be the second.
+      const tone = 1;
+      if (datum) dia = 0.96 * density;
+      else if (dia < CULL_DIA) {
+        bucketOf[i] = 65535;
+        continue;
       }
       if (afterimage) {
         if (unlit) {
           bucketOf[i] = 65535;
           continue;
         }
-        dia = Math.max(DIA_MIN, dia * 0.5);
+        dia = Math.max(CULL_DIA, dia * 0.5);
       }
       // Fully dispersed dots are the field: not drawn.
       if (t >= 1 && !datum) {
@@ -652,8 +660,13 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
         continue;
       }
       const ti = Math.round(Math.min(1, Math.max(0, tone)) * (TONES - 1));
-      const di = Math.round(((Math.min(DIA_MAX, dia) - DIA_MIN) / (DIA_MAX - DIA_MIN)) * (DIAS - 1));
-      const b = (kind[i] * TONES + ti) * DIAS + di;
+      const di = Math.round((Math.min(INK_DIA_MAX, dia) / INK_DIA_MAX) * (DIAS - 1));
+      // The palette lane is the DATUM, not the rim. On a dark ground the rim
+      // was a light source and earned the accent; on paper there is no light,
+      // so the rim is ink like everything else and the catchlight in his eye is
+      // the one mark on the page that is the second ink. `kind` still carries
+      // the rim so the relight can leave it flat.
+      const b = (isDatum[i] * TONES + ti) * DIAS + di;
       bucketOf[i] = b;
       counts[b + 1]++;
     }
@@ -679,7 +692,10 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       const k = Math.floor(b / (TONES * DIAS));
       const ti = Math.floor(b / DIAS) % TONES;
       const di = b % DIAS;
-      const r = ((DIA_MIN + ((DIA_MAX - DIA_MIN) * di) / (DIAS - 1)) * pitch) / 2;
+      // Must be the inverse of the bucket index above. The old mapping ran
+      // DIA_MIN..DIA_MAX; the ink transfer runs 0..INK_DIA_MAX, and mixing the
+      // two draws every dot at the wrong size.
+      const r = ((di / (DIAS - 1)) * INK_DIA_MAX * pitch) / 2;
       c.fillStyle = palette[k * TONES + ti];
       c.beginPath();
       if (di <= 1) {

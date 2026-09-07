@@ -92,7 +92,7 @@ export function InspectionPanel({ projects }: InspectionPanelProps) {
 
   return (
     <aside className="inspect" aria-label="Inspection" data-slug={project.slug}>
-      <Numeral value={project.metric} size="l" warm={false} as="p" />
+      <Numeral value={project.metric} size="l" as="p" />
       <p className="meta mt-4 text-ink-2">{project.metricLabel}</p>
 
       <div className="mt-8 border-t border-line pt-5">

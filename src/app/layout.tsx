@@ -8,7 +8,7 @@ import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
 import { FieldLight } from "@/components/interactive/field-light";
 import { orderedProjects, profile, socials } from "@/content";
-import { dot, mono, sans } from "@/lib/fonts";
+import { display, mono, text } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
 import { publishedPosts } from "@/lib/writing";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
@@ -95,7 +95,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     // from the server-rendered attributes.
     <html
       lang="en"
-      className={`${sans.variable} ${mono.variable} ${dot.variable}`}
+      className={`${display.variable} ${text.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
       <head>

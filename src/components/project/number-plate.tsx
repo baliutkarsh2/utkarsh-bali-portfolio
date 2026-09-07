@@ -1,7 +1,6 @@
 import { Reveal } from "@/components/interactive/reveal";
 import { Numeral } from "@/components/ui/numeral";
 import type { Project } from "@/content";
-import { isDotSafe } from "@/lib/fonts";
 
 type NumberPlateProps = {
   project: Pick<Project, "metric" | "metricLabel" | "highlight">;
@@ -31,13 +30,9 @@ export function NumberPlate({ project }: NumberPlateProps) {
   return (
     <div className="case-plate">
       <div className="shell">
-        {isDotSafe(project.metric) ? (
-          <Reveal>
-            <Numeral value={project.metric} size="l" as="p" />
-          </Reveal>
-        ) : (
-          <p className="text-display-xl text-ink">{project.metric}</p>
-        )}
+        <Reveal>
+          <Numeral value={project.metric} size="l" as="p" />
+        </Reveal>
         <p className="meta mt-4 text-ink-2">{project.metricLabel}</p>
       </div>
 

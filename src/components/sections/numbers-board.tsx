@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Reveal } from "@/components/interactive/reveal";
 import { Numeral } from "@/components/ui/numeral";
 import { metrics } from "@/content";
-import { isDotSafe } from "@/lib/fonts";
 
 /**
  * The numbers (§7.1, `#proof`): three figures as a hairlined row, three columns
@@ -32,11 +31,7 @@ export function NumbersBoard() {
         className="grid grid-cols-1 gap-x-(--gutter) border-b border-line sm:grid-cols-3"
       >
         {metrics.map((metric) => {
-          const figure = isDotSafe(metric.value) ? (
-            <Numeral value={metric.value} size="m" accent={metric.accent} />
-          ) : (
-            <span className="text-display-m text-ink">{metric.value}</span>
-          );
+          const figure = <Numeral value={metric.value} size="m" accent={metric.accent} />;
 
           return (
             <p key={metric.label} className="proof-cell">

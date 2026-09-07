@@ -30,52 +30,65 @@
    One dark theme. Contrast ratios are against the stated ground.
    ───────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* ── The pitch. Integer pixels only: the lattice must land on device pixels. ── */
+  /* ── The cell pitch of the dot field. Integer pixels only, so a dot lands on
+        a device pixel. It no longer governs the type scale: a type system
+        derived from a background tile was clever and made every size a
+        consequence of a decoration. ── */
   --pitch: 5px;
-  --lattice-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='5'%3E%3Crect width='1' height='1' fill='%23232326'/%3E%3C/svg%3E");
 
-  /* ── Grounds ── */
-  --ground: #0a0a0b; /* page */
-  --ground-2: #121214; /* panels, palette, row hover fill */
-  --ground-3: #1a1a1d; /* pressed / active fills */
+  /* ── Paper ──
+        The site is a printed artefact, not a screen. Ratios are measured
+        against the stated ground, not asserted. ── */
+  --ground: #faf8f4; /* paper */
+  --ground-2: #f1ede6; /* plate ground, code, table zebra */
+  --ground-3: #e7e1d6; /* pressed / selected */
 
-  /* ── Ink (warm white: the photograph was lit by a sunset) ── */
-  --ink: #f2f1ec; /* 17.5:1 on ground, 16.5:1 on ground-2, 15.4:1 on ground-3 */
-  --ink-2: #a6a5a0; /* 8.0:1 / 7.6:1 / 7.0:1, body and secondary */
-  /* 5.95:1 on the ground. Raised from #8a8984, which computed as a pass and
-     measured as a fail: a pixel probe that samples the real framebuffer under
-     each text box found 4.43:1 on the meta rows and the footer colophon,
-     because the CSS lattice paints --dot-off dots behind them and the local
-     background there is nearer #242424 than #0a0a0b. Contrast is against the
-     pixels that are actually behind the glyph, not against the colour an
-     ancestor declares. 4.72:1 against a lattice dot now. */
-  --ink-3: #8e8d88; /* 11px meta labels; the floor for text */
+  /* ── Ink ── */
+  --ink: #14120e; /* 17.64:1 on paper, 16.03 on paper-2, 14.38 on paper-3 */
+  --ink-2: #4a453c; /* 8.97 / 8.15 / 7.31 — body and secondary */
+  --ink-3: #67604f; /* 5.89 / 5.35 / 4.80 — the floor for text */
 
-  /* ── Dots ── */
-  --dot-off: #232326; /* the unlit dot. 1.26:1 by design. Decorative only, never text. */
+  /* ── Rules. Decorative geometry only; never text. ── */
+  --line: rgba(20, 18, 14, 0.14); /* renders #dad8d4 */
+  --rule-mid: rgba(20, 18, 14, 0.34); /* renders #acaaa6 — the plate mark */
+  --line-strong: rgba(20, 18, 14, 0.5); /* renders #878581, 3.47:1, non-text AA */
 
-  /* ── Rules ── */
-  --line: rgba(242, 241, 236, 0.1); /* renders #212122; decorative hairlines */
-  --line-strong: rgba(242, 241, 236, 0.38); /* renders #626260; 3.24:1, interactive borders (non-text AA) */
+  /* ── The unlit dot. On paper this is bare paper, not a grey pip: the field
+        carries value by ink AREA and a permanent grey lattice is the smudge. ── */
+  --dot-off: rgba(20, 18, 14, 0.06);
 
-  /* ── The accent: the sun on his face ── */
-  --sun: #ff6a2b; /* 6.92:1 on ground, 6.55:1 on ground-2, 6.08:1 on ground-3; ground on sun 6.92:1 */
+  /* ── The second ink. Licensed to four places site-wide: the datum in his eye,
+        the TODAY rule, the register mark on a current item, and selection and
+        focus. Never a link, never a button, never a heading. ── */
+  --sun: #a8321b; /* vermilion — 6.31:1 on paper; paper on it 6.31:1 */
+
+  /* ── The plate. The arrival runs here, the 404 lives here permanently, and
+        prefers-color-scheme: dark gets it rather than an invented palette. ── */
+  --plate: #16140f;
+  --plate-2: #221f18;
+  --bone: #efe9dc; /* 15.21:1 on plate */
+  --bone-2: #ada595; /* 7.53:1 */
+  --bone-3: #8f8878; /* 5.22:1 on plate only */
+  --sun-lit: #e2673c; /* 5.47:1 on plate */
 
   /* ── Focus / selection ── */
   --focus: var(--sun);
   --selection-bg: var(--sun);
-  --selection-fg: var(--ground); /* 6.92:1 */
+  --selection-fg: var(--ground); /* 6.31:1 */
 
-  /* ── Radii: none. LEDs are the only circles, and they are dots. ── */
+  /* ── Radii: one, 2px, and only on the plate mark — the deboss a copper plate
+        leaves in dampened paper. Nothing else on the site is round. ── */
   --radius: 0px;
+  --plate-radius: 2px;
 
-  /* ── Materials: no shadow, no blur except two surfaces (header, palette scrim). ── */
-  --header-bg: rgba(10, 10, 11, 0.8);
-  --header-blur: 12px;
-  --scrim: rgba(10, 10, 11, 0.7);
-  --scrim-blur: 2px;
+  /* ── Materials. Blur is a screen material and paper is not backlit, so the
+        header is solid and the scrim is ink, not frost. ── */
+  --header-bg: var(--ground);
+  --header-blur: 0px;
+  --scrim: rgba(20, 18, 14, 0.55);
+  --scrim-blur: 0px;
 
   /* ── Z-index scale. Tailwind has no z namespace; use `z-(--z-header)`. ── */
   --z-field: -1; /* the fixed lattice */
@@ -142,7 +155,6 @@
 @media (width >= 80rem) and (height >= 820px) {
   :root {
     --pitch: 6px;
-    --lattice-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect width='1' height='1' fill='%23232326'/%3E%3C/svg%3E");
   }
 }
 @media (width >= 48rem) and (width < 80rem) {
@@ -161,13 +173,15 @@
 
 /* ─────────────────────────────────────────────────────────────
    2. Theme mapping
-   `inline` is load-bearing for the type scale: `--text-dot-m` is a calc on
-   the pitch and must be re-resolved at the element, not frozen at :root.
+   `inline` so a token that references another custom property resolves at the
+   element rather than being frozen at :root.
    ───────────────────────────────────────────────────────────── */
 @theme inline {
-  --font-sans: var(--font-sans-src), ui-sans-serif, system-ui, sans-serif;
+  /* `--font-sans` keeps its name because every existing rule and utility says
+     `font-sans`; on paper it resolves to the reading serif. */
+  --font-sans: var(--font-text-src), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-display-src), Didot, "Bodoni MT", Georgia, serif;
   --font-mono: var(--font-mono-src), ui-monospace, "SF Mono", monospace;
-  --font-dot: var(--font-dot-src), var(--font-mono-src), monospace;
 
   --color-ground: var(--ground);
   --color-ground-2: var(--ground-2);
@@ -206,53 +220,58 @@
   --max-width-prose: var(--prose);
   --container-rail: var(--rail);
 
-  /* Geist 500. The weight rides on the token so display type cannot be set
-     at 400 or 600 by accident. */
-  --text-display-xl: clamp(3.25rem, min(11vw, 17vh), 10.5rem); /* the name only; 17vh keeps the hero on one 720px screen */
-  --text-display-xl--line-height: 0.92;
-  --text-display-xl--letter-spacing: -0.045em;
+  /* Bodoni Moda 500. `font-optical-sizing: auto` (base) makes opsz track the
+     rendered size, which is the historical fix for a Didone's one screen
+     failure: hairlines that vanish when set small. Bodoni is forbidden below
+     21px — below that the workhorse takes over. */
+  --text-display-xl: clamp(4.25rem, min(12vw, 19vh), 11.5rem); /* the name only */
+  --text-display-xl--line-height: 0.86;
+  --text-display-xl--letter-spacing: -0.015em;
   --text-display-xl--font-weight: 500;
 
-  --text-display-l: clamp(2.25rem, 5.5vw, 4.25rem); /* page h1, case-study name, mobile nav */
-  --text-display-l--line-height: 1.02;
-  --text-display-l--letter-spacing: -0.03em;
+  --text-display-l: clamp(3rem, 6.4vw, 5.25rem); /* page h1, case-study title */
+  --text-display-l--line-height: 0.94;
+  --text-display-l--letter-spacing: -0.012em;
   --text-display-l--font-weight: 500;
 
-  --text-display-m: clamp(1.625rem, 3vw, 2.5rem); /* section titles, contact line, the email */
-  --text-display-m--line-height: 1.1;
-  --text-display-m--letter-spacing: -0.02em;
+  --text-display-m: clamp(2rem, 3.6vw, 3rem); /* section titles, the email */
+  --text-display-m--line-height: 1.04;
+  --text-display-m--letter-spacing: -0.006em;
   --text-display-m--font-weight: 500;
 
-  --text-display-s: clamp(1.25rem, 2vw, 1.625rem); /* taglines, row titles, problem statements */
-  --text-display-s--line-height: 1.25;
-  --text-display-s--letter-spacing: -0.015em;
+  --text-display-s: clamp(1.5rem, 2.1vw, 1.875rem); /* row titles, taglines, standfirsts */
+  --text-display-s--line-height: 1.16;
+  --text-display-s--letter-spacing: 0;
   --text-display-s--font-weight: 500;
 
-  /* Geist 400 */
-  --text-lede: 1.125rem;
-  --text-lede--line-height: 1.6;
-  --text-body: 1rem;
-  --text-body--line-height: 1.65;
-  --text-small: 0.875rem;
+  /* Source Serif 4 400 — everything a person actually reads. */
+  --text-lede: 1.375rem; /* 22px standfirsts */
+  --text-lede--line-height: 1.5;
+  --text-body: 1.125rem; /* 18px running text */
+  --text-body--line-height: 1.62;
+  --text-small: 1rem; /* 16px rails, list items */
   --text-small--line-height: 1.55;
 
-  /* Geist Mono 500 */
-  --text-meta: 0.6875rem;
+  /* IBM Plex Mono — data only. Never a sentence, never an eyebrow. */
+  --text-meta: 0.6875rem; /* 11px machine labels */
   --text-meta--line-height: 1.2;
-  --text-meta--letter-spacing: 0.16em; /* uppercase */
+  --text-meta--letter-spacing: 0.09em; /* uppercase */
   --text-meta--font-weight: 500;
-  --text-data: 0.8125rem;
-  --text-data--line-height: 1.4;
-  --text-data--letter-spacing: 0.02em; /* tabular, mixed case */
-  --text-data--font-weight: 500;
+  --text-data: 0.8125rem; /* 13px dates, axis values, stack */
+  --text-data--line-height: 1.35;
+  --text-data--letter-spacing: 0.01em;
+  --text-data--font-weight: 400;
 
-  /* Doto 700, ROND 100. Dot pitch inside the glyph = 0.1em, so these sit ON the page pitch. */
-  --text-dot-m: calc(10 * var(--pitch)); /* 50px / 60px: numbers board, row metrics, footer count */
-  --text-dot-m--line-height: 1;
-  --text-dot-m--letter-spacing: 0;
-  --text-dot-l: calc(20 * var(--pitch)); /* 100px / 120px: case-study plate, inspection panel. Dots on every second lattice point. */
-  --text-dot-l--line-height: 1;
-  --text-dot-l--letter-spacing: 0;
+  /* Bodoni Moda 700, lining tabular. Figures stack in a column on the work
+     index and the case-study plate, so they have to align on the decimal. */
+  --text-numeral: clamp(2.5rem, 4.5vw, 3.75rem); /* 40 -> 60px, a figure in a row */
+  --text-numeral--line-height: 0.9;
+  --text-numeral--letter-spacing: -0.02em;
+  --text-numeral--font-weight: 700;
+  --text-numeral-l: clamp(3.5rem, 7.5vw, 6.5rem); /* 56 -> 104px, the figure that carries a page */
+  --text-numeral-l--line-height: 0.9;
+  --text-numeral-l--letter-spacing: -0.02em;
+  --text-numeral-l--font-weight: 700;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -314,10 +333,8 @@
     }
   }
 
-  /* No background on <body>, deliberately. The field below is a z-index -1
-     descendant, and the paint order puts negative-z descendants ABOVE the
-     root background but BELOW in-flow block backgrounds, so any fill on
-     <body> would hide the lattice. The ground lives on <html>. */
+  /* The ground lives on <html>; <body> stays unfilled so a negative-z
+     descendant can still paint above the root background. */
   body {
     min-height: 100svh;
     color: var(--ink);
@@ -326,22 +343,33 @@
     line-height: var(--text-body--line-height);
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    /* `auto`, not `antialiased`. Subpixel-off smoothing thins strokes, which
+       is what you want for light type on a dark ground and exactly wrong for
+       dark type on paper: it takes about 15% off every stroke, and a Didone's
+       hairlines are the first thing to go. This one line is the difference
+       between Bodoni and lace on a 1x Windows panel. */
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
   }
 
-  /* The field (§5.1). One fixed layer that never repaints on scroll. The tile
-     is an SVG rect, not a gradient: a 0.5px radial gradient renders as grey
-     mush at DPR 1, and an integer pitch keeps every dot on a device pixel. */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-field);
-    pointer-events: none;
-    background-image: var(--lattice-tile);
-    background-size: var(--pitch) var(--pitch);
+  /* The display face, applied where display sizes are. Optical sizing is left
+     to the browser so `opsz` tracks the rendered size on its own, which is the
+     historical fix for a Didone set small. */
+  .text-display-xl,
+  .text-display-l,
+  .text-display-m,
+  .text-display-s {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
   }
+
+
+  /* The lattice is gone, deliberately. A permanent grid of grey dots behind
+     every page is exactly the smudge this direction exists to avoid: on paper
+     it flattens the whole sheet to one mid tone, and it was the measured cause
+     of the 4.43:1 contrast failure on the meta rows, where text sat above
+     --dot-off pips rather than above the ground it declared. Dots now exist
+     only inside a plate mark, where they are a picture. */
 
   /* The hero canvas is position: fixed at z-index 0 while the hero is on
      screen (dispersed dots snap to the fixed lattice in viewport space).
@@ -476,7 +504,7 @@
 /* Geist Mono 500, mixed case, tabular: readouts, dates in rows, the caption. */
 @utility data {
   font-family: var(--font-mono);
-  font-weight: 500;
+  font-weight: 400;
   font-size: var(--text-data);
   line-height: var(--text-data--line-height);
   letter-spacing: var(--text-data--letter-spacing);

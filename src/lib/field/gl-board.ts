@@ -79,6 +79,29 @@ const float FIELD_TONE = 0.04;
 const float GROW_MS = 500.0;
 const float RELIGHT_GAIN = ${RELIGHT_GAIN.toFixed(4)};
 
+// ── Ink on paper. Every one of these was measured offline before it was
+//    written here; see the Stage 0 note in the plan.
+//
+//    LIFT is not optional. Straight inversion, coverage = (1 - L)^GAIN, gives a
+//    mean coverage of 0.55: the hair and the shadow side crush to solid, the
+//    eye disappears, and the result is worse than the halftone it replaced.
+//    Lifting the source first is the difference between an engraving and a
+//    photocopy.
+//
+//    DEEP_FLOOR holds the 27% of the mask that sits below UNLIT. Taken at face
+//    value those cells map to ~0.94 coverage and go nearly solid; that is the
+//    single largest cause of the mud.
+//
+//    1.128 is 2/sqrt(pi), the radius whose disc area equals the coverage.
+//    CULL_DIA is the most important line here: a dot too small to resolve is
+//    grey haze, and the ABSENCE of a dot is a highlight.
+const float LIFT = 0.55;
+const float INK_GAIN = 1.15;
+const float DEEP_FLOOR = 0.16;
+const float CULL_DIA = 0.30;
+const float INK_DIA_MAX = 1.42;   // sqrt(2): the diameter at which discs close
+const float BURNISH = 0.55;       // the cursor polishes a highlight into the plate
+
 uniform vec2  uOrigin;    // grid origin, CSS px
 uniform float uPitch;     // cell size, CSS px
 uniform float uLattice;   // page dot pitch, CSS px
@@ -241,37 +264,31 @@ void main() {
   // the lit branch at full ink tone: the mask's dark interior glows faintly.
   float L = unlit ? (f > 0.0 ? UNLIT : 0.0) : min(1.0, lum + 0.25 * f);
 
-  float dia;
-  float tone;
+  // ── Ink, not light ────────────────────────────────────────────────────
+  // Value is carried by AREA alone. On a dark ground the renderer encoded
+  // luminance twice, in tone and in diameter, and tone did most of the
+  // perceptual work; invert the ground and that same formula gives mid-grey
+  // dots on near-white which the eye integrates into one flat grey. So the
+  // tone channel is gone: the ink is always full black, the paper always full
+  // white, and the grey is an optical average of hard-edged marks. That is
+  // what an engraving is, and why an engraving is not a smudge.
+  float ink = pow(max(L, DEEP_FLOOR), LIFT);
+  float coverage = pow(1.0 - ink, INK_GAIN);
+  // Light on paper is LESS ink. The pointer does not illuminate, it burnishes:
+  // dots shrink, paper opens, and a highlight is polished into the plate.
+  coverage *= 1.0 - BURNISH * f;
+  // Assembly: the ink arrives rather than the light coming up.
+  coverage *= grow;
+
+  float dia = min(1.128 * sqrt(max(coverage, 0.0)), INK_DIA_MAX);
+  if (uScrollT > 0.0) dia *= 1.0 - uScrollT;
+
+  bool culled = dia < CULL_DIA;
   if (isDatum > 0.5) {
     dia = 0.96 * uDensity;
-    tone = 1.0;
-  } else if (L < UNLIT && f == 0.0) {
-    dia = DIA_MIN * uDensity;
-    tone = 0.0;
-  } else {
-    float base = DIA_MIN + 0.78 * L;
-    dia = DIA_MIN + (base - DIA_MIN) * grow;
-    dia *= 1.0 + 0.35 * f;
-    tone = grow;
-    if (uScrollT > 0.0) {
-      dia = dia + (DIA_MIN - dia) * uScrollT;
-      tone *= 1.0 - clamp((uScrollT - 0.6) / 0.4, 0.0, 1.0);
-    }
+    culled = false;
   }
-
-  // A cell with no tone is the field itself. At double density only the cells
-  // that sit on a page dot are drawn, at the page dot's size, so the unlit part
-  // of the portrait is pixel-identical to the CSS lattice around it.
-  bool culled = false;
-  if (isDatum < 0.5 && tone < FIELD_TONE) {
-    if (uDensity > 1.5 && (mod(aHome.x, uDensity) != 0.0 || mod(aHome.y, uDensity) != 0.0)) {
-      culled = true;
-    }
-    dia = DIA_MIN * uDensity;
-    tone = 0.0;
-  }
-  // Fully dispersed dots are the field: not drawn.
+  // Fully dispersed dots have left the plate.
   if (uScrollT >= 1.0 && isDatum < 0.5) culled = true;
 
   vec2 pos = home + aDisp;
@@ -288,9 +305,10 @@ void main() {
     return;
   }
 
-  vec3 target = isSun > 0.5 ? uSun : uInk;
-  vColor = vec4(mix(uOff, target, clamp(tone, 0.0, 1.0)), 1.0);
-  gl_PointSize = max(1.0, min(DIA_MAX, dia) * uPitch * uDpr);
+  // One ink, at full strength, always. The datum -- the catchlight in his eye
+  // -- is the single mark on the page allowed to be the second ink.
+  vColor = vec4(isDatum > 0.5 ? uSun : uInk, 1.0);
+  gl_PointSize = max(1.0, dia * uPitch * uDpr);
   gl_Position = vec4(device / uRes * 2.0 - 1.0, 0.0, 1.0) * vec4(1.0, -1.0, 1.0, 1.0);
 }
 `;
