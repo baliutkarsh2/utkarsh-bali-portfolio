@@ -310,40 +310,15 @@ const INK_DIA_MAX = 1.42;
 const BURNISH = 0.55;
 
 /**
- * The burin, and the stochastic screen that makes it possible.
+ * The burin and the stochastic screen are both gone; gl-board.ts carries the
+ * measurement and the reasoning, and the two renderers must not drift.
  *
- * A ruled orthogonal grid of directional marks merges: every stroke in a row is
- * collinear with its neighbours and they run together into scan lines, which is
- * a topographic map rather than an engraving. Breaking the lattice by a third of
- * a cell is what lets a stroke stay a stroke. It also kills the screen door and
- * the beat against the display's own pixel grid, both of which are invisible on
- * a dark ground and unavoidable on white.
- *
- * Where the surface gradient is weak its DIRECTION is noise, so the stroke
- * blends toward a steady 22.5 degree hatch -- off every page rule and off the
- * pixel diagonal. An engraver does the same thing in a flat passage.
+ * Short version: a 1.7-cell stroke crosses an eyelid rather than drawing it at
+ * this cell size, the threshold fired on 46.8% of the cells in his face against
+ * the 28% intended, and the tangents closed into concentric whorls. The jitter
+ * existed only to keep those strokes from lining up, so it went with them —
+ * and it was costing a third of a cell of placement error on every mark.
  */
-const JITTER = 0.34; // cells
-const BURIN_W = 0.46;
-const BURIN_LMAX = 1.7;
-const BURIN_NMIN = 0.1;
-const BURIN_HATCH = 0.3926991;
-const BURIN_FOLLOW = 0.42;
-/**
- * The diameter at which a disc becomes a stroke. 0.72 of the realised coverage
- * maximum (0.594, measured offline) is the deepest ~28% of the range; the
- * 1.128 is 2/sqrt(pi), the same area-exact radius the transfer uses. An
- * ABSOLUTE 0.72 here would fire zero strokes, because the deep floor caps
- * coverage below it -- the feature would silently do nothing.
- */
-const BURIN_DIA = 1.128 * Math.sqrt(0.72 * 0.594);
-
-/** Deterministic per-cell offset, matching jitterOf() in gl-board.ts. */
-function jitterOf(cx: number, cy: number): [number, number] {
-  const a = Math.sin(cx * 12.9898 + cy * 78.233) * 43758.5453;
-  const b = Math.sin(cx * 39.3468 + cy * 11.135) * 24634.6345;
-  return [((a - Math.floor(a)) - 0.5) * 2 * JITTER, ((b - Math.floor(b)) - 0.5) * 2 * JITTER];
-}
 
 const TONES = 8; // colour steps between --dot-off and --ink / --sun
 const DIAS = 16; // diameter steps, in cells, between 0 and INK_DIA_MAX
@@ -510,15 +485,8 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   // beneath it are the same pixel.
   // Jitter is baked once per cell rather than recomputed every frame: it is a
   // property of the plate, not of the moment.
-  const jx = new Float32Array(n);
-  const jy = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const [a, b] = jitterOf(gx[i], gy[i]);
-    jx[i] = a;
-    jy[i] = b;
-  }
-  const homeX = (i: number) => originX + (gx[i] + jx[i]) * pitch + 0.5;
-  const homeY = (i: number) => originY + (gy[i] + jy[i]) * pitch + 0.5;
+  const homeX = (i: number) => originX + gx[i] * pitch + 0.5;
+  const homeY = (i: number) => originY + gy[i] * pitch + 0.5;
   const snap = (v: number) => Math.round((v - 0.5) / lattice) * lattice + 0.5;
 
   function layout(g: { width: number; height: number; originX: number; originY: number; pitch: number; lattice: number; dpr: number }) {
@@ -834,50 +802,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       c.fillStyle = palette[k * TONES + ti];
       c.beginPath();
 
-      // ── The burin ──────────────────────────────────────────────────────
-      // In the deepest tones the disc becomes a short stroke laid along the
-      // local surface tangent, so the shadows hatch AROUND the form instead of
-      // stippling it. Every dot in this bucket is the same length and width, so
-      // one path with one lineWidth draws them all; only the direction is
-      // per-dot, which a path handles for free.
-      if (normals && dia >= BURIN_DIA && k === 0) {
-        const coverage = (dia / 1.128) * (dia / 1.128);
-        const len = Math.min(Math.max(coverage / BURIN_W, 1), BURIN_LMAX) * pitch;
-        c.lineWidth = BURIN_W * pitch;
-        c.lineCap = "round";
-        c.strokeStyle = palette[k * TONES + ti];
-        for (let q = start; q < end; q++) {
-          const i = order[q];
-          const nx = snx[i];
-          const ny = sny[i];
-          const nlen = Math.hypot(nx, ny);
-          // Where the gradient is weak its direction is noise, so the stroke
-          // falls back to a steady hatch rather than snapping to an axis and
-          // lining up with its neighbours.
-          const t = Math.min(1, Math.max(0, (nlen - BURIN_NMIN) / (BURIN_FOLLOW - BURIN_NMIN)));
-          const w = t * t * (3 - 2 * t);
-          const hx = Math.cos(BURIN_HATCH);
-          const hy = Math.sin(BURIN_HATCH);
-          let tx = hx;
-          let ty = hy;
-          if (nlen > 1e-4) {
-            const fx = -ny / nlen;
-            const fy = nx / nlen;
-            const sgn = fx * hx + fy * hy < 0 ? -1 : 1;
-            tx = hx + (fx * sgn - hx) * w;
-            ty = hy + (fy * sgn - hy) * w;
-            const m = Math.hypot(tx, ty) || 1;
-            tx /= m;
-            ty /= m;
-          }
-          const X = homeX(i) + px[i];
-          const Y = homeY(i) + py[i];
-          c.moveTo(X - (tx * len) / 2, Y - (ty * len) / 2);
-          c.lineTo(X + (tx * len) / 2, Y + (ty * len) / 2);
-        }
-        c.stroke();
-        continue;
-      }
+
 
       if (di <= 1) {
         // The two smallest buckets are about a pixel across: a square is the

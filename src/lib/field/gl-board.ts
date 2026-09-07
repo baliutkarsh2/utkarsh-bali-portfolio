@@ -107,36 +107,28 @@ const float BURNISH = 0.55;       // the cursor polishes a highlight into the pl
 // edge-on frame a hairline rather than a solid slab of ink.
 const float FLIP_MIN = 0.32;
 
-// — The burin ———————————————
-// In the deepest tones the disc becomes a short stroke laid along the local
-// surface TANGENT, so the shadows hatch AROUND the form instead of stippling
-// it. This is the difference between a mezzotint and a fax, and it is the one
-// thing here no template can produce, because the direction of every stroke
-// comes from the surface of his own face.
+// The burin is gone, and the measurement is why.
 //
-// The threshold is a fraction of the realised coverage range, not an absolute.
-// An absolute 0.72 fires ZERO strokes once the deep floor caps coverage at
-// 0.594: the feature silently does nothing and the picture quietly degrades to
-// the halftone it was meant to replace. Measured offline: p50 0.353, p72 0.475,
-// max 0.594.
-const float BURIN_AT = 0.72 * 0.594;
-const float BURIN_W = 0.46;       // stroke width, cells
-// 1.7, not the 2.6 the spec asked for. Stroke centres sit on the cell lattice,
-// so a stroke longer than about 1.7 cells reaches its neighbours and merges
-// with them: the first build of this produced scanlines across the torso and
-// concentric rectangles around the eye, which is a topographic map, not an
-// engraving. Marks have to stay marks.
-const float BURIN_LMAX = 1.7;     // stroke length cap, cells
-const float BURIN_NMIN = 0.10;    // below this the surface has no direction
-// Where the surface has a weak gradient its DIRECTION is noise, and every
-// stroke in a flat region snapped to the same axis and lined up. An engraver
-// does not follow the form into a flat passage either -- they lay a steady
-// hatch and let the form take over where there is form to follow. So the
-// tangent is blended toward a fixed hatch angle by how weak the normal is,
-// which also stops the loops closing into rings around a luminance extreme.
-const float BURIN_HATCH = 0.3926991;  // 22.5 degrees; off every page rule and
-                                      // off the pixel diagonal
-const float BURIN_FOLLOW = 0.42;      // |n| at which the surface fully wins
+// The idea was right and the scale was wrong. A stroke laid along the surface
+// tangent is what separates a mezzotint from a fax — but it needs a plate whose
+// marks are large next to its features. Here a cell is 3 CSS px and his face is
+// ninety cells across, so a 1.7-cell stroke crosses an eyelid instead of drawing
+// it. And the threshold was a FRACTION of the realised range, which once the
+// deep floor caps coverage at 0.594 put the trigger at 0.428: that fired on
+// 38.7% of all lit cells and on **46.8% of the cells in his face**, against the
+// 28% the direction asked for. The tangents then closed into concentric whorls
+// around every local extreme — precisely the tic §5.3a of the plan warned about
+// — and blending toward a fixed hatch angle did not stop it. The face read as a
+// fingerprint.
+//
+// Measured on the shipped field, the same 192×240 data rendered four ways:
+// face sharpness (mean |laplacian|) is 122.6 with neither burin nor jitter and
+// 109.3 with both, and the render correlates 0.54 with the version before
+// either landed. The owner's word for it was "fuzzy", and he was right.
+//
+// The deepest tones are discs now, like every other tone. Value is still
+// carried by area alone, which is the part of the direction that was load-
+// bearing; the strokes were the part that was decorative.
 
 uniform vec2  uOrigin;    // grid origin, CSS px
 uniform float uPitch;     // cell size, CSS px
@@ -175,23 +167,20 @@ float smoothstep01(float a, float b, float x) {
 /**
  * The dot's home in CSS px. Moves with the page; the scatter target does not.
  *
- * The jitter is not decoration. A ruled orthogonal grid of marks is invisible
- * on a dark ground and unavoidable on white: it shows a screen door, it beats
- * against the display's own pixel grid, and worst of all it makes every
- * directional stroke in a row collinear with its neighbours, so they merge into
- * continuous scan lines instead of reading as separate marks. Breaking the
- * lattice by a third of a cell is what turns a ruled screen into a stochastic
- * one and lets a stroke stay a stroke.
+ * There is no jitter here any more. It was introduced to stop burin strokes in
+ * a row lining up into scan lines, and with the strokes gone it has nothing
+ * left to buy — while it goes on costing exactly what it always cost, which is
+ * that every mark is displaced by up to a third of a cell from where the
+ * picture says it should be. Measured: face sharpness 122.6 at jitter 0 against
+ * 119.3 at 0.12 and 109.3 at the 0.34 that shipped. A face is drawn at the
+ * feature scale, and a third of a cell is a large fraction of an eyelid.
+ *
+ * The screen door a ruled grid can show on white is real, and the answer to it
+ * is resolution rather than noise: the grid stops reading as a grid when its
+ * cells are small enough, which is what the density and the source resolution
+ * are for.
  */
-const float JITTER = 0.34;   // cells
-
-vec2 jitterOf(vec2 cell) {
-  float a = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
-  float b = fract(sin(dot(cell, vec2(39.3468, 11.135))) * 24634.6345);
-  return (vec2(a, b) - 0.5) * 2.0 * JITTER;
-}
-
-vec2 homeOf(vec2 cell) { return uOrigin + (cell + jitterOf(cell)) * uPitch + 0.5; }
+vec2 homeOf(vec2 cell) { return uOrigin + cell * uPitch + 0.5; }
 
 /** Snap to the page lattice, the +0.5 convention of the CSS field tile. */
 vec2 snapToLattice(vec2 p) { return floor((p - 0.5) / uLattice + 0.5) * uLattice + 0.5; }
@@ -309,7 +298,6 @@ uniform vec3  uBone;      // the ink the plate is worked in, before the pull
 out vec4 vColor;
 // xy = the stroke's unit tangent, z = its width as a fraction of the sprite.
 // z == 0 means "this mark is a disc".
-out vec3 vStroke;
 
 ${COMMON}
 
@@ -388,28 +376,7 @@ void main() {
   vec3 ink = mix(uBone, uInk, uPull);
   vColor = vec4(isDatum > 0.5 ? uSun : ink, 1.0);
 
-  // Deep tones become burin strokes. gl_PointSize cannot be anisotropic, so
-  // the sprite is made square at the stroke's LENGTH and the fragment shader
-  // carves a capsule out of it. That costs one varying and no second draw
-  // call, where an instanced-quad pass would cost a whole second program and a
-  // second buffer for about a fifth of the marks.
-  float mark = dia;
-  vStroke = vec3(0.0);
-  float nlen = length(aNormal);
-  if (coverage >= BURIN_AT && isDatum < 0.5 && nlen > BURIN_NMIN) {
-    float len = clamp(coverage / BURIN_W, 1.0, BURIN_LMAX);
-    // Perpendicular to the normal: the stroke runs ALONG the surface, the way
-    // an engraver's burin follows the form rather than crossing it. Where the
-    // surface is nearly flat the normal has no trustworthy direction, so the
-    // stroke falls back to a steady hatch.
-    vec2 follow = vec2(-aNormal.y, aNormal.x) / max(nlen, 1e-4);
-    vec2 hatch = vec2(cos(BURIN_HATCH), sin(BURIN_HATCH));
-    float w = smoothstep(BURIN_NMIN, BURIN_FOLLOW, nlen);
-    vec2 tangent = normalize(mix(hatch, follow * sign(dot(follow, hatch)), w));
-    vStroke = vec3(tangent, BURIN_W / len);
-    mark = len;
-  }
-  gl_PointSize = max(1.0, mark * uPitch * uDpr * mix(FLIP_MIN, 1.0, abs(uFlip)));
+  gl_PointSize = max(1.0, dia * uPitch * uDpr * mix(FLIP_MIN, 1.0, abs(uFlip)));
   vec2 clip = device / uRes * 2.0 - 1.0;
   gl_Position = vec4(clip * vec2(1.0, -1.0), 0.0, 1.0);
 }
@@ -418,7 +385,6 @@ void main() {
 const DRAW_FS = /* glsl */ `#version 300 es
 precision highp float;
 in vec4 vColor;
-in vec3 vStroke;
 uniform float uAlpha;
 out vec4 outColor;
 
@@ -427,16 +393,7 @@ void main() {
   // crispness at these sizes and reads as mush. Ink either covers the paper or
   // it does not, and the grey is the optical average of the two.
   vec2 d = gl_PointCoord - 0.5;
-  if (vStroke.z > 0.0) {
-    // A capsule laid along the tangent, carved out of a square sprite whose
-    // side is the stroke's own length.
-    vec2 t = vStroke.xy;
-    float halfW = vStroke.z * 0.5;
-    float along = clamp(dot(d, t), -0.5 + halfW, 0.5 - halfW);
-    if (distance(d, t * along) > halfW) discard;
-  } else if (dot(d, d) > 0.25) {
-    discard;
-  }
+  if (dot(d, d) > 0.25) discard;
   outColor = vec4(vColor.rgb * uAlpha, uAlpha);
 }
 `;
