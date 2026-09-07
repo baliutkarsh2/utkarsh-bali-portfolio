@@ -296,6 +296,16 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Case studies and posts carry a sticky sub-bar under the fixed header:
+     3.5rem plus 2.75rem is 6.25rem of cover, where the default padding is 5.
+     An in-page anchor therefore landed its own heading 49px underneath the
+     bar, which is the one place on the site where a link goes somewhere the
+     reader cannot see. Measured, not guessed: `/projects/checkpoint#impact`
+     put the "04 IMPACT" head at y=101 with the bars reaching y=150. */
+  :root:has(.case-bar) {
+    scroll-padding-top: 7.25rem;
+  }
+
   /* Opt in rather than default: programmatic scrolls and reduced-motion
      users must not fight a smooth-scroll setting. */
   @media (prefers-reduced-motion: no-preference) {

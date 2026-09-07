@@ -6,7 +6,7 @@ export const projects: Project[] = [
     name: "Recurly Agent Platform",
     eyebrow: "Agent infrastructure",
     tagline:
-      "A product requirement becomes merged pull requests, through specialised agents and five human checkpoints.",
+      "A product requirement becomes merged pull requests, through specialized agents and five human checkpoints.",
     year: "2026",
     sortDate: "2026-05-01",
     status: "shipped",
@@ -23,9 +23,9 @@ export const projects: Project[] = [
     built:
       "Three things shipped between May and August, all of them agent infrastructure for teams inside the company rather than anything a customer sees.",
     architecture: [
-      "A product development lifecycle platform: requirement to merged pull requests through specialised Claude agents — a planner, a decomposer, a Sonnet and Opus coder pair, and a pull request responder — each running as an isolated Kubernetes Job through the Agent SDK, with five human checkpoints along the way.",
+      "A product development lifecycle platform: requirement to merged pull requests through specialized Claude agents — a planner, a decomposer, a Sonnet and Opus coder pair, and a pull request responder — each running as an isolated Kubernetes Job through the Agent SDK, with five human checkpoints along the way.",
       "An SDR assistant in Slack: async Python with three-tier Claude routing over BigQuery, 6sense, ZoomInfo and Salesforce, returning source-cited account briefs and outreach drafts.",
-      "A prospect report card pipeline, n8n to FastAPI on Cloud Run to Claude Opus, that turns an inbound form fill into a personalised PDF analysis of that prospect’s subscription business and emails it back.",
+      "A prospect report card pipeline, n8n to FastAPI on Cloud Run to Claude Opus, that turns an inbound form fill into a personalized PDF analysis of that prospect’s subscription business and emails it back.",
     ],
     stack: ["Claude Agent SDK", "Python", "Kubernetes", "FastAPI", "BigQuery", "Cloud Run"],
     impact:
