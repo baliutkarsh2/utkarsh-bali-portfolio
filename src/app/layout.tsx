@@ -6,7 +6,6 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { CommandPalette } from "@/components/interactive/command-palette";
-import { FieldLight } from "@/components/interactive/field-light";
 import { orderedProjects, profile, socials } from "@/content";
 import { display, mono, text } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
@@ -88,7 +87,9 @@ const personSchema = {
   sameAs: socials.filter((s) => s.kind !== "email").map((s) => s.href),
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
   return (
     // suppressHydrationWarning: the boot script adds `.js` and may set
     // data-motion before React hydrates, and both are expected to differ
@@ -111,8 +112,6 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           a background here would paint over the lattice (see globals.css §4). */}
       <body>
         <SkipLink />
-        {/* The lattice answering the pointer on every page; behind all content. */}
-        <FieldLight />
         <SiteHeader />
         <main id="main" tabIndex={-1}>
           <ViewTransition>{children}</ViewTransition>
@@ -121,21 +120,25 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         {/* Both lists are trimmed here so the content barrel (every case
             study's prose) never enters the palette's client chunk. */}
         <CommandPalette
-          projects={orderedProjects.map(({ slug, name, eyebrow, tagline, stack, org }) => ({
-            slug,
-            name,
-            eyebrow,
-            tagline,
-            stack,
-            org,
-          }))}
-          posts={publishedPosts().map(({ slug, title, summary, href, external }) => ({
-            slug,
-            title,
-            summary,
-            href,
-            external: Boolean(external),
-          }))}
+          projects={orderedProjects.map(
+            ({ slug, name, eyebrow, tagline, stack, org }) => ({
+              slug,
+              name,
+              eyebrow,
+              tagline,
+              stack,
+              org,
+            }),
+          )}
+          posts={publishedPosts().map(
+            ({ slug, title, summary, href, external }) => ({
+              slug,
+              title,
+              summary,
+              href,
+              external: Boolean(external),
+            }),
+          )}
         />
       </body>
     </html>

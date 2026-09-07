@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { ProgressRow } from "@/components/interactive/progress-row";
+import { ColumnRule } from "@/components/writing/column-rule";
 import { Tag, TagRow } from "@/components/ui/tag";
 import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
 import { absoluteUrl, jsonLd, personId } from "@/lib/seo";
@@ -37,18 +37,35 @@ export async function generateMetadata({
 }
 
 /**
- * A hosted post (§7.6). Only posts with a body reach this route: external
- * pieces never enter generateStaticParams, so today it builds zero pages and
- * is ready for the first one that lives here.
+ * A hosted post (§7.6), set as a column. Only posts with a body reach this
+ * route — external pieces never enter generateStaticParams — so today it
+ * builds zero pages and is ready for the first one that lives here.
  *
- * Structure, top to bottom: a sticky sub-bar under the header ("← Writing"
- * and the progress row of dots along its bottom edge, the one --sun element
- * on a post screen), then the article on the prose column: the data row,
- * the h1, the summary as lede, the tags as one meta line, and the MDX body
- * inside `.prose`. Contact closes the page as it does everywhere.
+ * This is the only page on the site whose job is uninterrupted reading, so it
+ * is the only one that indents. Three things follow from that and nothing
+ * else on the site does any of them:
  *
- * Words never animate. The only thing on this page that moves is the
- * progress row, and it is scrubbed by scroll, not timed.
+ *   THE MEASURE     one column of about 68ch and no rail. Nothing sits beside
+ *                   the text competing for the eye, because on this page
+ *                   there is nothing to compete with: there is one thing to
+ *                   do here and it is read.
+ *
+ *   THE DROP CAP    a Bodoni initial over about five lines of the first
+ *                   paragraph. It is the mark that says the reading starts
+ *                   HERE, which a page with one entry point can afford and an
+ *                   index cannot.
+ *
+ *   THE MARGIN      notes and pull quotes hang in a column to the left of the
+ *                   measure at the height of the sentence they answer,
+ *                   because they are authored at that point in the MDX. The
+ *                   hairline that separates the margin from the measure is
+ *                   also the reading progress: it draws downward as the
+ *                   reader scrolls (see ColumnRule). A progress bar would
+ *                   have been a fifth element on a page whose whole argument
+ *                   is that there are only two.
+ *
+ * Words never animate. The only thing on this page that moves is one
+ * hairline, and it is scrubbed by scroll rather than timed.
  */
 export default async function PostPage({ params }: PageProps<"/writing/[slug]">) {
   const { slug } = await params;
@@ -80,14 +97,10 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
         dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
       />
 
-      {/* Sub-bar: the case study's `.case-bar`, in flow under the 3.5rem
-          fixed header (hence mt-14) and then sticky at its bottom edge, the
-          ground at 80 % with no blur (the header and the palette scrim are
-          the only two blurred surfaces on the site, §2). The underline draws
-          on the label span, not the anchor, because `transition-colors` on
-          the same element would reset the underline's transition. The
-          progress row is in flow as the bar's bottom edge, so its dots are
-          never painted over the link. */}
+      {/* The way back, and nothing else. The sub-bar used to carry the dotted
+          progress row along its bottom edge; progress is the margin rule
+          now, so the bar is a link on a sticky ground and the one accent it
+          used to spend is spent nowhere. */}
       <div className="case-bar mt-14">
         <div className="shell flex h-11 items-center">
           <Link
@@ -98,42 +111,41 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
               aria-hidden="true"
               className="size-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5"
             />
-            <span className="dot-underline group-hover:[--u:100%] group-focus-visible:[--u:100%]">
-              Writing
-            </span>
+            <span className="dot-underline">Writing</span>
           </Link>
         </div>
-        <ProgressRow />
       </div>
 
-      <article className="shell pt-16 md:pt-20">
-        <header className="max-w-prose border-b border-line pb-8">
-          <p className="data flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-3">
-            <time dateTime={post.date}>{formatPostDate(post.date)}</time>
-            <span aria-hidden="true">·</span>
-            <span>{post.readingMinutes} min read</span>
-            {/* Drafts are only in publishedPosts() in development, so the
-                tag is a dev-only marker without any extra gating here. */}
-            {post.draft && <Tag>Draft</Tag>}
-          </p>
+      <article className="shell pt-16 pb-8 md:pt-20">
+        <div className="column">
+          <ColumnRule />
 
-          <h1 className="mt-6 text-display-l text-ink">{post.title}</h1>
+          <header className="column-head">
+            <p className="data flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-3">
+              <time dateTime={post.date}>{formatPostDate(post.date)}</time>
+              <span aria-hidden="true">·</span>
+              <span>{post.readingMinutes} min read</span>
+              {/* Drafts are only in publishedPosts() in development, so the
+                  tag is a dev-only marker without any extra gating here. */}
+              {post.draft && <Tag>Draft</Tag>}
+            </p>
 
-          {post.summary && <p className="mt-6 text-lede text-ink-2">{post.summary}</p>}
+            <h1 className="mt-6 text-display-l text-ink">{post.title}</h1>
 
-          {post.tags.length > 0 && (
-            <div className="mt-6">
-              <TagRow items={post.tags} label="Tags" />
-            </div>
-          )}
-        </header>
+            {post.summary && <p className="mt-6 text-lede text-ink-2">{post.summary}</p>}
 
-        <div className="prose py-12">
-          <Body />
+            {post.tags.length > 0 && (
+              <div className="mt-6">
+                <TagRow items={post.tags} label="Tags" />
+              </div>
+            )}
+          </header>
+
+          <div className="column-body prose pt-12">
+            <Body />
+          </div>
         </div>
       </article>
-
-      {/* A post has no numbered sections, so the close is the first. */}
     </>
   );
 }

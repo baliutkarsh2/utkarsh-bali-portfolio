@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { About } from "@/components/sections/about";
-import { Experience } from "@/components/sections/experience";
+import { Constellation } from "@/components/sections/constellation";
 import { Recognition } from "@/components/sections/recognition";
 import { Toolkit } from "@/components/sections/toolkit";
 
@@ -23,12 +23,22 @@ export const metadata: Metadata = {
  * not a page, and "who are you" and "where have you worked" are one question
  * asked twice — so /experience is a 308 to #experience here, the nav is three
  * items instead of five, and the answer is in one place.
+ *
+ * Section 02 is the work constellation (§7.2a): a time × employer chart
+ * with the eight projects marked on the month each one landed, followed by
+ * the same eight as a numbered list of links. It keeps the `#experience` id
+ * the 308 from /experience points at.
  */
 export default function AboutPage() {
   return (
     <>
       <About />
-      <Experience />
+      <Constellation
+        index="02"
+        title="Where I’ve worked."
+        readout="Experience"
+        id="experience"
+      />
       <Recognition />
       <Toolkit />
     </>

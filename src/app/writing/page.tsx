@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Row } from "@/components/ui/row";
-import { Tag } from "@/components/ui/tag";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { formatPostDate, publishedPosts } from "@/lib/writing";
-import { ordinal } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Writing",
@@ -12,72 +11,110 @@ export const metadata: Metadata = {
 };
 
 /**
- * The writing index (§7.5): a meta count, the h1, then every published post
- * as one <Row> in the site's single list grammar. A piece published elsewhere
- * (Medium today) opens in a new tab with the outward arrow and the sr-only
- * notice; a hosted post routes to /writing/[slug]. There is no RSS link in
- * the UI: the feed route still builds, and it comes back the day a post
- * lives here rather than elsewhere.
+ * The writing index (§7.5), which today is not an index.
  *
- * Server component. Nothing on this page animates: rows are words.
+ * There is one essay and it lives on Medium. A grid of one is a lie, a list
+ * of one is furniture built around a single line, and either would have been
+ * the fourth page on this site shaped "copy with a right rail". So the page
+ * is the essay: the title at display-l across most of the width, the
+ * standfirst under it, a rule the full measure of the page, and one machine
+ * line of publisher / date / read time beneath the rule, which is where a
+ * broadside puts its imprint. Nothing else above the fold.
+ *
+ * `n = 1` is said out loud in the masthead, in the register this site keeps
+ * for counts and axis values. It is the honest thing to say and it stops the
+ * page pretending to be a library.
+ *
+ * The composition does not change when a second essay arrives: the newest
+ * becomes the lead, everything behind it lists under the fold in the
+ * plainest form the site has, and the count in the masthead goes up.
+ *
+ * Server component. Nothing here animates.
  */
 export default function WritingPage() {
   const posts = publishedPosts();
-  const count = posts.length;
+  const [lead, ...rest] = posts;
+
+  if (!lead) {
+    return (
+      <header className="shell pt-24 pb-16 md:pt-28">
+        <p className="data text-ink-3">Writing · n = 0</p>
+        <h1 className="mt-6 text-display-l text-ink">Nothing published yet.</h1>
+        <p className="broadside-note caption">The first essay is being written.</p>
+      </header>
+    );
+  }
+
+  const external = lead.external;
+
+  const title = external ? (
+    <a href={lead.href} target="_blank" rel="noopener noreferrer">
+      {lead.title}
+      <ArrowUpRight aria-hidden="true" className="broadside-arrow" />
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  ) : (
+    <Link href={lead.href}>{lead.title}</Link>
+  );
 
   return (
     <>
-      <header className="shell pt-24 pb-10 md:pt-28">
-        <p className="meta text-ink-3">
-          Index · {count} {count === 1 ? "post" : "posts"}
+      <header className="shell broadside pt-24 pb-6 md:pt-28">
+        <p className="data text-ink-3">
+          Writing · n = {posts.length}
         </p>
-        <h1 className="mt-4 text-display-l text-ink">Writing.</h1>
+
+        {/* The essay's title is the page's h1, because the essay is the
+            page. The masthead line above says which room you are in. */}
+        <h1 className="broadside-title mt-8 text-display-l">{title}</h1>
+
+        {lead.summary && (
+          <p className="broadside-standfirst text-lede">{lead.summary}</p>
+        )}
+
+        <hr className="broadside-rule" />
+
+        <div className="broadside-imprint meta">
+          <p>{external ? external.publisher : "Here"}</p>
+          <p>
+            <time dateTime={lead.date}>{formatPostDate(lead.date)}</time>
+          </p>
+          <p>{lead.readingMinutes} min read</p>
+        </div>
       </header>
 
-      <div className="shell">
-        {count === 0 ? (
-          <p className="hairline border-b border-line py-10 text-body text-ink-2">
-            Nothing published yet. The first post is being written.
-          </p>
-        ) : (
-          <ul className="rows m-0 list-none p-0">
-            {posts.map((post, index) => {
-              const external = Boolean(post.external);
-              return (
-                <li key={post.slug}>
-                  <Row
-                    index={ordinal(index)}
-                    title={post.title}
-                    titleAs="h2"
-                    subtitle={post.summary || undefined}
-                    // The date line is set in the `data` register (mixed case,
-                    // 13px tabular mono, §7.5) inside the row's meta slot; the
-                    // slot's own uppercase and tracking are reset on the span.
-                    meta={
-                      <span className="data normal-case">
-                        <time dateTime={post.date}>{formatPostDate(post.date)}</time>
-                        <span aria-hidden="true"> · </span>
-                        {post.readingMinutes} min
-                      </span>
-                    }
-                    trailing={
-                      external || post.draft ? (
-                        <span className="flex flex-wrap gap-x-4 gap-y-1 md:justify-end">
-                          {post.external && <Tag>{post.external.publisher}</Tag>}
-                          {post.draft && <Tag>Draft</Tag>}
-                        </span>
-                      ) : undefined
-                    }
-                    href={post.href}
-                    external={external}
-                  />
-                </li>
-              );
-            })}
+      <div className="shell broadside pb-8">
+        <p className="broadside-note caption">
+          {posts.length === 1
+            ? "One essay, published where it was written. This page points at it rather than reprinting it, so the piece keeps its own readers and its own statistics."
+            : "Published where they were written. This page points at them rather than reprinting them, so each piece keeps its own readers and its own statistics."}
+        </p>
+
+        {rest.length > 0 && (
+          <ul className="broadside-rest">
+            {rest.map((post) => (
+              <li key={post.slug}>
+                <h2 className="broadside-rest-title text-display-s font-medium">
+                  {post.external ? (
+                    <a href={post.href} target="_blank" rel="noopener noreferrer">
+                      {post.title}
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  ) : (
+                    <Link href={post.href}>{post.title}</Link>
+                  )}
+                </h2>
+                <p className="broadside-rest-meta meta">
+                  {post.external ? post.external.publisher : "Here"} ·{" "}
+                  <time dateTime={post.date}>{formatPostDate(post.date)}</time> ·{" "}
+                  {post.readingMinutes} min read
+                  {post.draft ? " · Draft" : ""}
+                </p>
+              </li>
+            ))}
           </ul>
         )}
       </div>
-
     </>
   );
 }

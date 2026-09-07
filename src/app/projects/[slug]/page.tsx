@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -11,14 +10,9 @@ import {
   type Project,
 } from "@/content";
 import { Gallery } from "@/components/project/gallery";
-import { NumberPlate } from "@/components/project/number-plate";
-import { ProjectBody, ProjectRail } from "@/components/project/project-body";
+import { PlateFigure } from "@/components/project/number-plate";
+import { ProjectBody, ProjectColophon } from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
-import { ProgressRow } from "@/components/interactive/progress-row";
-import { Reveal } from "@/components/interactive/reveal";
-import { DotMask } from "@/components/ui/dot-mask";
-import { Led } from "@/components/ui/led";
-import { SpecList } from "@/components/ui/spec-list";
 import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
 
 /** Unknown slugs 404 instead of being rendered on demand. */
@@ -54,17 +48,40 @@ export async function generateMetadata({
 }
 
 /**
- * A case study (§7.4), in order: the sticky sub-bar with its progress row,
- * the masthead (the name morphs in from the index row), the one-number
- * plate, the cover when there is one, the four numbered sections beside the
- * sticky rail, the gallery when there is media, previous / next.
- * Rigour, then the number that earns it.
+ * A case study, as one plate rather than a template around a paragraph.
  *
- * Accent count per screen (rule 3): the progress row's leading dot is the
- * one accent on every case-study screen, and it is sticky, so nothing else
- * on the page is ever --sun: the plate's figure is --ink and the masthead
- * LED is --ink even when the project is ongoing (.case-mast in
- * components.css). The word beside the LED carries the status.
+ * The measurement that decided this: a case study on this site averages 198
+ * words — 317 at the longest, 136 at the shortest. Around those 198 words the
+ * page this replaces wrapped a sticky sub-bar, a scroll-progress row, a
+ * masthead, a full-bleed number band, five numbered section blocks, a sticky
+ * 20rem rail and a two-row prev/next footer. The scaffolding outweighed the
+ * content by an order of magnitude, which is exactly why it read as a template.
+ *
+ * What is here instead, in order:
+ *
+ *   · the frontispiece — the name at display-l, a one-line spec, and the
+ *     headline figure set very large and bled off the right edge of the sheet;
+ *   · four movements, each opening on its own first sentence set in the display
+ *     italic across a wider measure, with "How it works" drawn as a three-stage
+ *     schematic from the three `architecture` strings every project has;
+ *   · the number again, at the close of Impact;
+ *   · the plates, where there are screenshots; the colophon; the foot.
+ *
+ * Deleted, on purpose: the sub-bar (a sticky bar takes 44px off every screen of
+ * a page people actually read — the running head hangs in the margin instead,
+ * where a running head goes), the progress row, the number band, the numbered
+ * block heads, and the rail.
+ *
+ * The dot field is absent from the body of this page and that is the point:
+ * this is the document the machine printed, and a document does not contain its
+ * press. The lattice belongs to the home board and to the image masks.
+ *
+ * Accents: none. --sun is licensed to four places site-wide and no case study
+ * is one of them, so the figure, the rules and the schematic are all --ink.
+ *
+ * Motion: none. Nothing on this page has a cold state, so reduced motion and
+ * JavaScript-off both render exactly what everyone else sees — the only moving
+ * parts left are the shared image masks, which resolve themselves in CSS.
  */
 export default async function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   const { slug } = await params;
@@ -72,7 +89,13 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
   if (!project) notFound();
 
   const adjacent = adjacentProjects(slug);
-  const live = project.status === "ongoing";
+  const spec = [
+    project.eyebrow,
+    project.org ?? "Independent",
+    project.role,
+    project.year,
+    statusLabel[project.status],
+  ];
 
   return (
     <>
@@ -81,100 +104,45 @@ export default async function ProjectPage({ params }: PageProps<"/projects/[slug
         dangerouslySetInnerHTML={{ __html: jsonLd(buildSchema(project)) }}
       />
 
-      {/* Sub-bar: in flow under the 3.5rem fixed header (hence mt-14), then
-          sticky at the header's bottom edge. The progress row is its bottom
-          edge: a row of unlit dots lighting left to right with reading
-          progress, the leading dot in --sun. */}
-      <div className="case-bar mt-14">
-        <div className="shell flex h-11 items-center">
-          <Link
-            href="/projects"
-            className="group tap inline-flex items-center gap-2 text-small text-ink-2 transition-colors hover:text-ink"
-          >
-            <ArrowLeft
-              className="size-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5"
-              aria-hidden="true"
-            />
-            <span className="dot-underline group-hover:[--u:100%] group-focus-visible:[--u:100%]">
-              Work
-            </span>
-          </Link>
-        </div>
-        <ProgressRow />
-      </div>
+      <article className="plate">
+        {/* Frontispiece. The margin column opens with the way back, which is
+            the only navigation this page needs above the fold; the h1 shares
+            `project-{slug}` with the index row's title, so the name morphs
+            into place and nothing else moves. */}
+        <header className="frontis sheet-row shell">
+          <div>
+            <Link href="/projects" className="frontis-back data tap">
+              <ArrowLeft aria-hidden="true" />
+              <span className="dot-underline">Work</span>
+            </Link>
+          </div>
 
-      <article>
-        {/* Masthead. The h1 shares `project-{slug}` with the index row's
-            title, so the name morphs into place; nothing else here moves. */}
-        <header className="case-mast shell pt-12 pb-12 md:pt-16 md:pb-16">
-          <p className="meta text-ink-3">{project.eyebrow}</p>
-          <h1
-            className="mt-6 text-display-l text-ink"
-            style={{ viewTransitionName: `project-${project.slug}` }}
-          >
-            {project.name}
-          </h1>
-          <p className="measure mt-6 text-lede text-ink-2">{project.tagline}</p>
-
-          <SpecList
-            inline
-            className="mt-10"
-            rows={[
-              { term: "Role", value: project.role },
-              { term: "Organization", value: project.org ?? "Independent" },
-              { term: "Year", value: project.year },
-              {
-                term: "Status",
-                value: (
-                  <span className="inline-flex items-center gap-2">
-                    {/* The word beside it is the LED's label. */}
-                    <Led state={live ? "live" : "off"} />
-                    {statusLabel[project.status]}
-                  </span>
-                ),
-              },
-            ]}
-          />
+          <div>
+            <p className="spec-line data">
+              {spec.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </p>
+            <h1
+              className="frontis-name text-display-l"
+              style={{ viewTransitionName: `project-${project.slug}` }}
+            >
+              {project.name}
+            </h1>
+            <p className="frontis-tagline text-lede">{project.tagline}</p>
+          </div>
         </header>
 
-        <NumberPlate project={project} />
+        <PlateFigure project={project} />
 
-        {/* Cover, only when one exists. No placeholder plates: the number
-            above is the slide every project gets. */}
-        {project.cover && (
-          <div className="shell mt-12 md:mt-16">
-            <Reveal>
-              <DotMask ratio={`${project.cover.width} / ${project.cover.height}`}>
-                <Image
-                  src={project.cover.src}
-                  alt={project.cover.alt}
-                  width={project.cover.width}
-                  height={project.cover.height}
-                  sizes="(min-width: 84rem) 80rem, 100vw"
-                />
-              </DotMask>
-            </Reveal>
-          </div>
-        )}
+        <ProjectBody project={project} />
 
-        <div className="shell case-body section-y">
-          <ProjectBody project={project} />
-          <ProjectRail project={project} />
-        </div>
+        {project.media && project.media.length > 0 && <Gallery media={project.media} />}
 
-        {project.media && project.media.length > 0 && (
-          <div className="pb-(--section-y)">
-            <Gallery media={project.media} />
-          </div>
-        )}
+        <ProjectColophon project={project} />
       </article>
 
-      {adjacent && (
-        <div className="mt-(--section-y)">
-          <ProjectNav prev={adjacent.prev} next={adjacent.next} />
-        </div>
-      )}
-
+      {adjacent && <ProjectNav prev={adjacent.prev} next={adjacent.next} />}
     </>
   );
 }

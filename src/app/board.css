@@ -199,8 +199,7 @@ noscript .board-fallback {
    it reads as a picture rather than as broken UI. */
 @media (forced-colors: active) {
   .board-canvas,
-  .field,
-  .field-light {
+  .field {
     display: none;
   }
   .board-fallback {
@@ -219,23 +218,12 @@ noscript .board-fallback {
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   The field light: the page lattice answering the pointer everywhere.
-   Owned by src/components/interactive/field-light.tsx. Fixed at z 0, so it
-   sits above the CSS field (z -1) and below every page section (z 1).
-   ───────────────────────────────────────────────────────────── */
-.field-light {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-board);
-  display: block;
-  /* Sized in px by the component from the bitmap it allocates (see the
-     hero canvas above for why not 100vw/100vh). */
-  pointer-events: none;
-}
-
-@media (hover: none), print {
-  .field-light {
-    display: none;
-  }
-}
+/* The field light is gone. It lit the page-wide CSS lattice under the
+   pointer, and that lattice was deleted when the ground inverted -- so on
+   paper it was drawing a disc of grey dots on bare white, directly behind
+   running text. Two independent measurements, on two routes: background
+   contrast under a paragraph with the cursor resting on it went 8.97:1 to
+   1.05:1, and a stray corner of the halo failed a toolkit item at 1.50:1
+   where the paper itself measures 8.97:1. A permanent field of grey dots
+   behind the page IS the smudge this direction exists to avoid. Dots live
+   inside a plate mark now, and nowhere else. */

@@ -14,10 +14,13 @@ from the original photograph, then cropped to the subject's bounding box; the
 crop origin in the original frame is in CUTOUT_ORIGIN.txt so the windows below
 can stay in original-photo coordinates).
 
-The mapping (one formula shared with the renderer and the OG image):
+The mapping (one formula shared with the renderer and the OG image, `ink_dia`):
   byte 0        outside the mask, nothing is drawn
-  byte 1..12    inside the mask but unlit (L < 0.05): drawn at 0.18 x pitch in --dot-off
-  byte 13..255  lit: diameter = pitch x (0.18 + 0.78 x L), --ink; the rim set is --sun
+  byte 1..255   inside the mask: luminance x 255, floored at DEEP_FLOOR and run
+                through the ink transfer. One ink, --ink, at full strength; the
+                dot's AREA carries the value and a dot below CULL_DIA is not
+                drawn at all, so a highlight is bare paper. The catchlight in
+                his eye is the only --sun mark on the sheet.
 """
 from __future__ import annotations
 
@@ -77,6 +80,51 @@ TOE = 0.06       # floor under every lit cell
 EDGE_BAND_PX = 18      # silhouette band in photograph pixels
 EDGE_FLOOR = 0.42  # silhouette cells are forced to at least this luminance
 UNLIT = 0.05
+
+# ── The ink transfer ──────────────────────────────────────────────────────
+# One ink at full strength; value is carried by dot AREA alone. Every one of
+# these five numbers was measured offline before it was written down, and they
+# are the renderer's: src/lib/board.ts, src/lib/field/gl-board.ts and
+# src/lib/og.tsx hold the same constants and the four copies must not drift.
+#
+#   DEEP_FLOOR  the 27% of mask cells that sit under UNLIT map to ~0.94
+#               coverage taken at face value and go nearly solid. Flooring
+#               their luminance at 0.16 is the single largest cause of mud
+#               removed.
+#   LIFT        straight inversion gives mean coverage 0.55 and crushes the
+#               hair and the shadow side to a photocopy. The lift is not
+#               optional; 0.55 holds the form where 0.42 loses presence.
+#   INK_GAIN    press gain compensation.
+#   1.128       2/sqrt(pi): the area-exact diameter for a disc of `coverage`.
+#   INK_DIA_MAX sqrt(2), the diameter at which a cell closes to solid.
+#   CULL_DIA    the most important line: a dot you cannot resolve is grey haze,
+#               and the absence of a dot is a highlight.
+LIFT, INK_GAIN, DEEP_FLOOR, CULL_DIA, INK_DIA_MAX = 0.55, 1.15, 0.16, 0.30, 1.42
+
+
+def ink_dia(L: float) -> float:
+    """Dot diameter in cells for a cell of luminance L, or 0 if it is culled."""
+    coverage = (1.0 - min(max(L, DEEP_FLOOR), 1.0) ** LIFT) ** INK_GAIN
+    dia = min(1.128 * math.sqrt(coverage), INK_DIA_MAX)
+    return dia if dia >= CULL_DIA else 0.0
+
+
+# The OG card's own grid. It is not a free choice in either direction, and both
+# ends were measured on the real bake.
+#
+# Coarser is lighter: sampling the window at 48 x 60 averages sixteen of the
+# hero's cells into one, and because the transfer is convex that pulls realised
+# mean coverage down to 0.297 — under the 0.30 floor the direction sets. 56 x 70
+# lands at 0.306 and 64 x 80 at 0.311, against the hero's own 0.338 at 192 x 240.
+#
+# Finer is not free either. A share card is usually seen scaled to about 42% in
+# a timeline, and the engraving only survives that as long as its marks are
+# still marks; the card's 392px portrait puts a 70-row grid at 5.6px per cell,
+# which is 2.4px in a thumbnail. Below that the halftone stops resolving and
+# becomes the haze the cull exists to prevent. 56 x 70 is the finest grid that
+# clears the coverage floor while keeping the dot count under the SVG budget
+# in src/lib/og.tsx (1,666 drawn against 2,000).
+OG_COLS, OG_ROWS = 56, 70
 
 # ── Focal hierarchy ───────────────────────────────────────────────────────
 # A uniform halftone has no subject. In this frame the white tee is the
@@ -346,17 +394,15 @@ def render(
 ) -> Image.Image:
     """The settled frame, drawn the way the browser draws it.
 
-    Ink on paper: one ink at full strength, value carried by dot AREA alone.
-    These five constants are the renderer's (src/lib/board.ts and
-    src/lib/field/gl-board.ts) and the three copies must not drift, or the
-    image a no-JS visitor sees is not the picture the board draws.
+    Ink on paper: one ink at full strength, value carried by dot AREA alone,
+    through the shared `ink_dia` above — or the image a no-JS visitor sees is
+    not the picture the board draws.
 
     The rim is no longer an accent. On a dark ground it was a light source and
     earned the second ink; on paper there is no light, so the rim prints in the
     same ink as everything else and the catchlight in his eye is the only mark
     on the sheet that is vermilion.
     """
-    LIFT, INK_GAIN, DEEP_FLOOR, CULL_DIA, INK_DIA_MAX = 0.55, 1.15, 0.16, 0.30, 1.42
     rows, cols = field.shape
     ss = 2
     W, H = int(cols * cell_px), int(rows * cell_px)
@@ -372,9 +418,8 @@ def render(
             if (i, j) == datum:
                 dia, col = 0.96 * density, SUN
             else:
-                coverage = (1.0 - max(L, DEEP_FLOOR) ** LIFT) ** INK_GAIN
-                dia = min(1.128 * math.sqrt(coverage), INK_DIA_MAX)
-                if dia < CULL_DIA:
+                dia = ink_dia(L)
+                if dia == 0.0:
                     continue  # below resolution is haze; bare paper is a highlight
                 col = INK
             r = dia * k / 2
@@ -407,7 +452,7 @@ def main() -> None:
     f64, w64 = sample(main_win, 128, 160, focal_strength=0.0)
     fab, wab = sample(about_win, 128, 160, ABOUT_CROP, CENTER_HINT, focal_strength=0.0)
     fct, wct = sample(main_win, 96, 120, focal_strength=0.0)  # Contact afterimage
-    f48, w48 = sample(main_win, 48, 60, focal_strength=0.0)
+    fog, _ = sample(main_win, OG_COLS, OG_ROWS, focal_strength=0.0)
 
     # The name passes over the board's top-left corner at >= 80rem: it must be sky.
     assert not f96[:48, :48].any(), "top-left quarter of the hero field must be empty sky (move MAIN_CROP)"
@@ -417,13 +462,14 @@ def main() -> None:
     d64 = find_datum(f64, to_cell(DATUM_HINT, MAIN_CROP, 128))
     dab = find_datum(fab, to_cell(DATUM_HINT, ABOUT_CROP, 128))
     dct = find_datum(fct, to_cell(DATUM_HINT, MAIN_CROP, 96))
-    d48 = find_datum(f48, to_cell(DATUM_HINT, MAIN_CROP, 48))
+    dog = find_datum(fog, to_cell(DATUM_HINT, MAIN_CROP, OG_COLS))
     c96 = to_cell(CENTER_HINT, MAIN_CROP, 192)
     c64 = to_cell(CENTER_HINT, MAIN_CROP, 128)
     cab = to_cell(CENTER_HINT, ABOUT_CROP, 128)
     cct = to_cell(CENTER_HINT, MAIN_CROP, 96)
 
-    r96, r64, rab, r48 = rim_indices(f96, w96), rim_indices(f64, w64), rim_indices(fab, wab), rim_indices(f48, w48)
+    # The OG field needs no rim set: on the card the sun is the datum alone.
+    r96, r64, rab = rim_indices(f96, w96), rim_indices(f64, w64), rim_indices(fab, wab)
     rct = rim_indices(fct, wct)
 
     (CONTENT / "portrait-field-96.ts").write_text(ts_module("portraitField96", f96, d96, c96, r96, "Hero at >= 48rem: a 96 x 120 lattice box at double density. Window MAIN_CROP of the photograph."))
@@ -437,22 +483,32 @@ def main() -> None:
         f"export const DOT_COUNT = {count};\n"
     )
 
-    # OG: [x, y, r, kind] in grid units; kind 1 = sun. Lit cells only.
+    # OG: [x, y, r, kind] in grid units; kind 1 = the datum, the one vermilion
+    # mark. Radii come from `ink_dia`, the same transfer the board and the
+    # no-JS still use, so the share card is the same engraving as the page.
+    #
+    # Two differences from the pre-Intaglio bake, both structural rather than
+    # tuning. Sub-UNLIT cells are no longer skipped — they are the deepest
+    # shadows, 27% of the mask, and DEEP_FLOOR is what turns them into large
+    # dots instead of nothing. And the rim set no longer earns kind 1: on
+    # paper there is no light to be warm, so the sun is the datum alone.
     og: list[list[float]] = []
-    rim48 = set(r48)
-    for j in range(60):
-        for i in range(48):
-            v = int(f48[j, i])
-            if v == 0 or v / 255 < UNLIT:
+    for j in range(OG_ROWS):
+        for i in range(OG_COLS):
+            v = int(fog[j, i])
+            if v == 0:
                 continue
-            L = v / 255
-            kind = 1 if ((i, j) == d48 or (j * 48 + i) in rim48) else 0
-            r = 0.48 if (i, j) == d48 else (0.18 + 0.78 * L) / 2
-            og.append([i, j, round(r, 3), kind])
+            if (i, j) == dog:
+                og.append([i, j, 0.48, 1])
+                continue
+            dia = ink_dia(v / 255)
+            if dia == 0.0:
+                continue
+            og.append([i, j, round(dia / 2, 3), 0])
     (CONTENT / "portrait-og.ts").write_text(
-        "/** GENERATED by scripts/bake-portrait.py. Do not edit. 48 x 60 downsample for the OG image: [x, y, r, kind] in grid units, kind 1 = sun. */\n"
+        f"/** GENERATED by scripts/bake-portrait.py. Do not edit. {OG_COLS} x {OG_ROWS} downsample for the OG image: [x, y, r, kind] in grid units, kind 1 = the vermilion datum. */\n"
         "export const portraitOg: { w: number; h: number; dots: [number, number, number, number][] } = {\n"
-        f"  w: 48,\n  h: 60,\n  dots: {json.dumps(og, separators=(',', ':'))},\n}};\n"
+        f"  w: {OG_COLS},\n  h: {OG_ROWS},\n  dots: {json.dumps(og, separators=(',', ':'))},\n}};\n"
     )
 
     render(f96, d96, set(r96), 6, True, density=2).save(PUBLIC / "dots-96@2x.webp", quality=90, method=6)

@@ -70,7 +70,9 @@ const src = readFileSync(SOURCE, "utf8");
 const numbers = new Map();
 for (const file of [SOURCE, join(ROOT, "src", "lib", "board.ts")]) {
   const text = readFileSync(file, "utf8");
-  for (const [, name, value] of text.matchAll(/^(?:export )?const (\w+) = (-?[\d.]+);$/gm)) {
+  for (const [, name, value] of text.matchAll(
+    /^(?:export )?const (\w+) = (-?[\d.]+);$/gm,
+  )) {
     numbers.set(name, Number(value));
   }
 }
@@ -91,11 +93,17 @@ const COMMON = raw("COMMON");
 /** Fill `${COMMON}`, `${SOME_CONST}` and `${SOME_CONST.toFixed(n)}`. */
 function resolve(name) {
   let out = raw(name).replaceAll("${COMMON}", COMMON);
-  out = out.replace(/\$\{(\w+)(?:\.toFixed\((\d+)\))?\}/g, (whole, ident, digits) => {
-    if (!numbers.has(ident)) throw new Error(`${name}: cannot resolve \${${ident}}`);
-    const value = numbers.get(ident);
-    return digits === undefined ? String(value) : value.toFixed(Number(digits));
-  });
+  out = out.replace(
+    /\$\{(\w+)(?:\.toFixed\((\d+)\))?\}/g,
+    (whole, ident, digits) => {
+      if (!numbers.has(ident))
+        throw new Error(`${name}: cannot resolve \${${ident}}`);
+      const value = numbers.get(ident);
+      return digits === undefined
+        ? String(value)
+        : value.toFixed(Number(digits));
+    },
+  );
   const left = out.match(/\$\{[^}]*\}/g);
   if (left) throw new Error(`${name}: unresolved ${left.join(", ")}`);
   return out;
@@ -119,7 +127,10 @@ for (const specifier of [process.env.PUPPETEER_CORE, "puppeteer-core"]) {
     /* try the next one */
   }
 }
-if (!puppeteer) skip("puppeteer-core not resolvable (set PUPPETEER_CORE, or npm i -D puppeteer-core)");
+if (!puppeteer)
+  skip(
+    "puppeteer-core not resolvable (set PUPPETEER_CORE, or npm i -D puppeteer-core)",
+  );
 if (CHROME.length === 0) skip("no Chrome found (set CHROME_PATH)");
 
 // Headless Chrome runs SwiftShader here, which is fine: this is a compile
@@ -138,7 +149,9 @@ const results = await page.evaluate((shaders) => {
   if (!gl) return null;
   const out = {};
   for (const [name, source] of Object.entries(shaders)) {
-    const shader = gl.createShader(name.endsWith("_VS") ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER);
+    const shader = gl.createShader(
+      name.endsWith("_VS") ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER,
+    );
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     out[name] = {
@@ -162,7 +175,8 @@ for (const [name, { ok, log }] of Object.entries(results)) {
   } else {
     failed++;
     console.error(`  FAIL  ${name}  (${lines} lines)`);
-    for (const line of log.split("\n")) if (line.trim()) console.error(`        ${line.trim()}`);
+    for (const line of log.split("\n"))
+      if (line.trim()) console.error(`        ${line.trim()}`);
   }
 }
 

@@ -1,0 +1,905 @@
+/* ─────────────────────────────────────────────────────────────
+   plates.css — four compositions.
+
+   Imported by globals.css after components.css. Nothing here is a primitive:
+   each block is one page's layout and belongs to that page alone. The four
+   pages this file dresses are deliberately unlike each other, because the
+   four things they hold are unlike each other:
+
+     .toc           /projects        a contents page: figures right,
+                                      chronology in the left margin
+     .broadside     /writing         one essay, set as a broadside
+     .column        /writing/[slug]  one measure, a drop cap, marginalia
+     .spoiled       404              a sheet that came off the press wrong
+
+   Most rules are written unlayered. Tailwind's utilities live in the
+   `utilities` layer, and an unlayered rule beats every layered one whatever
+   its specificity — which is how a composition overrides a utility's
+   font-size (the three figure sizes on the contents page) without an
+   arms race of selectors. Same reasoning as board.css.
+   ───────────────────────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. /projects — The Contents Page
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Two axes, both read off the data, both visible at a glance:
+
+     LEFT   a hairline runs the height of the list. Every row's year is set
+            against it, and every row's text starts at a distance from it
+            proportional to how long ago the work began. The ragged left
+            margin is therefore the chronology itself: the steps between rows
+            are the real gaps between the dates, not a rhythm.
+
+     RIGHT  a column of figures in the display face at 700, at three sizes.
+            The size is how far the number reaches (see REACH in page.tsx),
+            which is uncorrelated with the date, so the column reads as a
+            skyline rather than a ramp.
+
+   The heights are unequal on purpose: rows from the current year carry a
+   standfirst, older rows carry a title and one machine line. A contents page
+   thins as it recedes.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.toc {
+  --year-col: 3.25rem; /* "2026" in 13px tabular mono, right-aligned */
+  --rule-gap: 1.25rem; /* rule to the flush-left row */
+  --step: 0rem; /* the chronological indent's full travel */
+  --fig-col: 7.5rem;
+}
+
+.toc-list {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The date rule. One hairline for the whole list, so it is an axis and not a
+   row decoration. Drawn at the year column's edge, from the first row's top
+   hairline to the last row's foot. */
+.toc-list::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: var(--year-col);
+  width: 1px;
+  background: var(--line-strong);
+}
+
+@media (width >= 48rem) {
+  .toc {
+    --step: 2.5rem;
+    --fig-col: 10rem;
+  }
+}
+
+@media (width >= 80rem) {
+  .toc {
+    --step: 4.5rem;
+    --fig-col: 13rem;
+  }
+}
+
+/* The column heads, above the list and outside it: they name the two axes so
+   the figures column does not have to be guessed at. */
+.toc-head {
+  display: grid;
+  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--fig-col);
+  align-items: end;
+  padding-bottom: 0.75rem;
+  color: var(--ink-3);
+}
+
+.toc-head > :first-child {
+  padding-inline-end: 0.85rem;
+  text-align: right;
+}
+
+.toc-head > :nth-child(2) {
+  padding-inline-start: var(--rule-gap);
+}
+
+.toc-head > :last-child {
+  text-align: right;
+}
+
+/* ── A row ────────────────────────────────────────────────────────────────
+   Three columns: the year against the rule, the body, the figure. The body's
+   own start is the chronology; --t is 0 for the newest project and 1 for the
+   oldest, written inline by the page. */
+.toc-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--fig-col);
+  align-items: start;
+  padding-block: 1.5rem;
+}
+
+@media (width >= 48rem) {
+  .toc-row {
+    padding-block: 1.75rem;
+  }
+}
+
+.toc-row[data-weight="lead"] {
+  padding-block: 1.75rem 2rem;
+}
+
+@media (width >= 48rem) {
+  .toc-row[data-weight="lead"] {
+    padding-block: 2.25rem 2.5rem;
+  }
+}
+
+/* The row's own hairline starts where the row starts, so the rules step
+   rightward down the page and the chronology is legible even in the
+   furniture. It never crosses the year column, which keeps the date rule
+   reading as a spine rather than as one cell of a table. */
+.toc-row::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  inset-inline-start: calc(var(--year-col) + var(--rule-gap) + var(--t, 0) * var(--step));
+  height: 1px;
+  background: var(--line);
+}
+
+/* Hover fills from the date rule to the right edge — never across the rule,
+   so the axis stays an axis, and never past the row's own box: a negative
+   inset here bled the fill into the shell's padding and made the whole
+   document 20 px wider than the viewport at every width. */
+.toc-row::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inset-inline-start: calc(var(--year-col) + 1px);
+  background: var(--ground-2);
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease-snap);
+  pointer-events: none;
+}
+
+.toc-row:hover::after,
+.toc-row:focus-within::after {
+  opacity: 1;
+}
+
+.toc-year,
+.toc-body,
+.toc-fig {
+  position: relative;
+  z-index: 1;
+}
+
+.toc-year {
+  padding-inline-end: 0.85rem;
+  text-align: right;
+  color: var(--ink-3);
+  /* The mono ascender and the display-s cap height do not start on the same
+     line; this drops the year onto the title's first baseline. */
+  padding-block-start: 0.55rem;
+  transition: color var(--dur-1) var(--ease-snap);
+}
+
+/* The first row of each year says the year in full ink: reading down, the
+   three groups separate without a second rule. */
+.toc-year[data-first] {
+  color: var(--ink-2);
+}
+
+.toc-row:hover .toc-year {
+  color: var(--ink);
+}
+
+.toc-body {
+  min-width: 0;
+  padding-inline-start: calc(var(--rule-gap) + var(--t, 0) * var(--step));
+  padding-inline-end: 1.5rem;
+}
+
+.toc-title {
+  margin: 0;
+}
+
+.toc-title a {
+  color: var(--ink);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  transition: text-decoration-color var(--dur-2) var(--ease-snap);
+}
+
+.toc-row:hover .toc-title a,
+.toc-title a:focus-visible {
+  text-decoration-color: var(--rule-mid);
+}
+
+.toc-standfirst {
+  margin-block-start: 0.5rem;
+  max-width: 58ch;
+  color: var(--ink-2);
+}
+
+.toc-meta {
+  margin-block-start: 0.75rem;
+  color: var(--ink-3);
+}
+
+/* ── The figures ──────────────────────────────────────────────────────────
+   Right-aligned, so the column has one clean edge and the raggedness is all
+   in the heights. Three sizes, set here rather than in the JSX: <Numeral> is
+   the only thing allowed to name the display face, and it offers two sizes,
+   so the third comes from the composition. Every size is far above the 21px
+   floor the face has. */
+.toc-fig {
+  text-align: right;
+}
+
+.toc-fig .numeral {
+  display: block;
+  color: var(--ink);
+}
+
+.toc-row[data-reach="people"] .numeral {
+  font-size: clamp(2.75rem, 5vw, 4.25rem); /* 44 → 68px */
+}
+
+.toc-row[data-reach="system"] .numeral {
+  font-size: clamp(2.125rem, 3.4vw, 2.875rem); /* 34 → 46px */
+}
+
+.toc-row[data-reach="bench"] .numeral {
+  font-size: clamp(1.625rem, 2.4vw, 2rem); /* 26 → 32px */
+}
+
+.toc-fig-label {
+  margin-block-start: 0.6rem;
+  color: var(--ink-3);
+  text-align: right;
+  text-wrap: pretty;
+}
+
+/* ── Below 48rem the two axes have nowhere to go. The indent collapses to
+      zero (--step is 0 there), the figure moves under the title, and the
+      year keeps its place against the rule: the chronology survives as the
+      order of the list and the rule that ties it together. ── */
+@media (width < 48rem) {
+  .toc-row,
+  .toc-head {
+    grid-template-columns: var(--year-col) minmax(0, 1fr);
+  }
+
+  /* Two columns, so the head's third label has nowhere to be. */
+  .toc-head > :last-child {
+    display: none;
+  }
+
+  .toc-body {
+    padding-inline-end: 0;
+  }
+
+  /* A 22px standfirst in a 278px column is five lines, and five lines is a
+     paragraph rather than a standfirst — it pushed the second project off a
+     390px screen on its own. The reading size instead. */
+  .toc-standfirst {
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+
+  .toc-fig {
+    grid-column: 2;
+    margin-block-start: 1rem;
+    text-align: left;
+  }
+
+  .toc-fig-label {
+    text-align: left;
+  }
+
+  .toc-row[data-reach="people"] .numeral {
+    font-size: 2.5rem;
+  }
+  .toc-row[data-reach="system"] .numeral {
+    font-size: 2rem;
+  }
+  .toc-row[data-reach="bench"] .numeral {
+    font-size: 1.625rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. /writing — The Broadside
+   ═══════════════════════════════════════════════════════════════════════════
+
+   There is one essay and it lives on Medium. A grid of one is a lie and a
+   list of one is furniture around a single line, so this page is not an
+   index: it is the essay, set the size the essay deserves, with the
+   machine line under a rule that runs the full measure of the page.
+
+   The second post gets the same treatment — it becomes the lead — and
+   everything after it falls into a short list under the fold. Nothing about
+   the composition has to change for that to work.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.broadside {
+  display: block;
+}
+
+.broadside-title {
+  margin: 0;
+  /* Most of the width, not all of it: a display-l line that runs to the
+     shell edge has no air at the end of it and stops looking set. */
+  max-width: 18ch;
+  color: var(--ink);
+}
+
+@media (width >= 48rem) {
+  .broadside-title {
+    max-width: 15ch;
+  }
+}
+
+.broadside-title a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+  transition: text-decoration-color var(--dur-2) var(--ease-snap);
+}
+
+.broadside-title a:hover,
+.broadside-title a:focus-visible {
+  text-decoration-color: var(--rule-mid);
+}
+
+/* The outward arrow, sized off the title rather than in pixels, so it stays
+   the same optical weight through the whole display-l clamp. Set on the last
+   line, riding the cap height. */
+.broadside-arrow {
+  display: inline-block;
+  width: 0.3em;
+  height: 0.3em;
+  margin-inline-start: 0.14em;
+  vertical-align: 0.42em;
+  stroke-width: 1.5;
+  color: var(--ink-3);
+  transition:
+    color var(--dur-1) var(--ease-snap),
+    translate var(--dur-2) var(--ease-snap);
+}
+
+.broadside-title a:hover .broadside-arrow,
+.broadside-title a:focus-visible .broadside-arrow {
+  color: var(--ink);
+  translate: 0.06em -0.06em;
+}
+
+.broadside-standfirst {
+  margin-block-start: var(--space-5);
+  max-width: 52ch;
+  color: var(--ink-2);
+}
+
+/* The full-width rule. The one horizontal on this page, and the machine line
+   sits directly under it — which is where a broadside puts its imprint. */
+.broadside-rule {
+  margin-block-start: var(--space-6);
+  border: 0;
+  border-top: 1px solid var(--line-strong);
+}
+
+/* The imprint. Widely spaced under the rule with no punctuation between the
+   items: the rule is what holds them together, and a middot here would be a
+   second joint doing the same job. */
+.broadside-imprint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2.75rem;
+  padding-block-start: 0.875rem;
+  color: var(--ink-3);
+}
+
+.broadside-imprint > * {
+  margin: 0;
+}
+
+/* The quiet line below the fold. Italic reading serif, the register this
+   site uses for a caption, and the only thing under the imprint. */
+.broadside-note {
+  margin-block-start: var(--space-10);
+  max-width: 46ch;
+  color: var(--ink-3);
+}
+
+/* When a second essay arrives, the rest of them list under the broadside in
+   the plainest form the site has: a date, a title, a publisher. */
+.broadside-rest {
+  margin-block-start: var(--space-10);
+  padding-block-start: var(--space-3);
+  border-top: 1px solid var(--line);
+  margin-inline: 0;
+  padding-inline: 0;
+  list-style: none;
+}
+
+.broadside-rest li + li {
+  margin-block-start: 1.25rem;
+}
+
+.broadside-rest-title {
+  margin: 0;
+  color: var(--ink);
+}
+
+.broadside-rest-title a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
+}
+
+.broadside-rest-title a:hover,
+.broadside-rest-title a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
+.broadside-rest-meta {
+  margin-block-start: 0.35rem;
+  color: var(--ink-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. /writing/[slug] — The Column
+   ═══════════════════════════════════════════════════════════════════════════
+
+   The only page on this site whose job is uninterrupted reading, so the only
+   page that indents. One measure of about 68ch, a margin column to its left
+   holding the marginalia, and a hairline between the two that is also the
+   reading progress: it draws downward as the reader scrolls.
+
+   The hairline is not a bar. It is the rule that already had to be there to
+   make a margin a margin, doing a second job.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.column {
+  --note-col: 0rem;
+  --note-gap: 0rem;
+  --column-measure: 68ch;
+
+  position: relative;
+  max-width: calc(var(--note-col) + var(--note-gap) + var(--column-measure));
+}
+
+@media (width >= 64rem) {
+  .column {
+    --note-col: 11rem;
+    --note-gap: 2.5rem;
+  }
+}
+
+@media (width >= 80rem) {
+  .column {
+    --note-col: 13rem;
+    --note-gap: 3rem;
+  }
+}
+
+/* The text sits to the right of the margin column. Below 64rem the margin is
+   zero wide and this is a plain single column. */
+.column-head,
+.column-body {
+  margin-inline-start: calc(var(--note-col) + var(--note-gap));
+  max-width: var(--column-measure);
+}
+
+/* A block formatting context, so the floated marginalia are contained by the
+   body rather than escaping past its last paragraph. */
+.column-body {
+  display: flow-root;
+}
+
+/* ── The margin hairline, which is also the progress ──────────────────────
+   `--p` runs 0..1 down the document. Above it the rule is ink, below it the
+   rule is the ordinary hairline; the boundary is a hard stop, because a
+   gradient here would be a gradient as fill.
+
+   The finished state is the base state. Without JavaScript globals.css sets
+   --p: 1 and the whole rule is drawn; under reduced motion, from either
+   source, the same. Where scroll timelines exist the CSS below drives --p
+   and no script runs at all; where they do not, ColumnRule writes the same
+   number from a passive listener. */
+.column-rule {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc(var(--note-col) + var(--note-gap) / 2);
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    var(--ink) 0 calc(var(--p) * 100%),
+    var(--line) calc(var(--p) * 100%) 100%
+  );
+  pointer-events: none;
+}
+
+@media (width < 64rem) {
+  .column-rule {
+    display: none;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .column-rule {
+    animation: progress-fill linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+@media print {
+  .column-rule {
+    background: var(--line);
+  }
+}
+
+/* ── The drop cap ─────────────────────────────────────────────────────────
+   Bodoni over about five lines of the body, floated rather than
+   `initial-letter` so every engine puts it in the same place and the box is
+   decided before the first paint. `--font-display` is named here, in CSS,
+   for the same reason globals.css names it for .text-display-*: this is a
+   letter about 90px tall, which is the size the face is drawn for. Nothing
+   in the TSX names it.
+
+   Only the first paragraph, and only when the body opens with a paragraph. */
+.column-body > p:first-child::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  /* Five lines, measured rather than derived: a floated initial overflows its
+     own line box by the half-leading, so arithmetic from cap height and
+     leading is off by most of a line. What actually governs it is the float's
+     box — it shortens ceil(font-size x line-height / body line-height) lines —
+     and the measurements agree: 4.9em shortened three, 8.2em four, 9.6em
+     five. */
+  font-size: 9.6em;
+  line-height: 0.82;
+  padding-inline-end: 0.06em;
+  padding-block-start: 0.04em;
+  color: var(--ink);
+}
+
+/* An opening paragraph that is really a lead-in to a list or a picture opts
+   out by carrying `plain` on the first element. */
+.column-body > .plain:first-child::first-letter {
+  float: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  padding: 0;
+}
+
+/* ── Marginalia ───────────────────────────────────────────────────────────
+   A note is authored at the point of the text it belongs to, so its
+   y-position is free: it is where the flow put it. It hangs into the margin
+   column by a negative margin, which keeps it out of the measure entirely —
+   no line box is ever shortened, so the text column stays rectangular.
+
+   Two floats that land close together stack instead of overlapping, which is
+   the behaviour marginalia want and the reason this is a float rather than
+   an absolute box.
+
+   Below 64rem there is no margin, so a note becomes an indented aside in the
+   flow, set small, between rules. */
+.column-note {
+  margin-block: 0.35em 0.9em;
+  color: var(--ink-3);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.column-note > :first-child {
+  margin-block-start: 0;
+}
+
+.column-note > :last-child {
+  margin-block-end: 0;
+}
+
+@media (width >= 64rem) {
+  .column-note {
+    float: left;
+    clear: left;
+    width: var(--note-col);
+    margin-inline-start: calc(-1 * (var(--note-col) + var(--note-gap)));
+    margin-block: 0.35em 1.25em;
+    text-align: right;
+  }
+}
+
+@media (width < 64rem) {
+  .column-note {
+    padding-inline-start: 1rem;
+    border-inline-start: 1px solid var(--line);
+  }
+}
+
+/* A pull quote is a note that is a voice rather than an aside: the reading
+   serif's italic at the lede size, in full ink. Same column, same rules. */
+.column-note[data-kind="quote"] {
+  color: var(--ink);
+  font-style: italic;
+  font-size: var(--text-lede);
+  line-height: 1.35;
+}
+
+@media (width < 64rem) {
+  .column-note[data-kind="quote"] {
+    border-inline-start-color: var(--ink);
+    border-inline-start-width: 2px;
+  }
+}
+
+/* A note's own index, so a reader can see which sentence it answers. */
+.column-note-ref {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  vertical-align: super;
+  font-size: 0.68em;
+  line-height: 0;
+  padding-inline-start: 0.1em;
+}
+
+/* The generated footnote section keeps working — it is what remark-gfm
+   emits and it must not break — but it is set as a colophon at the foot of
+   the column rather than as a second body. */
+.column-body [data-footnotes] {
+  margin-block-start: var(--space-8);
+  padding-block-start: var(--space-3);
+  border-top: 1px solid var(--line);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.column-body [data-footnotes] h2 {
+  margin: 0 0 1rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
+  letter-spacing: var(--text-meta--letter-spacing);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. 404 — The Spoiled Sheet
+   ═══════════════════════════════════════════════════════════════════════════
+
+   The one route that keeps the dark ground, and the reason is not mood: a
+   404 is a failed pull off the press, and the plate is what a sheet is
+   pressed against. So the whole route runs on --plate, the figure is half
+   inked, and the only vermilion on the site that belongs to these four pages
+   is the register mark in the margin — the mark a printer looks at to see
+   whether the sheet came through in register. This one did not.
+
+   The ground is a token remap rather than a set of dark overrides, so the
+   header, the footer, the palette and the focus ring all come across
+   without any of them knowing about it. Every ratio below is measured
+   against #16140f.
+   ───────────────────────────────────────────────────────────────────────── */
+
+html:has(.spoiled) {
+  --ground: #16140f; /* --plate */
+  --ground-2: #221f18; /* --plate-2 */
+  --ground-3: #2c2820;
+
+  --ink: #efe9dc; /* --bone,   15.21:1 */
+  --ink-2: #ada595; /* --bone-2,  7.53:1 */
+  --ink-3: #8f8878; /* --bone-3,  5.22:1 */
+
+  --line: rgba(239, 233, 220, 0.14);
+  --rule-mid: rgba(239, 233, 220, 0.3);
+  --line-strong: rgba(239, 233, 220, 0.45);
+  --dot-off: rgba(239, 233, 220, 0.08);
+
+  /* The screen vermilion, not the paper one: #a8321b is 2.2:1 on the plate
+     and #e2673c is 5.47:1. Selection and the focus ring resolve from --sun
+     on this same element, so both come across with it. */
+  --sun: #e2673c;
+  --selection-fg: #16140f; /* 5.47:1 under the selection ground */
+
+  background: #16140f;
+}
+
+/* The sheet fills the fold and its contents are centred in it, which is why
+   nothing inside may be sized in `ch`: the copy is centred, so a rewrap when
+   the webfont lands changes the block's height and moves the plate above it.
+   Measured — 46ch on the lede scored 0.0025 CLS at 1440 all by itself. Every
+   measure on this page is in rem, and the children stretch rather than
+   shrink-wrapping, so the swap cannot change a single box. */
+.spoiled {
+  /* How far outside the image the plate's edge is pressed. Shared by the
+     mark, the register mark that hangs on it, and the copy's clearance. */
+  --mark-inset: 1.5rem;
+
+  position: relative;
+  min-height: calc(100svh - 3.5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: calc(3.5rem + var(--space-6)) var(--space-10);
+}
+
+/* The mark has to stay inside the sheet. At 1.5rem it hung 4 px past the left
+   edge of a 390 px window, because the shell's padding there is only
+   1.25rem. */
+@media (width < 48rem) {
+  .spoiled {
+    --mark-inset: 1rem;
+  }
+}
+
+/* ── The figure ───────────────────────────────────────────────────────────
+   The box is sized in whole pitch cells by CSS, from the same numbers the
+   component hands the rasteriser, so it is correct on the first paint and
+   the canvas inside it never changes the layout. */
+.spoiled-plate {
+  /* The component writes both pairs inline; the breakpoint is resolved here,
+     never in JS, so the phone box is right on the first frame and nothing
+     below it moves after hydration. */
+  --plate-cols: var(--plate-cols-lg, 80);
+  --plate-rows: var(--plate-rows-lg, 40);
+
+  position: relative;
+  display: block;
+  margin: 0;
+  width: calc(var(--plate-cols) * var(--pitch));
+  max-width: 100%;
+  aspect-ratio: var(--plate-cols) / var(--plate-rows);
+}
+
+@media (width < 48rem) {
+  .spoiled-plate {
+    --plate-cols: var(--plate-cols-sm, 64);
+    --plate-rows: var(--plate-rows-sm, 32);
+  }
+}
+
+/* The face the plate is set in. The component reads it off the DOM to
+   rasterise it, so it has to be stated somewhere, and here is the honest
+   place: it is a property of the composition, not of the script.
+
+   It is the machine face, and there are two reasons, one of them measured.
+   "404" is a status code — it is data, which is the only thing IBM Plex Mono
+   is allowed to set on this site, and this figure is the largest piece of
+   data anywhere on it. And the display face was tried first and does not
+   survive: at a 6 px dot the crossbar and the diagonal of a Bodoni four are
+   thinner than one cell, they fall under the renderer's cull diameter, and
+   the figure comes out as three vertical stems reading "1 0 1". That is the
+   site's own rule about Bodoni below 21 px, arriving here as a raster
+   instead of as a font-size. A mono's strokes are all one weight, so every
+   one of them lands. */
+.plate-face {
+  font-family: var(--font-mono);
+}
+
+.spoiled-canvas {
+  position: absolute;
+  inset: calc(-1 * var(--pitch));
+  display: block;
+  width: calc(100% + 2 * var(--pitch));
+  height: calc(100% + 2 * var(--pitch));
+  pointer-events: none;
+}
+
+/* The plate mark: the edge of the copper pressed into the sheet. Wider than
+   the standard inset because the register mark hangs in the margin it
+   makes. */
+.spoiled-plate::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--mark-inset, 1.5rem));
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--plate-radius);
+  pointer-events: none;
+}
+
+/* Without JavaScript, or where the canvas cannot run, the figure is set in
+   type instead — the same face at about the same size in the same place, so
+   the two versions of this page are the same page. */
+.spoiled-fallback {
+  display: none;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(4.5rem, 13vw, 10rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+:root:not(.js) .spoiled-plate,
+.spoiled-plate[data-plate="fallback"] {
+  display: none;
+}
+
+:root:not(.js) .spoiled-fallback,
+.spoiled-plate[data-plate="fallback"] + .spoiled-fallback {
+  display: block;
+}
+
+@media (forced-colors: active) {
+  .spoiled-canvas {
+    display: none;
+  }
+  .spoiled-plate {
+    display: none;
+  }
+  .spoiled-fallback {
+    display: block;
+  }
+}
+
+/* ── The register mark ────────────────────────────────────────────────────
+   A cross in a circle, in the margin the plate mark makes, at the corner a
+   printer would look at first. The one vermilion on these four pages. */
+.spoiled-register {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--mark-inset, 1.5rem));
+  inset-inline-start: calc(100% + var(--mark-inset, 1.5rem));
+  translate: -50% -50%;
+  color: var(--sun);
+  pointer-events: none;
+}
+
+.spoiled-copy {
+  margin-block-start: calc(var(--mark-inset, 1.5rem) + var(--space-6));
+}
+
+.spoiled-title {
+  margin: 0;
+  color: var(--ink);
+}
+
+.spoiled-lede {
+  margin-block-start: var(--space-3);
+  max-width: 32rem;
+  color: var(--ink-2);
+}
+
+.spoiled-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin-block-start: var(--space-5);
+}
+
+.spoiled-actions a {
+  color: var(--ink);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  transition:
+    text-decoration-color var(--dur-2) var(--ease-snap),
+    text-decoration-thickness var(--dur-2) var(--ease-snap);
+}
+
+.spoiled-actions a:hover,
+.spoiled-actions a:focus-visible {
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
+}
+
+/* The imprint under the sheet: what the press was doing when it failed. */
+.spoiled-imprint {
+  margin-block-start: var(--space-8);
+  color: var(--ink-3);
+}
