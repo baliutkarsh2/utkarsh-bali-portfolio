@@ -2,8 +2,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type SectionProps = {
-  /** "01", "02" … IBM Plex Mono meta in --ink-3. Data only; never a sentence. */
-  index: string;
+  /**
+   * "01", "02" … Only the SectionSpy's hook now: it is never rendered. The
+   * numeral used to hang over every section title and it is gone site-wide —
+   * a page of three sections does not need to count itself out loud.
+   */
+  index?: string;
   title: string;
   /**
    * Short label for the header readout when the title is a sentence.
@@ -26,11 +30,10 @@ type SectionProps = {
  * The shared grammar of every page (§7): a top hairline, a meta index, a
  * display-m title, copy on 7 of 12 columns, an optional rail. Nothing is
  * centred. The section carries `data-section-index` / `data-section-title`
- * for the header's SectionSpy, which writes "02 SELECTED WORK" into the
- * readout as the section comes into view. The index is aria-hidden; the
- * heading carries the text.
+ * for the header's SectionSpy, which writes "SELECTED WORK" into the readout
+ * as the section comes into view.
  */
-export function Section({ index, title, readout, id, rail, railLabel, children, className }: SectionProps) {
+export function Section({ index = "", title, readout, id, rail, railLabel, children, className }: SectionProps) {
   const sectionId = id ?? `section-${index}`;
   const headingId = `${sectionId}-title`;
 
@@ -43,9 +46,6 @@ export function Section({ index, title, readout, id, rail, railLabel, children, 
       className={cn("section shell section-y", className)}
     >
       <div className="section-head">
-        <span className="meta text-ink-3" aria-hidden="true">
-          {index}
-        </span>
         <h2 id={headingId} className="text-display-m font-medium text-balance text-ink">
           {title}
         </h2>

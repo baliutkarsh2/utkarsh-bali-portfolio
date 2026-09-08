@@ -993,22 +993,6 @@
     outline-offset: -2px;
   }
 
-  /* The swelled rule under the home colophon is a background, and forced
-     colours flattens every background to Canvas — measured: #67604f becomes
-     #000 on #000 and the rule disappears entirely. It is the mark that says a
-     colophon starts here, so it comes back in system ink.
-
-     The chop is the same problem in SVG: a 1px --line ring and a 10%-ink
-     deboss arc, both of which forced colours has nothing to keep. The ring and
-     the initials come back as CanvasText; the deboss highlight does not,
-     because a highlight inside a two-colour palette is a second ring. The
-     wiped plate tone is deliberately NOT re-asserted — it is texture, not
-     meaning, and the plate mark's own 1px border already becomes CanvasText. */
-  .colophon-rule {
-    background: CanvasText;
-    forced-color-adjust: none;
-  }
-
   .chop-mark {
     forced-color-adjust: none;
   }

@@ -203,7 +203,11 @@ const SOURCES: Record<PortraitSource, SourceSpec> = {
       import("@/content/portrait-field-64").then((m) => m.portraitField64),
   },
   about: {
-    cols: 64,
+    // 44, not 64. The About crop was baked with 60 empty columns down its left
+    // edge -- 31% of the plate was blank paper, where the hero's crop wastes 10
+    // columns and the phone's 7. Those columns are gone from the field and the
+    // box came in with them.
+    cols: 44,
     rows: 80,
     load: () =>
       import("@/content/portrait-field-about").then(

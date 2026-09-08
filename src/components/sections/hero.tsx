@@ -2,8 +2,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { Button } from "@/components/ui/button";
-import { Led } from "@/components/ui/led";
-import { now, profile } from "@/content";
+import { profile } from "@/content";
 import { portrait } from "@/content/portrait";
 
 /** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
@@ -39,27 +38,13 @@ const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
 export function Hero() {
   return (
     <section id="home" aria-labelledby="hero-title" className="hero shell">
-      <div className="hero-intro board-above flex flex-col items-start gap-4">
-        {/* The mission line used to sit above this: seven dots at the page
-            pitch and a drawing hairline, captioned "Connecting the dots...".
-            Its referent was the CSS lattice, and the lattice is gone -- a joke
-            whose setup has been deleted. Two stacked eyebrows over a display
-            heading was also the genre's own device, twice. The component and
-            the footer's use of it both stay. */}
-        {/* A plate caption, not a machine eyebrow. Mono uppercase tracked
-            small caps over a display heading is the single most-used device in
-            this genre; the printed equivalent is an italic line under the
-            impression, and the register mark carries the state. */}
-        <p className="hero-status caption flex flex-wrap items-center gap-x-3 gap-y-2 text-ink-3">
-          <span className="flex items-center gap-2 text-ink-2">
-            <Led state="live" label="Currently" />
-            {now.status}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>{profile.location}</span>
-        </p>
-      </div>
-
+      {/* No status line over the name.
+          "Currently · Final semester at Purdue · West Lafayette, IN" sat here
+          with a live LED, and every fact in it is said again below: the
+          semester in the lede, the graduation in the last line of the story,
+          the town in the footer. It was an eyebrow over a display heading --
+          the one device this direction set out to avoid -- and it was the only
+          thing on the site that had to be revisited on a date. */}
       {/* Two block spans rather than a <br>: the whitespace text node between
           them keeps textContent "Utkarsh Bali" for assistive tech and crawlers
           while the blocks break the line. */}

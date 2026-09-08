@@ -1241,29 +1241,28 @@
   @media (width >= 80rem) {
     .hero {
       grid-template-columns: minmax(0, 1fr) calc(96 * var(--pitch));
-      grid-template-rows: auto auto minmax(0, 1fr);
+      /* Two rows, not three. The first used to hold the status line and it
+         is gone, so a third `auto` row plus its row-gap was reserving empty
+         ground above the name for nothing. */
+      grid-template-rows: auto minmax(0, 1fr);
       column-gap: var(--space-8);
-      /* Tall enough for the board and its readout, never taller: on a 1080p
-         panel a full 100svh left 227px of empty ground inside the hero and
-         pushed the numbers board off the first screen. 53rem is 48px pad +
-         720px board + 30px caption + 48px pad at the 6px pitch. */
-      min-height: min(calc(100svh - 3.5rem), 53rem);
-    }
-    .hero-intro {
-      grid-column: 1;
-      grid-row: 1;
+      /* Tall enough for the board, never taller: on a 1080p panel a full
+         100svh left 227px of empty ground inside the hero. 51rem is 48px pad
+         + 720px board + 48px pad at the 6px pitch; it was 53rem when the
+         board still carried a 30px readout under it. */
+      min-height: min(calc(100svh - 3.5rem), 51rem);
     }
     .hero-name {
       grid-column: 1 / -1;
-      grid-row: 2;
+      grid-row: 1;
     }
     .hero-copy {
       grid-column: 1;
-      grid-row: 3;
+      grid-row: 2;
     }
     .hero-board {
       grid-column: 2;
-      grid-row: 1 / 4;
+      grid-row: 1 / 3;
       align-self: start;
     }
   }
@@ -1438,43 +1437,14 @@
     }
   }
 
-  /* ── The colophon (home only; see contact.tsx) ───────────────────────────
-     A book's colophon, set the way a book's colophon is set: a swelled rule,
-     then a short justified paragraph in the reading face at 15px, hyphenated,
-     on a 34rem measure. It is the one justified block on the site, and it is
-     justified because that is what the form is — a settled, finished block of
-     type at the back of the object, not a caption and not a footnote.
-
-     --ink-3 measures 5.89:1 on the paper, above the 4.5 floor for text this
-     size. Oldstyle figures because the numbers in it are read inside sentences
-     rather than aligned in a column; the mono lining figures the rest of the
-     site uses would stand up out of the line like a receipt.
-     ─────────────────────────────────────────────────────────────────────── */
-  .colophon {
-    grid-column: 1 / -1;
-    max-width: 34rem;
-    margin-top: var(--space-10);
-  }
-
-  /* Thin at the ends, full weight through the middle: a swelled rule, the mark
-     a printer sets under a colophon. Clipped rather than rounded — the site has
-     one radius and it belongs to the plate mark. */
-  .colophon-rule {
-    width: 9rem;
-    height: 4px;
-    background: var(--ink-3);
-    clip-path: polygon(
-      0 50%,
-      10% 12%,
-      50% 0,
-      90% 12%,
-      100% 50%,
-      90% 88%,
-      50% 100%,
-      10% 88%
-    );
-  }
-
+  /* `.colophon-note` is all that is left of the home page's colophon: the
+     prose block it belonged to is gone, and so are `.colophon` and
+     `.colophon-rule`, which drew a swelled rule under it. Removing them fixed
+     a collision as well as a dead rule -- the case study's foot also carries
+     `.colophon`, and while these lived here it inherited a `margin-top: 5rem`
+     meant for the home page. That was 80px of empty ground above "Built with"
+     on all eight case studies, on top of the 80px the movement above it
+     already ends with. The NDA note is the one surviving user of the class. */
   .colophon-note {
     margin: var(--space-3) 0 0;
     font-family: var(--font-sans);
