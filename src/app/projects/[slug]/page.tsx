@@ -78,7 +78,7 @@ export async function generateMetadata({
  * this is the document the machine printed, and a document does not contain its
  * press. The lattice belongs to the home board and to the image masks.
  *
- * Accents: none. --sun is licensed to four places site-wide and no case study
+ * Accents: none. --sun is licensed to three places site-wide and no case study
  * is one of them, so the figure, the rules and the schematic are all --ink.
  *
  * Motion: none. Nothing on this page has a cold state, so reduced motion and

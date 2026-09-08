@@ -70,9 +70,13 @@
         carries value by ink AREA and a permanent grey lattice is the smudge. ── */
   --dot-off: rgba(20, 18, 14, 0.06);
 
-  /* ── The second ink. Licensed to four places site-wide: the datum in his eye,
-        the TODAY rule, the register mark on a current item, and selection and
-        focus. Never a link, never a button, never a heading. ── */
+  /* ── The second ink. Licensed to three places site-wide: the TODAY rule on
+        the chart, the register mark on a current item, and selection and
+        focus. Never a link, never a button, never a heading.
+        It was four. The fourth was the datum, one vermilion cell in his eye,
+        and it is off every portrait now -- at the size a dot prints, one
+        saturated cell in 51,747 does not read as a mark with a meaning, it
+        reads as a stray red pixel on a photograph of a person. ── */
   --sun: #a8321b; /* vermilion — 6.31:1 on paper; paper on it 6.31:1 */
 
   /* ── The plate. The arrival runs here, the 404 lives here permanently, and
@@ -1137,7 +1141,7 @@
    the status LED are register marks, which are struck on the plate itself and
    are therefore part of the first pull; the focus ring and ::selection are the
    browser's, not the press's, and a control that waits 460ms to show focus is
-   broken. The datum in his eye is drawn on the canvas and lands with the field.
+   broken.
 
    `translate`, not `transform`: an independent property so a carrier that
    already positions itself with a transform is not clobbered by this. Both

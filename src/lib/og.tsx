@@ -68,7 +68,7 @@ const REGISTER = 5;
    card under 2,000 circles. The ink-on-paper bake ships 1,666 dots — up from
    754, because the transfer no longer discards the sub-UNLIT cells and the
    grid went from 48 × 60 to 56 × 70 — so the filter never runs. If a re-bake
-   overshoots, the smallest dots go first and the datum is always kept.
+   overshoots, the smallest dots go first.
    ───────────────────────────────────────────────────────────── */
 const MAX_CIRCLES = 2000;
 const MIN_R = 0.18;
@@ -240,11 +240,12 @@ const hairline: CSSProperties = { height: 1, backgroundColor: LINE };
  * not drawn, because a dot you cannot resolve is haze and the absence of a
  * dot is a highlight.
  *
- * kind 1 is the datum, the catchlight in his eye. `sun` gates it because
- * vermilion is rationed to one mark per card: where a card carries a register
- * mark the datum prints in ink instead.
+ * Every dot is ink. `kind` 1 marked the datum -- the catchlight in his eye,
+ * the one vermilion mark the portrait carried -- and it is off the field now
+ * on every surface that draws this face. The `sun` prop is kept because the
+ * card still rations vermilion to one mark, which is the register mark.
  */
-function Portrait({ height, sun }: { height: number; sun: boolean }) {
+function Portrait({ height }: { height: number }) {
   const cell = height / portraitOg.h;
   const width = px(portraitOg.w * cell);
   return (
@@ -254,13 +255,13 @@ function Portrait({ height, sun }: { height: number; sun: boolean }) {
       viewBox={`0 0 ${width} ${height}`}
       style={{ width, height, flexShrink: 0 }}
     >
-      {PORTRAIT_DOTS.map(([x, y, r, kind]) => (
+      {PORTRAIT_DOTS.map(([x, y, r]) => (
         <circle
           key={`${x}-${y}`}
           cx={px((x + 0.5) * cell)}
           cy={px((y + 0.5) * cell)}
           r={px(r * cell)}
-          fill={sun && kind === 1 ? SUN : INK}
+          fill={INK}
         />
       ))}
     </svg>
@@ -290,10 +291,6 @@ export async function renderOgCard({
   const large = portrait === "large";
   const signature = portrait === "small";
   const register = Boolean(metric?.accent);
-  /** Vermilion is licensed to one mark per card. The register mark on the
-   *  ongoing project outranks the datum, because it is the card's only piece
-   *  of state; every other card spends the ration on his eye, or not at all. */
-  const datum = large && !register;
   const metaLine = meta.join("  ·  ");
 
   const figureW =
@@ -428,7 +425,6 @@ export async function renderOgCard({
             {(large || signature) && (
               <Portrait
                 height={large ? PORTRAIT_LARGE_H : PORTRAIT_SIGNATURE_H}
-                sun={datum}
               />
             )}
           </div>

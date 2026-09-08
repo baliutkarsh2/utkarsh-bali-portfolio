@@ -452,9 +452,23 @@ def sample(
 
 
 def find_datum(field: np.ndarray, hint_cell: tuple[int, int]) -> tuple[int, int]:
+    """No datum, on any portrait.
+
+    This used to return the hinted cell, and the renderers painted that one dot
+    in vermilion -- the catchlight in his eye, and by the direction's own count
+    one of the four places the second ink was licensed. It is gone at Utkarsh's
+    call, and he is right: at the size a dot actually prints, a single saturated
+    cell in a field of 51,747 does not read as a mark with a meaning. It reads
+    as a stray red pixel on a photograph of a person.
+
+    The hint is still validated, so the assertion that has caught a bad crop
+    twice still fires; only the coordinate handed back changes. [-1, -1] is the
+    same "off the field" convention bake-art.py uses for every plate, and it
+    matches no cell in either renderer or in the still.
+    """
     x, y = hint_cell
     assert field[y, x] > 0, "datum cell is outside the mask"
-    return (x, y)
+    return (-1, -1)
 
 
 def rim_indices(field: np.ndarray, warmth: np.ndarray) -> list[int]:

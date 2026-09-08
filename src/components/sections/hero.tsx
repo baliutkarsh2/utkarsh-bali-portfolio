@@ -106,8 +106,8 @@ export function Hero() {
           >
             Checkpoint
           </Link>
-          , where we try to break AI agents before their users do. Final
-          semester at Purdue, CS and AI.
+          , building agent testing infrastructure. Final semester at Purdue, CS
+          and AI.
         </p>
 
         <div className="hero-actions mt-8 flex flex-wrap items-center gap-3">

@@ -980,7 +980,7 @@
      here; the plain text between tokens takes the pre's --ink. That theme sets
      code in ONE ink and distinguishes kinds by weight and italic rather than by
      hue, the way a printed technical book does -- the second ink is licensed to
-     four places site-wide and a code block is not one of them. */
+     three places site-wide and a code block is not one of them. */
   .prose code {
     font-family: var(--font-mono);
     font-size: 0.875em;

@@ -220,8 +220,9 @@ function plateField(text: string, w: number, h: number, family: string): BoardFi
     w,
     h,
     count,
-    // No datum: the one always-vermilion dot belongs to his eye on the home
-    // page. The accent on this page is the register mark, and it is markup.
+    // No datum. There is no vermilion dot on any board now; see the note in
+    // src/content/portrait-field-96.ts. The accent on this page is the
+    // register mark, and it is markup.
     datum: [-1, -1],
     // The centre the assembly radiates from, which is what decides where the
     // pull fails first.
