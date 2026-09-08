@@ -754,12 +754,21 @@
       margin-top: calc(var(--space-3) + 20px);
     }
 
-    /* The key stays stacked. Its wide form was `3.5rem minmax(0,1fr) 22rem`
-       plus a gutter -- 440px of fixed track, which inside the 624px column
-       left under 180px for a project's name against a right-aligned meta
-       cell carrying "February 2026 · Checkpoint · Ongoing". The base form
-       puts the meta on its own line under the name, which is what a narrow
-       sheet always got. */
+    .cn-index-link {
+      grid-template-columns: 3.5rem minmax(0, 1fr) 22rem;
+      column-gap: var(--gutter);
+    }
+
+    .cn-index-gutter {
+      grid-row: 1;
+    }
+
+    .cn-index-meta {
+      grid-column: 3;
+      grid-row: 1;
+      margin-top: 0;
+      text-align: right;
+    }
 
     .cn-record-entry {
       padding-block: var(--space-6);

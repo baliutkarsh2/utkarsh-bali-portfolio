@@ -427,15 +427,7 @@ export function Constellation({
   id,
   readout,
 }: ConstellationProps) {
-  // Both variants bleed now. The chart is a time x employer plot with six
-  // lanes and a two-year axis; its transpose is keyed to VIEWPORT width, so
-  // inside the 624px column the wide form would fire with a quarter of the
-  // room it was measured for and the narrow form it needs is unreachable.
-  // A figure that runs wider than the type column is a normal thing for a
-  // page to do, and it is the one element here that earns it. The record and
-  // the numbered key below it stay in the column: `bleed` puts a `shell` back
-  // on everything that is words.
-  const bleed = true;
+  const bleed = variant === "chart";
   const headingId = `${id}-title`;
 
   return (
@@ -614,15 +606,15 @@ export function Constellation({
             one landed. A band is a job; a mark is a project. Filled is shipped,
             half-filled is ongoing, open is research, and the vermilion rule is
             today.{" "}
-            {variant === "record"
-              ? "The numbered list below is the key."
-              : "Every mark is a link."}
+            {bleed
+              ? "Every mark is a link."
+              : "The numbered list below is the key."}
           </span>
         </figcaption>
       </figure>
 
       {variant === "record" && (
-        <div className="shell">
+        <>
           <h3 className="cn-sub caption text-ink-3">
             The {word(inDateOrder.length)} projects, in date order
           </h3>
@@ -747,7 +739,7 @@ export function Constellation({
               );
             })}
           </ol>
-        </div>
+        </>
       )}
     </section>
   );

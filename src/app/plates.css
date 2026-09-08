@@ -92,7 +92,7 @@
 .toc-row {
   position: relative;
   display: grid;
-  grid-template-columns: var(--year-col) minmax(0, 1fr);
+  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--dev-col, 0);
   align-items: start;
   padding-block: 1.5rem;
   /* The row is what an apparatus note returns to, and 6rem clears the 3.5rem
@@ -198,11 +198,28 @@
   display: none;
 }
 
-/* The column is gone with the wide page: --year-col 3.25rem plus a 9rem
-   plate left under 300px for a project's name and its sentence in a 624px
-   box. Each device still appears full size on its own case study, which is
-   where a phone reader met it anyway. `.toc-device { display: none }` above
-   now holds at every width, so the eight DotBoard mounts never start. */
+@media (width >= 64rem) {
+  .toc-row {
+    --dev-col: 9rem;
+  }
+
+  .toc-device {
+    display: block;
+    /* Hangs from the row's own top line, beside the title rather than beside
+       the standfirst, so a lead row and a plain row put their device at the
+       same height. */
+    padding-inline-end: var(--space-4);
+  }
+
+  /* The wiped tone stays and the border does not, which is the right pair
+     here: the tint says an area was pressed, and a full plate mark would
+     claim each device is a figure the page is ABOUT. On this page the eight
+     numerals are that, and the devices are marks in the margin beside them.
+     Both come from globals.css §plate-mark via board.css's own copy. */
+  .toc-device .board::before {
+    content: none;
+  }
+}
 
 .toc-year {
   padding-inline-end: 0.85rem;
@@ -322,12 +339,23 @@
   color: var(--ink-3);
 }
 
-/* One column. The second track was `min(40vw, 30rem)`, the only
-     viewport-relative column on the site, and it does not shrink with the
-     shell -- at 1440px it alone was wider than the whole content box. The
-     base `display: block` drops the sky under the imprint at the full
-     measure, which plates.css already described as what a broadside does on
-     a narrower sheet. */
+@media (width >= 64rem) {
+  /* Two children, so the plate needs no row arithmetic: the type is one
+     block and the plate is the other. */
+  .broadside {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(40vw, 30rem);
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .broadside-plate {
+    margin: 0;
+    /* Hangs from the masthead's own top line rather than from the title's
+       cap, so the plate and the eyebrow start together. */
+    padding-block-start: var(--space-2);
+  }
+}
 
 .broadside-title {
   margin: 0;
