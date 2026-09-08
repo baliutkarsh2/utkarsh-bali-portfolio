@@ -28,17 +28,4 @@ export const story: readonly string[] = [
   "Finishing at Purdue in December.",
 ];
 
-/**
- * The About lead: one line, and it is the only opinion on the page.
- *
- * The childhood paragraph that used to open here is the first two lines of
- * `story` now, on the home page where someone actually meets it. A second
- * line used to follow this one saying "everything below is the record: where
- * I worked, what I shipped there, and what I was recognised for" -- a page
- * introducing its own contents, which is the thing this pass exists to stop.
- */
-export const aboutNote = {
-  lead: "The projects I want are the ones where the hard part isn’t the model. It’s deciding what the thing should actually do.",
-};
-
 export const mission = "Connecting the dots...";

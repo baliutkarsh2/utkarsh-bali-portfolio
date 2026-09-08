@@ -102,8 +102,6 @@
         header is solid and the scrim is ink, not frost. ── */
   --header-bg: var(--ground);
   --header-blur: 0px;
-  --scrim: rgba(20, 18, 14, 0.55);
-  --scrim-blur: 0px;
 
   /* ── Z-index scale. Tailwind has no z namespace; use `z-(--z-header)`. ── */
   --z-field: -1; /* behind everything; nothing claims it now the lattice is gone */
@@ -125,11 +123,29 @@
   --space-8: 4rem;
   --space-10: 5rem;
   --space-12: 6rem;
-  --section-y: clamp(2.75rem, 4.5vw, 4rem);
+  /* Half a section's gap; two of these meet at every boundary, so the visible
+     gap is twice this plus the head's own 36px. At 4rem that measured 165px on
+     / and /about, against 57-64px on the site this direction is now taking its
+     content grammar from. 2.25rem brings a boundary to 108px, which is a
+     paragraph break between two pieces of a page rather than a chapter break
+     between two documents. */
+  --section-y: clamp(1.75rem, 3vw, 2.25rem);
   --section-gap: 2.5rem; /* section head to body */
 
   /* ── Containers ── */
-  --shell: 84rem; /* stops growing here; 4K gets more field, not a wider page */
+  /* ── The column ───────────────────────────────────────────────────────────
+     One centred column, and everything on the site sits in it. `shell` has
+     always had `margin-inline: auto`, so this is the only number that had to
+     change: at 84rem the content box was 1264px and a 1440px screen read as
+     flush-left text with a wide right margin. 44rem gives a 624px box, which
+     is the measure this site's 18px serif wants and within a hair of the
+     reference Utkarsh gave (576px at 16px).
+
+     Everything that used to sit BESIDE something now sits under it. The wide
+     branches those compositions were written in are gated on viewport width,
+     not on the container, so each one had to be taken out by hand or it would
+     have gone on firing with a quarter of the room it was measured for. */
+  --shell: 44rem;
   --shell-pad: 1.25rem; /* 2rem at ≥48rem, 2.5rem at ≥80rem */
   --measure: 66ch; /* prose */
   --prose: 44rem; /* writing post column */
@@ -249,21 +265,26 @@
      rendered size, which is the historical fix for a Didone's one screen
      failure: hairlines that vanish when set small. Bodoni is forbidden below
      21px — below that the workhorse takes over. */
-  --text-display-xl: clamp(
-    4.25rem,
-    min(12vw, 19vh),
-    11.5rem
-  ); /* the name only */
+  /* The name only. The ceiling came down from 11.5rem with the column: at
+     171px, which is what min(12vw, 19vh) resolves to on a 1440x900 screen,
+     "Utkarsh" measures about 595px and the content box is 624px. 8.5rem sets
+     it near 495px -- a masthead that fills the column instead of one that
+     overruns it. */
+  --text-display-xl: clamp(3.25rem, min(12vw, 19vh), 8.5rem);
   --text-display-xl--line-height: 0.86;
   --text-display-xl--letter-spacing: -0.015em;
   --text-display-xl--font-weight: 500;
 
-  --text-display-l: clamp(3rem, 6.4vw, 5.25rem); /* page h1, case-study title */
+  --text-display-l: clamp(2.5rem, 6.4vw, 4rem); /* page h1, case-study title */
   --text-display-l--line-height: 0.94;
   --text-display-l--letter-spacing: -0.012em;
   --text-display-l--font-weight: 500;
 
-  --text-display-m: clamp(2rem, 3.6vw, 3rem); /* section titles, the email */
+  --text-display-m: clamp(
+    1.75rem,
+    3.6vw,
+    2.25rem
+  ); /* section titles, the email */
   --text-display-m--line-height: 1.04;
   --text-display-m--letter-spacing: -0.006em;
   --text-display-m--font-weight: 500;
@@ -983,16 +1004,6 @@
   .led,
   .nav-led,
   .dot-list > li::before,
-  .palette-row[data-active="true"]::before {
-    background: CanvasText;
-    forced-color-adjust: none;
-  }
-
-  .palette-row[data-active="true"] {
-    outline: 2px solid Highlight;
-    outline-offset: -2px;
-  }
-
   .chop-mark {
     forced-color-adjust: none;
   }

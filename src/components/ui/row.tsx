@@ -24,8 +24,6 @@ type RowProps = {
   led?: "live" | "off";
   /** Screen-reader text for the LED ("Ongoing"). */
   ledLabel?: string;
-  /** "compact" is the palette result row: label left, hint right, no hairline. */
-  variant?: "default" | "compact";
   /** `view-transition-name` on the title, e.g. "project-checkpoint", shared with the case-study h1. */
   transitionName?: string;
   /** The heading element for the title. "h3" under a section h2; "h2" on index pages under the h1. */
@@ -37,7 +35,7 @@ type RowProps = {
 
 /**
  * Every list on the site is this list (§12.9): selected work, the work
- * index, writing, recognition, prev/next and the palette results. The whole
+ * index, writing, recognition and prev/next. The whole
  * row is the link: the title's anchor carries `stretch-link`, so there is
  * never an <a> inside an <a>, and any inner link opts out with
  * `relative z-10`. Hover fills --ground-2 out to the shell edges, the index
@@ -45,9 +43,6 @@ type RowProps = {
  *
  * The title's heading level is the consumer's call (`titleAs`, default h3),
  * because the same row sits under an h1 on index pages and under an h2
- * inside a Section. Inside a listbox the palette wraps the compact row in
- * its `role="option"` element; `aria-selected` on that wrapper drives the
- * active fill and the LED gutter (see .row[data-variant="compact"]).
  */
 export function Row({
   index,
@@ -60,13 +55,11 @@ export function Row({
   external = false,
   led,
   ledLabel,
-  variant = "default",
   transitionName,
   titleAs: TitleTag = "h3",
   children,
   className,
 }: RowProps) {
-  const compact = variant === "compact";
   const titleStyle = transitionName
     ? ({ viewTransitionName: transitionName } as CSSProperties)
     : undefined;
@@ -92,7 +85,6 @@ export function Row({
   return (
     <div
       className={cn("row", className)}
-      data-variant={variant}
       data-link={href ? "" : undefined}
       data-external={external ? "" : undefined}
       data-trailing={trailing ? "" : undefined}
@@ -107,24 +99,24 @@ export function Row({
         <TitleTag
           className={cn(
             "row-title",
-            compact ? "text-body" : "text-display-s font-medium text-balance",
+            "text-display-s font-medium text-balance",
           )}
           style={titleStyle}
         >
           {titleContent}
         </TitleTag>
         {subtitle && (
-          <p className={cn("row-subtitle text-ink-2", compact ? "text-small" : "mt-1.5 text-small")}>
+          <p className={cn("row-subtitle text-ink-2", "mt-1.5 text-small")}>
             {subtitle}
           </p>
         )}
-        {meta && <p className={cn("row-meta meta text-ink-3", compact ? "mt-1" : "mt-2.5")}>{meta}</p>}
+        {meta && <p className={cn("row-meta meta text-ink-3", "mt-2.5")}>{meta}</p>}
         {children}
       </div>
 
       {trailing && <div className="row-trailing">{trailing}</div>}
 
-      {href && !compact && <Arrow className="row-arrow" aria-hidden="true" />}
+      {href && <Arrow className="row-arrow" aria-hidden="true" />}
     </div>
   );
 }

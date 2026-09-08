@@ -3,10 +3,10 @@ Bake the dot-portrait fields from the segmented cutout.
 
 Run by hand; every output is committed. Vercel never runs this.
 
-    python scripts/bake-portrait.py            # writes src/content/portrait-field-*.ts (96, 64, about, contact),
+    python scripts/bake-portrait.py            # writes src/content/portrait-field-*.ts (96, 64, contact),
                                                # src/content/portrait-meta.ts,
                                                # src/content/portrait-og.ts,
-                                               # public/portrait/dots-96@2x.webp, dots-64@2x.webp, dots-about@2x.webp
+                                               # public/portrait/dots-96@2x.webp, dots-64@2x.webp
     python scripts/bake-portrait.py --preview DIR   # also writes review PNGs
 
 Input: src/assets/portrait/utkarsh-cutout.png (RGBA, lossless, produced by
@@ -67,11 +67,10 @@ PUBLIC = ROOT / "public/portrait"
 # reframes the portrait with nothing failing to announce it. Pinning them to a
 # fixed reference frame leaves exactly one thing that has to be right, a single
 # ratio, and it is checkable -- downscale the new window onto the old one and
-# correlate. That was measured at 0.9918 on MAIN_CROP and 0.9952 on ABOUT_CROP
+# correlate. That was measured at 0.9918 on MAIN_CROP
 # when the source went from 1760 to 2350 wide.
 REFERENCE_FRAME = (1760, 2374)
 MAIN_CROP = (600, 300, 1760, 1750)   # head, shoulders, the top of the arm
-ABOUT_CROP = (760, 340, 1400, 1140)  # the face, second angle for About
 # The eye catchlight in original coordinates, chosen once on a grid overlay of
 # the photograph. The datum is a design mark (always --sun), not a measurement:
 # in this side-lit photograph the eye itself is in shadow.
@@ -96,7 +95,6 @@ CENTER_HINT = (1250, 800)
 DENSITY = 3
 HERO_BOX = (96, 120)     # portrait-field-96,  home hero at >= 48rem
 PHONE_BOX = (64, 80)     # portrait-field-64,  home below 48rem
-ABOUT_BOX = (64, 80)     # portrait-field-about
 CONTACT_BOX = (48, 60)   # portrait-field-contact, the afterimage
 
 # Device pixels per PAGE cell in the committed stills. This is held fixed
@@ -105,7 +103,6 @@ CONTACT_BOX = (48, 60)   # portrait-field-contact, the afterimage
 # quotient, and it gets smaller as the grid gets finer, which is the point.
 HERO_STILL_PX = 12       # 96 x 12 = 1152 px wide, the @2x hero still
 PHONE_STILL_PX = 10      # 64 x 10 = 640
-ABOUT_STILL_PX = 10
 PREVIEW_PX = 7           # the review PNGs, 1x and only ever looked at
 
 # Tone curve, tuned by eye on the real photograph with scripts/tune-portrait.py.
@@ -621,9 +618,8 @@ def main() -> None:
     PUBLIC.mkdir(parents=True, exist_ok=True)
 
     main_win = window(im, origin, MAIN_CROP, scale)
-    about_win = window(im, origin, ABOUT_CROP, scale)
     print(f"cutout {im.size[0]}x{im.size[1]} {im.mode}, {scale:.4f} source px per reference px; "
-          f"main window {main_win.size[0]}x{main_win.size[1]}, about {about_win.size[0]}x{about_win.size[1]}")
+          f"main window {main_win.size[0]}x{main_win.size[1]}")
 
     # focal_strength 0 on every main-window field now, matching About. The
     # focal plateau dodges the head and burns everything outside it, which is a
@@ -632,15 +628,13 @@ def main() -> None:
     # engraving needs.
     hero = (HERO_BOX[0] * DENSITY, HERO_BOX[1] * DENSITY)
     phone = (PHONE_BOX[0] * DENSITY, PHONE_BOX[1] * DENSITY)
-    about = (ABOUT_BOX[0] * DENSITY, ABOUT_BOX[1] * DENSITY)
     contact = (CONTACT_BOX[0] * DENSITY, CONTACT_BOX[1] * DENSITY)
     print(f"density {DENSITY}: hero {hero[0]}x{hero[1]}, phone {phone[0]}x{phone[1]}, "
-          f"about {about[0]}x{about[1]}, contact {contact[0]}x{contact[1]}; hero cell "
+          f"contact {contact[0]}x{contact[1]}; hero cell "
           f"{main_win.size[0] / hero[0]:.3f} source px "
           f"({main_win.size[0] / hero[0] / scale:.3f} photograph px)")
     f96, w96 = sample(main_win, *hero, focal_strength=0.0, scale=scale)
     f64, w64 = sample(main_win, *phone, focal_strength=0.0, scale=scale)
-    fab, wab = sample(about_win, *about, ABOUT_CROP, CENTER_HINT, focal_strength=0.0, scale=scale)
     fct, wct = sample(main_win, *contact, focal_strength=0.0, scale=scale)  # Contact afterimage
     fog, _ = sample(main_win, OG_COLS, OG_ROWS, focal_strength=0.0, scale=scale)
 
@@ -652,22 +646,19 @@ def main() -> None:
 
     d96 = find_datum(f96, to_cell(DATUM_HINT, MAIN_CROP, hero[0]))
     d64 = find_datum(f64, to_cell(DATUM_HINT, MAIN_CROP, phone[0]))
-    dab = find_datum(fab, to_cell(DATUM_HINT, ABOUT_CROP, about[0]))
     dct = find_datum(fct, to_cell(DATUM_HINT, MAIN_CROP, contact[0]))
     dog = find_datum(fog, to_cell(DATUM_HINT, MAIN_CROP, OG_COLS))
     c96 = to_cell(CENTER_HINT, MAIN_CROP, hero[0])
     c64 = to_cell(CENTER_HINT, MAIN_CROP, phone[0])
-    cab = to_cell(CENTER_HINT, ABOUT_CROP, about[0])
     cct = to_cell(CENTER_HINT, MAIN_CROP, contact[0])
 
     # The OG field needs no rim set: on the card the sun is the datum alone.
-    r96, r64, rab = rim_indices(f96, w96), rim_indices(f64, w64), rim_indices(fab, wab)
+    r96, r64 = rim_indices(f96, w96), rim_indices(f64, w64)
     rct = rim_indices(fct, wct)
 
     (CONTENT / "portrait-field-96.ts").write_text(ts_module("portraitField96", f96, d96, c96, r96, f"Hero at >= 48rem: a {HERO_BOX[0]} x {HERO_BOX[1]} lattice box at density {DENSITY}. Window MAIN_CROP of the photograph."))
     (CONTENT / "portrait-field-64.ts").write_text(ts_module("portraitField64", f64, d64, c64, r64, f"Hero below 48rem: a {PHONE_BOX[0]} x {PHONE_BOX[1]} box at density {DENSITY}."))
     (CONTENT / "portrait-field-contact.ts").write_text(ts_module("portraitFieldContact", fct, dct, cct, rct, f"The Contact afterimage: the hero window at half its size, a {CONTACT_BOX[0]} x {CONTACT_BOX[1]} box at density {DENSITY}."))
-    (CONTENT / "portrait-field-about.ts").write_text(ts_module("portraitFieldAbout", fab, dab, cab, rab, f"About: the face only, second angle. Window ABOUT_CROP, a {ABOUT_BOX[0]} x {ABOUT_BOX[1]} box at density {DENSITY}."))
 
     count = int((f96 >= UNLIT * 255).sum())
     (CONTENT / "portrait-meta.ts").write_text(
@@ -709,11 +700,9 @@ def main() -> None:
 
     render(f96, d96, set(r96), HERO_STILL_PX / DENSITY, True, density=DENSITY).save(PUBLIC / "dots-96@2x.webp", quality=90, method=6)
     render(f64, d64, set(r64), PHONE_STILL_PX / DENSITY, True, density=DENSITY).save(PUBLIC / "dots-64@2x.webp", quality=90, method=6)
-    render(fab, dab, set(rab), ABOUT_STILL_PX / DENSITY, True, density=DENSITY).save(PUBLIC / "dots-about@2x.webp", quality=90, method=6)
 
     print(f"96 field: {count} lit, datum {d96}, center {c96}, rim {len(r96)}")
     print(f"64 field: {int((f64 >= UNLIT * 255).sum())} lit, datum {d64}")
-    print(f"about field: {int((fab >= UNLIT * 255).sum())} lit, datum {dab}")
     print(f"contact field: {int((fct >= UNLIT * 255).sum())} lit, datum {dct}")
     print(f"og dots: {len(og)}")
     for f in sorted(PUBLIC.glob("*.webp")):
@@ -726,7 +715,6 @@ def main() -> None:
         out.mkdir(parents=True, exist_ok=True)
         render(f96, d96, set(r96), PREVIEW_PX / DENSITY, False, density=DENSITY).save(out / "bake-96.png")
         render(f64, d64, set(r64), 9 / DENSITY, False, density=DENSITY).save(out / "bake-64.png")
-        render(fab, dab, set(rab), 9 / DENSITY, False, density=DENSITY).save(out / "bake-about.png")
         render(fct, dct, set(rct), 9 / DENSITY, False, density=DENSITY).save(out / "bake-contact.png")
         print("previews in", out)
 

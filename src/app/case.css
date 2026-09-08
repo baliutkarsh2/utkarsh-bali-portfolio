@@ -62,13 +62,11 @@
     row-gap: var(--space-2);
   }
 
-  @media (width >= 64rem) {
-    .sheet-row {
-      grid-template-columns: var(--plate-margin) minmax(0, 1fr);
-      column-gap: var(--gutter);
-      row-gap: 0;
-    }
-  }
+  /* The margin column is gone with the wide page: `.sheet-row` is the base
+     one-column form at every width, which puts a movement's running head in
+     a row above its type instead of out in a margin beside it. case.css's
+     own note above already called that the intended narrow-sheet behaviour.
+     The head stops being sticky with it -- there is nothing to hang it in. */
 
   @media (width >= 80rem) {
     .plate {
@@ -161,16 +159,22 @@
 
   /* `.plates-band` is the gallery: not a movement of the argument, but the same
      band on the same sheet, so it takes the same rule and the same rhythm. */
+  /* 129px between movements became 81px: the same tightening the section
+     token got, applied to the one route --section-y cannot reach. The top
+     padding stays at 32px so an anchored landing still clears the sub-bar --
+     :root:has(.case-bar) scroll-padding-top is a measured 7.25rem and puts a
+     movement's padding box at 116px, so its head lands at 148 against a bar
+     that ends at 106. */
   .movement,
   .plates-band {
     border-top: 1px solid var(--line);
-    padding-block: var(--space-5) var(--space-8);
+    padding-block: var(--space-4) var(--space-5);
   }
 
   @media (width >= 64rem) {
     .movement,
     .plates-band {
-      padding-block: var(--space-6) var(--space-10);
+      padding-block: var(--space-4) var(--space-6);
     }
   }
 
@@ -189,28 +193,14 @@
      overrides the balance the base layer gives every display size, which would
      otherwise try to break "III" across two lines in a 7.5rem margin. It is
      aria-hidden in the TSX; the <h2> beside it carries the name. */
-  .movement-numeral {
-    color: var(--ink-3);
-    text-wrap: nowrap;
-  }
-
   .movement-title {
     margin: 0;
     color: var(--ink-3);
   }
 
-  @media (width >= 64rem) {
-    .movement-head {
-      position: sticky;
-      top: calc(3.5rem + var(--space-3));
-      align-self: start;
-      display: block;
-    }
-
-    .movement-title {
-      margin-block-start: 0.5rem;
-    }
-  }
+  /* The head was sticky here, hanging in the margin column. With one column
+     there is no margin to hang in and nothing to stick past: it is a label row
+     above the type, which is what it already was below 64rem. */
 
   /* The standfirst: the block's own first sentence, set in the display italic
      across --plate-lede. Everything under it drops to the body measure, so the
@@ -383,7 +373,7 @@
      ─────────────────────────────────────────────────────────────────────── */
   .colophon {
     border-top: 1px solid var(--line-strong);
-    padding-block: var(--space-5) var(--space-8);
+    padding-block: var(--space-4) var(--space-6);
   }
 
   .colophon-stack {

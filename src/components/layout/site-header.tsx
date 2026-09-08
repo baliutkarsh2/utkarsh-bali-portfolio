@@ -13,10 +13,6 @@ const SCROLL_THRESHOLD = 8;
 /** The nav collapses into the menu below this; matches the `md` breakpoint. */
 const NAV_QUERY = "(min-width: 48rem)";
 
-function openPalette() {
-  window.dispatchEvent(new Event("open-command-palette"));
-}
-
 /**
  * Fixed 3.5rem bar. States: `top` (no rule) → `[data-scrolled]` (rule fades
  * in after 8px) → `[data-menu-open]` (< 48rem, the menu dialog is up).
@@ -159,18 +155,6 @@ export function SiteHeader() {
               writes, because the header is the one persistent client
               component; it re-arms itself on every route. */}
           <SectionSpy />
-
-          {/* The visible label is the accessible name so a voice-control
-              user can say what they see; the sr-only tail tells a screen
-              reader what the key does without displacing the label. */}
-          <button type="button" onClick={openPalette} className="kbd-chip meta">
-            <kbd className="kbd-mac">
-              <span aria-hidden="true">⌘</span>
-              <span className="sr-only">Command </span>K
-            </kbd>
-            <kbd className="kbd-other">Ctrl K</kbd>
-            <span className="sr-only">, search</span>
-          </button>
 
           <button
             type="button"

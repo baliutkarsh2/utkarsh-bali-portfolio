@@ -1,6 +1,6 @@
 /* ─────────────────────────────────────────────────────────────
    Global chrome: skip link, header, mobile menu, footer, command
-   palette, nine-dot mark, mission line. Imported by globals.css
+   nine-dot mark, mission line. Imported by globals.css
    after the tokens, so every var() below resolves from :root.
 
    Conventions:
@@ -192,65 +192,6 @@
 
   .readout:empty {
     display: none;
-  }
-
-  /* Hairline chip. --line at rest is deliberate: the text is the affordance,
-     and the border firms up to --line-strong under the pointer. */
-  .kbd-chip {
-    display: none;
-    flex-shrink: 0;
-    white-space: nowrap;
-    align-items: center;
-    height: 1.75rem;
-    padding-inline: 0.5rem;
-    border: 1px solid var(--line);
-    background: none;
-    color: var(--ink-3);
-    cursor: pointer;
-    transition:
-      color var(--dur-1) var(--ease-snap),
-      border-color var(--dur-1) var(--ease-snap);
-  }
-
-  @media (width >= 48rem) {
-    .kbd-chip {
-      display: inline-flex;
-    }
-  }
-
-  .kbd-chip:hover {
-    color: var(--ink);
-    border-color: var(--line-strong);
-  }
-
-  .kbd-chip kbd {
-    font: inherit;
-    letter-spacing: inherit;
-  }
-
-  /* The shortcut as the visitor's keyboard has it: the boot script marks a
-     Mac on <html> (data-mac); everyone else sees Ctrl. */
-  .kbd-chip .kbd-mac,
-  :root[data-mac] .kbd-chip .kbd-other {
-    display: none;
-  }
-
-  :root[data-mac] .kbd-chip .kbd-mac {
-    display: inline;
-  }
-
-  /* On a tablet the chip keeps its 1.75rem box (a 44px-tall bordered chip in
-     a 56px bar reads as a button, and it is a key hint); the hit area grows
-     to 44px through a pseudo-element instead: 28px + 2 × 8px. */
-  @media (pointer: coarse) {
-    .kbd-chip {
-      position: relative;
-    }
-    .kbd-chip::before {
-      content: "";
-      position: absolute;
-      inset: -0.5rem -0.375rem;
-    }
   }
 
   .menu-button,
@@ -474,200 +415,6 @@
     text-indent: -1.4em;
   }
 
-  /* ── Command palette ──────────────────────────────────────── */
-
-  /* The <dialog> is the panel: 40rem at 12vh on --ground-2 with a --line-strong
-     border, radius 0. Left padding reserves the LED gutter on every row. */
-  .palette {
-    --palette-pad: 1.25rem;
-    position: fixed;
-    top: 12vh;
-    bottom: auto;
-    inset-inline: 0;
-    width: min(40rem, calc(100% - 2rem));
-    max-width: none;
-    max-height: calc(88vh - 1rem);
-    margin: 0 auto;
-    padding: 0;
-    border: 1px solid var(--line-strong);
-    background: var(--ground-2);
-    color: var(--ink);
-    flex-direction: column;
-    overflow: hidden;
-    opacity: 1;
-    scale: 1;
-    transition:
-      opacity 160ms var(--ease-out),
-      scale 160ms var(--ease-out),
-      display 160ms allow-discrete,
-      overlay 160ms allow-discrete;
-  }
-
-  /* Only while open: an unconditional display would show the closed dialog. */
-  .palette[open] {
-    display: flex;
-  }
-
-  .palette:not([open]) {
-    opacity: 0;
-    scale: 0.98;
-    transition-duration: 120ms;
-  }
-
-  @starting-style {
-    .palette[open] {
-      opacity: 0;
-      scale: 0.98;
-    }
-  }
-
-  /* The second of the site's two blurred surfaces. */
-  .palette::backdrop {
-    background: var(--scrim);
-    -webkit-backdrop-filter: blur(var(--scrim-blur));
-    backdrop-filter: blur(var(--scrim-blur));
-    opacity: 1;
-    transition:
-      opacity 160ms var(--ease-out),
-      display 160ms allow-discrete,
-      overlay 160ms allow-discrete;
-  }
-
-  .palette:not([open])::backdrop {
-    opacity: 0;
-    transition-duration: 120ms;
-  }
-
-  @starting-style {
-    .palette[open]::backdrop {
-      opacity: 0;
-    }
-  }
-
-  .palette-input {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: var(--space-2);
-    height: 3.25rem;
-    padding-inline: var(--palette-pad) var(--space-2);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .palette-prompt {
-    color: var(--ink-3);
-  }
-
-  /* The one place without the focus ring. The input is the only focusable
-     element inside a modal dialog, so where focus is cannot be in doubt; the
-     active result row (fill + LED, driven by aria-activedescendant) is the
-     visible focus, as in every command palette. A --sun outline through the
-     3.25rem bar would also be the screen's second accent (rule 3). */
-  .palette-field {
-    flex: 1 1 auto;
-    min-width: 0;
-    height: 100%;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ink);
-    outline: none;
-  }
-
-  .palette-field::placeholder {
-    color: var(--ink-3);
-  }
-
-  .palette-list {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: 52vh;
-    padding-block: var(--space-1);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
-  .palette-group-label {
-    margin: 0;
-    padding: var(--space-2) var(--space-2) 0.375rem var(--palette-pad);
-    color: var(--ink-3);
-  }
-
-  .palette-empty {
-    margin: 0;
-    padding: var(--space-4) var(--palette-pad);
-    color: var(--ink-2);
-  }
-
-  /* Compact row: label left, hint right. The fill commits on --ease-snap;
-     the text does not move. */
-  .palette-row {
-    position: relative;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-2);
-    padding: 0.625rem var(--space-2) 0.625rem var(--palette-pad);
-    color: var(--ink-2);
-    cursor: pointer;
-    transition:
-      background-color var(--dur-2) var(--ease-snap),
-      color var(--dur-1) var(--ease-snap);
-  }
-
-  /* 44px rows on a finger: 12px + 21.7px (small) + 12px. */
-  @media (pointer: coarse) {
-    .palette-row {
-      padding-block: 0.75rem;
-    }
-  }
-
-  .palette-row[data-active="true"] {
-    background: var(--ground-3);
-    color: var(--ink);
-  }
-
-  /* The one accent element on this screen: a 4px --sun LED in the gutter. */
-  .palette-row[data-active="true"]::before {
-    content: "";
-    position: absolute;
-    left: 0.5rem;
-    top: 50%;
-    width: 4px;
-    height: 4px;
-    margin-top: -2px;
-    border-radius: 50%;
-    background: var(--sun);
-  }
-
-  .palette-row-label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .palette-row-hint {
-    flex: none;
-    color: var(--ink-3);
-  }
-
-  /* --ink-3 is 4.95:1 on --ground-3, below the floor for 11px text, so the
-     hint steps up to --ink-2 (7.0:1) while its row carries the fill. */
-  .palette-row[data-active="true"] .palette-row-hint {
-    color: var(--ink-2);
-  }
-
-  .palette-foot {
-    display: flex;
-    flex: none;
-    justify-content: space-between;
-    gap: var(--space-2);
-    padding: 0.625rem var(--space-2) 0.625rem var(--palette-pad);
-    border-top: 1px solid var(--line);
-    color: var(--ink-3);
-  }
-
   /* ── Nine-dot mark ────────────────────────────────────────── */
 
   /* Three pitches square; the SVG has no viewBox and places its dots at
@@ -780,7 +527,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Reduced motion, from the OS or the palette toggle. Opacity fades
+   Reduced motion, from the OS. Opacity fades
    stay (they are not motion); scale and hairline draws go.
    ───────────────────────────────────────────────────────────── */
 
@@ -788,34 +535,16 @@
   .nine-dot-mark line {
     transition: none;
   }
-  .palette,
-  .palette:not([open]) {
-    scale: 1;
-    transition:
-      opacity 160ms var(--ease-out),
-      display 160ms allow-discrete,
-      overlay 160ms allow-discrete;
-  }
 }
 
 :root[data-motion="reduce"] .nine-dot-mark line {
   transition: none;
 }
 
-:root[data-motion="reduce"] .palette,
-:root[data-motion="reduce"] .palette:not([open]) {
-  scale: 1;
-  transition:
-    opacity 160ms var(--ease-out),
-    display 160ms allow-discrete,
-    overlay 160ms allow-discrete;
-}
-
 @media print {
   .site-header,
   .skip-link,
-  .menu,
-  .palette {
+  .menu {
     display: none;
   }
 }

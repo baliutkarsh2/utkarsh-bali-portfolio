@@ -10,7 +10,6 @@
 export type { BoardField } from "./portrait-types";
 export { portraitField96 } from "./portrait-field-96";
 export { portraitField64 } from "./portrait-field-64";
-export { portraitFieldAbout } from "./portrait-field-about";
 export { portraitFieldContact } from "./portrait-field-contact";
 export { portraitOg } from "./portrait-og";
 export { DOT_COUNT } from "./portrait-meta";
@@ -21,6 +20,5 @@ export const portrait = {
   fallback: {
     hero: "/portrait/dots-96@2x.webp",
     phone: "/portrait/dots-64@2x.webp",
-    about: "/portrait/dots-about@2x.webp",
   },
 } as const;

@@ -1,24 +1,18 @@
-import { DotBoard } from "@/components/interactive/dot-board";
-import { SpecList } from "@/components/ui/spec-list";
-import { aboutNote, profile } from "@/content";
-import { portrait } from "@/content/portrait";
-
 /**
- * The first section of /about (§7.2). The Section primitive renders an h2,
- * and a page has one h1, so this section writes its own head in the same
- * grammar (hairline, meta index, the title) with the h1 in display-l, and
- * carries the same data attributes the header's SectionSpy reads.
+ * The head of /about, and now only the head.
  *
- * Copy on 7 of 12 columns: the lead in display-s, the body in lede --ink-2.
- * Rail on 4 from column 9: the board in `still` mode (the tighter face crop,
- * 64 × 80, the second angle; drawn settled on mount, the pointer is a light
- * only) with its readout, then the spec list. The rail is taller than the
- * copy here, so it is not sticky: there is nothing for it to stick past.
+ * It used to carry a lead in display-s, a spec list of Education / At Purdue /
+ * GPA / Based in, and the portrait in `still` mode on a rail — a three-item
+ * grid over twelve columns. All three are gone at Utkarsh's call. The facts in
+ * the spec list are either said better elsewhere (the degree and the dates are
+ * the first and last lines of the story on the home page; the town is in the
+ * footer) or are the kind of number a CV carries and a page does not need to
+ * lead with. The portrait is on the home page, where meeting it once is the
+ * point.
  *
- * Below 64rem the copy wrapper dissolves (`display: contents` on a plain div
- * in components.css) and the board is ordered straight after the lead at its
- * own 320 px, with the body and the spec list following. The DOM order is
- * the reading order at every width: lead, board, body, facts.
+ * What is left is the page's h1 in the same grammar as every other section
+ * head — hairline, title — carrying the data attributes the header's
+ * SectionSpy reads, and `section-first` for the fixed header's clearance.
  */
 export function About() {
   return (
@@ -36,38 +30,6 @@ export function About() {
         >
           About
         </h1>
-      </div>
-
-      <div className="about-body">
-        <div className="about-copy">
-          {/* Prose in a display size: `pretty` wrapping, not the `balance`
-              the display tokens carry, since this runs to five lines. */}
-          <p className="about-lead measure text-display-s font-medium text-pretty text-ink">
-            {aboutNote.lead}
-          </p>
-        </div>
-
-        <DotBoard
-          mode="still"
-          source="about"
-          alt={portrait.alt}
-          fallback={portrait.fallback.about}
-          className="about-board"
-          gpu
-        />
-
-        <SpecList
-          className="about-specs"
-          rows={[
-            { term: "Education", value: profile.educationDetail },
-            {
-              term: "At Purdue",
-              value: `${profile.enrolled} to ${profile.graduation}`,
-            },
-            { term: "GPA", value: profile.gpa },
-            { term: "Based in", value: profile.location },
-          ]}
-        />
       </div>
     </section>
   );

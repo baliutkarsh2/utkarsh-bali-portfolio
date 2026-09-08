@@ -25,7 +25,6 @@ type BoardStatus =
  */
 export type PortraitSource =
   | "hero"
-  | "about"
   | "contact"
   | "device-recurly"
   | "device-checkpoint"
@@ -201,18 +200,6 @@ const SOURCES: Record<PortraitSource, SourceSpec> = {
       import("@/content/portrait-field-96").then((m) => m.portraitField96),
     loadSm: () =>
       import("@/content/portrait-field-64").then((m) => m.portraitField64),
-  },
-  about: {
-    // 44, not 64. The About crop was baked with 60 empty columns down its left
-    // edge -- 31% of the plate was blank paper, where the hero's crop wastes 10
-    // columns and the phone's 7. Those columns are gone from the field and the
-    // box came in with them.
-    cols: 44,
-    rows: 80,
-    load: () =>
-      import("@/content/portrait-field-about").then(
-        (m) => m.portraitFieldAbout,
-      ),
   },
   contact: {
     cols: 48,
@@ -717,12 +704,18 @@ export function DotBoard({
         if (scrollRaf) return;
         scrollRaf = requestAnimationFrame(() => {
           scrollRaf = 0;
+          // Relayout only. The canvas is fixed behind the page and the box
+          // is not, so the field has to be re-placed against the box on every
+          // scroll frame or the portrait slides off its own plate.
+          //
+          // The board used to disperse here as well -- every dot flying out
+          // on a scroll term. That was written when the board was the first
+          // thing on the page, so the cloud left upward through empty air.
+          // With the plate under the name and the copy, the same cloud blows
+          // up over the nav: the portrait comes apart into dust across
+          // "About Work Contact" the moment a reader scrolls toward the
+          // story. A plate on a page scrolls like a plate.
           relayout();
-          const t = Math.min(
-            1,
-            Math.max(0, window.scrollY / (0.9 * window.innerHeight)),
-          );
-          board.scroll(t);
           schedule();
         });
       };

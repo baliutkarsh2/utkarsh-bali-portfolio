@@ -65,7 +65,6 @@ STILL_PX = 12
 FIELDS = [
     ("portrait-field-96", "verso-96.webp"),
     ("portrait-field-64", "verso-64.webp"),
-    ("portrait-field-about", "verso-about.webp"),
 ]
 
 

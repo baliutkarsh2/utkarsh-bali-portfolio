@@ -5,11 +5,9 @@ import { ViewTransition, type ReactNode } from "react";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
-import { CommandPalette } from "@/components/interactive/command-palette";
-import { orderedProjects, profile, socials } from "@/content";
+import { profile, socials } from "@/content";
 import { display, mono, text } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
-import { publishedPosts } from "@/lib/writing";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
 import "./globals.css";
 
@@ -117,30 +115,7 @@ export default function RootLayout({
           <ViewTransition>{children}</ViewTransition>
         </main>
         <SiteFooter />
-        {/* Both lists are trimmed here so the content barrel (every case
-            study's prose) never enters the palette's client chunk. */}
-        <CommandPalette
-          projects={orderedProjects.map(
-            ({ slug, name, eyebrow, tagline, stack, org }) => ({
-              slug,
-              name,
-              eyebrow,
-              tagline,
-              stack,
-              org,
-            }),
-          )}
-          posts={publishedPosts().map(
-            ({ slug, title, summary, href, external }) => ({
-              slug,
-              title,
-              summary,
-              href,
-              external: Boolean(external),
-            }),
-          )}
-        />
-      </body>
+              </body>
     </html>
   );
 }

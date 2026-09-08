@@ -64,7 +64,6 @@
    and the box needs 384, so it may run into the shell padding as the
    inspection panel does. Clamped, the last column and row would be clipped. */
 @media (width >= 80rem) {
-  .about-board,
   .contact-board .board,
   .section-rail .board {
     max-width: none;
@@ -76,7 +75,6 @@
    rather than to its column's left edge. Unlayered, next to the `margin: 0`
    reset above, which would otherwise beat it. */
 @media (width >= 64rem) {
-  .about-board,
   .contact-board .board {
     margin-inline-start: auto;
   }

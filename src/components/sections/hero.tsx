@@ -56,21 +56,6 @@ export function Hero() {
         {surname && <span className="block">{surname}</span>}
       </h1>
 
-      {/* Column 2 from 80rem, directly under the name below that. The figure
-          box is the layout anchor; the canvas is fixed behind the page. The
-          board loads its field on the client, in its own cached chunk.
-
-          No caption. It read "288 × 360 · 51,747 dots" at rest and
-          "x 003 · y 012 · 0.42" under the pointer -- the machine describing
-          its own output, under a picture of a person. */}
-      <DotBoard
-        mode="hero"
-        source="hero"
-        alt={portrait.alt}
-        fallback={portrait.fallback.hero}
-        mobileFallback={portrait.fallback.phone}
-        className="hero-board"
-      />
 
       <div className="hero-copy board-above">
         <p className="max-w-[34ch] text-display-s text-ink">
@@ -109,6 +94,22 @@ export function Hero() {
           )}
         </div>
       </div>
+
+      {/* Column 2 from 80rem, directly under the name below that. The figure
+          box is the layout anchor; the canvas is fixed behind the page. The
+          board loads its field on the client, in its own cached chunk.
+
+          No caption. It read "288 × 360 · 51,747 dots" at rest and
+          "x 003 · y 012 · 0.42" under the pointer -- the machine describing
+          its own output, under a picture of a person. */}
+      <DotBoard
+        mode="hero"
+        source="hero"
+        alt={portrait.alt}
+        fallback={portrait.fallback.hero}
+        mobileFallback={portrait.fallback.phone}
+        className="hero-board"
+      />
     </section>
   );
 }

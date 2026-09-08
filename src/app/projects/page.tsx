@@ -45,7 +45,7 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <header className="shell pt-24 pb-10 md:pt-28 md:pb-14">
+      <header className="shell pt-20 pb-8 md:pt-24 md:pb-10">
         <p className="meta text-ink-3">
           {count} projects · {firstYear}&ndash;{currentYear}
         </p>

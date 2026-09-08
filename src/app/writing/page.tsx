@@ -66,7 +66,7 @@ export default function WritingPage() {
 
   return (
     <>
-      <header className="shell broadside pt-24 pb-6 md:pt-28">
+      <header className="shell broadside pt-20 pb-6 md:pt-24">
         {/* The type is one grid child so the plate beside it can be the other.
             Without the wrapper the figure has to span rows it cannot name --
             `grid-row: 1 / -1` resolves against the EXPLICIT grid, which has no
