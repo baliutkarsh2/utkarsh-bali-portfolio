@@ -294,6 +294,61 @@
     background: var(--sun);
   }
 
+  /* ═══ The story ═══════════════════════════════════════════════════════════
+     Twelve lines under the lede, and the only list on the site set as prose.
+     No heading over it and no rule above it: it is the continuation of the
+     paragraph it sits under, not a new section, and a hairline there would
+     make it one.
+
+     The marker is a dot at the page pitch, hung in the margin rather than
+     indented into the measure, so the left edge of the text stays flush with
+     everything above it and the dots read as a column of their own. Same
+     grammar as the field: a small round mark in ink on paper.
+     ─────────────────────────────────────────────────────────────────────── */
+  .story {
+    padding-block: var(--space-8) 0;
+  }
+
+  .story-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-width: 62ch;
+  }
+
+  .story-line {
+    position: relative;
+    padding-inline-start: 1.5rem;
+    text-wrap: pretty;
+  }
+
+  .story-line + .story-line {
+    margin-block-start: 0.85rem;
+  }
+
+  .story-line::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    /* Optically on the first line's x-height rather than its box, which for a
+       serif at this size sits a little above the vertical centre. */
+    inset-block-start: 0.62em;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+
+  @media (width >= 48rem) {
+    .story {
+      padding-block-start: var(--space-10);
+    }
+
+    .story-line + .story-line {
+      margin-block-start: 1rem;
+    }
+  }
+
   /* ═══ Section ═══════════════════════════════════════════════════════════════
      Hairline · meta index · display-m title · body on 7 of 12 columns with an
      optional sticky rail on 4 from column 9 (§7). Nothing is centred. */

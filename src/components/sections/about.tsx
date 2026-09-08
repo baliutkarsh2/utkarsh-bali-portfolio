@@ -34,7 +34,7 @@ export function About() {
           id="about-title"
           className="text-display-l font-medium text-balance text-ink"
         >
-          Started with quadcopters.
+          About
         </h1>
       </div>
 
@@ -44,9 +44,6 @@ export function About() {
               the display tokens carry, since this runs to five lines. */}
           <p className="about-lead measure text-display-s font-medium text-pretty text-ink">
             {aboutNote.lead}
-          </p>
-          <p className="about-prose measure text-lede text-ink-2 lg:mt-6">
-            {aboutNote.body}
           </p>
         </div>
 

@@ -2,10 +2,11 @@ import { Constellation } from "@/components/sections/constellation";
 import { Contact } from "@/components/sections/contact";
 import { Hero } from "@/components/sections/hero";
 import { SelectedWork } from "@/components/sections/selected-work";
+import { Story } from "@/components/sections/story";
 
 /**
- * Home: the plate, the top three projects, the constellation full-bleed, and
- * the close.
+ * Home: the plate, the story, the top three projects, the constellation
+ * full-bleed, and the close.
  *
  * There was a "Three numbers" board between the plate and the work -- the YC
  * ranking, a failure rate and an AUROC, set large, above the projects they
@@ -40,6 +41,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
+      <Story />
       <SelectedWork />
       <Constellation
         variant="chart"

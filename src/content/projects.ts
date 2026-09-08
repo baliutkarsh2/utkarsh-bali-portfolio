@@ -6,7 +6,7 @@ export const projects: Project[] = [
     name: "Recurly Agent Platform",
     eyebrow: "Agent infrastructure",
     tagline:
-      "A product requirement becomes merged pull requests, through specialized agents and five human checkpoints.",
+      "Takes a product requirement and turns it into merged pull requests. Five agents do the work; a human signs off five times.",
     year: "2026",
     sortDate: "2026-05-01",
     status: "shipped",
@@ -15,7 +15,8 @@ export const projects: Project[] = [
     metricLabel: "faster from requirement to merge",
     role: "Software Engineer Intern",
     org: "Recurly",
-    highlight: "Claude Agent SDK, isolated Kubernetes Jobs, five human checkpoints",
+    highlight:
+      "Claude Agent SDK, isolated Kubernetes Jobs, five human checkpoints",
     problem:
       "A written requirement becomes a merged pull request through a chain of handoffs: someone reads the document, someone splits it into work, someone writes the code, someone answers the review. Most of the elapsed time is not any of those steps. It is the waiting between them. One agent handed the whole chain does not fix that either — it returns a diff large enough that nobody wants to be the person who reviews it.",
     story:
@@ -27,7 +28,14 @@ export const projects: Project[] = [
       "An SDR assistant in Slack: async Python with three-tier Claude routing over BigQuery, 6sense, ZoomInfo and Salesforce, returning source-cited account briefs and outreach drafts.",
       "A prospect report card pipeline, n8n to FastAPI on Cloud Run to Claude Opus, that turns an inbound form fill into a personalized PDF analysis of that prospect’s subscription business and emails it back.",
     ],
-    stack: ["Claude Agent SDK", "Python", "Kubernetes", "FastAPI", "BigQuery", "Cloud Run"],
+    stack: [
+      "Claude Agent SDK",
+      "Python",
+      "Kubernetes",
+      "FastAPI",
+      "BigQuery",
+      "Cloud Run",
+    ],
     impact:
       "About three times faster from a written requirement to a merged pull request, with all five human checkpoints still in place: the time came out of the waits between handoffs, not out of the review. The Slack assistant answers with a source-cited brief in about twenty-five seconds, which collapses hours of prospecting into one command.",
     links: [],
@@ -47,7 +55,8 @@ export const projects: Project[] = [
     metricLabel: "of YC Summer 2026 applicants",
     role: "Co-founder & CTO",
     org: "Checkpoint",
-    highlight: "Adversarial test generation, sandboxed execution, LLM-judged scoring",
+    highlight:
+      "Adversarial test generation, sandboxed execution, LLM-judged scoring",
     problem:
       "Teams shipping LLM agents have unit tests for their code and almost nothing for the agent. The failures that matter are not exceptions. They are a tool called with the wrong argument, a policy boundary quietly crossed, a multi-turn conversation that drifts. None of that shows up in a green build.",
     story:
@@ -67,14 +76,20 @@ export const projects: Project[] = [
       "Stateful tool mocking mattered more than model choice. Most interesting agent bugs only appear on turn three or later.",
       "A strong application signal is not a business. Ranking well told us the problem was legible; it didn’t tell us anyone would pay yet.",
     ],
-    links: [{ label: "usecheckpoint.dev", href: "https://usecheckpoint.dev", kind: "site" }],
+    links: [
+      {
+        label: "usecheckpoint.dev",
+        href: "https://usecheckpoint.dev",
+        kind: "site",
+      },
+    ],
   },
   {
     slug: "autonomous-app-crawler",
     name: "App Crawler",
     eyebrow: "Agent infrastructure",
     tagline:
-      "A GKE-distributed crawler that indexes Android apps into an org-wide knowledge base for downstream agents.",
+      "Walks an Android app screen by screen and writes down how it works, so other agents don’t have to figure it out themselves.",
     year: "2025",
     sortDate: "2025-12-01",
     status: "shipped",
@@ -106,7 +121,7 @@ export const projects: Project[] = [
     name: "QualGent AI Assistant",
     eyebrow: "Agent orchestration",
     tagline:
-      "An enterprise QA copilot routing across 45+ tools and sub-agents from a single orchestrator.",
+      "One chat box for a QA team, with 45+ tools and sub-agents behind it.",
     year: "2025",
     sortDate: "2025-11-01",
     status: "shipped",
@@ -127,7 +142,14 @@ export const projects: Project[] = [
       "Tool surface spanning RAG retrieval, an MCP Postgres/pgvector Toolbox, and Jira and Linear through OAuth.",
       "Deployed to Vertex AI Agent Engine via gated Cloud Build, so agent changes ship through the same review gate as code.",
     ],
-    stack: ["Google ADK", "Gemini 2.5 Pro", "Vertex AI", "MCP", "pgvector", "Cloud Build"],
+    stack: [
+      "Google ADK",
+      "Gemini 2.5 Pro",
+      "Vertex AI",
+      "MCP",
+      "pgvector",
+      "Cloud Build",
+    ],
     impact:
       "Unified 45+ tools and sub-agents behind one interface, becoming the primary way QA engineers at QualGent queried app knowledge, test history, and issue trackers.",
     links: [],
@@ -138,7 +160,7 @@ export const projects: Project[] = [
     name: "CLIP-H",
     eyebrow: "Interpretability research",
     tagline:
-      "Clinical hypothesis verification on MIMIC-IV using sparse autoencoders and an LLM ensemble.",
+      "Checks whether a clinical hypothesis actually holds up in the patient data, and shows which features the model leaned on to decide.",
     year: "2026",
     sortDate: "2026-01-01",
     status: "research",
@@ -159,7 +181,14 @@ export const projects: Project[] = [
       "A GPT and Claude ensemble scoring candidate clinical hypotheses, where disagreement between models is signal rather than noise.",
       "Validation against a synthetic oracle with known ground truth, so verification accuracy is measurable rather than asserted.",
     ],
-    stack: ["Python", "PyTorch", "Sparse autoencoders", "MIMIC-IV", "GPT", "Claude"],
+    stack: [
+      "Python",
+      "PyTorch",
+      "Sparse autoencoders",
+      "MIMIC-IV",
+      "GPT",
+      "Claude",
+    ],
     impact:
       "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses with Purdue and Harvard Business School faculty. The work is being prepared for a NeurIPS submission.",
     links: [
@@ -175,7 +204,7 @@ export const projects: Project[] = [
     name: "LLM Multi-Agent QA System",
     eyebrow: "Agent QA",
     tagline:
-      "Four agents (planner, executor, verifier, supervisor) driving Android UI flows to deterministic completion.",
+      "Four agents — planner, executor, verifier, supervisor — that drive an Android app and get the same result every time.",
     year: "2025",
     sortDate: "2025-08-01",
     status: "shipped",
@@ -213,7 +242,11 @@ export const projects: Project[] = [
       height: 900,
     },
     links: [
-      { label: "Watch the demo", href: "https://youtu.be/d7lRN2lXeu0", kind: "video" },
+      {
+        label: "Watch the demo",
+        href: "https://youtu.be/d7lRN2lXeu0",
+        kind: "video",
+      },
       {
         label: "Source",
         href: "https://github.com/baliutkarsh2/multi_agent_qa_mark2",
@@ -226,7 +259,7 @@ export const projects: Project[] = [
     name: "Clinical AI Assistant",
     eyebrow: "Healthcare AI",
     tagline:
-      "Self-hosted LLaMA and on-device speech, tested across Indiana hospitals under HIPAA constraints.",
+      "Lets a nurse chart by talking instead of typing. Runs on the hospital’s own hardware, so patient data never leaves the building.",
     year: "2024 to 2025",
     sortDate: "2025-05-01",
     status: "research",
@@ -264,7 +297,8 @@ export const projects: Project[] = [
         alt: "Home screen with a large microphone button under the prompt 'How can I help you today?', plus shortcuts to add a task or reminder and to view patient vitals",
         width: 700,
         height: 1482,
-        caption: "Voice-first home screen. The microphone is the primary control.",
+        caption:
+          "Voice-first home screen. The microphone is the primary control.",
       },
       {
         kind: "image",
@@ -283,7 +317,13 @@ export const projects: Project[] = [
         caption: "Patient vitals, captured without touching a keyboard.",
       },
     ],
-    links: [{ label: "Source", href: "https://github.com/baliutkarsh2/nurse2", kind: "repo" }],
+    links: [
+      {
+        label: "Source",
+        href: "https://github.com/baliutkarsh2/nurse2",
+        kind: "repo",
+      },
+    ],
   },
   {
     slug: "wallex",
@@ -313,6 +353,12 @@ export const projects: Project[] = [
     stack: ["Flutter", "Python", "Hugging Face", "Firebase", "GCP", "AdMob"],
     impact:
       "Grew to 3,000+ users across 22+ countries, with full ownership from product through deployment and monetization.",
-    links: [{ label: "Source", href: "https://github.com/baliutkarsh2/wallex", kind: "repo" }],
+    links: [
+      {
+        label: "Source",
+        href: "https://github.com/baliutkarsh2/wallex",
+        kind: "repo",
+      },
+    ],
   },
 ];
