@@ -36,7 +36,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 try:
-    from scipy.ndimage import gaussian_filter, grey_dilation, grey_erosion
+    from scipy.ndimage import gaussian_filter
 except ImportError as exc:  # pragma: no cover - a hand-run script, not a build step
     raise SystemExit(
         "scipy is required for the float Gaussian in blur(): pip install scipy.\n"
@@ -122,17 +122,6 @@ BROAD = 1.2            # broad unsharp strength
 BROAD_RADIUS_PX = 48   # in photograph pixels
 FINE = 1.1             # fine unsharp strength: the features
 FINE_RADIUS_CELLS = 1.1
-# How far the anti-halo clamp looks, in cells. Wider than the fine unsharp's
-# own radius, or the overshoot it is meant to remove is inside the window and
-# becomes the local maximum it clamps to.
-HALO_CELLS = 2.6
-
-# The highlight knee. Luminance above HIGHLIGHT_KNEE is compressed into
-# [KNEE, CEIL] instead of running to 1.0. A cell stops carrying a dot above
-# 0.826, so a CEIL just over that leaves the brightest few per cent as bare
-# paper and gives everything below it the lightest dot the screen can print.
-HIGHLIGHT_KNEE = 0.75
-HIGHLIGHT_CEIL = 0.86
 ADAPT = 0.95           # local normalisation blend, before the shadow weight
 ADAPT_RADIUS_PX = 62
 ADAPT_SD = 0.23        # target local standard deviation
@@ -366,31 +355,10 @@ def sample(
         detail = np.clip(detail / max(float(np.percentile(detail[inside], 96)), 1e-6), 0, 1)
 
     # 1. Two unsharp passes: the shape, then the features.
-    #
-    # Clamped to the source's own local range, which is the whole reason this
-    # is not a plain `lum + k * (lum - blur)`. An unsharp mask overshoots on
-    # both sides of a hard edge: it makes the light side lighter than anything
-    # that was actually there and the dark side darker. On a face that reads as
-    # crispness. Along the collar, where a dark shirt meets a lit edge over a
-    # long smooth diagonal, the overshoot is coherent for a hundred cells and
-    # prints as a pale line lying across the neck. Utkarsh saw two of them.
-    #
-    # Clamping each sharpened pixel back into [local min, local max] of the
-    # pre-sharpen image keeps all the acutance the mask buys -- edges still
-    # move to the extremes that were genuinely nearby -- and removes only the
-    # part that invents a value the neighbourhood never had. HALO_CELLS is the
-    # radius the clamp looks over, and it has to be at least as wide as the
-    # halo or the halo becomes the local maximum and clamps to itself.
-    lum0 = lum
     if BROAD > 0:
         lum = lum + BROAD * (lum - blur(lum, broad_radius))
     if FINE > 0:
         lum = lum + FINE * (lum - blur(lum, max(0.6, pitch * FINE_RADIUS_CELLS)))
-    if HALO_CELLS > 0:
-        k = max(3, int(round(pitch * HALO_CELLS)) | 1)
-        lo = grey_erosion(lum0, size=(k, k), mode="nearest")
-        hi = grey_dilation(lum0, size=(k, k), mode="nearest")
-        lum = np.clip(lum, lo, hi)
     lum = np.clip(lum, 0, 1)
 
     # 2. Local normalisation, weighted to the shadows. The local mean and
@@ -442,32 +410,6 @@ def sample(
     foc_c, _ = cell_mean(focal, cols, rows, inside)
     edge_c, _ = cell_mean(edge.astype(np.float32), cols, rows, inside)
     keep = cover > 0.5
-
-    # ── The highlight knee ──
-    #
-    # A cell goes bare above L = 0.826: that is where the ink transfer's
-    # diameter falls under CULL_DIA and no dot is drawn at all. Bare paper IS
-    # the highlight in an engraving and most of it is right, but a long, thin,
-    # CONNECTED run of it does not read as light. It reads as a scratch. On
-    # this portrait the shirt collar and its placket were two such runs lying
-    # across the neck, which is what Utkarsh saw as two white lines. Measured
-    # before this: 5,163 cells bare, 10.0% of the figure.
-    #
-    # So the top of the range is compressed rather than clipped. Everything
-    # under KNEE is untouched. Above it the range is squeezed so that only a
-    # genuine specular, the brightest few per cent, still clears the bare
-    # threshold; a broad bright surface like a lit collar keeps the lightest
-    # dot the screen can print and reads as fabric again.
-    if HIGHLIGHT_KNEE < 1.0:
-        v = values
-        hi = v > HIGHLIGHT_KNEE
-        span = max(1.0 - HIGHLIGHT_KNEE, 1e-6)
-        values = np.where(
-            hi,
-            HIGHLIGHT_KNEE + (v - HIGHLIGHT_KNEE) * (HIGHLIGHT_CEIL - HIGHLIGHT_KNEE) / span,
-            v,
-        )
-
     out = np.zeros((rows, cols), np.uint8)
     out[keep] = np.maximum(1, np.round(np.clip(values[keep], 0, 1) * 255).astype(np.uint8))
     warmth = np.where(keep, warmth, 0.0).astype(np.float32)
