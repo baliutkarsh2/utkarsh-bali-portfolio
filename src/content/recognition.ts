@@ -40,7 +40,7 @@ export const achievements: Achievement[] = [
   {
     label: "KVPY 2021, All India Rank 1638",
     detail:
-      "The Kishore Vaigyanik Protsahan Yojana: a Department of Science and Technology fellowship for students going into basic-science research, run by IISc and discontinued after 2022. The 2021 cycle selected on the aptitude test alone.",
+      "India’s national fellowship for students headed into research science, run by IISc.",
     year: "2021",
     kind: "academic",
   },
