@@ -71,11 +71,6 @@ export type Experience = {
   tags: string[];
 };
 
-export type SkillGroup = {
-  name: string;
-  skills: string[];
-};
-
 export type AchievementKind = "academic" | "research" | "startup" | "community";
 
 export type Achievement = {

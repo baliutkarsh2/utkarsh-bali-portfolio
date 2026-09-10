@@ -37,7 +37,7 @@ import { ordinal } from "@/lib/utils";
  * The first sentence, and everything after it.
  *
  * A terminator only ends a sentence when whitespace and a capital (or the end
- * of the string) follow it, which is what keeps "0.844 AUROC" and "top 10% of
+ * of the string) follow it, which is what keeps "~3x faster" and "top 10% of
  * the applicant pool" from splitting mid-figure. Every second sentence in
  * src/content/projects.ts starts with a capital; a block that never matches is
  * returned whole as the standfirst, with nothing under it.

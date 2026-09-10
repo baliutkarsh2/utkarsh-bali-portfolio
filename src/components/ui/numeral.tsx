@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 type NumeralProps = {
-  /** The figure as text: "0.844", "Top 10%", "<1%", "~3x". */
+  /** The figure as text: "Top 10%", "<1%", "~3x", "3K+". */
   value: string;
   /** Two sizes: `m` for a figure in a row, `l` for the one that carries a page. */
   size: "m" | "l";

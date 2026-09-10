@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { About } from "@/components/sections/about";
 import { Constellation } from "@/components/sections/constellation";
 import { Recognition } from "@/components/sections/recognition";
-import { Toolkit } from "@/components/sections/toolkit";
 
 export const metadata: Metadata = {
   title: "About",
@@ -40,7 +39,6 @@ export default function AboutPage() {
         id="experience"
       />
       <Recognition />
-      <Toolkit />
     </>
   );
 }

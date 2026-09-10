@@ -7,8 +7,6 @@ export { now } from "./now";
 export { projects } from "./projects";
 export { experiences } from "./experience";
 export { achievements } from "./recognition";
-export { skillGroups } from "./skills";
-export { metrics, type Metric } from "./metrics";
 export { portrait } from "./portrait";
 export * from "./personal";
 

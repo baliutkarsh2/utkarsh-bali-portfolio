@@ -109,9 +109,9 @@ const DEVICES: PlateSpec[] = [
     field: "deviceClipH",
     project: "clip-h",
     title: "CLIP-H",
-    subject: "A Top-K sparse autoencoder: five features carry the whole code",
+    subject: "A handful of named concepts standing in for a whole record",
     alt:
-      "An engraved diagram of a sparse autoencoder: a dense rank of units, a wider rank of " +
+      "An engraved diagram of a compression: a dense rank of units, a wider rank of " +
       "mostly empty sockets with only five lit, and a dense rank out. Every path on the " +
       "plate runs through one of the five.",
     w: 48,

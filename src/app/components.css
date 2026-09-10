@@ -1292,53 +1292,6 @@
     hyphens: auto;
     font-variant-numeric: oldstyle-nums proportional-nums;
   }
-
-  /* ── Toolkit: a table, not a scoreboard. Five hairlined rows in the
-        SpecList grammar: the group in the meta column, its tools as one
-        wrapped line joined by middots. Words, so nothing here moves. ── */
-  .toolkit {
-    margin: 0;
-    border-top: 1px solid var(--line-strong);
-  }
-
-  .toolkit > div {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.5rem;
-    padding-block: 1rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .toolkit dt,
-  .toolkit dd {
-    margin: 0;
-    min-width: 0;
-  }
-
-  .toolkit-list {
-    display: flex;
-    flex-wrap: wrap;
-    row-gap: 0.25rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    color: var(--ink-2);
-  }
-
-  .toolkit-list > li:not(:last-child)::after {
-    content: "·" / "";
-    margin-inline: 0.6em;
-    color: var(--ink-3);
-  }
-
-  @media (width >= 40rem) {
-    .toolkit > div {
-      grid-template-columns: 11rem minmax(0, 1fr);
-      column-gap: var(--space-3);
-      align-items: baseline;
-      padding-block: 1.125rem;
-    }
-  }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════

@@ -43,7 +43,7 @@ export const experiences: Experience[] = [
     summary:
       "Applied ML research where the product constraints matter as much as the model: interpretability, privacy, and whether a clinician would actually trust the output.",
     bullets: [
-      "Built CLIP-H for clinical hypothesis verification on MIMIC-IV using Top-K sparse autoencoders and a GPT/Claude ensemble. Validated against a synthetic oracle at 0.844 AUROC, certifying 14 hypotheses for a NeurIPS submission with Purdue and Harvard Business School faculty.",
+      "Built CLIP-H, on interpretable clinical prediction with LLMs, with Purdue and Harvard Business School faculty. Under review as a NeurIPS 2026 workshop submission, so it is described here only at that level.",
       "Developed a Flutter and TypeScript clinical assistant tested across Indiana hospitals that cuts nurses’ documentation overhead by about 40%, running self-hosted LLaMA 3.2 and an on-device, HIPAA-compliant speech-to-text pipeline.",
       "Presented the work at the Purdue Spring Research Conference.",
     ],
@@ -60,8 +60,6 @@ export const experiences: Experience[] = [
       "Owned the LLM pipeline and the distributed infrastructure under it, turning raw social chatter about Minecraft into insights that reached Microsoft product and marketing leadership.",
     bullets: [
       "Owned a Python LLM sentiment pipeline (LLaMA 4) that processed millions of social posts across Minecraft and A Minecraft Movie.",
-      "Designed the distributed Azure Databricks and Spark workflows underneath it, with SQL-optimized schemas across ingestion, inference, evaluation, and monitoring under strict cost and latency SLAs.",
-      "Cut compute spend by about 25% with no loss in accuracy.",
     ],
     tags: ["LLaMA", "Spark", "Databricks", "Azure", "Evaluation"],
   },

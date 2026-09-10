@@ -160,37 +160,30 @@ export const projects: Project[] = [
     name: "CLIP-H",
     eyebrow: "Interpretability research",
     tagline:
-      "Checks whether a clinical hypothesis actually holds up in the patient data, and shows which features the model leaned on to decide.",
+      "Interpretable clinical prediction: the reasoning behind a prediction is a set of named clinical hypotheses a clinician can read and challenge, not just a score.",
     year: "2026",
     sortDate: "2026-01-01",
     status: "research",
     featured: true,
-    metric: "0.844",
-    metricLabel: "AUROC against a synthetic oracle",
+    metric: "NeurIPS 2026",
+    metricLabel: "workshop submission, under review",
     role: "Software Engineer, AI Research",
     org: "Purdue University",
-    highlight: "Top-K SAEs, GPT/Claude ensemble, NeurIPS submission planned",
+    highlight: "Concepts, then hypotheses, then prediction",
     problem:
-      "Language models will generate clinical hypotheses all day. The hard question is which ones survive contact with the data, and whether you can show your work well enough for a reviewer to check it.",
+      "A prediction score tells you what may happen to a patient. It rarely tells you why, in terms anyone can check.",
     story:
-      "I built CLIP-H with Purdue and Harvard Business School faculty. The goal was hypothesis verification you could actually audit: sparse features you can name, an ensemble that disagrees usefully, and a validation setup that doesn’t quietly grade its own homework.",
+      "CLIP-H — Clinical Latent Interpretation and Prediction via Hypotheses — is work with Purdue and Harvard Business School faculty, currently under review as a NeurIPS 2026 workshop submission. It is described here only at the level the paper’s title and abstract already state; the method and the results stay out of public writing until that review is finished.",
     built:
-      "A hypothesis verification pipeline over MIMIC-IV using Top-K sparse autoencoders to surface interpretable features, with a GPT and Claude ensemble scoring candidate hypotheses.",
+      "A framework that turns patient data into plain-language clinical hypotheses, discards the ones that do not hold up, and uses the surviving set as the feature space the prediction is made from — so a prediction decomposes into named, auditable clinical concepts.",
     architecture: [
-      "Top-K sparse autoencoders over MIMIC-IV representations, producing features sparse enough to be named and inspected.",
-      "A GPT and Claude ensemble scoring candidate clinical hypotheses, where disagreement between models is signal rather than noise.",
-      "Validation against a synthetic oracle with known ground truth, so verification accuracy is measurable rather than asserted.",
+      "Find candidate concepts in the patient data.",
+      "State each in plain language and drop the ones that fail checking.",
+      "Predict from what survives, so every prediction is traceable to named hypotheses.",
     ],
-    stack: [
-      "Python",
-      "PyTorch",
-      "Sparse autoencoders",
-      "MIMIC-IV",
-      "GPT",
-      "Claude",
-    ],
+    stack: ["Python", "PyTorch", "MIMIC-IV", "LLMs"],
     impact:
-      "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses with Purdue and Harvard Business School faculty. The work is being prepared for a NeurIPS submission.",
+      "Under review as a NeurIPS 2026 workshop submission with Purdue and Harvard Business School faculty. Numbers are deliberately not published here while it is under review.",
     // Written in a Purdue research group's codebase, so there is nothing of
     // mine to publish. The repo this used to link was not the work.
     confidential: "lab",
@@ -201,7 +194,7 @@ export const projects: Project[] = [
     name: "LLM Multi-Agent QA System",
     eyebrow: "Agent QA",
     tagline:
-      "Four agents — planner, executor, verifier, supervisor — that drive an Android app and get the same result every time.",
+      "Give it a plain-English task on an Android phone, like find the best pizza place near me and start Google Maps to it, and it does it. Four agents plan, execute, verify and supervise the run.",
     year: "2025",
     sortDate: "2025-08-01",
     status: "shipped",

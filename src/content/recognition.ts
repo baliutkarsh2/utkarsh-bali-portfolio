@@ -10,9 +10,9 @@ export const achievements: Achievement[] = [
     href: "/projects/checkpoint",
   },
   {
-    label: "NeurIPS submission in preparation on clinical hypothesis verification",
+    label: "NeurIPS 2026 workshop submission, under review",
     detail:
-      "Certified 14 hypotheses with CLIP-H at 0.844 AUROC. Being prepared for a NeurIPS submission, with Purdue and Harvard Business School faculty.",
+      "CLIP-H, on interpretable clinical prediction, with Purdue and Harvard Business School faculty.",
     year: "2026",
     kind: "research",
     href: "/projects/clip-h",
@@ -38,16 +38,16 @@ export const achievements: Achievement[] = [
     kind: "academic",
   },
   {
-    label: "KVPY, All India Rank 1638 (top 1%)",
+    label: "KVPY 2021, All India Rank 1638",
     detail:
-      "Nationally ranked among 150,000+ candidates for exceptional scientific aptitude.",
-    year: "2022",
+      "The Kishore Vaigyanik Protsahan Yojana: a Department of Science and Technology fellowship for students going into basic-science research, run by IISc and discontinued after 2022. The 2021 cycle selected on the aptitude test alone.",
+    year: "2021",
     kind: "academic",
   },
   {
     label: "Teaching assistant and workshop lead",
     detail:
-      "TA for CS 471 (AI) and TDM 101, guiding 300+ students. Led weekly Machine Learning @ Purdue workshops mentoring 200+ students on building and deploying production AI systems.",
+      "TA for CS 24300 (Artificial Intelligence Basics), CS 471 (Introduction to Artificial Intelligence) and TDM 101, guiding 300+ students. Led weekly Machine Learning @ Purdue workshops mentoring 200+ students on building and deploying production AI systems.",
     year: "2024 to 2026",
     kind: "community",
   },
