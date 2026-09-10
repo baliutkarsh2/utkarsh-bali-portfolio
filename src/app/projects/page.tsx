@@ -88,7 +88,7 @@ export default function ProjectsPage() {
               project.eyebrow,
               project.org ?? project.role,
               statusLabel[project.status],
-              project.confidential ? "NDA" : null,
+              project.confidential === "company" ? "NDA" : null,
               `${project.metric} ${project.metricLabel}`,
             ]
               .filter(Boolean)

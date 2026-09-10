@@ -49,7 +49,14 @@ export type Project = {
   cover?: MediaSlot;
   media?: MediaSlot[];
   /** Work under NDA, suppresses any "view source" affordance. */
-  confidential?: boolean;
+  /**
+   * Why there is no public source, where there is none. "company" is an
+   * employer's codebase under NDA; "lab" is a research group's, which is not
+   * under NDA but is not mine to publish either. The two want different
+   * sentences and different index labels -- "NDA" is wrong for a lab -- which
+   * is why this is not a boolean.
+   */
+  confidential?: "company" | "lab";
 };
 
 export type Experience = {

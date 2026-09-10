@@ -39,7 +39,7 @@ export const projects: Project[] = [
     impact:
       "About three times faster from a written requirement to a merged pull request, with all five human checkpoints still in place: the time came out of the waits between handoffs, not out of the review. The Slack assistant answers with a source-cited brief in about twenty-five seconds, which collapses hours of prospecting into one command.",
     links: [],
-    confidential: true,
+    confidential: "company",
   },
   {
     slug: "checkpoint",
@@ -114,7 +114,7 @@ export const projects: Project[] = [
     impact:
       "Held a sub-1% failure rate at production scale and became core infrastructure inside QualGent, feeding the knowledge base that the company’s QA copilot reads from.",
     links: [],
-    confidential: true,
+    confidential: "company",
   },
   {
     slug: "qualgent-ai-assistant",
@@ -153,7 +153,7 @@ export const projects: Project[] = [
     impact:
       "Unified 45+ tools and sub-agents behind one interface, becoming the primary way QA engineers at QualGent queried app knowledge, test history, and issue trackers.",
     links: [],
-    confidential: true,
+    confidential: "company",
   },
   {
     slug: "clip-h",
@@ -191,13 +191,10 @@ export const projects: Project[] = [
     ],
     impact:
       "Reached 0.844 AUROC against the synthetic oracle and certified 14 hypotheses with Purdue and Harvard Business School faculty. The work is being prepared for a NeurIPS submission.",
-    links: [
-      {
-        label: "Source",
-        href: "https://github.com/baliutkarsh2/hypothesis_generation",
-        kind: "repo",
-      },
-    ],
+    // Written in a Purdue research group's codebase, so there is nothing of
+    // mine to publish. The repo this used to link was not the work.
+    confidential: "lab",
+    links: [],
   },
   {
     slug: "multi-agent-qa",

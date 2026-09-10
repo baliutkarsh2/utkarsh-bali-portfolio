@@ -311,8 +311,9 @@ export function ProjectColophon({ project }: { project: Project }) {
 
         {project.confidential && (
           <p className="colophon-note text-small">
-            Built inside a company codebase, so there’s no public source to
-            link. Happy to talk through the design.
+            {project.confidential === "lab"
+              ? "Written inside a research group’s codebase, so there’s no public source to link. Happy to talk through the design."
+              : "Built inside a company codebase, so there’s no public source to link. Happy to talk through the design."}
           </p>
         )}
       </div>
