@@ -11,6 +11,7 @@ import {
 import { fieldCaps } from "@/lib/field/gl";
 import { createGLBoard } from "@/lib/field/gl-board";
 import { motionAllowed, onMotionChange } from "@/lib/motion";
+import { onThemeChange } from "@/lib/theme";
 
 type BoardStatus =
   "lattice" | "assembling" | "live" | "settled" | "static" | "fallback";
@@ -268,7 +269,10 @@ function cssVar(el: Element, name: string, fallback: string): string {
   return v || fallback;
 }
 
-function densityOf(mode: BoardMode, source: PortraitSource | undefined): number {
+function densityOf(
+  mode: BoardMode,
+  source: PortraitSource | undefined,
+): number {
   if (mode === "text") return 1;
   return (source && SOURCES[source].density) || PORTRAIT_DENSITY;
 }
@@ -308,12 +312,21 @@ export function DotBoard({
   const figureRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
-  // The motion policy can flip mid-session (the palette's toggle, the OS
-  // setting). Each change re-runs the board effect, which tears the board
-  // down and rebuilds it under the new policy: a settled still when reduced,
-  // the fixed canvas with its pin bed when restored.
+  // The motion policy can flip mid-session (the OS setting). Each change
+  // re-runs the board effect, which tears the board down and rebuilds it
+  // under the new policy: a settled still when reduced, the fixed canvas with
+  // its pin bed when restored.
   const [motionEpoch, setMotionEpoch] = useState(0);
   useEffect(() => onMotionChange(() => setMotionEpoch((n) => n + 1)), []);
+
+  // So can the theme, and the board cannot ignore it. Every colour it draws
+  // with -- ink, sun, the unlit dot, the bone the arrival starts in -- is read
+  // from CSS ONCE, below, when the board is built. Flip to dark without this
+  // and the field keeps painting #14120e ink onto a #16140f ground: the
+  // portrait does not go dark, it goes invisible. Bumping the epoch re-runs
+  // the effect, which re-reads all four.
+  const [themeEpoch, setThemeEpoch] = useState(0);
+  useEffect(() => onThemeChange(() => setThemeEpoch((n) => n + 1)), []);
 
   const box = boxOf(mode, source);
   const density = densityOf(mode, source);
@@ -398,7 +411,10 @@ export function DotBoard({
         // quietly stops being the one anybody actually gets. In development it
         // says so, with the reason the capability probe gave.
         if (wantsGpu && process.env.NODE_ENV !== "production") {
-          console.warn("[dot-board] GPU declined:", JSON.stringify(fieldCaps()));
+          console.warn(
+            "[dot-board] GPU declined:",
+            JSON.stringify(fieldCaps()),
+          );
         }
         canvas = recycleCanvas(canvas);
         board = createBoard(canvas, field, options);
@@ -490,8 +506,7 @@ export function DotBoard({
         // dprCap still wins in both cases, so the governor can pull this back
         // on a machine that cannot hold the frame.
         const SUPERSAMPLE_MIN = 2;
-        const drawnOnce =
-          mode === "still" || mode === "afterimage" || !motion;
+        const drawnOnce = mode === "still" || mode === "afterimage" || !motion;
         const native = window.devicePixelRatio || 1;
         const dpr = Math.min(
           renderer === "gpu" || drawnOnce
@@ -1012,7 +1027,17 @@ export function DotBoard({
       printQuery.removeEventListener("change", onPrintQuery);
       stop();
     };
-  }, [mode, source, text, caption, restLabel, density, motionEpoch, gpu]);
+  }, [
+    mode,
+    source,
+    text,
+    caption,
+    restLabel,
+    density,
+    motionEpoch,
+    themeEpoch,
+    gpu,
+  ]);
 
   const decorative = alt === "";
   // The caption's resting text is in the HTML from the first frame; the

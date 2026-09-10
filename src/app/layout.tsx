@@ -8,6 +8,7 @@ import { SkipLink } from "@/components/layout/skip-link";
 import { profile, socials } from "@/content";
 import { display, mono, text } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
 import "./globals.css";
 
@@ -100,7 +101,11 @@ export default function RootLayout({
       <head>
         {/* Must run before first paint. React 19 hoists <script src> but not
             inline scripts, so <head> is written explicitly here. */}
-        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: MOTION_BOOT_SCRIPT + THEME_BOOT_SCRIPT,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLd(personSchema) }}
@@ -115,7 +120,7 @@ export default function RootLayout({
           <ViewTransition>{children}</ViewTransition>
         </main>
         <SiteFooter />
-              </body>
+      </body>
     </html>
   );
 }

@@ -750,6 +750,46 @@
   pointer-events: none;
 }
 
+/* ── The plates keep their polarity in the dark ────────────────────────────
+   A photograph does not invert when a site goes dark, and this one especially
+   must not: the field carries value as ink AREA, so on a dark ground the
+   densest passages -- his hair, the shadow under the jaw -- would print the
+   MOST bone and come out the brightest thing on the page. That is a negative,
+   not a dark theme. Checked on screen before this rule existed: his hair was
+   the brightest area of the picture.
+
+   So a board is a print, and a print is ink on paper wherever it hangs. These
+   four tokens are re-declared on the board itself, which is the element
+   dot-board.tsx reads its colours from (cssVar reads getComputedStyle of the
+   figure), so both renderers pick up the paper values without knowing a theme
+   exists. The wash behind the plate mark comes back to paper with them.
+
+   `.board` ONLY, not `.plate-mark`. The first version of this rule scoped to
+   both, and the constellation carries a plate mark: its lane names went to
+   ink on the plate ground and measured 1.02:1. A chart is not a photograph.
+   It is text and marks, it has no polarity to preserve, and it follows the
+   theme like everything else.
+
+   The arrival is deliberately NOT covered: `[data-arrival]` is on the root and
+   this is scoped to `.board`, so the plate-to-print turn still runs in bone on
+   plate for its 2.6 seconds and then settles here. A plate IS cut backwards;
+   a hung print is not. */
+:root[data-theme="dark"] .board {
+  --ink: #14120e;
+  --ink-2: #4a453c;
+  --ground-2: #f1ede6;
+  --dot-off: rgba(20, 18, 14, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .board {
+    --ink: #14120e;
+    --ink-2: #4a453c;
+    --ground-2: #f1ede6;
+    --dot-off: rgba(20, 18, 14, 0.06);
+  }
+}
+
 /* Row-wide click target without nesting <a> inside <a>. Interactive
    children opt out with `relative z-10`. */
 @utility stretch-link {
@@ -1057,7 +1097,9 @@
    measured against #16140f. Remapping tokens rather than writing dark
    overrides is what lets the header, the footer, the palette and the focus
    ring come across without any of them knowing the arrival exists. */
-:root[data-arrival="plate"] {
+:root[data-arrival="plate"],
+:root[data-theme="dark"] {
+  color-scheme: dark;
   --ground: #16140f; /* --plate */
   --ground-2: #221f18; /* --plate-2 */
   --ground-3: #2c2820;
@@ -1075,12 +1117,52 @@
   --selection-fg: #16140f;
 }
 
+/* The same remap again, for a visitor who has chosen nothing and whose
+   machine asks for dark. `:not([data-theme="light"])` is the whole point of
+   using an attribute: it lets the OS win by default and lose the moment the
+   visitor picks light explicitly. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #16140f; /* --plate */
+    --ground-2: #221f18; /* --plate-2 */
+    --ground-3: #2c2820;
+
+    --ink: #efe9dc; /* --bone,   15.21:1 */
+    --ink-2: #ada595; /* --bone-2,  7.53:1 */
+    --ink-3: #8f8878; /* --bone-3,  5.22:1 */
+
+    --line: rgba(239, 233, 220, 0.14);
+    --rule-mid: rgba(239, 233, 220, 0.3);
+    --line-strong: rgba(239, 233, 220, 0.45);
+    --dot-off: rgba(239, 233, 220, 0.08);
+
+    --sun: #e2673c; /* the screen vermilion: 5.47:1 here, where #a8321b is 2.2 */
+    --selection-fg: #16140f;
+  }
+}
+
 /* The sheet, still warming. --ground is registered in §3, so this is a settle
    and not a second jump. It has to finish inside the arrival's own window --
    dot-board drops the attribute at 2600 ms and the animation goes with it --
    so it runs 1576→2576 ms, with 24 ms of slack. */
 :root[data-arrival="sheet"] {
   animation: warm-the-sheet 1s var(--ease-out) both;
+}
+
+/* Not in the dark. The arrival is a plate becoming paper, and warm-the-sheet
+   is the moment the ground turns; in a dark theme there is no paper to turn
+   into, so the pull still happens on the field and the ground stays plate.
+   Without this the page would spend a second animating to white and then snap
+   back to the plate when the attribute is dropped. */
+:root[data-theme="dark"][data-arrival="sheet"] {
+  animation: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-arrival="sheet"] {
+    animation: none;
+  }
 }
 
 @keyframes warm-the-sheet {

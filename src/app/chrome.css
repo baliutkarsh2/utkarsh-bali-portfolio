@@ -194,6 +194,77 @@
     display: none;
   }
 
+  /* ── The theme control ─────────────────────────────────────────────────
+     A hairline chip carrying one mark, in the same grammar as the rest of the
+     header's data. The mark IS the state: filled is the plate, hollow is the
+     paper, half is "follow the machine" — the filled/hollow/half vocabulary
+     the constellation already uses, so it is not a new thing to learn. No sun
+     and no crescent: this direction has one radius and it belongs to the
+     plate mark, so the mark here is a square. */
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-1) var(--ease-snap),
+      color var(--dur-1) var(--ease-snap);
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--rule-mid);
+    color: var(--ink);
+  }
+
+  /* Holds the width before the control mounts, so the header row never
+     reflows when it arrives. */
+  .theme-toggle-slot {
+    display: inline-block;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .theme-mark {
+    width: 9px;
+    height: 9px;
+    border: 1px solid currentColor;
+    background: transparent;
+  }
+
+  /* Dark chosen: the plate, inked solid. */
+  .theme-toggle[data-choice="dark"] .theme-mark {
+    background: currentColor;
+  }
+
+  /* System: half the square, which is the chart's own "ongoing" mark. */
+  .theme-toggle[data-choice="system"] .theme-mark {
+    background: linear-gradient(
+      to right,
+      currentColor 0 50%,
+      transparent 50% 100%
+    );
+  }
+
+  /* A finger-sized target that is not a finger-sized box: the chip keeps its
+     28px so the header row does not grow, and the hit area is a pseudo. */
+  @media (pointer: coarse) {
+    .theme-toggle {
+      position: relative;
+    }
+    .theme-toggle::after {
+      content: "";
+      position: absolute;
+      inset: -0.5rem;
+    }
+  }
+
   .menu-button,
   .menu-close {
     display: inline-flex;

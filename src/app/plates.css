@@ -160,9 +160,15 @@
    `.toc-year, .toc-body, .toc-fig` until the figure column was deleted, and
    the deletion matched `.toc-fig` inside the selector LIST and took the whole
    rule with it -- so the fill, which has no z-index of its own, painted over
-   every row it was meant to sit behind. Hovering a project blanked it. */
+   every row it was meant to sit behind. Hovering a project blanked it.
+
+   `.toc-device` is in the list now and never was: it is a plain div, so the
+   positioned ::after painted over the engraved plate even while the text was
+   correct. The first fix left the picture half of every row still vanishing
+   into the fill. */
 .toc-year,
-.toc-body {
+.toc-body,
+.toc-device {
   position: relative;
   z-index: 1;
 }

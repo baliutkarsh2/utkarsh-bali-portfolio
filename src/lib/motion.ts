@@ -1,7 +1,7 @@
 /**
  * Motion policy.
  *
- * There is one theme and no theme toggle, but motion has two switches:
+ * Motion has two switches (the theme has its own module, src/lib/theme.ts):
  * the operating system's reduced-motion setting and the palette's
  * "Reduce motion" action. Both are read here and nowhere else in JS; CSS
  * reads the same two signals through the `motion-ok` custom variant.
@@ -29,8 +29,6 @@ const REDUCE_QUERY = "(prefers-reduced-motion: reduce)";
  */
 export const MOTION_BOOT_SCRIPT =
   "document.documentElement.classList.add('js');" +
-  // The palette chip shows ⌘ on a Mac and Ctrl everywhere else (chrome.css).
-  "if(/Mac|iP(hone|ad|od)/.test(navigator.platform||''))document.documentElement.dataset.mac='';" +
   `try{if(localStorage.getItem('${MOTION_STORAGE_KEY}')==='reduce')document.documentElement.dataset.motion='reduce'}catch(e){}`;
 
 function root(): HTMLElement | null {
@@ -81,7 +79,9 @@ export function setMotion(mode: MotionMode): void {
  * devtools). Returns the unsubscribe function. The board uses this to stop
  * its loop mid-session; scroll progress uses it to detach its listener.
  */
-export function onMotionChange(listener: (allowed: boolean) => void): () => void {
+export function onMotionChange(
+  listener: (allowed: boolean) => void,
+): () => void {
   const html = root();
   if (!html) return () => {};
 
@@ -90,7 +90,10 @@ export function onMotionChange(listener: (allowed: boolean) => void): () => void
   media.addEventListener("change", notify);
 
   const observer = new MutationObserver(notify);
-  observer.observe(html, { attributes: true, attributeFilter: ["data-motion"] });
+  observer.observe(html, {
+    attributes: true,
+    attributeFilter: ["data-motion"],
+  });
 
   return () => {
     media.removeEventListener("change", notify);

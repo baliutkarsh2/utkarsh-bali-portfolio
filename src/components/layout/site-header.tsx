@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { navItems, profile, socials } from "@/content/profile";
 import { NineDotMark } from "@/components/ui/nine-dot-mark";
 import { SectionSpy } from "@/components/interactive/section-spy";
+import { ThemeToggle } from "@/components/interactive/theme-toggle";
 
 /** Scroll distance after which the bottom hairline fades in. */
 const SCROLL_THRESHOLD = 8;
@@ -150,11 +151,17 @@ export function SiteHeader() {
           {/* Written by the SectionSpy. Hidden from assistive tech: it echoes
               the heading in view, which a screen reader already has, and it
               changes on scroll, which must never be announced. */}
-          <span id="section-readout" className="readout meta" aria-hidden="true" />
+          <span
+            id="section-readout"
+            className="readout meta"
+            aria-hidden="true"
+          />
           {/* The spy renders nothing. It lives here, next to the element it
               writes, because the header is the one persistent client
               component; it re-arms itself on every route. */}
           <SectionSpy />
+
+          <ThemeToggle />
 
           <button
             type="button"
@@ -177,7 +184,11 @@ export function SiteHeader() {
       >
         <div className="menu-bar shell">
           {homeLink}
-          <button type="button" onClick={closeMenu} className="menu-close meta tap">
+          <button
+            type="button"
+            onClick={closeMenu}
+            className="menu-close meta tap"
+          >
             Close
           </button>
         </div>
@@ -210,11 +221,15 @@ export function SiteHeader() {
               <li key={social.kind}>
                 <a
                   href={social.href}
-                  {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  {...(external
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
                   className="menu-social tap"
                 >
                   {social.label}
-                  {external && <span className="sr-only"> (opens in a new tab)</span>}
+                  {external && (
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  )}
                 </a>
               </li>
             );
