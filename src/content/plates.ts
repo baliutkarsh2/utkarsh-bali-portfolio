@@ -78,8 +78,8 @@ const DEVICES: PlateSpec[] = [
     subject: "A requirement through five agents, cut five times by a human",
     alt:
       "An engraved diagram: a written requirement enters a chain of five specialised agents, " +
-      "and the chain is broken five times by holes of bare paper — one for each human " +
-      "checkpoint — before it leaves as three merged pull requests.",
+      "and the chain is broken five times by holes of bare paper, one for each human " +
+      "checkpoint, before it leaves as three merged pull requests.",
     w: 48,
     h: 60,
     count: 738,
@@ -92,7 +92,7 @@ const DEVICES: PlateSpec[] = [
     field: "deviceCheckpoint",
     project: "checkpoint",
     title: "Checkpoint",
-    subject: "Five adversarial suites, thickening; one dies on turn three",
+    subject: "Five adversarial suites, thickening. One dies on turn three",
     alt:
       "An engraved diagram: five columns of adversarial test cases growing heavier as the " +
       "turns go deeper. The fourth column stops after three rows, and the verdict rule at " +
@@ -130,7 +130,7 @@ const DEVICES: PlateSpec[] = [
     alt:
       "An engraved dendrogram of a depth-first traversal: every node is a screen and every " +
       "drop is a tap. The leftmost path is inked heavily all the way to the foot of the " +
-      "plate; two branches end in stubs rather than screens.",
+      "plate. Two branches end in stubs rather than screens.",
     w: 48,
     h: 60,
     count: 515,
@@ -146,7 +146,7 @@ const DEVICES: PlateSpec[] = [
     subject: "One orchestrator, forty-five tools, three routes taken",
     alt:
       "An engraved diagram: one orchestrator fanning to fifteen routes, each carrying three " +
-      "tools or sub-agents — forty-five in all — over the three surfaces they live behind. " +
+      "tools or sub-agents, forty-five in all, over the three surfaces they live behind. " +
       "Three routes are inked heavily and twelve are hairlines.",
     w: 48,
     h: 60,
@@ -162,9 +162,9 @@ const DEVICES: PlateSpec[] = [
     title: "LLM Multi-Agent QA System",
     subject: "Four agents in lockstep, sixteen steps, no diagonals",
     alt:
-      "An engraved diagram: four lanes — planner, executor, verifier, supervisor — and a " +
+      "An engraved diagram: four lanes, planner, executor, verifier and supervisor, with a " +
       "token visiting them in that order for sixteen steps. Every connector is a right " +
-      "angle; the long return leg from the supervisor to the planner crosses the plate " +
+      "angle. The long return leg from the supervisor to the planner crosses the plate " +
       "four times.",
     w: 48,
     h: 60,
@@ -198,7 +198,7 @@ const DEVICES: PlateSpec[] = [
     subject: "One plate, twenty-two impressions",
     alt:
       "An engraved diagram: a bevelled copper plate above the bed of a press, and below it " +
-      "twenty-two impressions pulled from it — one for each country the app reached — each " +
+      "twenty-two impressions pulled from it, one for each country the app reached, each " +
       "holding the plate's own proportion at a smaller size as the edition goes out. One " +
       "maker, many hands.",
     w: 48,
@@ -217,7 +217,8 @@ const OTHERS: PlateSpec[] = [
     field: "clinicalVoice",
     project: "clinical-ai-assistant",
     title: "The voice-first home screen",
-    subject: "A white app, engraved: bare paper with the type as a scatter of ink",
+    subject:
+      "A white app, engraved: bare paper with the type as a scatter of ink",
     alt:
       "The clinical assistant's home screen, engraved as a dot field: the prompt “How can " +
       "I help you today?”, the microphone as the primary control, and shortcuts to add a " +
@@ -269,7 +270,7 @@ const OTHERS: PlateSpec[] = [
     alt:
       "A register strip: seven quarters from the last months of 2024 to the middle of 2026, " +
       "each band carrying ink in proportion to the number of projects begun in it. The " +
-      "first quarter of 2025 is bare paper — a hole in the rule.",
+      "first quarter of 2025 is bare paper, a hole in the rule.",
     w: 240,
     h: 8,
     count: 1640,
@@ -281,7 +282,7 @@ const OTHERS: PlateSpec[] = [
     id: "sky",
     field: "skyField",
     title: "The sky over West Lafayette",
-    subject: "11 July 2025, 23:00 — 2,307 stars",
+    subject: "11 July 2025 at 23:00, 2,307 stars",
     alt:
       "The night sky over West Lafayette at eleven o'clock on the eleventh of July 2025, " +
       "engraved as a dot field: a solid disc of ink with 2,307 stars showing through as " +
@@ -307,7 +308,9 @@ export const plateById: ReadonlyMap<Plate["id"], Plate> = new Map(
 
 /** The device for a case study, where it has one. */
 export function deviceOf(slug: string): Plate | undefined {
-  return plates.find((plate) => plate.project === slug && plate.id.startsWith("device-"));
+  return plates.find(
+    (plate) => plate.project === slug && plate.id.startsWith("device-"),
+  );
 }
 
 /**

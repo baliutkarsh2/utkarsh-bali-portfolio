@@ -427,9 +427,14 @@
     border-color: var(--ink);
     color: var(--ground);
   }
+  /* --ink-2, not #ffffff. A primary button is --ink with a --ground label, so
+     hovering the box to white put near-white text on white: measured 1.04:1,
+     the button vanishing under the cursor. White was right when the ground was
+     dark and this was a light chip getting brighter; on paper the lift has to
+     go the other way, into the ink. --ground on --ink-2 is 8.15:1. */
   .btn[data-variant="primary"]:hover {
-    background: #ffffff;
-    border-color: #ffffff;
+    background: var(--ink-2);
+    border-color: var(--ink-2);
   }
   .btn[data-variant="primary"]:active {
     transform: scale(0.985);

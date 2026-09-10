@@ -156,6 +156,17 @@
   opacity: 1;
 }
 
+/* The row's content sits above its own hover fill. This rule read
+   `.toc-year, .toc-body, .toc-fig` until the figure column was deleted, and
+   the deletion matched `.toc-fig` inside the selector LIST and took the whole
+   rule with it -- so the fill, which has no z-index of its own, painted over
+   every row it was meant to sit behind. Hovering a project blanked it. */
+.toc-year,
+.toc-body {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── The quarterly rule ───────────────────────────────────────────────────
    A band of ink at the page pitch under the standfirst, ten cells tall and
    the full measure wide, whose local density is the number of projects that

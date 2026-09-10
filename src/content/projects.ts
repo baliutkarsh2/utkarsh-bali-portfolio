@@ -6,7 +6,7 @@ export const projects: Project[] = [
     name: "Recurly Agent Platform",
     eyebrow: "Agent infrastructure",
     tagline:
-      "Takes a product requirement and turns it into merged pull requests. Five agents do the work; a human signs off five times.",
+      "Takes a product requirement and turns it into merged pull requests. Five agents do the work. A human signs off five times.",
     year: "2026",
     sortDate: "2026-05-01",
     status: "shipped",
@@ -18,13 +18,13 @@ export const projects: Project[] = [
     highlight:
       "Claude Agent SDK, isolated Kubernetes Jobs, five human checkpoints",
     problem:
-      "A written requirement becomes a merged pull request through a chain of handoffs: someone reads the document, someone splits it into work, someone writes the code, someone answers the review. Most of the elapsed time is not any of those steps. It is the waiting between them. One agent handed the whole chain does not fix that either — it returns a diff large enough that nobody wants to be the person who reviews it.",
+      "A written requirement becomes a merged pull request through a chain of handoffs: someone reads the document, someone splits it into work, someone writes the code, someone answers the review. Most of the elapsed time is not any of those steps. It is the waiting between them. One agent handed the whole chain does not fix it either. It returns a diff large enough that nobody wants to review it.",
     story:
       "I spent the summer at Recurly building internal agent infrastructure for the engineering and go-to-market teams, reporting into the platform group. The through-line across all three things I shipped is the same: put an agent on the part of the work that is a handoff, and leave the judgement with a person.",
     built:
-      "Three things shipped between May and August, all of them agent infrastructure for teams inside the company rather than anything a customer sees.",
+      "Three things shipped between May and August, none of them customer-facing.",
     architecture: [
-      "A product development lifecycle platform: requirement to merged pull requests through specialized Claude agents — a planner, a decomposer, a Sonnet and Opus coder pair, and a pull request responder — each running as an isolated Kubernetes Job through the Agent SDK, with five human checkpoints along the way.",
+      "A product development lifecycle platform. A planner, a decomposer, a Sonnet and Opus coder pair, and a pull request responder, each an isolated Kubernetes Job through the Agent SDK.",
       "An SDR assistant in Slack: async Python with three-tier Claude routing over BigQuery, 6sense, ZoomInfo and Salesforce, returning source-cited account briefs and outreach drafts.",
       "A prospect report card pipeline, n8n to FastAPI on Cloud Run to Claude Opus, that turns an inbound form fill into a personalized PDF analysis of that prospect’s subscription business and emails it back.",
     ],
@@ -37,7 +37,7 @@ export const projects: Project[] = [
       "Cloud Run",
     ],
     impact:
-      "About three times faster from a written requirement to a merged pull request, with all five human checkpoints still in place: the time came out of the waits between handoffs, not out of the review. The Slack assistant answers with a source-cited brief in about twenty-five seconds, which collapses hours of prospecting into one command.",
+      "The time came out of the waits between handoffs, not out of the review, so all five checkpoints stayed. The Slack assistant answers with a source-cited brief in about twenty-five seconds.",
     links: [],
     confidential: "company",
   },
@@ -60,9 +60,9 @@ export const projects: Project[] = [
     problem:
       "Teams shipping LLM agents have unit tests for their code and almost nothing for the agent. The failures that matter are not exceptions. They are a tool called with the wrong argument, a policy boundary quietly crossed, a multi-turn conversation that drifts. None of that shows up in a green build.",
     story:
-      "I co-founded Checkpoint with Ayushman Gupta and Aaditya Gaur and led engineering as CTO. The bet was that agents need a pre-production failure surface: somewhere to break the loop on purpose, before a user does it by accident. I run it at lower intensity while I finish at Purdue, but the product is live in private beta and the thesis hasn’t changed.",
+      "I co-founded Checkpoint with Ayushman Gupta and Aaditya Gaur and led engineering as CTO. The bet was that agents need a pre-production failure surface, somewhere to break the loop on purpose before a user does it by accident.",
     built:
-      "Engineers submit an agent config: prompts, tools, schemas. Checkpoint generates adversarial multi-turn test suites across five categories, runs them against stateful mocked tools in a sandbox, and scores the transcripts with an LLM judge working from a structured rubric rather than string matching.",
+      "Engineers submit an agent config: prompts, tools, schemas. Checkpoint does the rest.",
     architecture: [
       "Test generation across happy paths, edge cases, adversarial prompts, policy boundaries, and ambiguous inputs.",
       "Synthetic environments with mocked tool calls that hold state across turns, so multi-step failures are reproducible.",
@@ -70,11 +70,11 @@ export const projects: Project[] = [
     ],
     stack: ["Next.js", "Python", "FastAPI", "OpenAI API", "AWS"],
     impact:
-      "Y Combinator told us our Summer 2026 application ranked in the top 10% of the applicant pool. We didn’t get an interview. The product is live in private beta, and the sandbox and test-generation work is still the clearest version of a thesis I hold: agents need somewhere to fail on purpose.",
+      "YC ranked our Summer 2026 application in the top 10% and then didn’t interview us. The product is live in private beta, and the thesis still holds. Agents need somewhere to fail on purpose.",
     learnings: [
       "Adversarial generation is the easy half. Deciding what counts as a failure, and making that judgment reproducible, is the actual product.",
       "Stateful tool mocking mattered more than model choice. Most interesting agent bugs only appear on turn three or later.",
-      "A strong application signal is not a business. Ranking well told us the problem was legible; it didn’t tell us anyone would pay yet.",
+      "A strong application signal is not a business. Ranking well told us the problem was legible. It didn’t tell us anyone would pay.",
     ],
     links: [
       {
@@ -104,15 +104,15 @@ export const projects: Project[] = [
     story:
       "At QualGent I architected App Crawler, reporting to the CTO. The hard part was never the crawling. It was keeping state, recovery, and scale sane while running across messy mobile flows that break in ways nobody designed for.",
     built:
-      "A GKE-distributed Python system that indexes Android apps into an org-wide knowledge base, using a GPT-4o DFS agent with Set-of-Marks and uiautomator2 to traverse UIs via ADB and populate a Vertex AI RAG corpus.",
+      "A distributed Python system that indexes Android apps into a knowledge base other agents read from.",
     architecture: [
       "GPT-4o depth-first agent using Set-of-Marks prompting and uiautomator2 to traverse app UIs through ADB.",
       "Event-driven backend: a Supabase-queue watcher spawning per-app Kubernetes Jobs, an AAB to APK converter, and remote emulator leasing from a managed GCE fleet.",
-      "Self-healing CronJobs holding a sub-1% failure rate at scale, with the extracted state landing in a Vertex AI RAG corpus.",
+      "Self-healing CronJobs, with the extracted state landing in a Vertex AI RAG corpus.",
     ],
     stack: ["Python", "GKE", "Kubernetes", "GCP", "Vertex AI", "GPT-4o", "ADB"],
     impact:
-      "Held a sub-1% failure rate at production scale and became core infrastructure inside QualGent, feeding the knowledge base that the company’s QA copilot reads from.",
+      "Became core infrastructure inside QualGent, feeding the knowledge base its QA copilot reads from.",
     links: [],
     confidential: "company",
   },
@@ -134,9 +134,9 @@ export const projects: Project[] = [
     problem:
       "QA teams had capability scattered across a dozen surfaces: test history in one place, tickets in another, app knowledge in a third. Every question meant stitching them together by hand.",
     story:
-      "I built QualGent’s flagship assistant: one orchestrator that could reach everything. The interesting engineering was in routing, not generation. With 45+ tools available, picking the right three is the whole problem.",
+      "I built QualGent’s flagship assistant. The interesting engineering was in routing, not generation: with that many tools available, picking the right three is the whole problem.",
     built:
-      "An enterprise QA copilot built as a Gemini 2.5 Pro orchestrator on Google ADK, routing across 45+ tools and sub-agents and deployed on Vertex AI Agent Engine through a gated Cloud Build pipeline.",
+      "An enterprise QA copilot: one orchestrator in front of everything a QA engineer needs to ask about.",
     architecture: [
       "Gemini 2.5 Pro orchestrator on Google ADK, routing across 45+ tools and sub-agents with shared state management.",
       "Tool surface spanning RAG retrieval, an MCP Postgres/pgvector Toolbox, and Jira and Linear through OAuth.",
@@ -151,7 +151,7 @@ export const projects: Project[] = [
       "Cloud Build",
     ],
     impact:
-      "Unified 45+ tools and sub-agents behind one interface, becoming the primary way QA engineers at QualGent queried app knowledge, test history, and issue trackers.",
+      "Became the primary way QA engineers at QualGent queried app knowledge, test history and issue trackers.",
     links: [],
     confidential: "company",
   },
@@ -173,17 +173,16 @@ export const projects: Project[] = [
     problem:
       "A prediction score tells you what may happen to a patient. It rarely tells you why, in terms anyone can check.",
     story:
-      "CLIP-H — Clinical Latent Interpretation and Prediction via Hypotheses — is work with Purdue and Harvard Business School faculty, currently under review as a NeurIPS 2026 workshop submission. It is described here only at the level the paper’s title and abstract already state; the method and the results stay out of public writing until that review is finished.",
+      "CLIP-H stands for Clinical Latent Interpretation and Prediction via Hypotheses. It is work with Purdue and Harvard Business School faculty, under review as a NeurIPS 2026 workshop submission, so it is described here only at the level the title and abstract already state.",
     built:
-      "A framework that turns patient data into plain-language clinical hypotheses, discards the ones that do not hold up, and uses the surviving set as the feature space the prediction is made from — so a prediction decomposes into named, auditable clinical concepts.",
+      "A framework that turns patient data into plain-language clinical hypotheses, discards the ones that do not hold up, and predicts from what survives.",
     architecture: [
       "Find candidate concepts in the patient data.",
       "State each in plain language and drop the ones that fail checking.",
       "Predict from what survives, so every prediction is traceable to named hypotheses.",
     ],
     stack: ["Python", "PyTorch", "MIMIC-IV", "LLMs"],
-    impact:
-      "Under review as a NeurIPS 2026 workshop submission with Purdue and Harvard Business School faculty. Numbers are deliberately not published here while it is under review.",
+    impact: "Results are held back until the review is finished.",
     // Written in a Purdue research group's codebase, so there is nothing of
     // mine to publish. The repo this used to link was not the work.
     confidential: "lab",
@@ -208,7 +207,7 @@ export const projects: Project[] = [
     story:
       "I built a multi-agent QA system for Android flows. One agent plans, one executes, one checks state, and one handles recovery when the app does something unexpected. Splitting those roles mattered more than making any single one smarter.",
     built:
-      "An agentic ADB pipeline that converts natural language into Android actions using episodic memory, with a planner, executor, verifier, and supervisor coordinating over a message bus.",
+      "An agentic ADB pipeline that turns a spoken goal into Android actions, with four agents coordinating over a message bus.",
     architecture: [
       "Planner agent decomposes natural-language test goals into executable UI steps, replanning when the app diverges.",
       "Executor drives Android Debug Bridge with GPT-4o and OpenAI Vision reading the screen, while the verifier checks state transitions.",
@@ -223,7 +222,7 @@ export const projects: Project[] = [
       "Android SDK",
     ],
     impact:
-      "Achieved more than 99% deterministic execution across complex UI flows in internal benchmarks.",
+      "The same instruction produces the same run, which is what makes a flaky UI testable at all.",
     cover: {
       kind: "image",
       src: "/projects/qa-architecture.png",
@@ -264,15 +263,15 @@ export const projects: Project[] = [
     story:
       "I built a clinical assistant with hard privacy constraints: nothing leaves the device that doesn’t have to. Local speech-to-text, self-hosted models, and an interface a nurse could use one-handed while doing something else.",
     built:
-      "A Flutter and TypeScript clinical assistant tested across Indiana hospitals, running self-hosted LLaMA 3.2 and an on-device, HIPAA-compliant speech-to-text pipeline.",
+      "A voice-first clinical assistant a nurse can use one-handed, mid-shift.",
     architecture: [
       "Flutter and TypeScript application layer built around voice-first clinical workflows: tasks, reminders, and patient vitals.",
       "Self-hosted LLaMA 3.2 with a zero-API, on-device speech pipeline, so protected health information never leaves the device.",
-      "Deployed and tested across Indiana hospitals, then presented at the Purdue Spring Research Conference.",
+      "Deployed and tested across Indiana hospitals.",
     ],
     stack: ["Flutter", "TypeScript", "LLaMA 3.2", "PyTorch", "On-device STT"],
     impact:
-      "Cut nurses’ documentation overhead by roughly 40% in hospital testing, and was presented at the Purdue Spring Research Conference.",
+      "Time nurses got back at the bedside instead of at a keyboard. Presented at the Purdue Spring Research Conference.",
     cover: {
       kind: "image",
       src: "/projects/clinical-cover.png",
@@ -332,7 +331,7 @@ export const projects: Project[] = [
     problem:
       "I wanted to ship an AI product that real people would use, not just another weekend demo.",
     story:
-      "WalleX was my first real consumer app. I owned the mobile UX, model integration, analytics, deployment, and monetization, then watched real users find it in countries I had never been to. It taught me more about product than any project before it.",
+      "My first real consumer app. I owned all of it, from the mobile UX to monetization, then watched people find it in countries I had never been to. It taught me more about product than anything before it.",
     built:
       "A cross-platform app with nine open-source text-to-image models, Firebase-backed analytics and remote config, and AdMob monetization.",
     architecture: [
@@ -342,7 +341,7 @@ export const projects: Project[] = [
     ],
     stack: ["Flutter", "Python", "Hugging Face", "Firebase", "GCP", "AdMob"],
     impact:
-      "Grew to 3,000+ users across 22+ countries, with full ownership from product through deployment and monetization.",
+      "Real users, in places I had no connection to, using something I made on my own.",
     links: [
       {
         label: "Source",

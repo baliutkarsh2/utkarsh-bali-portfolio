@@ -603,9 +603,9 @@ export function Constellation({
         <figcaption className={cn("cn-caption", bleed && "shell")}>
           <span className="caption measure block text-ink-2">
             {sentenceCase(word(inDateOrder.length))} projects, on the month each
-            one landed. A band is a job; a mark is a project. Filled is shipped,
-            half-filled is ongoing, open is research, and the vermilion rule is
-            today.{" "}
+            one landed. A band is a job and a mark is a project. Filled is
+            shipped, half-filled is ongoing, open is research, and the vermilion
+            rule is today.{" "}
             {bleed
               ? "Every mark is a link."
               : "The numbered list below is the key."}
