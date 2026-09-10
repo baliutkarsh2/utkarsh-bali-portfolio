@@ -356,7 +356,7 @@ export const projects: Project[] = [
     links: [
       {
         label: "Source",
-        href: "https://github.com/baliutkarsh2/wallex",
+        href: "https://github.com/baliutkarsh2/wallpaper_App_free",
         kind: "repo",
       },
     ],
