@@ -34,64 +34,66 @@ export function Contact({ index }: { index?: string }) {
       aria-labelledby="contact-title"
       data-section-index={sectionIndex}
       data-section-title="Contact"
-      className="contact shell section-y"
+      className="contact-band section-y"
     >
-      <div className="section-head contact-head">
-        <h2
-          id="contact-title"
-          className="text-display-m font-medium text-balance text-ink"
-        >
-          {TITLE}
-        </h2>
-      </div>
+      <div className="contact shell">
+        <div className="section-head contact-head">
+          <h2
+            id="contact-title"
+            className="text-display-m font-medium text-balance text-ink"
+          >
+            {TITLE}
+          </h2>
+        </div>
 
-      <div className="contact-body">
-        <CopyEmail email={profile.email} />
+        <div className="contact-body">
+          <CopyEmail email={profile.email} />
 
-        <ul
-          className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-1 text-small"
-          aria-label="Elsewhere"
-        >
-          {socials
-            .filter((social) => social.kind !== "email")
-            .map((social) => (
-              <li key={social.kind}>
-                <a
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="dot-underline tap text-ink-2 hover:text-ink"
-                >
-                  {social.label}
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </a>
-              </li>
-            ))}
-        </ul>
+          <ul
+            className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-1 text-small"
+            aria-label="Elsewhere"
+          >
+            {socials
+              .filter((social) => social.kind !== "email")
+              .map((social) => (
+                <li key={social.kind}>
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dot-underline tap text-ink-2 hover:text-ink"
+                  >
+                    {social.label}
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </li>
+              ))}
+          </ul>
 
-        {essay && (
-          <p className="mt-8 text-small text-ink-2">
-            Also{" "}
-            <a
-              href={essay.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="dot-underline tap text-ink"
-            >
-              an essay
-              <span className="sr-only"> (opens in a new tab)</span>
-            </a>
-            <ArrowUpRight
-              className="inline-block size-[0.9em] align-[-0.1em] text-ink-3"
-              aria-hidden="true"
-            />{" "}
-            on {essay.external?.publisher ?? "the web"}: {essay.title}.
-          </p>
-        )}
-      </div>
+          {essay && (
+            <p className="mt-8 text-small text-ink-2">
+              Also{" "}
+              <a
+                href={essay.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dot-underline tap text-ink"
+              >
+                an essay
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+              <ArrowUpRight
+                className="inline-block size-[0.9em] align-[-0.1em] text-ink-3"
+                aria-hidden="true"
+              />{" "}
+              on {essay.external?.publisher ?? "the web"}: {essay.title}.
+            </p>
+          )}
+        </div>
 
-      <div className="contact-board">
-        <DotBoard mode="afterimage" source="contact" alt="" />
+        <div className="contact-board">
+          <DotBoard mode="afterimage" source="contact" alt="" />
+        </div>
       </div>
     </section>
   );

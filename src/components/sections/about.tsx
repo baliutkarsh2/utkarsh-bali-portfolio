@@ -1,36 +1,32 @@
 /**
- * The head of /about, and now only the head.
+ * The masthead of /about.
  *
- * It used to carry a lead in display-s, a spec list of Education / At Purdue /
- * GPA / Based in, and the portrait in `still` mode on a rail — a three-item
- * grid over twelve columns. All three are gone at Utkarsh's call. The facts in
- * the spec list are either said better elsewhere (the degree and the dates are
- * the first and last lines of the story on the home page; the town is in the
- * footer) or are the kind of number a CV carries and a page does not need to
- * lead with. The portrait is on the home page, where meeting it once is the
- * point.
+ * It used to be a `section` in the shared grammar: a hairline, then the h1,
+ * then the section's own bottom padding. With the lead, the spec list and the
+ * portrait all removed there was nothing under the heading, so the page opened
+ * with a ruled box containing one word and about a hundred pixels of bare
+ * paper. A section with no body reads as unfinished rather than as spare.
  *
- * What is left is the page's h1 in the same grammar as every other section
- * head — hairline, title — carrying the data attributes the header's
- * SectionSpy reads, and `section-first` for the fixed header's clearance.
+ * So it is a masthead instead, in the same shape /projects and /writing
+ * already use: no rule above the title, the page's own top padding clearing
+ * the fixed header, and the first real section following directly. The data
+ * attributes stay because the header's SectionSpy reads them.
  */
 export function About() {
   return (
-    <section
+    <header
       id="about"
       aria-labelledby="about-title"
       data-section-index="01"
       data-section-title="About"
-      className="section section-first shell"
+      className="shell pt-20 pb-8 md:pt-24 md:pb-10"
     >
-      <div className="section-head">
-        <h1
-          id="about-title"
-          className="text-display-l font-medium text-balance text-ink"
-        >
-          About
-        </h1>
-      </div>
-    </section>
+      <h1
+        id="about-title"
+        className="text-display-l font-medium text-balance text-ink"
+      >
+        About
+      </h1>
+    </header>
   );
 }

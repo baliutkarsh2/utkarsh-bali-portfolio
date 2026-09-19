@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { Button } from "@/components/ui/button";
+import { Story } from "@/components/sections/story";
 import { profile } from "@/content";
 import { portrait } from "@/content/portrait";
 
@@ -112,6 +113,8 @@ export function Hero() {
             </Button>
           )}
         </div>
+
+        <Story className="hero-story" />
       </div>
     </section>
   );

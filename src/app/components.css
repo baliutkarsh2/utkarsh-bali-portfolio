@@ -268,6 +268,17 @@
     padding-block: var(--space-8) 0;
   }
 
+  /* In the hero it is a column, not a section: no top padding of its own (the
+     actions above already set the gap) and a measure that holds twelve lines
+     against a 576px plate without either column running past the other. */
+  .hero-story {
+    padding-block: var(--space-6) 0;
+  }
+
+  .hero-story .story-list {
+    max-width: 52ch;
+  }
+
   .story-list {
     margin: 0;
     padding: 0;
@@ -984,13 +995,6 @@
    primitives above: tokens only, nothing dotted off the pitch, no word moves.
    ───────────────────────────────────────────────────────────────────────── */
 @layer components {
-  /* A page's first section: its head carries the h1 in the Section grammar,
-     and its top padding also clears the fixed 3.5rem header. Used in place of
-     the `section-y` utility, which would outrank a padding rule in this layer. */
-  .section-first {
-    padding-block: calc(3.5rem + var(--space-6)) var(--section-y);
-  }
-
   /* A Section without a rail whose body is rows or columns rather than prose
      (Beliefs, Toolkit, Off hours, Recognition): the copy runs the full shell,
      so three columns have room and a row's hover fill reaches both edges. */
@@ -1217,6 +1221,28 @@
         pseudo-element spanning every column) rather than a border on the
         section, whose border would run through the shell padding. Below
         64rem there is no rail and no board. ── */
+  /* ── The close, as a tinted panel ──────────────────────────────────────
+     Every page was one ground from the masthead to the footer: paper, with
+     black on it, and the only tonal events were the plate marks. A printed
+     sheet does not work that way -- it carries panels of tint, and the last
+     block before the trim is exactly where one belongs. The band bleeds by
+     the ABSENCE of `shell`, the same way the constellation does, rather than
+     by 100vw, which would count the scrollbar and open a horizontal scroll.
+     --ground-2 is the wash already used behind every plate, so this is the
+     palette's own second ground rather than a new value. */
+  /* The footer carries the address because every interior route ends there
+     and has no close of its own. The home page has both, 350px apart, so the
+     email and its copy control were printed twice on one screen. Where the
+     close exists, the footer's copy stands down. */
+  body:has(.contact-band) .footer-address {
+    display: none;
+  }
+
+  .contact-band {
+    background: var(--ground-2);
+    border-top: 1px solid var(--line);
+  }
+
   .contact {
     display: grid;
     grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
@@ -1253,8 +1279,13 @@
     .contact-body {
       grid-column: 1 / span 5;
     }
+    /* `end` here used to drop the address to the foot of a row whose height
+       is the ghost's, which left about 200px of nothing under the title. It
+       only read as deliberate while the close sat on the same paper as the
+       rest of the page; inside a tinted panel the same space reads as a hole
+       in the panel. The address sits under its heading. */
     .contact-body {
-      align-self: end;
+      align-self: start;
     }
     .contact-board {
       display: block;

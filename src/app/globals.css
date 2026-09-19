@@ -369,6 +369,13 @@
    ───────────────────────────────────────────────────────────── */
 @layer base {
   html {
+    /* Reserve the scrollbar's track whether or not this page needs one. The
+       shell is centred, so a page short enough not to scroll centred itself
+       in 1440 instead of 1425 and every column on it sat 8px to the right of
+       the same column on every other page: /writing's title started at 88
+       where /projects' started at 80, and navigating between them shifted the
+       type sideways. */
+    scrollbar-gutter: stable;
     background: var(--ground);
     color-scheme: dark;
     scroll-padding-top: 5rem;

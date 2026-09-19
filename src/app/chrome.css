@@ -145,8 +145,16 @@
   }
 
   /* The active-route LED. It lives in the link's left padding so the label
-     does not move between routes. 4px, --ink (the page's one --sun element
-     belongs to the page, never to the chrome), never animates. */
+     does not move between routes. 4px, never animates.
+
+     --sun, and this reverses a decision recorded here: the note used to read
+     "the page's one --sun element belongs to the page, never to the chrome".
+     That is a stricter rule than the palette's own licence, which grants the
+     second ink to "the register mark on a current item" -- and this dot is
+     exactly that. It is reversed deliberately, because the consequence was
+     that /projects and /writing carried no colour at all: on most screens the
+     site's only hue was never on screen. Four pixels marking where you are is
+     the cheapest possible place to spend it. */
   .nav-led {
     position: absolute;
     left: 0.125rem;
@@ -155,7 +163,7 @@
     height: 4px;
     margin-top: -2px;
     border-radius: 50%;
-    background: var(--ink);
+    background: var(--sun);
   }
 
   /* Stretched to its track, not sized by its content: `justify-self: end`
