@@ -111,6 +111,14 @@
     border-bottom: 1px solid var(--line);
   }
 
+  /* Except where the footer's own rule is 36px below it. Two hairlines with
+     nothing between them read as a stray band, and the footer's rule is the
+     page's close; the list does not need a second one under it. Measured on
+     /about, where Recognition is the last section on the page. */
+  main > :last-child .rows {
+    border-bottom: 0;
+  }
+
   .row::before {
     content: "";
     position: absolute;
@@ -1309,25 +1317,12 @@
     }
   }
 
-  /* `.colophon-note` is all that is left of the home page's colophon: the
-     prose block it belonged to is gone, and so are `.colophon` and
-     `.colophon-rule`, which drew a swelled rule under it. Removing them fixed
-     a collision as well as a dead rule -- the case study's foot also carries
-     `.colophon`, and while these lived here it inherited a `margin-top: 5rem`
-     meant for the home page. That was 80px of empty ground above "Built with"
-     on all eight case studies, on top of the 80px the movement above it
-     already ends with. The NDA note is the one surviving user of the class. */
-  .colophon-note {
-    margin: var(--space-3) 0 0;
-    font-family: var(--font-sans);
-    font-size: 0.9375rem;
-    line-height: 1.62;
-    color: var(--ink-3);
-    text-align: justify;
-    text-justify: inter-word;
-    hyphens: auto;
-    font-variant-numeric: oldstyle-nums proportional-nums;
-  }
+  /* `.colophon-note` was styled here as well as in case.css, left over from a
+     home-page colophon that no longer exists. It set a different family, a
+     different size and `text-align: justify` with `hyphens: auto`, which on a
+     two-line note at this measure gives visibly uneven word spacing. case.css
+     owns the class now: body font, ragged right, like every other paragraph on
+     the sheet. */
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════

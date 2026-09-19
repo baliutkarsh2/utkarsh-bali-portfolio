@@ -1,6 +1,6 @@
 /* ─────────────────────────────────────────────────────────────
    Global chrome: skip link, header, mobile menu, footer, command
-   nine-dot mark, mission line. Imported by globals.css
+   nine-dot mark. Imported by globals.css
    after the tokens, so every var() below resolves from :root.
 
    Conventions:
@@ -407,34 +407,18 @@
      the site is inset to the page column, and a full-bleed rule under an
      unfilled block reads as a stray. On .shell it would still be 40px wider
      on each side than the section rules, since that box carries the padding. */
+  /* One block now that the mission line is gone. It used to be a
+     space-between pair with the identity right-aligned against it; with one
+     child, space-between put a right-aligned block at the left edge of the
+     row, which read as a bug. Left edge, left aligned, on the same column as
+     everything above it. */
   .footer-top {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-4) var(--space-6);
     padding-top: var(--space-6);
     border-top: 1px solid var(--line);
   }
 
-  /* "Connecting the dots" then the three dots one pitch later: the words'
-     ellipsis is made of the site's own dots. */
-  .footer-mission-line {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--pitch);
-    margin: 0;
-    color: var(--ink-3);
-  }
-
   .footer-identity p {
     margin: 0;
-  }
-
-  @media (width >= 40rem) {
-    .footer-identity {
-      text-align: right;
-    }
   }
 
   /* The close lives once, on the home page; every other route ends here, so
@@ -531,78 +515,6 @@
     stroke-dashoffset: 0;
   }
 
-  /* ── Mission line ─────────────────────────────────────────── */
-
-  .mission-line {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--ink);
-  }
-
-  /* (n − 1) pitches wide, one pitch tall; the SVG has no viewBox and lays its
-     dots out in percentages of this box, so they sit one pitch apart at
-     either pitch. The end dots overflow by 0.75px on purpose. */
-  .mission-line-rule {
-    display: block;
-    flex: none;
-    width: calc((var(--n, 7) - 1) * var(--pitch));
-    height: var(--pitch);
-    overflow: visible;
-  }
-
-  .mission-line-rule circle {
-    fill: currentColor;
-  }
-
-  /* Base state is drawn: the finished line is the fallback for no JS, no
-     scroll timelines and reduced motion alike. */
-  .mission-line-rule line {
-    stroke: var(--line-strong);
-    stroke-width: 1;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 0;
-  }
-
-  .mission-line-text {
-    color: var(--ink-3);
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    /* With JS: hidden until <Reveal> lands data-in on it or an ancestor,
-       then it draws over --dur-5. The `.js` root class comes from the
-       inline head script, so a page without JS never waits on this. */
-    :root.js:not([data-motion="reduce"]) .mission-line-rule line {
-      stroke-dashoffset: 1;
-      transition: stroke-dashoffset var(--dur-5) var(--ease-out);
-    }
-
-    :root.js:not([data-motion="reduce"])
-      :is(.mission-line[data-in], [data-in] .mission-line)
-      .mission-line-rule
-      line {
-      stroke-dashoffset: 0;
-    }
-
-    /* Without JS, browsers with scroll timelines scrub the draw as the line
-       enters the viewport; the rest simply show it drawn. */
-    @supports (animation-timeline: view()) {
-      :root:not(.js) .mission-line-rule line {
-        animation: mission-draw linear both;
-        animation-timeline: view();
-        animation-range: entry 0% cover 35%;
-      }
-    }
-  }
-}
-
-@keyframes mission-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────

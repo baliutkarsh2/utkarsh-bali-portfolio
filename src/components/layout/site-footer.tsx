@@ -1,36 +1,22 @@
 import Link from "next/link";
 import { CopyEmail } from "@/components/interactive/copy-email";
 import { profile, socials } from "@/content";
-import { MissionLine } from "@/components/ui/mission-line";
-import { Reveal } from "@/components/interactive/reveal";
 
 /**
  * Server component. Two rows on the shell under a top hairline: the last line
  * with the identity right-aligned, then the links.
  *
- * There used to be a third row -- a printer's imprint giving the date in roman
- * numerals, the state of the plate, the cell count, the screen angle and which
- * edge the sheet was laid to. Every line of it was true and not one of them was
+ * Two things have been cut from here for the same reason: a printer's imprint
+ * in roman numerals, and a "Connecting the dots" line that drew itself as the
+ * footer scrolled in. Both were true to the site's own metaphor and neither was
  * for the reader. A visitor wants to know who this is, what he built and how to
- * reach him; a footer that instead performs the metaphor the site is built on
- * is the site talking to itself. It is gone, and so is the sentence about the
- * plate that used to close the home page.
+ * reach him.
  */
 export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="shell">
         <div className="footer-top">
-          {/* Reveal sets data-in once the footer enters view; the line's
-              draw keys off it (see .mission-line in chrome.css). The words
-              are in the HTML from the first frame and never move. */}
-          <Reveal className="footer-mission">
-            <p className="footer-mission-line meta">
-              <span>Connecting the dots</span>
-              <MissionLine dots={3} />
-            </p>
-          </Reveal>
-
           <div className="footer-identity text-small text-ink-2">
             <p>{profile.name}</p>
             <p>{profile.education}</p>

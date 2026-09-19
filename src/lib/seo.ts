@@ -18,7 +18,7 @@ export const siteConfig = {
   name: "Utkarsh Bali",
   title: "Utkarsh Bali | Agent infrastructure and developer tools",
   description:
-    "I build the infrastructure agents run on, and the thing that breaks them first. Purdue CS + AI, December 2026. Recurly, QualGent (YC X25), and Checkpoint.",
+    "Software engineer building agent infrastructure. Purdue CS and AI, finishing December 2026. Recurly, QualGent (YC X25), and Checkpoint.",
   locale: "en_US",
 } as const;
 

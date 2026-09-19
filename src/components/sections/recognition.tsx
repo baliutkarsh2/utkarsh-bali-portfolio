@@ -6,8 +6,10 @@ import { achievements } from "@/content";
  * /about §7.7, section 03. Every achievement is one <Row>: the year in
  * the gutter (through `gutter`, not `index`: it is a data column, and the
  * only place the year appears, so it is read rather than hidden), the label
- * in display-s, the detail in small --ink-2, the kind as the meta line.
- * Rows with an href (YC, NeurIPS) are whole-row links with the arrow; the
+ * in display-s and the detail in small --ink-2. The `kind` used to print
+ * under each row as a lowercase word -- "startup", "academic" -- which only
+ * restated the label above it in smaller type; it is data for sorting, not a
+ * caption. Rows with an href (YC, NeurIPS) are whole-row links with the arrow; the
  * rest are static. No numerals and no LED: the spine above is the section's
  * accent, and the rows here are words.
  *
@@ -25,7 +27,6 @@ export function Recognition() {
               gutter={<span className="data normal-case">{item.year}</span>}
               title={item.label}
               subtitle={item.detail}
-              meta={item.kind}
               href={item.href}
               titleAs="h3"
             />

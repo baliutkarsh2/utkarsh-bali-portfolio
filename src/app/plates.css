@@ -878,26 +878,6 @@ html:has(.spoiled) {
   outline-offset: 4px;
 }
 
-/* ── The press docket ─────────────────────────────────────────────────────
-   Which pull this is, and what came of it. Plex, because it is data — the
-   same argument the figure itself makes. It is in the markup from the server
-   at PULL I, so its line exists on the first paint and nothing below it moves
-   when the count changes.
-
-   The colour shift on hover and focus is the only hint that the plate is
-   live: it is a colour transition, not motion, and it is the register this
-   site already answers a pointer in. */
-.spoiled-readout {
-  margin-block-start: calc(var(--mark-inset, 1.5rem) + var(--space-3));
-  color: var(--ink-3);
-  transition: color var(--dur-1) var(--ease-snap);
-}
-
-.spoiled-plate:has(.spoiled-pull:hover:not([data-spent])) ~ .spoiled-readout,
-.spoiled-plate:has(.spoiled-pull:focus-visible) ~ .spoiled-readout {
-  color: var(--ink);
-}
-
 /* The plate mark: the edge of the copper pressed into the sheet. Wider than
    the standard inset because the register mark hangs in the margin it
    makes. */

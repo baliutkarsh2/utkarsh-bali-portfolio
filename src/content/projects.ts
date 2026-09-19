@@ -55,8 +55,7 @@ export const projects: Project[] = [
     metricLabel: "of YC Summer 2026 applicants",
     role: "Co-founder & CTO",
     org: "Checkpoint",
-    highlight:
-      "Adversarial test generation, sandboxed execution, LLM-judged scoring",
+    highlight: "No agent reaches a user untested",
     problem:
       "Teams shipping LLM agents have unit tests for their code and almost nothing for the agent. The failures that matter are not exceptions. They are a tool called with the wrong argument, a policy boundary quietly crossed, a multi-turn conversation that drifts. None of that shows up in a green build.",
     story:
@@ -70,7 +69,7 @@ export const projects: Project[] = [
     ],
     stack: ["Next.js", "Python", "FastAPI", "OpenAI API", "AWS"],
     impact:
-      "YC ranked our Summer 2026 application in the top 10% and then didn’t interview us. The product is live in private beta, and the thesis still holds. Agents need somewhere to fail on purpose.",
+      "YC ranked us in the top 10% and then didn’t interview us. The product is live in private beta, and the thesis still holds. Agents need somewhere to fail on purpose.",
     learnings: [
       "Adversarial generation is the easy half. Deciding what counts as a failure, and making that judgment reproducible, is the actual product.",
       "Stateful tool mocking mattered more than model choice. Most interesting agent bugs only appear on turn three or later.",
@@ -160,7 +159,7 @@ export const projects: Project[] = [
     name: "CLIP-H",
     eyebrow: "Interpretability research",
     tagline:
-      "Interpretable clinical prediction: the reasoning behind a prediction is a set of named clinical hypotheses a clinician can read and challenge, not just a score.",
+      "A clinical prediction that arrives with its reasoning attached, as named hypotheses a clinician can read and argue with.",
     year: "2026",
     sortDate: "2026-01-01",
     status: "research",
@@ -169,17 +168,17 @@ export const projects: Project[] = [
     metricLabel: "workshop submission, under review",
     role: "Software Engineer, AI Research",
     org: "Purdue University",
-    highlight: "Concepts, then hypotheses, then prediction",
+    highlight: "Traceable from record to prediction",
     problem:
       "A prediction score tells you what may happen to a patient. It rarely tells you why, in terms anyone can check.",
     story:
-      "CLIP-H stands for Clinical Latent Interpretation and Prediction via Hypotheses. It is work with Purdue and Harvard Business School faculty, under review as a NeurIPS 2026 workshop submission, so it is described here only at the level the title and abstract already state.",
+      "CLIP-H is Clinical Latent Interpretation and Prediction via Hypotheses, with Purdue and Harvard Business School faculty. It is under review at a NeurIPS 2026 workshop, so it is described here only at the level the title and abstract already state.",
     built:
-      "A framework that turns patient data into plain-language clinical hypotheses, discards the ones that do not hold up, and predicts from what survives.",
+      "The prediction and its justification are the same object, so a clinician can disagree with one named hypothesis instead of with the number.",
     architecture: [
       "Find candidate concepts in the patient data.",
       "State each in plain language and drop the ones that fail checking.",
-      "Predict from what survives, so every prediction is traceable to named hypotheses.",
+      "Predict from what survives.",
     ],
     stack: ["Python", "PyTorch", "MIMIC-IV", "LLMs"],
     impact: "Results are held back until the review is finished.",
@@ -201,11 +200,11 @@ export const projects: Project[] = [
     metric: ">99%",
     metricLabel: "deterministic execution, internal benchmark",
     role: "Independent build",
-    highlight: "Planner, executor, verifier, supervisor",
+    highlight: "GPT-4o, OpenAI Vision, ADB",
     problem:
       "Most agent tests fail in boring ways: a bad click, a missing state check, or a recovery path that was never designed.",
     story:
-      "I built a multi-agent QA system for Android flows. One agent plans, one executes, one checks state, and one handles recovery when the app does something unexpected. Splitting those roles mattered more than making any single one smarter.",
+      "I built this for Android flows. Splitting the work across four agents mattered more than making any single one smarter.",
     built:
       "An agentic ADB pipeline that turns a spoken goal into Android actions, with four agents coordinating over a message bus.",
     architecture: [
@@ -326,7 +325,7 @@ export const projects: Project[] = [
     featured: true,
     metric: "3K+",
     metricLabel: "users across 22+ countries",
-    role: "Solo product build",
+    role: "Independent build",
     highlight: "Nine image models, mobile app, monetization",
     problem:
       "I wanted to ship an AI product that real people would use, not just another weekend demo.",

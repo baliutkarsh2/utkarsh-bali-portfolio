@@ -6,7 +6,7 @@ import { Recognition } from "@/components/sections/recognition";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "How I got here, where I’ve worked, and the tools I reach for. Recurly, QualGent (YC X25), Purdue and a Microsoft Research collaboration at the Data Mine. Purdue CS + AI, December 2026.",
+    "Where Utkarsh Bali has worked and what he has built: Recurly, QualGent (YC X25), Purdue AI research, and a Microsoft Research collaboration.",
   alternates: { canonical: "/about" },
 };
 

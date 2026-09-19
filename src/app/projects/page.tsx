@@ -7,7 +7,7 @@ import { orderedProjects, statusLabel } from "@/content";
 export const metadata: Metadata = {
   title: "Work",
   description:
-    "Every project: agent infrastructure, developer tools, consumer AI, and research prototypes, each with a full write-up.",
+    "Eight projects, 2024 to 2026: agent infrastructure, developer tools, consumer AI and research, each with a write-up.",
   alternates: { canonical: "/projects" },
 };
 
@@ -88,7 +88,6 @@ export default function ProjectsPage() {
               project.eyebrow,
               project.org ?? project.role,
               statusLabel[project.status],
-              project.confidential === "company" ? "NDA" : null,
               `${project.metric} ${project.metricLabel}`,
             ]
               .filter(Boolean)

@@ -1,5 +1,16 @@
 import type { Experience } from "./types";
 
+/**
+ * The employment record behind the constellation on /about.
+ *
+ * Every lane here except Microsoft has a case study, and the numbered index
+ * sits directly above this on the page, so the depth lives there and these
+ * entries stay at the level a record is for: who, when, where, and what the
+ * work was. The bullets used to be lifted straight off a résumé -- forty-word
+ * sentences of stacked proper nouns, restating a case study a reader could
+ * already click. Written as sentences now, and only where they say something
+ * the case study does not lead with.
+ */
 export const experiences: Experience[] = [
   {
     company: "Recurly",
@@ -9,13 +20,10 @@ export const experiences: Experience[] = [
     sortDate: "2026-05-01",
     current: false,
     summary:
-      "Built internal agent infrastructure for Recurly’s engineering and go-to-market teams, from the platform that turns product requirements into merged pull requests to the tooling that researches inbound prospects.",
+      "A summer on internal agent tooling for the engineering and go-to-market teams.",
     bullets: [
-      "Built the core PDLC automation platform using specialized Claude agents (planner, decomposer, a Sonnet/Opus coder pair, and a PR responder) deployed as isolated Kubernetes Jobs via the Agent SDK. Drives PRD to merged PRs through five human checkpoints, accelerating shipping about 3x.",
-      "Shipped an AI SDR Slack bot (async Python, 3-tier Claude routing) querying BigQuery, 6sense, ZoomInfo, and SFDC to research, qualify, and audit account and call history. Returns source-cited briefs and outreach drafts in about 25 seconds, collapsing hours of prospecting into one command.",
-      "Automated a Prospect Report Card pipeline (n8n to FastAPI on Cloud Run to Claude Opus) that turns an inbound marketing form-fill into a personalized PDF analysis of the prospect’s subscription business and emails it back, replacing hours of manual SDR research.",
+      "Three things shipped, none of them customer-facing: the platform that takes a written requirement to merged pull requests, a Slack assistant that researches an account before a call, and a pipeline that answers an inbound form with a written analysis of that prospect’s business.",
     ],
-    tags: ["Claude Agent SDK", "Kubernetes", "Python", "FastAPI", "BigQuery"],
   },
   {
     company: "QualGent",
@@ -25,13 +33,11 @@ export const experiences: Experience[] = [
     sortDate: "2025-09-01",
     current: false,
     summary:
-      "Reported to the CTO on App Crawler and the QualGent AI Assistant, taking agent infrastructure from prototype into production inside a YC X25 company.",
+      "Reported to the CTO at a YC X25 company, taking agent infrastructure from prototype into production.",
     bullets: [
-      "Architected App Crawler, a GKE-distributed Python system indexing Android apps into an org-wide knowledge base, using a GPT-4o DFS agent with Set-of-Marks and uiautomator2 to traverse UIs via ADB and populate a Vertex AI RAG corpus.",
-      "Engineered the event-driven backend that runs it hands-off: a Supabase-queue watcher spawning per-app Kubernetes Jobs, an AAB to APK converter, and remote emulator leasing from a managed GCE fleet, holding a sub-1% failure rate at scale via self-healing CronJobs.",
-      "Built the flagship QualGent AI Assistant, an enterprise QA copilot: a Gemini 2.5 Pro orchestrator on Google ADK routing across 45+ tools and sub-agents (RAG, MCP Postgres/pgvector Toolbox, Jira and Linear via OAuth), deployed on Vertex AI Agent Engine through gated Cloud Build.",
+      "Built App Crawler, which walks an Android app screen by screen and writes down how it works, and the backend that runs it unattended across a fleet of emulators.",
+      "Built the QA assistant the company sells on: one chat box over 45 tools and sub-agents.",
     ],
-    tags: ["Google ADK", "GKE", "Vertex AI", "Python", "RAG"],
   },
   {
     company: "Purdue University",
@@ -41,13 +47,12 @@ export const experiences: Experience[] = [
     sortDate: "2024-08-15",
     current: true,
     summary:
-      "Applied ML research where the product constraints matter as much as the model: interpretability, privacy, and whether a clinician would actually trust the output.",
+      "Applied ML research where interpretability, privacy and whether a clinician would trust the answer matter as much as accuracy.",
     bullets: [
-      "Built CLIP-H, on interpretable clinical prediction with LLMs, with Purdue and Harvard Business School faculty. Under review as a NeurIPS 2026 workshop submission, so it is described here only at that level.",
-      "Developed a Flutter and TypeScript clinical assistant tested across Indiana hospitals that cuts nurses’ documentation overhead by about 40%, running self-hosted LLaMA 3.2 and an on-device, HIPAA-compliant speech-to-text pipeline.",
-      "Presented the work at the Purdue Spring Research Conference.",
+      "CLIP-H, on interpretable clinical prediction, with Purdue and Harvard Business School faculty. Under review at a NeurIPS 2026 workshop, so it stays at that level here.",
+      "A clinical assistant nurses tested across Indiana hospitals. About 40% less documentation time, and it runs on the hospital’s own hardware.",
+      "Presented at the Purdue Spring Research Conference.",
     ],
-    tags: ["Research", "MIMIC-IV", "Interpretability", "LLaMA", "Flutter"],
   },
   {
     company: "Microsoft",
@@ -57,10 +62,9 @@ export const experiences: Experience[] = [
     sortDate: "2024-08-01",
     current: false,
     summary:
-      "Owned the LLM pipeline and the distributed infrastructure under it, turning raw social chatter about Minecraft into insights that reached Microsoft product and marketing leadership.",
+      "Owned the LLM pipeline and the distributed infrastructure under it.",
     bullets: [
-      "Owned a Python LLM sentiment pipeline (LLaMA 4) that processed millions of social posts across Minecraft and A Minecraft Movie.",
+      "Read a few million social posts about Minecraft and A Minecraft Movie for sentiment. The results went to Microsoft product and marketing leadership.",
     ],
-    tags: ["LLaMA", "Spark", "Databricks", "Azure", "Evaluation"],
   },
 ];

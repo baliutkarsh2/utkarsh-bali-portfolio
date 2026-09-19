@@ -4,7 +4,7 @@ export const achievements: Achievement[] = [
   {
     label: "Y Combinator Summer 2026, top 10% of applicants",
     detail:
-      "YC told our Checkpoint team that our Summer 2026 application ranked in the top 10% of the applicant pool. We didn’t get an interview.",
+      "Our Checkpoint application. We didn’t get an interview.",
     year: "2026",
     kind: "startup",
     href: "/projects/checkpoint",
@@ -12,28 +12,26 @@ export const achievements: Achievement[] = [
   {
     label: "NeurIPS 2026 workshop submission, under review",
     detail:
-      "CLIP-H, on interpretable clinical prediction, with Purdue and Harvard Business School faculty.",
+      "CLIP-H, with Purdue and Harvard Business School faculty.",
     year: "2026",
     kind: "research",
     href: "/projects/clip-h",
   },
   {
     label: "Mary-Ann Neel Computer Science Scholar",
-    detail:
-      "Awarded to a top Purdue CS student for academic and technical excellence.",
+    detail: "A Purdue CS department award for academic and technical work.",
     year: "2025",
     kind: "academic",
   },
   {
     label: "Discovery Park Research Scholar, 3 times",
-    detail:
-      "Recognized three times for high-impact interdisciplinary research and engineering.",
+    detail: "For research that crosses departments.",
     year: "2024 to 2026",
     kind: "research",
   },
   {
     label: "Dean’s List and Semester Honors, 6 times",
-    detail: "Six semesters at Purdue, carrying a 3.90 / 4.00 GPA in CS and AI.",
+    detail: "At a 3.90 GPA in CS and AI.",
     year: "2023 to 2026",
     kind: "academic",
   },
@@ -47,7 +45,7 @@ export const achievements: Achievement[] = [
   {
     label: "Teaching assistant and workshop lead",
     detail:
-      "TA for CS 24300 (Artificial Intelligence Basics), CS 471 (Introduction to Artificial Intelligence) and TDM 101, guiding 300+ students. Led weekly Machine Learning @ Purdue workshops mentoring 200+ students on building and deploying production AI systems.",
+      "TA for CS 24300, CS 471 and TDM 101, and weekly Machine Learning @ Purdue workshops. About 500 students between them.",
     year: "2024 to 2026",
     kind: "community",
   },

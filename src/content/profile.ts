@@ -5,8 +5,8 @@ export const profile = {
   shortName: "Utkarsh",
   initials: "UB",
   role: "Software engineer",
-  tagline:
-    "I build the infrastructure agents run on, and the thing that breaks them before a user does.",
+  /** One plain line, for link previews and the social card. */
+  tagline: "Software engineer, building agent infrastructure.",
   email: "baliutkarsh2@gmail.com",
   location: "West Lafayette, IN",
   education: "Purdue University, CS + AI",

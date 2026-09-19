@@ -265,8 +265,8 @@ const lanes: Lane[] = (() => {
         bullets: [],
         note:
           key === INDEPENDENT
-            ? "No employer, so no record to keep. These are the ones I owned end to end."
-            : "Mine rather than an employer’s, so there is no employment record to keep here.",
+            ? "Built on my own, start to finish."
+            : "My own company.",
         interval: null,
         sortKey: Number.NEGATIVE_INFINITY,
         points: [],
@@ -297,7 +297,7 @@ const lanes: Lane[] = (() => {
     if (lane.kind !== "employer") {
       lane.sortKey = Math.max(lane.sortKey, centre);
       // A lane with no employment record borrows its role from the work that
-      // sits in it, de-duplicated: "Independent build · Solo product build".
+      // sits in it, de-duplicated.
       const roles = lane.points
         .map((p) => p.role)
         .filter((r, j, all) => all.indexOf(r) === j);
@@ -377,9 +377,10 @@ const word = (n: number) => WORDS[n] ?? String(n);
 
 /**
  * The margin dateline. An employer prints its employment record verbatim; a
- * lane that has none prints the span of the work that sits in it instead, and
- * says so — "Work dated Feb 2026" is a different claim from an employment
- * interval, and the plate draws no band for it either.
+ * lane that has none prints the span of the work that sits in it instead. It
+ * used to prefix that with "Work dated", to mark that a work span is not an
+ * employment interval. The note under the lane already makes that distinction
+ * in words a reader recognises, and the plate draws no band for it either.
  */
 function dateline(lane: Lane): string {
   if (lane.dates) return lane.dates;
@@ -389,7 +390,7 @@ function dateline(lane: Lane): string {
     months.length === 1
       ? months[0]
       : `${months[0]} to ${months[months.length - 1]}`;
-  return `Work dated ${span}`;
+  return span;
 }
 
 type ConstellationProps = {
@@ -633,16 +634,12 @@ export function Constellation({
           prose. Below 64rem the margin folds into a head row above the type,
           which is what a margin does on a narrow page.
 
-          Every summary and every bullet is `experience.ts` verbatim. They are
-          long and specific and that is the point: the Microsoft lane is
-          fourteen months of employment band with no marker on it, and the
-          LLaMA-4 pipeline, the Databricks workflows and the 25% compute saving
-          exist nowhere else on this site. Same for two of the three Recurly
-          items and the Spring Research Conference line. Nothing here is
-          summarised, truncated or rewritten. */}
-          <h3 className="cn-sub caption text-ink-3">
-            The record, lane by lane
-          </h3>
+          Every lane but Microsoft has a case study, and the numbered index
+          is directly above this, so the depth is one click away and these
+          entries stay short. Microsoft is the exception the section exists
+          for: fourteen months of employment band with no marker on it and no
+          case study anywhere, so its line is the only record of that work. */}
+          <h3 className="cn-sub caption text-ink-3">The record</h3>
           <ol className="cn-record">
             {lanes.map((lane) => {
               const headingId = `lane-${slugify(lane.key)}`;

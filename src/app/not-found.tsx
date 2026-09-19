@@ -10,7 +10,7 @@ import { SpoiledPlate } from "@/components/interactive/spoiled-plate";
  */
 export const metadata: Metadata = {
   title: "Not found",
-  description: "The link may be out of date, or I may have moved something.",
+  description: "The link may be out of date, or I moved it.",
   robots: { index: false, follow: true },
   // Drop the layout's canonical: a 404 is not a copy of the home page.
   alternates: { canonical: null },
@@ -65,12 +65,15 @@ export default function NotFound() {
 
       <div className="spoiled-copy">
         <h1 id="not-found-title" className="spoiled-title text-display-m text-balance">
-          The plate didn&rsquo;t take.
+          This page doesn&rsquo;t exist.
         </h1>
 
+        {/* Kept short on purpose. At this measure the old, longer line sat
+            exactly on the wrap boundary: one line in Source Serif, two in the
+            fallback, so the font swap reflowed the block and this route's CLS
+            went from 0.0002 to 0.0040. Short enough to be one line in both. */}
         <p className="spoiled-lede text-body">
-          The sheet came through the press with nothing on it. The link may be out of
-          date, or I may have moved something.
+          The link may be out of date, or I moved it.
         </p>
 
         <div className="spoiled-actions text-body">

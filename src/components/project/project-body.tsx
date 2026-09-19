@@ -62,10 +62,8 @@ export function ProjectBody({ project }: { project: Project }) {
   // sentence of the first learning, with the remainder of that learning and
   // the rest of the list under it. Nothing is repeated and nothing is dropped.
   //
-  // `hasCoda` and the four titles come from src/lib/corpus.ts rather than being
-  // written here, because the colophon's collation line counts the movements
-  // this page renders. One statement, two consumers: a movement cannot be
-  // removed from the page and go on being counted underneath it.
+  // `hasCoda` and the four titles come from src/lib/corpus.ts rather than
+  // being written here, so nothing else can disagree with what renders.
   const coda = hasCoda(project) ? splitLead(learnings[0]) : null;
   const codaRest = coda
     ? [coda.rest, ...learnings.slice(1)].filter(Boolean)
@@ -259,8 +257,8 @@ function Schematic({ project }: { project: Project }) {
 }
 
 /**
- * The foot of a case study: what it was built with, the links, and the NDA
- * note where there is one.
+ * The foot of a case study: what it was built with, the links, and the note
+ * where there is no public source.
  *
  * This is what the sticky rail was. A rail that follows 198 words down a page
  * is empty for most of them, and it cost three headings, a column of the grid
@@ -288,7 +286,7 @@ export function ProjectColophon({ project }: { project: Project }) {
       <div>
         <p className="colophon-stack data">{project.stack.join("  ·  ")}</p>
 
-        {project.links.length > 0 ? (
+        {project.links.length > 0 && (
           <ul className="colophon-links">
             {project.links.map((link) => (
               <li key={link.href}>
@@ -305,8 +303,6 @@ export function ProjectColophon({ project }: { project: Project }) {
               </li>
             ))}
           </ul>
-        ) : (
-          <CancelledPlate />
         )}
 
         {project.confidential && (
@@ -321,70 +317,3 @@ export function ProjectColophon({ project }: { project: Project }) {
   );
 }
 
-/**
- * PLATE CANCELLED.
- *
- * Three of the eight projects carry no link at all, and until now that read as
- * a missing field: the row where every other case study has a "Source" or a
- * "Watch the demo" was simply not there, and absence is indistinguishable from
- * oversight.
- *
- * A printer closing an edition takes a burin to the copper and scores the plate
- * through, so that no further impressions can ever be pulled from it. The
- * cancelled plate is then kept and often printed *once more*, cancelled, as the
- * record that the edition is closed. That is exactly the right object here,
- * because the reason there is no screenshot is the same reason a cancelled plate
- * makes no prints: the work exists, the plate exists, and nothing more comes off
- * it. It says "closed", not "missing".
- *
- * The strokes are ruled at ±22.5°, which is not a picked angle: it is this
- * site's own screen angle (§5.3.3 — not 45°, which aligns with the pixel
- * diagonal and with every rule on the page). The cancellation is cut at the
- * angle the plate was screened at.
- *
- * Rendered on the *absence of a link*, never on the `confidential` flag: the
- * mark has to be a consequence of the record, so it can never appear as
- * decoration beside a working link. On the five projects that have one, this
- * function is not called at all.
- *
- * The caption is real DOM text in a real <figcaption> and is deliberately not
- * aria-hidden. "Under NDA" is a fact about the work and it stays crawlable,
- * announced, and selectable; the drawing above it is the only part that is
- * decorative, and it is the only part marked so.
- */
-function CancelledPlate() {
-  return (
-    <figure className="cancel">
-      {/* 168 × 104 with the strokes struck corner-to-edge through the centre.
-          tan(22.5°) × 84 = 34.79, so a line through (84, 52) at 22.5° leaves
-          the plate at y = 52 ± 34.79 on the left and right edges — the full
-          width of the copper, which is how far a burin goes. */}
-      <span className="cancel-well plate-mark">
-        <svg
-          className="cancel-plate"
-          viewBox="0 0 168 104"
-          width="168"
-          height="104"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <rect
-            className="cancel-ground"
-            x="0"
-            y="0"
-            width="168"
-            height="104"
-          />
-          <path className="cancel-stroke" d="M0 17.21 L168 86.79" />
-          <path className="cancel-stroke" d="M0 86.79 L168 17.21" />
-        </svg>
-      </span>
-
-      <figcaption className="cancel-note">
-        <span>Plate cancelled</span>
-        <span>NDA</span>
-        <span>No impressions</span>
-      </figcaption>
-    </figure>
-  );
-}

@@ -38,7 +38,7 @@ import { motionAllowed, onMotionChange } from "@/lib/motion";
  *
  * PULL IT AGAIN. The plate is a button, and pressing it brings the press down
  * again: the assembly advances to the next entry in FREEZES and stops again,
- * still short, and the readout counts the attempt. The increments shrink, so
+ * still short. The increments shrink, so
  * the sequence is visibly asymptotic — it converges around 574 ms of an 1100
  * ms assembly and the last cells never arrive. That is the joke and it is
  * also true: no amount of pressure fixes a spoiled plate.
@@ -99,9 +99,6 @@ const FREEZE_MS = 400;
  * started. The edges of the sheet never take.
  */
 const FREEZES = [FREEZE_MS, 466, 507, 532, 548, 558, 564];
-
-/** The attempt, as a printer would number it. One entry per FREEZES entry. */
-const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII"];
 
 /** Below this the glyph's coverage is not ink, it is the edge of the paper. */
 const INK_FLOOR = 0.1;
@@ -472,9 +469,7 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
             onClick={pull}
           >
             <span className="sr-only">
-              {spent
-                ? "The plate is spoiled. No further pull will take."
-                : "Pull the sheet again"}
+              {spent ? "Nothing more will print." : "Print it again"}
             </span>
           </button>
         )}
@@ -497,15 +492,6 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
         </svg>
       </figure>
 
-      {/* The press docket, under the sheet. It is rendered on the server too,
-          at PULL I, so its box exists on the first paint and hydration adds
-          no line — the live region only ever announces a change a visitor
-          asked for. Without JavaScript it is still true: the page loaded, the
-          plate did not take, and that was pull one. */}
-      <p className="spoiled-readout meta" aria-live="polite">
-        Pull {NUMERALS[attempt - 1]} ·{" "}
-        {spent ? "the plate is spoiled" : "the plate didn’t take"}
-      </p>
     </>
   );
 }

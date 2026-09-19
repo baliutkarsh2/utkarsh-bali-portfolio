@@ -437,94 +437,6 @@
     color: var(--rule-mid);
   }
 
-  /* ── The cancelled plate ─────────────────────────────────────────────────
-     Three of the eight projects have no link, and where the links row goes on
-     the other five this goes instead: a small empty plate, scored through.
-
-     A printer closing an edition takes a burin to the copper so that no further
-     impressions can be pulled, and then often prints the cancelled plate once
-     more as the record that the edition is closed. It is exactly the right
-     object for work under NDA, because the reason there is no screenshot is the
-     same reason a cancelled plate makes no prints. It says closed, not missing.
-
-     The strokes are ruled at ±22.5°, which is the site's own screen angle
-     (§5.3.3 — deliberately not 45°, which aligns with the pixel diagonal and
-     with every rule on the page). The cancellation is cut at the angle the
-     plate was screened at.
-
-     Drawn as inline SVG rather than as two rotated borders: a rotated border is
-     a box that has to be clipped back to the plate, and it stops being a line
-     at all in forced colours. Two <path>s with a real stroke print, scale, and
-     take a system colour.
-     ──────────────────────────────────────────────────────────────────────── */
-  .cancel {
-    /* Clears the plate mark's 10px outset above the copper. */
-    margin: calc(var(--space-4) + 10px) 0 0;
-    max-width: var(--plate-lede);
-  }
-
-  /* The copper. 168px at ≥48rem; the full column on a phone, where 168px in the
-     middle of a 350px measure reads as a thumbnail of nothing. The viewBox does
-     the rest: the aspect ratio is fixed, so the strokes hold 22.5° at every
-     width, and the intrinsic size is known before paint, so nothing shifts. */
-  .cancel-well {
-    --plate-inset: 10px;
-    display: block;
-    width: 100%;
-  }
-
-  @media (width >= 48rem) {
-    .cancel-well {
-      width: 168px;
-    }
-  }
-
-  .cancel-plate {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-
-  .cancel-ground {
-    fill: var(--ground-2);
-  }
-
-  /* Full-strength ink, and a fixed physical width: a burin cuts the same groove
-     whatever size the plate is, so the stroke does not scale with the box. */
-  .cancel-stroke {
-    fill: none;
-    stroke: var(--ink);
-    stroke-width: 1.5;
-    vector-effect: non-scaling-stroke;
-  }
-
-  /* Plex micro (10px) — the plan's smallest step, which exists for exactly this:
-     a machine's note about the object, under the object. Not `meta`, because
-     `meta` is 11px and this is the one label on the sheet that is subordinate to
-     a figure rather than naming a section. Separators generated with empty alt
-     text, as everywhere else on this page. */
-  .cancel-note {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 0.5rem;
-    /* Clears the plate mark's 10px outset below the copper. */
-    margin-block-start: calc(var(--space-2) + 10px);
-    font-family: var(--font-mono);
-    font-weight: 500;
-    font-size: 0.625rem;
-    line-height: 1.4;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-  }
-
-  .cancel-note > span + span::before {
-    content: "·" / "";
-    margin-inline-end: 0.5rem;
-    color: var(--rule-mid);
-  }
-
   .colophon-links {
     display: flex;
     flex-wrap: wrap;
@@ -610,31 +522,6 @@
   }
 }
 
-/* ═══ Forced colours ════════════════════════════════════════════════════════
-   The cancelled plate is the one thing on this route that is a drawing rather
-   than text, and forced colours would otherwise force the copper's fill to
-   CanvasText — a solid black rectangle with two invisible strokes across it,
-   which is the opposite of the mark. `forced-color-adjust: none` on the <svg>
-   inherits to both the ground and the strokes, and the two system colours are
-   then set explicitly: bare Canvas for the plate, CanvasText for the burin.
-
-   The plate mark around it is a border and is forced to CanvasText on its own,
-   which is correct. The caption is real text and needs nothing.
-   ═════════════════════════════════════════════════════════════════════════ */
-@media (forced-colors: active) {
-  .cancel-plate {
-    forced-color-adjust: none;
-  }
-
-  .cancel-ground {
-    fill: Canvas;
-  }
-
-  .cancel-stroke {
-    stroke: CanvasText;
-  }
-}
-
 /* ═══ The two figure sizes ══════════════════════════════════════════════════
    Deliberately unlayered. <Numeral> carries `text-numeral-l`, a Tailwind
    utility, and the utilities layer beats the components layer whatever the
@@ -683,7 +570,6 @@
   .stage,
   .plate-figure,
   .plate-grid > li,
-  .cancel,
   .colophon,
   .plate-foot {
     break-inside: avoid;

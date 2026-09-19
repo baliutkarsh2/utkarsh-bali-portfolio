@@ -27,7 +27,7 @@ export function Gallery({ media }: { media: MediaSlot[] }) {
   return (
     <section className="plates-band sheet-row shell" aria-labelledby="plates-title">
       <h2 id="plates-title" className="movement-title meta">
-        Plates
+        Screens
       </h2>
 
       <ul className="plate-grid">

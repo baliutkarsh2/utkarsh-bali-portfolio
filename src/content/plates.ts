@@ -23,12 +23,9 @@ import type { PortraitSource } from "@/components/interactive/dot-board";
  * `n` is a position in this array, not a written-down number, and the array is
  * in the site's one collated order: the eight project devices in
  * `orderedProjects` order, so a device's number is the same number
- * src/lib/corpus.ts already prints for that case study, and then the plates
+ * the case study already carries, and then the plates
  * that belong to no single project. check-plates.mjs re-derives that sort from
  * src/content/projects.ts and fails if the two disagree.
- *
- * Set the numeral with `roman(plate.n)` from src/lib/corpus.ts. It is not
- * re-exported here, because there is one roman numeral function on this site.
  */
 
 /** A field that ships as a `<DotBoard mode="still" source={id} />`. */
@@ -96,7 +93,7 @@ const DEVICES: PlateSpec[] = [
     alt:
       "An engraved diagram: five columns of adversarial test cases growing heavier as the " +
       "turns go deeper. The fourth column stops after three rows, and the verdict rule at " +
-      "the foot of the plate is broken underneath it.",
+      "the foot of the diagram is broken underneath it.",
     w: 48,
     h: 60,
     count: 789,
@@ -113,7 +110,7 @@ const DEVICES: PlateSpec[] = [
     alt:
       "An engraved diagram of a compression: a dense rank of units, a wider rank of " +
       "mostly empty sockets with only five lit, and a dense rank out. Every path on the " +
-      "plate runs through one of the five.",
+      "diagram runs through one of the five.",
     w: 48,
     h: 60,
     count: 856,
@@ -130,7 +127,7 @@ const DEVICES: PlateSpec[] = [
     alt:
       "An engraved dendrogram of a depth-first traversal: every node is a screen and every " +
       "drop is a tap. The leftmost path is inked heavily all the way to the foot of the " +
-      "plate. Two branches end in stubs rather than screens.",
+      "diagram. Two branches end in stubs rather than screens.",
     w: 48,
     h: 60,
     count: 515,
@@ -164,7 +161,7 @@ const DEVICES: PlateSpec[] = [
     alt:
       "An engraved diagram: four lanes, planner, executor, verifier and supervisor, with a " +
       "token visiting them in that order for sixteen steps. Every connector is a right " +
-      "angle. The long return leg from the supervisor to the planner crosses the plate " +
+      "angle. The long return leg from the supervisor to the planner crosses the diagram " +
       "four times.",
     w: 48,
     h: 60,
@@ -178,11 +175,10 @@ const DEVICES: PlateSpec[] = [
     field: "deviceClinical",
     project: "clinical-ai-assistant",
     title: "Clinical AI Assistant",
-    subject: "A waveform becomes tokens becomes a note, all on one sheet",
+    subject: "A waveform becomes tokens becomes a note, all on the device",
     alt:
-      "An engraved diagram of an on-device speech pipeline: two utterances as a waveform, " +
-      "a rank of tokens, and six ragged rules of written text. Nothing on the plate leaves " +
-      "the plate.",
+      "A diagram of the on-device speech pipeline: two utterances as a waveform, a rank of " +
+      "tokens, and six ragged lines of written text.",
     w: 48,
     h: 60,
     count: 990,
@@ -195,12 +191,10 @@ const DEVICES: PlateSpec[] = [
     field: "deviceWallex",
     project: "wallex",
     title: "WalleX",
-    subject: "One plate, twenty-two impressions",
+    subject: "One app, twenty-two countries",
     alt:
-      "An engraved diagram: a bevelled copper plate above the bed of a press, and below it " +
-      "twenty-two impressions pulled from it, one for each country the app reached, each " +
-      "holding the plate's own proportion at a smaller size as the edition goes out. One " +
-      "maker, many hands.",
+      "A diagram: one app above twenty-two smaller copies of itself, one for each country " +
+      "it reached.",
     w: 48,
     h: 60,
     count: 545,
@@ -217,8 +211,7 @@ const OTHERS: PlateSpec[] = [
     field: "clinicalVoice",
     project: "clinical-ai-assistant",
     title: "The voice-first home screen",
-    subject:
-      "A white app, engraved: bare paper with the type as a scatter of ink",
+    subject: "The home screen, voice first",
     alt:
       "The clinical assistant's home screen, engraved as a dot field: the prompt “How can " +
       "I help you today?”, the microphone as the primary control, and shortcuts to add a " +
@@ -282,7 +275,7 @@ const OTHERS: PlateSpec[] = [
     id: "sky",
     field: "skyField",
     title: "The sky over West Lafayette",
-    subject: "11 July 2025 at 23:00, 2,307 stars",
+    subject: "11 July 2025",
     alt:
       "The night sky over West Lafayette at eleven o'clock on the eleventh of July 2025, " +
       "engraved as a dot field: a solid disc of ink with 2,307 stars showing through as " +
