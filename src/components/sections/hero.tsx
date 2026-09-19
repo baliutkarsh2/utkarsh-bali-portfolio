@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { CSSProperties } from "react";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { Button } from "@/components/ui/button";
@@ -73,26 +72,31 @@ export function Hero() {
       />
 
       <div className="hero-copy board-above">
-        <p className="max-w-[34ch] text-display-s text-ink">
-          {profile.tagline}
-        </p>
+        {/* One line under the name, and it is the whole introduction.
+            What was here: the positioning line ("I build the infrastructure
+            agents run on, and the thing that breaks them before a user
+            does.") over a second paragraph naming the role, the company, what
+            it builds, the university and the semester. Six facts in two
+            sentences, when the story below already tells all six in order.
 
-        {/* Who he is now, in two sentences. The CV version of this line --
-            "Recurly, summer 2026. Before that, agent infrastructure at
-            QualGent (YC X25). Co-founder and CTO of Checkpoint. Purdue CS +
-            AI, done in December." -- was four employers in four clauses, and
-            the list under it now tells that story properly and in order. */}
-        <p className="mt-5 max-w-[34ch] text-lede text-ink-2">
-          Co-founder and CTO of{" "}
-          <Link
-            href="/projects/checkpoint"
+            The link goes to the product, not to its case study: the case
+            study is two clicks away from the work index and this line is the
+            only place on the page where the live thing is one click away.
+            `--u-rest: 100%` rests the dotted rule at full width, as links in
+            prose do; colour alone would not mark it, --ink on --ink-2 being
+            2.1:1. */}
+        <p className="max-w-[34ch] text-display-s text-ink">
+          building{" "}
+          <a
+            href="https://usecheckpoint.dev"
+            target="_blank"
+            rel="noopener noreferrer"
             className="dot-underline text-ink"
             style={LINK_AT_REST}
           >
             Checkpoint
-          </Link>
-          , building agent testing infrastructure. Final semester at Purdue, CS
-          and AI.
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
         </p>
 
         <div className="hero-actions mt-8 flex flex-wrap items-center gap-3">

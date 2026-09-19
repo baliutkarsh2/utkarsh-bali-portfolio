@@ -76,10 +76,6 @@
     display: none;
   }
 
-  .cn-full .cn-caption {
-    margin-top: var(--space-4);
-  }
-
   /* ═══ The plate ════════════════════════════════════════════════════════════
      Phones: an axis gutter and one column per lane; a header band for the
      vertical labels and a tall track under it. The track height is a constant,
@@ -435,11 +431,6 @@
     white-space: nowrap;
   }
 
-  /* ═══ Caption ══════════════════════════════════════════════════════════════ */
-  .cn-caption {
-    margin-top: calc(var(--space-3) + 12px); /* clears the plate mark */
-  }
-
   /* ═══ The key, and the roster ══════════════════════════════════════════════
      The plate is a picture of the eight links below it. With the stylesheet or
      the script off, this list is the section. */
@@ -748,10 +739,6 @@
       transform: translateX(-100%);
       padding-bottom: 0;
       padding-right: 0.5rem;
-    }
-
-    .cn-caption {
-      margin-top: calc(var(--space-3) + 20px);
     }
 
     .cn-index-link {

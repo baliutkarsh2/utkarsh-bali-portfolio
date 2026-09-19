@@ -374,7 +374,6 @@ const WORDS = [
   "ten",
 ];
 const word = (n: number) => WORDS[n] ?? String(n);
-const sentenceCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * The margin dateline. An employer prints its employment record verbatim; a
@@ -588,29 +587,6 @@ export function Constellation({
             </div>
           </Reveal>
         </div>
-
-        {/* The caption carries its own `shell` when the plate is bled, so it
-            lines up with the section title above it rather than with the
-            plate's edge. Same words either way; only the last sentence knows
-            which page it is on, because on / there is no key below to point
-            at and the marks are the only way in.
-
-            It is a legend, and it used to be six sentences: which lanes were
-            employers, which company employed nobody "and so carries no band",
-            that dates are accurate to the month "under a ±15 day bar". All
-            true, none of it needed to read the chart. What a legend owes a
-            reader is what the marks mean. */}
-        <figcaption className={cn("cn-caption", bleed && "shell")}>
-          <span className="caption measure block text-ink-2">
-            {sentenceCase(word(inDateOrder.length))} projects, on the month each
-            one landed. A band is a job and a mark is a project. Filled is
-            shipped, half-filled is ongoing, open is research, and the vermilion
-            rule is today.{" "}
-            {bleed
-              ? "Every mark is a link."
-              : "The numbered list below is the key."}
-          </span>
-        </figcaption>
       </figure>
 
       {variant === "record" && (
