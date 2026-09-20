@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties } from "react";
+import { onThemeChange, resolvedTheme } from "@/lib/theme";
 
 /**
  * The hero portrait: a colour dot field of the subject.
@@ -23,15 +24,21 @@ import { useEffect, useRef, type CSSProperties } from "react";
  * into a chunk. The renderer reads its pixels once and never touches it
  * again.
  *
- * IT HANGS ON A PLATE, in both themes, and that is not decoration. He is
- * backlit -- the sun is behind him -- so his face is in shadow and only the
- * rim is bright. On paper his skin sits a few percent off the sheet, and every
- * curve that darkens him enough to separate the two takes his face with it;
- * measured across gamma 1.1 / 1.2 / 1.3 against contrast 1.0 / 1.3 / 1.45 /
- * 1.6, and by the second step the eye and the brow are gone. On the plate the
- * same marks read immediately. So there is one ground, one polarity and no
- * theme branch: the colours are the photograph's own and they do not care
- * what the page is doing.
+ * THE GROUND FOLLOWS THE THEME, and so does the transfer. He is backlit --
+ * the sun is behind him -- so his face is in shadow and only the rim is
+ * bright, and the two grounds want different treatment:
+ *
+ *   · ON PAPER the diameter range is WIDE, 0.42 to 0.96. A dark cell closes
+ *     up and a light one opens, so the sheet carries the highlights: his lit
+ *     cheek and the rim light are made of paper showing through rather than
+ *     of pale marks. A gamma of 1.10 on top separates his face from his hair.
+ *   · ON THE PLATE the range is NARROW, 0.72 to 0.98, and the curve is off.
+ *     There is no bright ground to show through, so a small mark is only a
+ *     faint one; the marks stay big and their own colour does the work.
+ *
+ * Narrowing the paper range is what washed him out the first time, and the
+ * ground took the blame for it -- the portrait shipped on a black plate in
+ * both themes for exactly one commit. The range was the variable.
  *
  * Two grids, as the old dot portrait had. 155 columns is a 4 px cell in the
  * hero column; on a phone the same field would be a 2.3 px cell, where the
@@ -39,12 +46,13 @@ import { useEffect, useRef, type CSSProperties } from "react";
  * so below 48rem it takes the 96-column bake instead.
  */
 
-/** Narrow on purpose: colour carries the picture and diameter only gives it
- *  a grain. A small disc of his own skin tone is not a highlight the way a
- *  small disc of ink is; it is just a faint mark. */
-const DIA_MIN = 0.72;
-const DIA_MAX = 0.98;
-const GAMMA = 0.85;
+/** Kept in step with PAPER and PLATE in scripts/bake-hero.py, which renders
+ *  the no-JavaScript stills and must draw the same picture. */
+const LOOK = {
+  light: { min: 0.42, max: 0.96, gamma: 1.1 },
+  dark: { min: 0.72, max: 0.98, gamma: 1.0 },
+} as const;
+const CURVE_EXP = 0.85;
 /** Below this mean coverage a cell is outside the subject and prints nothing.
  *  Kept in step with ALPHA_FLOOR in scripts/bake-hero.py, which renders the
  *  no-JavaScript still and must draw the same picture. */
@@ -121,6 +129,12 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
       const cw = rect.width / w;
       const ch = rect.height / h;
       const cell = Math.min(cw, ch);
+      const look = LOOK[resolvedTheme()];
+      // One 256-entry curve rather than a pow() per channel per cell.
+      const curve = new Uint8Array(256);
+      for (let v = 0; v < 256; v++) {
+        curve[v] = Math.round(Math.pow(v / 255, look.gamma) * 255);
+      }
 
       // Bucket by quantised colour, then lay every disc of one colour into a
       // single path. A path may hold arcs of any radius, so diameter stays
@@ -132,12 +146,14 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
           const k = (j * w + i) * 4;
           const cover = data[k + 3] / 255;
           if (cover < ALPHA_FLOOR) continue;
-          const r = data[k];
-          const g = data[k + 1];
-          const b = data[k + 2];
+          const r = curve[data[k]];
+          const g = curve[data[k + 1]];
+          const b = curve[data[k + 2]];
           const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
           const dia =
-            (DIA_MIN + (DIA_MAX - DIA_MIN) * Math.pow(1 - lum, GAMMA)) * cover;
+            (look.min +
+              (look.max - look.min) * Math.pow(1 - lum, CURVE_EXP)) *
+            cover;
           const key =
             ((r * LEVELS) >> 8) * LEVELS * LEVELS +
             ((g * LEVELS) >> 8) * LEVELS +
@@ -193,6 +209,7 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
     const onResize = () => schedule();
     window.addEventListener("resize", onResize);
     phone.addEventListener("change", boot);
+    const offTheme = onThemeChange(schedule);
 
     // Print: the still is in the DOM but out of layout and lazy on screen, so
     // it costs no request there; asking for it before the print snapshot
@@ -212,6 +229,7 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
       window.removeEventListener("resize", onResize);
       window.removeEventListener("beforeprint", onBeforePrint);
       phone.removeEventListener("change", boot);
+      offTheme();
     };
   }, []);
 
@@ -220,7 +238,18 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
   // there; <picture> picks the phone bake below 48rem with no state involved.
   const image = (
     <picture>
+      {/* Without JavaScript there is no theme toggle, so the theme IS the
+          system preference and these can choose. Print falls through to the
+          paper arm, which is the right answer on paper. */}
+      <source
+        media={`${PHONE} and (prefers-color-scheme: dark)`}
+        srcSet="/portrait/hero-dots-sm-dark@2x.webp"
+      />
       <source media={PHONE} srcSet="/portrait/hero-dots-sm@2x.webp" />
+      <source
+        media="(prefers-color-scheme: dark)"
+        srcSet="/portrait/hero-dots-dark@2x.webp"
+      />
       <img
         src="/portrait/hero-dots@2x.webp"
         alt=""

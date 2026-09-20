@@ -715,22 +715,6 @@
   pointer-events: none;
 }
 
-/* The hero hangs on the PLATE, in both themes, and that is not decoration.
-   He is backlit -- the sun is behind him -- so his face is in shadow and only
-   the rim is bright. On paper his skin sits a few percent off the sheet, and
-   every curve that darkens him enough to separate the two takes his face with
-   it: measured across gamma 1.1 / 1.2 / 1.3 against contrast 1.0 / 1.3 /
-   1.45 / 1.6, and by the second step the eye and the brow are gone and he is
-   a silhouette. On the plate the same marks read immediately, warm against
-   near-black, with the rim light doing what it did in the photograph.
-
-   So this is the one dark ground on the light page, it is the same near-black
-   the 404 and the dark theme use, and the plate mark around it is what a
-   plate mark was always for. Unlayered, beside the rule it overrides. */
-.board[data-mode="hero"]::after {
-  background: #16140f;
-}
-
 /* ── The monochrome plates keep their polarity in the dark ─────────────────
    A plate carries value as ink AREA, so on a dark ground its densest passages
    would print the MOST bone and come out the brightest thing on the figure.

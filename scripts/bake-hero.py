@@ -42,23 +42,25 @@ CROP = (300, 0, 1564, 1550)
 ALPHA_FLOOR = 0.35
 OUT = os.path.join(ROOT, "public", "portrait")
 
-# The transfer. A cell is never bare and never quite closed: below DIA_MIN the
-# disc stops being resolvable and turns to haze, and at DIA_MAX a touch of
-# ground still separates neighbours, which is what keeps it a screen.
-DIA_MIN, DIA_MAX, GAMMA = 0.72, 0.98, 0.85
-# THE FIELD HANGS ON A PLATE, in both themes, and that is not decoration.
+# The transfer, per ground. Both looks are stated here AND in hero-dots.tsx,
+# which draws the live field; the two must agree or a reader without
+# JavaScript sees a different picture.
 #
-# He is backlit: the sun is behind him, so his face is in shadow and only the
-# rim is bright. On paper his skin sits a few percent off the sheet, and every
-# curve that darkens him enough to separate the two takes his face with it --
-# measured at gamma 1.1 / 1.2 / 1.3 against contrast 1.0 / 1.3 / 1.45 / 1.6,
-# and by the second step the eye and the brow are gone and he is a silhouette.
-# On the plate the same marks read immediately, warm against near-black, with
-# the rim light doing what it did in the photograph.
+# ON PAPER the diameter range is WIDE. A dark cell closes up and a light one
+# opens, so the sheet itself carries the highlights: his lit cheek and the rim
+# light are made of paper showing through, not of pale marks. Narrowing this
+# range is what washed him out the first time paper was tried, and the ground
+# took the blame for it.
 #
-# So the ground is the plate in both themes, no tone curve is applied at all,
-# and the colours are the photograph's own.
-PLATE = (22, 20, 15)
+# ON THE PLATE the range is narrow and the tone curve is off. There is no
+# bright ground to show through, so a small mark is only a faint one and the
+# marks have to stay big and let their own colour do the work.
+#
+# The gamma is applied by the RENDERER, not baked in, so one neutral grid
+# serves both themes.
+PAPER = dict(ground=(250, 248, 244), dia=(0.42, 0.96), gamma=1.10)
+PLATE = dict(ground=(34, 31, 24), dia=(0.72, 0.98), gamma=1.00)
+CURVE_EXP = 0.85
 SS = 4  # supersample for the still, so its disc edges match the canvas's
 
 
@@ -83,14 +85,16 @@ def grid(im, cols):
     return Image.fromarray(np.uint8(np.round(out * 255)), "RGBA")
 
 
-def still(g, cell, ground):
+def still(g, cell, look):
     """The rendered field, for the readers that cannot run the renderer.
     Kept in step with the draw loop in hero-dots.tsx by hand; the two must
     agree or a visitor without JavaScript gets a different picture."""
     cols, rows = g.size
     px = g.load()
+    lo, hi = look["dia"]
+    lut = [(i / 255) ** look["gamma"] for i in range(256)]
     W, H = cols * cell, rows * cell
-    canvas = Image.new("RGB", (W * SS, H * SS), ground)
+    canvas = Image.new("RGB", (W * SS, H * SS), look["ground"])
     d = ImageDraw.Draw(canvas)
     for j in range(rows):
         for i in range(cols):
@@ -98,8 +102,9 @@ def still(g, cell, ground):
             cover = a / 255
             if cover < ALPHA_FLOOR:
                 continue
+            r, gr, b = (round(lut[v] * 255) for v in (r, gr, b))
             lum = (0.2126 * r + 0.7152 * gr + 0.0722 * b) / 255
-            dia = DIA_MIN + (DIA_MAX - DIA_MIN) * (1 - lum) ** GAMMA
+            dia = lo + (hi - lo) * (1 - lum) ** CURVE_EXP
             # The silhouette thins rather than steps: a half-covered cell
             # prints a half-sized mark, which is what an edge looks like.
             dia *= cover
@@ -120,12 +125,19 @@ def main():
         g = grid(im, cols)
         gp = os.path.join(OUT, f"hero-grid{tag}.webp")
         g.save(gp, lossless=True, method=6, exact=True)
-        sp = os.path.join(OUT, f"hero-dots{tag}@2x.webp")
-        still(g, cell, PLATE).save(sp, quality=82, method=6)
+        # One still per ground. Without JavaScript there is no theme toggle,
+        # so the theme IS the system preference and <picture> can choose with
+        # a prefers-color-scheme source. Print takes the paper one, which is
+        # the default arm and the right answer on paper.
+        sizes = []
+        for look, suffix in ((PAPER, ""), (PLATE, "-dark")):
+            sp = os.path.join(OUT, f"hero-dots{tag}{suffix}@2x.webp")
+            still(g, cell, look).save(sp, quality=82, method=6)
+            sizes.append(f"{os.path.getsize(sp) / 1024:.0f} KB")
         print(
             f"  {cols} x {g.size[1]} cells"
             f"  grid {os.path.getsize(gp) / 1024:5.1f} KB"
-            f"  still {os.path.getsize(sp) / 1024:6.1f} KB"
+            f"  stills {' + '.join(sizes)}"
         )
 
 
