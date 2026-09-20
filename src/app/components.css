@@ -1054,29 +1054,16 @@
    layout on the site that needs explicit grid placement. Nothing in this
    block animates; spacing inside the blocks is utilities in the JSX.
 
-   One column by default, in the phone order: mission line + status, the
-   name, the board, then tagline / lede / actions. From 80rem (§7.1, addendum
-   §E) it is a two-column grid placed by line number, because auto-placement
-   can never overlap items and the name must pass over the board:
+   One column by default, in the phone order: the name, the photograph, then
+   the lede, the actions and the story. From 80rem it is a two-column grid
+   placed by line number: the name across the top, the copy in column 1, the
+   photograph in column 2 spanning both rows.
 
-       row 1   intro (mission line, status)   │ board: column 2,
-       row 2   h1, grid-column 1 / -1 ────────┤ rows 1–3,
-       row 3   tagline, lede, actions         │ align-self: start
-
-   The name's first line ends over the board's left columns; the bake keeps
-   that region empty (checked against the 96-field: columns 0–29 carry no
-   mask above row 100, well past the crop's 24 × 24 guarantee). The h1 is
-   `justify-self: start` so its box is only as wide as "Utkarsh": the box
-   overlaps the board only where the letters do, and the board's `cursor:
-   none` region is not covered by an empty span of heading box.
-
-   The board's canvas is position: fixed at z 0 (board.css); the copy
-   wrappers and the h1 carry `board-above` in the JSX so they paint over it.
-
-   Vertical rhythm at 1440 × 900: the box is the viewport under the 3.5rem
-   header (margin-top, so the spec's min-height is the box itself), padding
-   3rem puts the board at y ≈ 104 and its caption at ≈ 840, and the copy
-   column ends a few pixels above that.
+   The photograph replaced a WebGL dot field here. The h1 used to have to
+   pass over the board's empty top-left cells, which the bake guaranteed were
+   blank; a photograph has no blank corner, so the name and the picture are
+   simply neighbours now and `justify-self: start` keeps the h1's box only as
+   wide as "Utkarsh".
    ───────────────────────────────────────────────────────────────────────── */
 @layer components {
   .hero {
@@ -1088,8 +1075,30 @@
   }
 
   .hero-name,
-  .hero-board {
+  .hero-photo {
     justify-self: start;
+  }
+
+  /* The photograph. One column wide on a phone, in a box shorter than the
+     source so it does not eat the whole screen before the copy starts;
+     `object-position` keeps his face in frame when the box crops. From 80rem
+     the box is the source's own ratio and nothing is cropped at all. */
+  .hero-photo {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: none;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    object-position: 68% 30%;
+    background: var(--ground-2);
+  }
+
+  @media (width >= 48rem) {
+    .hero-photo {
+      aspect-ratio: 4 / 3;
+      object-position: 70% 28%;
+    }
   }
   @media (width >= 80rem) {
     .hero {
@@ -1113,10 +1122,13 @@
       grid-column: 1;
       grid-row: 2;
     }
-    .hero-board {
+    .hero-photo {
       grid-column: 2;
       grid-row: 1 / 3;
       align-self: start;
+      /* The source is cropped to exactly this ratio, so nothing is cut. */
+      aspect-ratio: 1800 / 2211;
+      object-position: center;
     }
   }
 
@@ -1278,44 +1290,13 @@
     margin-top: var(--section-gap);
   }
 
-  .contact-board {
-    display: none;
-  }
-
-  @media (width >= 64rem) {
-    .contact-head,
-    .contact-body {
-      grid-column: 1 / span 5;
-    }
-    /* `end` here used to drop the address to the foot of a row whose height
-       is the ghost's, which left about 200px of nothing under the title. It
-       only read as deliberate while the close sat on the same paper as the
-       rest of the page; inside a tinted panel the same space reads as a hole
-       in the panel. The address sits under its heading. */
-    .contact-body {
-      align-self: start;
-    }
-    .contact-board {
-      display: block;
-      grid-column: 6 / span 3;
-      grid-row: 2 / span 2;
-      min-width: 0;
-      /* Ten pitches puts the ghost's top row of dots level with the title box,
-         so the figure is bracketed by the title above and the address below
-         rather than floating between the index line and the title. */
-      padding-top: calc(10 * var(--pitch));
-    }
-  }
-
-  @media (width >= 80rem) {
-    .contact-head,
-    .contact-body {
-      grid-column: 1 / span 7;
-    }
-    .contact-board {
-      grid-column: 9 / span 4;
-    }
-  }
+  /* The close used to reserve columns 6-12 for a ghost: a near-invisible dot
+     afterimage of the portrait, at about 6% ink, in the corner of the band.
+     It was the last survivor of a direction where the portrait was a dot
+     field, and beside a photograph it is simply a smudge. With it gone the
+     copy takes the whole band rather than a narrow column with a third of a
+     tinted panel empty beside it, and `align-self: start` is no longer
+     holding anything open. */
 
   /* `.colophon-note` was styled here as well as in case.css, left over from a
      home-page colophon that no longer exists. It set a different family, a

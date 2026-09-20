@@ -777,10 +777,7 @@
    It is text and marks, it has no polarity to preserve, and it follows the
    theme like everything else.
 
-   The arrival is deliberately NOT covered: `[data-arrival]` is on the root and
-   this is scoped to `.board`, so the plate-to-print turn still runs in bone on
-   plate for its 2.6 seconds and then settles here. A plate IS cut backwards;
-   a hung print is not. */
+   */
 :root[data-theme="dark"] .board {
   --ink: #14120e;
   --ink-2: #4a453c;
@@ -1053,49 +1050,18 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   11. The arrival
-   An intaglio plate is worked in the dark and cut in reverse, because the
-   sheet it prints is its mirror. So the board assembles as a plate — bone
-   marks on a near-black ground, flipped — and then the sheet is pulled.
+   11. The dark palette
+   This block used to be the arrival: the hero board assembled as an intaglio
+   plate, bone marks on a near-black ground and mirrored, and then the sheet
+   was pulled -- the whole palette stepping from plate to paper between two
+   frames, because a cross-fade between bone-on-plate and ink-on-paper passes
+   through a point where the two colours meet and no staging of it clears the
+   4.5 floor.
 
-   This half is the page. The other half is the canvas (uPull / uMirror in
-   gl-board.ts, setPull in board.ts), driven off one clock in dot-board.tsx:
-   the pull runs 1250→1900 ms of a 2600 ms arrival.
-
-   **The ground and the type step. They do not cross-fade, and that is not a
-   shortcut — a cross-fade here cannot be made legible.** The page starts bone
-   on plate (15.21:1) and ends ink on paper (17.64:1): the same two colours in
-   opposite roles, so every continuous path between them passes through a
-   point where the two meet. Solve for the best case and it is 4.18:1, below
-   the 4.5 floor, and that is an *optimally* staged swap; a naive simultaneous
-   cross-fade bottoms out near 1.03:1, with the h1 genuinely invisible for
-   about a tenth of a second. Staggering does not rescue it in either order —
-   ground first leaves bone type on paper, type first leaves ink on plate. So
-   the swap happens between two frames and no frame is ever sampled mid-way.
-
-   The step is driven from JS rather than from a keyframe percentage, because
-   it has to land on the *same frame* as the canvas mirror flip — one event,
-   not two that agree to three decimal places. dot-board flips the attribute
-   the first frame its smoothstepped pull crosses 0.5, which is t≈1576 ms.
-
-   The marks are what carries the moment across: half inked at the flip, they
-   are mid-grey against both grounds, so they are the one thing that does not
-   jump. They go on darkening to full ink for another 324 ms, on paper. It
-   reads as the ink transferring, because that is what it is.
-
-   What softens the step is the second state: the paper arrives as
-   `--ground-3` and warms to `--ground` over a second, the sheet lifting
-   toward the light. Both are paper — ink measures 14.38:1 on the first and
-   17.64:1 on the last — so the settle is free.
-
-   The h1 is real text at full opacity throughout, bone on the plate and ink
-   on the sheet, so the arrival never delays the largest contentful paint and
-   never leaves the page's own heading invisible.
-
-   Once per session, set from JS. With JS off the attribute is never set and
-   the page is paper from the first byte. Under reduced motion the board draws
-   its settled frame and never enters the arrival branch at all, and §9's `*`
-   rule matches the root, so the warm is dropped too.
+   The portrait is a photograph now. There is no plate to pull from, so the
+   arrival is gone and what survives is the half of it that was always useful:
+   one token remap that the dark theme, the 404 and prefers-color-scheme all
+   share.
    ───────────────────────────────────────────────────────────── */
 
 /* The plate. This is the same token remap the spoiled sheet uses in
@@ -1104,7 +1070,6 @@
    measured against #16140f. Remapping tokens rather than writing dark
    overrides is what lets the header, the footer, the palette and the focus
    ring come across without any of them knowing the arrival exists. */
-:root[data-arrival="plate"],
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ground: #16140f; /* --plate */
@@ -1149,37 +1114,6 @@
   }
 }
 
-/* The sheet, still warming. --ground is registered in §3, so this is a settle
-   and not a second jump. It has to finish inside the arrival's own window --
-   dot-board drops the attribute at 2600 ms and the animation goes with it --
-   so it runs 1576→2576 ms, with 24 ms of slack. */
-:root[data-arrival="sheet"] {
-  animation: warm-the-sheet 1s var(--ease-out) both;
-}
-
-/* Not in the dark. The arrival is a plate becoming paper, and warm-the-sheet
-   is the moment the ground turns; in a dark theme there is no paper to turn
-   into, so the pull still happens on the field and the ground stays plate.
-   Without this the page would spend a second animating to white and then snap
-   back to the plate when the attribute is dropped. */
-:root[data-theme="dark"][data-arrival="sheet"] {
-  animation: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"])[data-arrival="sheet"] {
-    animation: none;
-  }
-}
-
-@keyframes warm-the-sheet {
-  from {
-    --ground: #e7e1d6; /* --ground-3 */
-  }
-  to {
-    --ground: #faf8f4; /* --ground */
-  }
-}
 
 /* ─────────────────────────────────────────────────────────────
    12. The second plate, in register

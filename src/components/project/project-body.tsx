@@ -99,7 +99,6 @@ export function ProjectBody({ project }: { project: Project }) {
         {device && (
           <figure className="device-figure">
             <DotBoard
-              mode="still"
               source={device.id}
               alt={device.alt}
               fallback={device.still}

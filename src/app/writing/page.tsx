@@ -107,7 +107,6 @@ export default function WritingPage() {
             portrait rather than looking like a different site. */}
         <figure className="broadside-plate">
           <DotBoard
-            mode="still"
             source={sky.id}
             alt={sky.alt}
             fallback={sky.still}

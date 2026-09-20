@@ -1,24 +1,20 @@
 /**
- * The portrait: a photograph turned into a field of dots.
+ * What is left of the dot portrait.
  *
- * The photograph itself is never served. `scripts/segment.py` cuts the subject
- * out of it, `scripts/bake-portrait.py` samples that cutout onto dot grids and
- * writes the generated modules re-exported here. To change the portrait,
- * replace `src/assets/portrait/utkarsh-cutout.png`, re-run the bake, update
- * `alt`, and commit the outputs. Nothing runs at build time.
+ * The hero was a photograph turned into a field of dots: `scripts/segment.py`
+ * cut the subject out, `scripts/bake-portrait.py` sampled that cutout onto dot
+ * grids at three sizes, and the board drew them. The hero is the photograph
+ * itself now (src/assets/portrait/utkarsh-hero.jpg), so the three fields and
+ * their baked stills are gone.
+ *
+ * `portraitOg` survives because the social card is not the site: Satori draws
+ * it at request time with no canvas and no CSS variables, and a field of
+ * circles is the one thing that renderer does well.
  */
-export type { BoardField } from "./portrait-types";
-export { portraitField96 } from "./portrait-field-96";
-export { portraitField64 } from "./portrait-field-64";
-export { portraitFieldContact } from "./portrait-field-contact";
 export { portraitOg } from "./portrait-og";
-export { DOT_COUNT } from "./portrait-meta";
 
 export const portrait = {
-  alt: "Utkarsh Bali in profile, rendered as a field of dots: sitting on a hilltop above the coast, smiling into the light as the sun drops over the ocean behind him",
-  /** Where the noscript, print and no-canvas fallbacks live. */
-  fallback: {
-    hero: "/portrait/dots-96@2x.webp",
-    phone: "/portrait/dots-64@2x.webp",
-  },
+  alt:
+    "Utkarsh Bali on a ridge above the coast at sunset, looking out over the " +
+    "ocean with the sun low behind him",
 } as const;

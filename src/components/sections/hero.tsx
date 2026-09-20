@@ -1,9 +1,10 @@
 import type { CSSProperties } from "react";
-import { DotBoard } from "@/components/interactive/dot-board";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Story } from "@/components/sections/story";
 import { profile } from "@/content";
 import { portrait } from "@/content/portrait";
+import heroPortrait from "@/assets/portrait/utkarsh-hero.jpg";
 
 /** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
 const [firstName, ...restOfName] = profile.name.split(" ");
@@ -18,22 +19,25 @@ const surname = restOfName.join(" ");
 const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
 
 /**
- * The first screen (§7.1). Everything here is in the HTML on frame one and
- * nothing in it moves: the name is the LCP element on every viewport, plain
- * text in Bodoni 500, and the only things that animate are dots — the mission
- * line's hairline drawing in and the portrait assembling on the board.
+ * The first screen. Everything here is in the HTML on frame one and nothing
+ * in it moves. The name is the LCP element on every viewport, plain text in
+ * Bodoni 500.
  *
- * The name is at full opacity from frame zero THROUGHOUT the arrival — bone on
- * the plate, ink on the sheet — which is why the arrival can invert the whole
- * palette under it without ever delaying the largest contentful paint.
+ * The portrait is a photograph. It used to be a WebGL field of dots that
+ * assembled over about a second while the whole palette inverted under it --
+ * an arrival, a cursor that burnished a highlight into the plate, a tier
+ * ladder down to a 2D canvas and then to a still. All of that is gone: one
+ * <Image>, one file, no canvas, no client JavaScript, nothing to animate and
+ * nothing to fall back to.
  *
- * The status LED is the one --sun element of this screen (the portrait's rim
- * and datum are the light source, not UI, and do not count).
+ * `priority` because it is above the fold on every viewport, and a static
+ * import so the intrinsic size is known at build time and the layout cannot
+ * shift while it loads.
  *
  * Layout lives in `.hero` (components.css): one column in this DOM order on
  * phones and tablets; from 80rem a two-column grid where the h1 spans both
- * columns and passes over the board's empty top-left cells. Server component;
- * the board and the reveal are the only client islands.
+ * columns. Fully a server component now -- there is no client island left on
+ * this screen.
  */
 export function Hero() {
   return (
@@ -56,20 +60,17 @@ export function Hero() {
         {surname && <span className="block">{surname}</span>}
       </h1>
 
-      {/* Column 2 from 80rem, directly under the name below that. The figure
-          box is the layout anchor; the canvas is fixed behind the page. The
-          board loads its field on the client, in its own cached chunk.
-
-          No caption. It read "288 × 360 · 51,747 dots" at rest and
-          "x 003 · y 012 · 0.42" under the pointer -- the machine describing
-          its own output, under a picture of a person. */}
-      <DotBoard
-        mode="hero"
-        source="hero"
+      {/* Column 2 from 80rem, directly under the name below that. The source
+          is cropped to 0.814, which is the box's own ratio, so it fills the
+          column with no cover-crop at desktop width; `object-fit: cover` and
+          an object-position only come into play on a phone, where the box is
+          shorter. No caption: it is a picture of a person. */}
+      <Image
+        src={heroPortrait}
         alt={portrait.alt}
-        fallback={portrait.fallback.hero}
-        mobileFallback={portrait.fallback.phone}
-        className="hero-board"
+        className="hero-photo"
+        sizes="(width >= 80rem) 38rem, 100vw"
+        priority
       />
 
       <div className="hero-copy board-above">

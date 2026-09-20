@@ -281,12 +281,12 @@ export function SpoiledPlate({ text = "404" }: { text?: string }) {
     const motion = motionAllowed();
 
     const start = (field: BoardField): (() => void) | null => {
-      const colors = {
-        ink: cssVar(figure, "--ink", "#efe9dc"),
-        sun: cssVar(figure, "--sun", "#e2673c"),
-        off: cssVar(figure, "--dot-off", "rgba(239,233,220,0.08)"),
-      };
-      const board = createBoard(canvas, field, { mode: "still", colors, pointer: false });
+      const board = createBoard(canvas, field, {
+        colors: {
+          ink: cssVar(figure, "--ink", "#efe9dc"),
+          off: cssVar(figure, "--dot-off", "rgba(239,233,220,0.08)"),
+        },
+      });
       if (!board) {
         figure.dataset.plate = "fallback";
         setPressable(false);

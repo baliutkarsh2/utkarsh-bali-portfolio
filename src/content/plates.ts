@@ -16,7 +16,6 @@ import type { PortraitSource } from "@/components/interactive/dot-board";
  *   · the portrait fields. They are the site's subject rather than its
  *     illustrations, they carry a datum and a rim that nothing else does, and
  *     scripts/bake-portrait.py owns them end to end.
- *   · the verso showthrough (below, separately). It has no field and no
  *     renderer entry at all -- it is a mark on the paper, not a board.
  *
  * ── The numbering ──────────────────────────────────────────────────────────
@@ -207,55 +206,6 @@ const DEVICES: PlateSpec[] = [
 /* ── The plates that belong to no single project ───────────────────────────── */
 const OTHERS: PlateSpec[] = [
   {
-    id: "clinical-voice",
-    field: "clinicalVoice",
-    project: "clinical-ai-assistant",
-    title: "The voice-first home screen",
-    subject: "The home screen, voice first",
-    alt:
-      "The clinical assistant's home screen, engraved as a dot field: the prompt “How can " +
-      "I help you today?”, the microphone as the primary control, and shortcuts to add a " +
-      "task or view patient vitals.",
-    w: 60,
-    h: 128,
-    count: 1816,
-    box: [30, 64],
-    density: 2,
-    still: "/portrait/clinical-voice@2x.webp",
-  },
-  {
-    id: "clinical-tasks",
-    field: "clinicalTasks",
-    project: "clinical-ai-assistant",
-    title: "Tasks and reminders",
-    subject: "Dictated hands-free during a shift",
-    alt:
-      "The clinical assistant's task and reminder list, engraved as a dot field: five " +
-      "entries dictated during a shift.",
-    w: 60,
-    h: 128,
-    count: 2020,
-    box: [30, 64],
-    density: 2,
-    still: "/portrait/clinical-tasks@2x.webp",
-  },
-  {
-    id: "clinical-vitals",
-    field: "clinicalVitals",
-    project: "clinical-ai-assistant",
-    title: "Patient vitals",
-    subject: "Captured without touching a keyboard",
-    alt:
-      "The clinical assistant's patient vitals screen, engraved as a dot field: a chart " +
-      "above a column of readings, all of it captured by voice.",
-    w: 60,
-    h: 128,
-    count: 3836,
-    box: [30, 64],
-    density: 2,
-    still: "/portrait/clinical-vitals@2x.webp",
-  },
-  {
     id: "rule-quarters",
     field: "quarterlyRule",
     title: "The quarterly rule",
@@ -315,22 +265,3 @@ export function deviceOf(slug: string): Plate | undefined {
 export function plateGrid(plate: Plate): string {
   return `${plate.w} × ${plate.h} · ${plate.count.toLocaleString("en-US")} dots`;
 }
-
-/* ── The verso showthrough ─────────────────────────────────────────────────
-   scripts/bake-verso.py. Not a plate and not a board: the portrait's deepest
-   passages only, flipped, at 12% -- what comes through a sheet from the plate
-   on its other side.
-
-   It ships as a plain image, and it needs all four of these or it breaks a
-   non-negotiable: `aria-hidden` (it carries no meaning and is the portrait
-   again, so a screen reader must not meet it twice), `loading="lazy"`,
-   `decoding="async"`, and the `width`/`height` below written onto the element
-   — an intrinsic size is what keeps CLS at 0.0000, and this is the one image
-   on the site that is not inside a `<figure>` with a reserved box. */
-export type Verso = { src: string; width: number; height: number };
-
-export const verso: Record<"hero" | "phone" | "about", Verso> = {
-  hero: { src: "/portrait/verso-96.webp", width: 1152, height: 1440 },
-  phone: { src: "/portrait/verso-64.webp", width: 768, height: 960 },
-  about: { src: "/portrait/verso-about.webp", width: 768, height: 960 },
-};

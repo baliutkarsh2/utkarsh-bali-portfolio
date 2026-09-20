@@ -142,42 +142,34 @@ for (const [, token, value] of globals.matchAll(
 }
 
 /* ─────────────────────────────────────────────────────────────
-   3. No tone channel in the draw shader.
+   3. One ink, and no tone channel.
 
    The renderer used to encode luminance in two channels: tone (mixing the
    unlit colour toward the ink) and diameter. On a dark ground tone does most
    of the perceptual work. Invert the ground and the same formula gives
-   mid-grey dots on near-white, which the eye integrates into one flat grey —
+   mid-grey dots on near-white, which the eye integrates into one flat grey --
    the smudge. The fix was not to tune it. The fix was to delete the channel:
    every mark is one ink at full strength and value is carried by AREA alone.
    That is what an engraving is.
 
-   So `uOff` — the unlit colour — must never reach the fragment colour.
+   This used to read the WebGL draw shader and assert it never sampled `uOff`.
+   That renderer went with the dot portrait, and the 2D board is the only one
+   left -- so the check moved to where the colour is actually chosen. Pass 3
+   sets one fill for the whole frame; the moment a fill style is computed
+   per-bucket or per-dot again, the tone channel is back.
    ───────────────────────────────────────────────────────────── */
-const shaderSource = readFileSync(
-  join(ROOT, "src", "lib", "field", "gl-board.ts"),
-  "utf8",
+const boardSource = readFileSync(join(ROOT, "src", "lib", "board.ts"), "utf8");
+const fills = [...boardSource.matchAll(/^\s*c\.fillStyle\s*=\s*(.+?);/gm)].map(
+  (m) => m[1].trim(),
 );
-const drawStart = shaderSource.indexOf("const DRAW_VS");
-const drawEnd = shaderSource.indexOf("const SHARED");
-if (drawStart < 0 || drawEnd < 0) {
+if (fills.length !== 1 || fills[0] !== "inkFill") {
   fail(
-    "no tone channel",
-    "could not find DRAW_VS in gl-board.ts — this check has gone stale",
+    "one ink",
+    `board.ts sets fillStyle ${fills.length} time(s) (${fills.join(", ") || "none"}). ` +
+      "It must be exactly once, to `inkFill`. Value is carried by ink AREA, not by " +
+      "mixing a mark toward the ground -- that is the smudge, and it is the one " +
+      "thing this direction cannot survive.",
   );
-} else {
-  const draw = shaderSource.slice(drawStart, drawEnd);
-  for (const line of draw.split("\n")) {
-    const code = line.replace(/\/\/.*$/, "");
-    if (!code.includes("uOff")) continue;
-    if (/^\s*uniform\s/.test(code)) continue;
-    fail(
-      "no tone channel",
-      `the draw shader reads uOff: "${code.trim()}". Value is carried by ink AREA, ` +
-        `not by mixing a mark toward the ground — that is the smudge, and it is the ` +
-        `one thing this direction cannot survive.`,
-    );
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────

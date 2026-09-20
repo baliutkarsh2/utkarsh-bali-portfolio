@@ -61,7 +61,6 @@ export default function ProjectsPage() {
         {rule && (
           <figure className="toc-rule">
             <DotBoard
-              mode="still"
               source={rule.id}
               alt={rule.alt}
               fallback={rule.still}
@@ -135,7 +134,6 @@ export default function ProjectsPage() {
                 {device && (
                   <div className="toc-device" aria-hidden="true">
                     <DotBoard
-                      mode="still"
                       source={device.id}
                       alt=""
                       fallback={device.still}

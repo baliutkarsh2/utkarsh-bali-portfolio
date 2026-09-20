@@ -1,6 +1,5 @@
 import { ArrowUpRight } from "lucide-react";
 import { CopyEmail } from "@/components/interactive/copy-email";
-import { DotBoard } from "@/components/interactive/dot-board";
 import { profile, socials } from "@/content";
 import { recentPosts } from "@/lib/writing";
 
@@ -89,10 +88,6 @@ export function Contact({ index }: { index?: string }) {
               on {essay.external?.publisher ?? "the web"}: {essay.title}.
             </p>
           )}
-        </div>
-
-        <div className="contact-board">
-          <DotBoard mode="afterimage" source="contact" alt="" />
         </div>
       </div>
     </section>
