@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Reveal } from "@/components/interactive/reveal";
 import { DotMask } from "@/components/ui/dot-mask";
 import type { MediaSlot } from "@/content";
 
@@ -13,7 +12,6 @@ import type { MediaSlot } from "@/content";
  * Three across at ≥ 64rem (the clinical assistant's 700 × 1482 phone screens),
  * stacked below. The column gap is wider than the page gutter on purpose: two
  * plate marks eat 20px of it and the marks must not touch. Each item keeps its
- * own <Reveal> so a stacked gallery resolves one screen at a time.
  *
  * Captions are the `caption` utility now, not `meta`: a caption under a plate
  * is a sentence a person reads, and mono uppercase is for machine labels.
@@ -34,32 +32,30 @@ export function Gallery({ media }: { media: MediaSlot[] }) {
         {media.map((item) => (
           <li key={item.src}>
             <figure className="plate-mark m-0">
-              <Reveal>
-                <DotMask ratio={`${item.width} / ${item.height}`}>
-                  {item.kind === "video" ? (
-                    // The content type allows a video slot; none exists yet.
-                    // Muted, inline and on demand so nothing plays by itself.
-                    <video
-                      src={item.src}
-                      width={item.width}
-                      height={item.height}
-                      controls
-                      muted
-                      playsInline
-                      preload="metadata"
-                      aria-label={item.alt}
-                    />
-                  ) : (
-                    <Image
-                      src={item.src}
-                      alt={item.alt}
-                      width={item.width}
-                      height={item.height}
-                      sizes="(min-width: 64rem) 15rem, 100vw"
-                    />
-                  )}
-                </DotMask>
-              </Reveal>
+              <DotMask ratio={`${item.width} / ${item.height}`}>
+                {item.kind === "video" ? (
+                  // The content type allows a video slot; none exists yet.
+                  // Muted, inline and on demand so nothing plays by itself.
+                  <video
+                    src={item.src}
+                    width={item.width}
+                    height={item.height}
+                    controls
+                    muted
+                    playsInline
+                    preload="metadata"
+                    aria-label={item.alt}
+                  />
+                ) : (
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    width={item.width}
+                    height={item.height}
+                    sizes="(min-width: 64rem) 15rem, 100vw"
+                  />
+                )}
+              </DotMask>
               {item.caption && <figcaption className="caption">{item.caption}</figcaption>}
             </figure>
           </li>

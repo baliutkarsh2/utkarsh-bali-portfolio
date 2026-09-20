@@ -51,7 +51,6 @@
 .toc {
   --year-col: 3.25rem; /* "2026" in 13px tabular mono, right-aligned */
   --rule-gap: 1.25rem; /* rule to the flush-left row */
-  --step: 0rem; /* the chronological indent's full travel */
 }
 
 .toc-list {
@@ -73,17 +72,6 @@
   background: var(--line-strong);
 }
 
-@media (width >= 48rem) {
-  .toc {
-    --step: 2.5rem;
-  }
-}
-
-@media (width >= 80rem) {
-  .toc {
-    --step: 4.5rem;
-  }
-}
 
 /* ── A row ────────────────────────────────────────────────────────────────
    Three columns: the year against the rule, the body, the figure. The body's
@@ -690,15 +678,6 @@
   }
 }
 
-/* A note's own index, so a reader can see which sentence it answers. */
-.column-note-ref {
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-  vertical-align: super;
-  font-size: 0.68em;
-  line-height: 0;
-  padding-inline-start: 0.1em;
-}
 
 /* The generated footnote section keeps working — it is what remark-gfm
    emits and it must not break — but it is set as a colophon at the foot of

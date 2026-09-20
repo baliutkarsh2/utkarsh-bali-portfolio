@@ -2,7 +2,6 @@ import type { Social } from "./types";
 
 export const profile = {
   name: "Utkarsh Bali",
-  shortName: "Utkarsh",
   initials: "UB",
   role: "Software engineer",
   /** One plain line, for link previews and the social card. */

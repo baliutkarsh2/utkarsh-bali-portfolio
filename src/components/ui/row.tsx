@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
-import { Led } from "@/components/ui/led";
 import { cn } from "@/lib/utils";
 
 type RowProps = {
@@ -15,22 +14,13 @@ type RowProps = {
   subtitle?: ReactNode;
   /** The meta line: "eyebrow · year · status". */
   meta?: ReactNode;
-  /** Right slot: a <Numeral> with its label, or a <Tag>. 14rem at ≥ 48rem, 16rem at ≥ 80rem. */
-  trailing?: ReactNode;
   href?: string;
   /** Opens in a new tab, outward arrow, sr-only notice. */
   external?: boolean;
-  /** A 6 px LED beside the index: --sun for "live" (the ongoing project), --ink-3 for "off". */
-  led?: "live" | "off";
-  /** Screen-reader text for the LED ("Ongoing"). */
-  ledLabel?: string;
   /** `view-transition-name` on the title, e.g. "project-checkpoint", shared with the case-study h1. */
   transitionName?: string;
   /** The heading element for the title. "h3" under a section h2; "h2" on index pages under the h1. */
   titleAs?: "h2" | "h3" | "div";
-  /** Rendered under the subtitle: bullets, extra lines. */
-  children?: ReactNode;
-  className?: string;
 };
 
 /**
@@ -43,6 +33,12 @@ type RowProps = {
  *
  * The title's heading level is the consumer's call (`titleAs`, default h3),
  * because the same row sits under an h1 on index pages and under an h2
+ * inside a section.
+ *
+ * Four props are gone because no call site ever passed them: `trailing` (the
+ * right slot, for a <Numeral> that no longer exists), `led`/`ledLabel` (a 6px
+ * lamp beside the index, which took <Led> with it), `children` and
+ * `className`.
  */
 export function Row({
   index,
@@ -50,15 +46,10 @@ export function Row({
   title,
   subtitle,
   meta,
-  trailing,
   href,
   external = false,
-  led,
-  ledLabel,
   transitionName,
   titleAs: TitleTag = "h3",
-  children,
-  className,
 }: RowProps) {
   const titleStyle = transitionName
     ? ({ viewTransitionName: transitionName } as CSSProperties)
@@ -84,15 +75,13 @@ export function Row({
 
   return (
     <div
-      className={cn("row", className)}
+      className="row"
       data-link={href ? "" : undefined}
       data-external={external ? "" : undefined}
-      data-trailing={trailing ? "" : undefined}
     >
       <div className="row-gutter meta">
         {index && <span aria-hidden="true">{index}</span>}
         {gutter}
-        {led && <Led state={led} label={ledLabel} />}
       </div>
 
       <div className="row-main">
@@ -111,10 +100,7 @@ export function Row({
           </p>
         )}
         {meta && <p className={cn("row-meta meta text-ink-3", "mt-2.5")}>{meta}</p>}
-        {children}
       </div>
-
-      {trailing && <div className="row-trailing">{trailing}</div>}
 
       {href && <Arrow className="row-arrow" aria-hidden="true" />}
     </div>

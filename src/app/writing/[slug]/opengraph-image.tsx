@@ -1,6 +1,10 @@
 import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgCard } from "@/lib/og";
 
+// Only the slugs generateStaticParams emits. Without this the route
+// answers 200 with a fallback card under pages that 404.
+export const dynamicParams = false;
+
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
 export const alt = "Post by Utkarsh Bali";

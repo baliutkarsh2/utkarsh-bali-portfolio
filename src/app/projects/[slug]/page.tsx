@@ -124,8 +124,11 @@ export default async function ProjectPage({
 
           <div>
             <p className="spec-line data">
-              {spec.map((item) => (
-                <span key={item}>{item}</span>
+              {/* Keyed on the index, not the value: spec is
+                  [eyebrow, org, role, year, status] and two of those being
+                  equal would silently drop a span. */}
+              {spec.map((item, i) => (
+                <span key={i}>{item}</span>
               ))}
             </p>
             <h1

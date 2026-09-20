@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import type { Project } from "@/content";
 import { DotBoard } from "@/components/interactive/dot-board";
 import { deviceOf } from "@/content/plates";
-import { Reveal } from "@/components/interactive/reveal";
 import { DotMask } from "@/components/ui/dot-mask";
 import { CODA, MOVEMENTS, hasCoda } from "@/lib/corpus";
 import { ordinal } from "@/lib/utils";
@@ -110,19 +109,17 @@ export function ProjectBody({ project }: { project: Project }) {
         <Schematic project={project} />
         {project.cover && (
           <figure className="plate-figure plate-mark">
-            <Reveal>
-              <DotMask
-                ratio={`${project.cover.width} / ${project.cover.height}`}
-              >
-                <Image
-                  src={project.cover.src}
-                  alt={project.cover.alt}
-                  width={project.cover.width}
-                  height={project.cover.height}
-                  sizes="(min-width: 64rem) 52rem, 100vw"
-                />
-              </DotMask>
-            </Reveal>
+            <DotMask
+              ratio={`${project.cover.width} / ${project.cover.height}`}
+            >
+              <Image
+                src={project.cover.src}
+                alt={project.cover.alt}
+                width={project.cover.width}
+                height={project.cover.height}
+                sizes="(min-width: 64rem) 52rem, 100vw"
+              />
+            </DotMask>
           </figure>
         )}
       </Movement>

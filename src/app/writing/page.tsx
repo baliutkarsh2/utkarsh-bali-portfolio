@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   description:
     "Occasional essays by Utkarsh Bali on software, life, art, and philosophy.",
   alternates: { canonical: "/writing" },
+  openGraph: {
+    url: "/writing",
+    title: "Writing",
+    description:
+      "Occasional essays by Utkarsh Bali on software, life, art, and philosophy.",
+  },
 };
 
 /**

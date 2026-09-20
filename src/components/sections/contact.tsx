@@ -19,11 +19,8 @@ const TITLE = "Get in touch";
  * rendered. The figure is decorative (`alt=""` gives it aria-hidden) and
  * runs no loop.
  *
- * `index` is only the SectionSpy's hook now; nothing renders it.
  */
-export function Contact({ index }: { index?: string }) {
-  // The close now renders once, on the home page, which always passes an index.
-  const sectionIndex = index ?? "";
+export function Contact() {
   // One essay, published on Medium. One line, not a section of its own.
   const [essay] = recentPosts(1);
 
@@ -31,7 +28,7 @@ export function Contact({ index }: { index?: string }) {
     <section
       id="contact"
       aria-labelledby="contact-title"
-      data-section-index={sectionIndex}
+      data-section-index=""
       data-section-title="Contact"
       className="contact-band section-y"
     >

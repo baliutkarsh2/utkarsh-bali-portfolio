@@ -1,4 +1,4 @@
-export type LinkKind = "repo" | "demo" | "video" | "site" | "paper";
+export type LinkKind = "repo" | "video" | "site";
 
 export type ProjectLink = {
   label: string;
@@ -19,7 +19,7 @@ export type MediaSlot = {
   caption?: string;
 };
 
-export type ProjectStatus = "shipped" | "archived" | "research" | "ongoing";
+export type ProjectStatus = "shipped" | "research" | "ongoing";
 
 export type Project = {
   slug: string;
@@ -62,18 +62,14 @@ export type Experience = {
   location: string;
   dates: string;
   sortDate: string;
-  current: boolean;
   summary: string;
   bullets: string[];
 };
-
-export type AchievementKind = "academic" | "research" | "startup" | "community";
 
 export type Achievement = {
   label: string;
   detail: string;
   year: string;
-  kind: AchievementKind;
   href?: string;
 };
 

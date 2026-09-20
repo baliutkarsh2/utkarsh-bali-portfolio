@@ -8,8 +8,6 @@
 
 /* ─────────────────────────────────────────────────────────────
    0. Custom variants
-   `in`        a dot surface has resolved: data-in on the element or on an
-               ancestor (the Reveal wrapper).
    `js`        the boot script ran. Anything that starts unlit waits for this,
                so a visitor without JavaScript is never shown dim numerals or
                a half-masked image.
@@ -17,7 +15,6 @@
                toggle, which the boot script mirrors as data-motion on <html>.
    `fine`      a mouse or trackpad, the only pointers the board reacts to.
    ───────────────────────────────────────────────────────────── */
-@custom-variant in (&[data-in], [data-in] &);
 @custom-variant js (:root.js &);
 @custom-variant motion-ok {
   @media (prefers-reduced-motion: no-preference) {
@@ -82,11 +79,7 @@
   /* ── The plate. The arrival runs here, the 404 lives here permanently, and
         prefers-color-scheme: dark gets it rather than an invented palette. ── */
   --plate: #16140f;
-  --plate-2: #221f18;
   --bone: #efe9dc; /* 15.21:1 on plate */
-  --bone-2: #ada595; /* 7.53:1 */
-  --bone-3: #8f8878; /* 5.22:1 on plate only */
-  --sun-lit: #e2673c; /* 5.47:1 on plate */
 
   /* ── Focus / selection ── */
   --focus: var(--sun);
@@ -104,12 +97,10 @@
   --header-blur: 0px;
 
   /* ── Z-index scale. Tailwind has no z namespace; use `z-(--z-header)`. ── */
-  --z-field: -1; /* behind everything; nothing claims it now the lattice is gone */
   --z-board: 0; /* hero canvas */
   --z-content: 1; /* text over the board */
   --z-sticky: 30; /* case-study sub-bar, inspection panel */
   --z-header: 50;
-  --z-dialog: 100; /* palette, mobile menu (<dialog> top layer anyway) */
   --z-skip: 110;
 
   /* ── Spacing: 0.5rem steps. Tailwind's 0.25rem utilities are allowed for
@@ -122,7 +113,6 @@
   --space-6: 3rem;
   --space-8: 4rem;
   --space-10: 5rem;
-  --space-12: 6rem;
   /* Half a section's gap; two of these meet at every boundary, so the visible
      gap is twice this plus the head's own 36px. At 4rem that measured 165px on
      / and /about, against 57-64px on the site this direction is now taking its
@@ -162,9 +152,6 @@
   --dur-1: 120ms; /* colour */
   --dur-2: 200ms; /* fills, LEDs */
   --dur-3: 320ms; /* image resolve, page in */
-  --dur-4: 600ms; /* numeral warm-up */
-  --dur-5: 900ms; /* hairline draw */
-  --dur-board: 1100ms; /* portrait assembly */
 }
 
 /* Pitch steps. Integer only. Above 80rem the shell is capped, so a 4K panel
@@ -212,16 +199,10 @@
   --font-display: var(--font-display-src), Didot, "Bodoni MT", Georgia, serif;
   --font-mono: var(--font-mono-src), ui-monospace, "SF Mono", monospace;
 
-  --color-ground: var(--ground);
-  --color-ground-2: var(--ground-2);
-  --color-ground-3: var(--ground-3);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
-  --color-sun: var(--sun);
-  --color-dot-off: var(--dot-off);
   --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
 
   /* No radius and no shadow exist on this site, so the utilities for them
      do not either: `rounded-md` and `shadow-sm` are compile-time no-ops.
@@ -235,19 +216,14 @@
      and the token agree; `ease-out-soft` is the same curve under the name
      the component contract uses. Literal values: see the note in section 1. */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-snap: cubic-bezier(0.2, 0, 0, 1);
   --ease-page: cubic-bezier(0.65, 0, 0.35, 1);
   /* `transition-colors` and friends commit on the snap curve at --dur-2. */
   --default-transition-duration: var(--dur-2);
   --default-transition-timing-function: var(--ease-snap);
 
-  --container-shell: var(--shell);
-  --container-measure: var(--measure);
   /* `max-w-prose` reads --max-width-* first (Tailwind's own is 65ch), so
      the prose column is mapped there, not under --container-*. */
-  --max-width-prose: var(--prose);
-  --container-rail: var(--rail);
 
   /* Bodoni Moda 500. `font-optical-sizing: auto` (base) makes opsz track the
      rendered size, which is the historical fix for a Didone's one screen
@@ -297,11 +273,9 @@
   --text-meta: 0.6875rem; /* 11px machine labels */
   --text-meta--line-height: 1.2;
   --text-meta--letter-spacing: 0.09em; /* uppercase */
-  --text-meta--font-weight: 500;
   --text-data: 0.8125rem; /* 13px dates, axis values, stack */
   --text-data--line-height: 1.35;
   --text-data--letter-spacing: 0.01em;
-  --text-data--font-weight: 400;
 
   /* Bodoni Moda 700, lining tabular. Figures stack in a column on the work
      index and the case-study plate, so they have to align on the decimal. */
@@ -533,16 +507,8 @@
   }
 
   /* Tabular figures wherever numbers sit in columns. */
-  time,
-  .font-dot {
+  time {
     font-variant-numeric: tabular-nums;
-  }
-
-  /* Doto always carries ROND 100: circles, the same circles as the portrait.
-     Anything that sets font-variation-settings on a numeral (the wght
-     warm-up) must repeat "ROND" 100, since the property is not additive. */
-  .font-dot {
-    font-variation-settings: "ROND" 100;
   }
 
   /* Display tokens balance, running text is pretty. Base layer, so a
@@ -670,12 +636,14 @@
   }
 }
 
-/* Image resolve (§6). Every screenshot sits under a disc mask at the pitch.
-   Resolved is a disc radius of 0.71 × pitch: the half-diagonal of the tile
-   is 0.707, so the discs overlap and the image is whole. Under `.js` with
-   motion allowed it rests at 0.45 (a dot screen) until data-in lands, then
-   grows over --dur-3 and stays. No JS, or reduced motion: resolved from
-   the first frame. */
+/* Image resolve. Every screenshot sits under a disc mask at the pitch, at a
+   radius of 0.71 x pitch: the half-diagonal of the tile is 0.707, so the discs
+   overlap and the image is whole.
+
+   It used to rest at 0.45 -- a visible dot screen -- and grow to 0.71 when the
+   figure scrolled into view. That was gated on `:root.js` and on motion, so a
+   visitor without JavaScript already got the resolved image; now everyone
+   does. */
 @utility dot-mask {
   --dot-r: calc(0.71 * var(--pitch));
   mask-image: radial-gradient(
@@ -685,14 +653,6 @@
   );
   mask-size: var(--pitch) var(--pitch);
   mask-repeat: repeat;
-  @media (prefers-reduced-motion: no-preference) {
-    :root.js:not([data-motion="reduce"]) & {
-      transition: --dot-r var(--dur-3) var(--ease-out);
-    }
-    :root.js:not([data-motion="reduce"]) &:not([data-in]):not([data-in] *) {
-      --dot-r: calc(0.45 * var(--pitch));
-    }
-  }
 }
 
 /* The plate mark.
@@ -930,7 +890,6 @@
     --p: 1;
   }
 
-  body::before,
   body > header,
   canvas,
   dialog {
@@ -948,15 +907,9 @@
     --dot-r: calc(0.71 * var(--pitch)) !important;
   }
 
-  /* Numerals print lit, whether or not they were ever scrolled into view.
-     `.numeral` is the class <Numeral> renders (components.css); `.font-dot`
-     covers a stray use of the utility. */
-  .numeral,
-  .font-dot {
+  /* Numerals print at full weight. */
+  .numeral {
     font-weight: 700 !important;
-    font-variation-settings:
-      "ROND" 100,
-      "wght" 700 !important;
   }
 
   main a[href^="http"]::after {

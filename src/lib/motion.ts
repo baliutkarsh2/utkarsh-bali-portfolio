@@ -13,8 +13,6 @@
  * the assembly they asked not to see.
  */
 
-export type MotionMode = "reduce" | "auto";
-
 /** localStorage key. Shared with the boot script below; change both or neither. */
 export const MOTION_STORAGE_KEY = "motion";
 
@@ -46,30 +44,6 @@ export function motionAllowed(): boolean {
   if (!html) return false;
   if (html.dataset.motion === "reduce") return false;
   return !window.matchMedia(REDUCE_QUERY).matches;
-}
-
-/** The visitor's own choice, independent of the OS setting. */
-export function getMotion(): MotionMode {
-  return root()?.dataset.motion === "reduce" ? "reduce" : "auto";
-}
-
-/**
- * Applies a choice immediately (the attribute is what CSS and motionAllowed
- * read) and persists it for the next visit.
- */
-export function setMotion(mode: MotionMode): void {
-  const html = root();
-  if (!html) return;
-  if (mode === "reduce") {
-    html.dataset.motion = "reduce";
-  } else {
-    delete html.dataset.motion;
-  }
-  try {
-    localStorage.setItem(MOTION_STORAGE_KEY, mode);
-  } catch {
-    // Storage is unavailable; the attribute still applies for this page view.
-  }
 }
 
 /**

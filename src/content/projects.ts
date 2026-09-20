@@ -324,7 +324,7 @@ export const projects: Project[] = [
     status: "shipped",
     featured: true,
     metric: "3K+",
-    metricLabel: "users across 22+ countries",
+    metricLabel: "users across 22 countries",
     role: "Independent build",
     highlight: "Nine image models, mobile app, monetization",
     problem:

@@ -28,4 +28,3 @@ export const story: readonly string[] = [
   "Finishing at Purdue in December.",
 ];
 
-export const mission = "Connecting the dots...";

@@ -3,7 +3,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Children, isValidElement, type ComponentPropsWithoutRef } from "react";
 import { DotMask } from "@/components/ui/dot-mask";
-import { Reveal } from "@/components/interactive/reveal";
 import { Note } from "@/components/writing/note";
 
 /**
@@ -35,7 +34,7 @@ const IMAGE_SIZES = "(min-width: 48rem) 44rem, 100vw";
 /**
  * Every picture in a post resolves through the lattice (§7.6): a <DotMask>
  * (hairline frame, ground-2 behind, the disc mask at the pitch) inside a
- * <Reveal>, which is what lands `data-in` and grows the discs from a dot
+ * the `dot-mask` utility, which screens the image through discs at the
  * screen to a whole image over --dur-3 as it enters view. Without JS or under
  * reduced motion the mask is resolved from the first frame.
  *
@@ -60,30 +59,28 @@ function MdxImage({ src = "", alt = "", title, width, height }: ImgProps) {
 
   return (
     <figure>
-      <Reveal>
-        <DotMask ratio={sized ? `${w} / ${h}` : undefined}>
-          {sized ? (
-            <Image
-              src={source}
-              alt={alt}
-              width={w}
-              height={h}
-              sizes={IMAGE_SIZES}
-              unoptimized={remote}
-            />
-          ) : (
-            <Image
-              src={source}
-              alt={alt}
-              width={0}
-              height={0}
-              sizes={IMAGE_SIZES}
-              unoptimized={remote}
-              className="h-auto w-full"
-            />
-          )}
-        </DotMask>
-      </Reveal>
+      <DotMask ratio={sized ? `${w} / ${h}` : undefined}>
+        {sized ? (
+          <Image
+            src={source}
+            alt={alt}
+            width={w}
+            height={h}
+            sizes={IMAGE_SIZES}
+            unoptimized={remote}
+          />
+        ) : (
+          <Image
+            src={source}
+            alt={alt}
+            width={0}
+            height={0}
+            sizes={IMAGE_SIZES}
+            unoptimized={remote}
+            className="h-auto w-full"
+          />
+        )}
+      </DotMask>
       {title && <figcaption>{title}</figcaption>}
     </figure>
   );

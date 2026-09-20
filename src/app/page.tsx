@@ -32,9 +32,8 @@ import { SelectedWork } from "@/components/sections/selected-work";
  * one screen apart. The hero still carries the status line, which is the only
  * part of it that was time-sensitive.
  *
- * No <Reveal> around a section: words never animate. The reveals sit inside
- * the sections, around the dot surfaces only (the mission line's hairline,
- * the numerals). Metadata and JSON-LD come from the layout.
+ * Nothing on this page animates in. Metadata and JSON-LD come from the
+ * layout.
  */
 export default function HomePage() {
   return (

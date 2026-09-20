@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import type { MouseEventHandler, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type ButtonProps = {
   variant: "primary" | "secondary" | "text";
   /** Internal ("/projects", "#work") renders <Link>; external renders <a>. */
   href?: string;
-  /** Without an href the element is a real <button type="button">. */
-  onClick?: MouseEventHandler<HTMLButtonElement>;
   /** Opens in a new tab with the sr-only notice and the outward arrow. */
   external?: boolean;
   children: ReactNode;
@@ -23,7 +21,7 @@ const isExternalHref = (href: string) => /^(https?:|mailto:|tel:)/.test(href);
  * underline. The element is chosen by what it does: <Link> for a route,
  * <a> for another origin or a mailto:, <button> for an action.
  */
-export function Button({ variant, href, onClick, external, children, className }: ButtonProps) {
+export function Button({ variant, href, external, children, className }: ButtonProps) {
   const classes = cn("btn tap", className);
   const content =
     variant === "text" ? <span className="btn-label">{children}</span> : children;
@@ -60,7 +58,7 @@ export function Button({ variant, href, onClick, external, children, className }
   }
 
   return (
-    <button type="button" className={classes} data-variant={variant} onClick={onClick}>
+    <button type="button" className={classes} data-variant={variant}>
       {content}
     </button>
   );

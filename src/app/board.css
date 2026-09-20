@@ -59,24 +59,12 @@
   }
 }
 
-/* Rail boards (the About still, the Contact afterimage) keep their cell
-   width at the 6px pitch: four columns at 80rem are 379px before any padding,
-   and the box needs 384, so it may run into the shell padding as the
-   inspection panel does. Clamped, the last column and row would be clipped. */
+/* A rail board keeps its cell width at the 6px pitch: four columns at 80rem
+   are 379px before any padding and the box needs 384, so a clamp would clip
+   the last column and row. */
 @media (width >= 80rem) {
-  .contact-board .board,
   .section-rail .board {
     max-width: none;
-  }
-}
-
-/* A rail board is narrower than its rail. Align it to the shell's right edge,
-   where the hero board, the section hairlines and the footer identity all end,
-   rather than to its column's left edge. Unlayered, next to the `margin: 0`
-   reset above, which would otherwise beat it. */
-@media (width >= 64rem) {
-  .contact-board .board {
-    margin-inline-start: auto;
   }
 }
 
@@ -196,8 +184,7 @@ noscript .board-fallback {
    fix. The WebP is a single image, so `forced-color-adjust` leaves it alone and
    it reads as a picture rather than as broken UI. */
 @media (forced-colors: active) {
-  .board-canvas,
-  .field {
+  .board-canvas {
     display: none;
   }
   .board-fallback {

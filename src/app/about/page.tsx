@@ -8,6 +8,15 @@ export const metadata: Metadata = {
   description:
     "Where Utkarsh Bali has worked and what he has built: Recurly, QualGent (YC X25), Purdue AI research, and a Microsoft Research collaboration.",
   alternates: { canonical: "/about" },
+  // Without this the page inherits the layout's openGraph verbatim, so a
+  // share of /about resolves to the home page and carries the home page's
+  // headline over a card image that says "About".
+  openGraph: {
+    url: "/about",
+    title: "About",
+    description:
+      "Where Utkarsh Bali has worked and what he has built: Recurly, QualGent (YC X25), Purdue AI research, and a Microsoft Research collaboration.",
+  },
 };
 
 /**

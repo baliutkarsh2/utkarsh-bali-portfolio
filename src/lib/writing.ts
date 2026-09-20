@@ -105,10 +105,6 @@ export function recentPosts(count: number): Post[] {
   return publishedPosts().slice(0, count);
 }
 
-export function allTags(): string[] {
-  return [...new Set(publishedPosts().flatMap((p) => p.tags))].sort();
-}
-
 export function formatPostDate(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
     year: "numeric",

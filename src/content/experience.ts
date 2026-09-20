@@ -18,7 +18,6 @@ export const experiences: Experience[] = [
     location: "Broomfield, CO",
     dates: "May 2026 to Aug 2026",
     sortDate: "2026-05-01",
-    current: false,
     summary:
       "A summer on internal agent tooling for the engineering and go-to-market teams.",
     bullets: [
@@ -31,7 +30,6 @@ export const experiences: Experience[] = [
     location: "San Francisco, CA",
     dates: "Sep 2025 to Dec 2025",
     sortDate: "2025-09-01",
-    current: false,
     summary:
       "Reported to the CTO at a YC X25 company, taking agent infrastructure from prototype into production.",
     bullets: [
@@ -45,7 +43,6 @@ export const experiences: Experience[] = [
     location: "West Lafayette, IN",
     dates: "Aug 2024 to Present",
     sortDate: "2024-08-15",
-    current: true,
     summary:
       "Applied ML research where interpretability, privacy and whether a clinician would trust the answer matter as much as accuracy.",
     bullets: [
@@ -60,7 +57,6 @@ export const experiences: Experience[] = [
     location: "West Lafayette, IN",
     dates: "Aug 2024 to May 2025",
     sortDate: "2024-08-01",
-    current: false,
     summary:
       "Owned the LLM pipeline and the distributed infrastructure under it.",
     bullets: [

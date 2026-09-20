@@ -393,50 +393,6 @@
     color: var(--ink-2);
   }
 
-  /* ── The collation line ──────────────────────────────────────────────────
-     A rare-book catalogue does not describe a volume, it collates it: one
-     formula stating the physical make-up of the object in hand, so that another
-     cataloguer holding a different copy can tell whether anything is missing.
-     This is that formula for the sheet just read, and every value in it is
-     counted off the project's own record at module scope in src/lib/corpus.ts —
-     the plate number from the collated order, the movements from the sections
-     the page renders, the stages from `architecture`, the materials from the
-     stack, the words from the prose, and the date of this impression.
-
-     Roman for the plate and the movements, arabic for the counts. That is the
-     convention and it carries information: the roman numbers are positions in a
-     structure and the arabic ones are quantities of things.
-
-     Set in Plex at the machine-label size rather than with the `meta` utility,
-     because the separators have to be generated: `content: "·" / ""` paints the
-     middot and gives it empty alt text, so the line reads as a formula and is
-     announced as a list of terms rather than as a run of full stops. Same
-     grammar as `.spec-line` at the head of the sheet — the two ends of the
-     plate describe it in the same voice.
-     ──────────────────────────────────────────────────────────────────────── */
-  .colophon-collation {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 0.5rem;
-    margin: var(--space-2) 0 0;
-    max-width: var(--plate-lede);
-    font-family: var(--font-mono);
-    font-weight: 500;
-    font-size: var(--text-meta);
-    line-height: 1.55;
-    letter-spacing: var(--text-meta--letter-spacing);
-    text-transform: uppercase;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink-3);
-  }
-
-  .colophon-collation > span + span::before {
-    content: "·" / "";
-    margin-inline-end: 0.5rem;
-    color: var(--rule-mid);
-  }
-
   .colophon-links {
     display: flex;
     flex-wrap: wrap;

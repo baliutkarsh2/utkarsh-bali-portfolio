@@ -3,7 +3,6 @@ import type { Project } from "./types";
 
 export * from "./types";
 export { profile, socials, navItems } from "./profile";
-export { now } from "./now";
 export { projects } from "./projects";
 export { experiences } from "./experience";
 export { achievements } from "./recognition";
@@ -35,7 +34,6 @@ export function adjacentProjects(slug: string): { prev: Project; next: Project }
 
 export const statusLabel: Record<Project["status"], string> = {
   shipped: "Shipped",
-  archived: "Archived",
   research: "Research",
   ongoing: "Ongoing",
 };

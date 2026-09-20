@@ -26,14 +26,12 @@ const title = "Selected work";
  * `section-wide` (components.css) runs the copy across every column for a
  * Section without a rail whose body is rows.
  *
- * Each numeral sits in its own Reveal so it warms as its row enters view;
- * the words around it are outside the wrapper and never animate.
  */
-export function SelectedWork({ index = "" }: { index?: string }) {
+export function SelectedWork() {
   const rows = featuredProjects.slice(0, ROW_COUNT);
 
   return (
-    <Section index={index} title={title} id="work" className="section-wide">
+    <Section title={title} id="work" className="section-wide">
       <ul className="rows">
         {rows.map((project) => (
           <li key={project.slug}>

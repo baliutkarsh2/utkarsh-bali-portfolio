@@ -9,19 +9,7 @@ type SectionProps = {
    */
   index?: string;
   title: string;
-  /**
-   * Short label for the header readout when the title is a sentence.
-   * "01 THIS SUMMER I BUILT THE AGENT …" is not a section name.
-   */
-  readout?: string;
   id?: string;
-  /** Right rail, 4 of 12 columns from column 9, sticky at ≥ 64rem. */
-  rail?: ReactNode;
-  /**
-   * Names the rail as a complementary landmark. Without it the rail is a
-   * plain div: an unnamed, or decorative, aside is noise in a landmark list.
-   */
-  railLabel?: string;
   children: ReactNode;
   className?: string;
 };
@@ -32,8 +20,12 @@ type SectionProps = {
  * centred. The section carries `data-section-index` / `data-section-title`
  * for the header's SectionSpy, which writes "SELECTED WORK" into the readout
  * as the section comes into view.
+ *
+ * The right rail is gone: `rail` and `railLabel` were never passed by any of
+ * the three call sites, and neither was `readout`, which existed for a title
+ * long enough to be a sentence. No title on the site is.
  */
-export function Section({ index = "", title, readout, id, rail, railLabel, children, className }: SectionProps) {
+export function Section({ index = "", title, id, children, className }: SectionProps) {
   const sectionId = id ?? `section-${index}`;
   const headingId = `${sectionId}-title`;
 
@@ -42,7 +34,7 @@ export function Section({ index = "", title, readout, id, rail, railLabel, child
       id={sectionId}
       aria-labelledby={headingId}
       data-section-index={index}
-      data-section-title={readout ?? title}
+      data-section-title={title}
       className={cn("section shell section-y", className)}
     >
       <div className="section-head">
@@ -53,14 +45,6 @@ export function Section({ index = "", title, readout, id, rail, railLabel, child
 
       <div className="section-body">
         <div className="section-copy">{children}</div>
-        {rail &&
-          (railLabel ? (
-            <aside className="section-rail" aria-label={railLabel}>
-              {rail}
-            </aside>
-          ) : (
-            <div className="section-rail">{rail}</div>
-          ))}
       </div>
     </section>
   );

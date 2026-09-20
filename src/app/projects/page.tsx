@@ -9,6 +9,12 @@ export const metadata: Metadata = {
   description:
     "Eight projects, 2024 to 2026: agent infrastructure, developer tools, consumer AI and research, each with a write-up.",
   alternates: { canonical: "/projects" },
+  openGraph: {
+    url: "/projects",
+    title: "Work",
+    description:
+      "Eight projects, 2024 to 2026: agent infrastructure, developer tools, consumer AI and research, each with a write-up.",
+  },
 };
 
 /**

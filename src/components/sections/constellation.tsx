@@ -1,7 +1,6 @@
 import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
 import { experiences, projects, statusLabel } from "@/content";
-import { Reveal } from "@/components/interactive/reveal";
 import { cn } from "@/lib/utils";
 import type { Experience, Project, ProjectStatus } from "@/content";
 
@@ -36,15 +35,10 @@ import type { Experience, Project, ProjectStatus } from "@/content";
       ongoing, open research). The single vermilion element on this screen is
       the TODAY rule, which is the one --sun licence this chart holds.
 
-   4. The one thing that moves is a thing a PRESS does. The plate arrives by
-      being PRINTED: a hard roller edge crosses it once, at about 1500 CSS
-      px/s, and everything behind that edge is already there. It is a single
-      `clip-path` keyframe in constellation.css, fired by <Reveal> — which
-      lands `data-in` once and unobserves, so the sequence is bounded and
-      self-terminating without this component owning a clock. Not one word is
-      inside the clip that is not also outside it: the section head and the
-      caption sit outside the plate entirely, so nothing that reads as type
-      is ever animated. Without JavaScript, or under either motion switch,
+   4. Nothing moves. The plate used to arrive by being PRINTED: a hard roller
+      edge crossed it once at about 1500 CSS px/s, everything behind the edge
+      already there. It was one `clip-path` keyframe, and a visitor without
+      JavaScript never saw it. Everything is present at first paint now.
       the CSS never clips at all and the finished plate is the first paint.
 
       The four crosshairs inside the plate mark's corners and the ticks on
@@ -128,6 +122,15 @@ function employmentInterval(entry: Experience): Interval {
   const start = parseHumanMonth(rawStart) ?? monthStart(entry.sortDate);
   const open = /present|current|now/i.test(rawEnd);
   const parsedEnd = open ? null : parseHumanMonth(rawEnd);
+  // `null` means two different things: the job is open-ended, or the string
+  // did not parse. Taken together they draw a typo as employment running to
+  // the build date, with nothing anywhere saying so.
+  if (!open && parsedEnd === null) {
+    throw new Error(
+      `constellation: could not parse the end of "${entry.dates}" for ` +
+        `${entry.company}. Expected "Mon YYYY to Mon YYYY" or "... to Present".`,
+    );
+  }
   const end = parsedEnd === null ? NOW : addMonths(parsedEnd, 1);
   return { start, end: Math.max(end, start + DAY), open };
 }
@@ -188,7 +191,6 @@ const GLYPH: Record<ProjectStatus, "filled" | "half" | "open"> = {
   shipped: "filled",
   ongoing: "half",
   research: "open",
-  archived: "open",
 };
 
 /**
@@ -457,136 +459,129 @@ export function Constellation({
 
       <figure className={cn("cn", bleed && "cn-full")}>
         <div className="cn-frame">
-          {/* The bed under the roller. <Reveal> lands `data-in` here once, and
-            the pull is one keyframe on the plate inside it — see "THE PULL"
-            in constellation.css. The wrapper is a plain block, so it changes
-            no box: the plate's own top margin collapses through it exactly as
-            it collapsed through .cn-frame before. */}
-          <Reveal className="cn-sheet">
-            <div
-              className="cn-plot plate-mark"
-              style={{ "--lanes": lanes.length } as CSSProperties}
-            >
-              {/* The rules layer spans every lane and sits under the marks. */}
-              <div className="cn-grid" aria-hidden="true">
-                {yearRules.map((rule) => (
-                  <span
-                    key={rule.year}
-                    className="cn-rule"
-                    style={{ "--t": rule.at } as CSSProperties}
-                  />
-                ))}
-                {/* `data-sun` is the second plate. The rule and its two end ticks
-                are one element, so the ticks register with it. */}
+          <div
+            className="cn-plot plate-mark"
+            style={{ "--lanes": lanes.length } as CSSProperties}
+          >
+            {/* The rules layer spans every lane and sits under the marks. */}
+            <div className="cn-grid" aria-hidden="true">
+              {yearRules.map((rule) => (
                 <span
-                  className="cn-today"
-                  data-sun=""
-                  style={{ "--t": todayAt } as CSSProperties}
+                  key={rule.year}
+                  className="cn-rule"
+                  style={{ "--t": rule.at } as CSSProperties}
                 />
-              </div>
-
-              {/* The first plate's register marks: four crosshairs just inside
-              the corners of the plate mark, where a printer lays them so a
-              second plate can be squared onto the first. Absolutely
-              positioned, so the grid never counts them as a cell. */}
-              <div className="cn-register" aria-hidden="true">
-                <span className="cn-reg" data-corner="tl" />
-                <span className="cn-reg" data-corner="tr" />
-                <span className="cn-reg" data-corner="bl" />
-                <span className="cn-reg" data-corner="br" />
-              </div>
-
-              {lanes.map((lane, i) => {
-                const place = {
-                  "--row": i + 1,
-                  "--col": i + 2,
-                } as CSSProperties;
-                return (
-                  <Fragment key={lane.key}>
-                    <div className="cn-lane-label" style={place}>
-                      <span className="cn-lane-name text-small font-medium text-ink">
-                        {lane.head}
-                        {lane.tail && (
-                          <span className="cn-lane-tail"> {lane.tail}</span>
-                        )}
-                      </span>
-                    </div>
-
-                    <div
-                      className="cn-lane"
-                      data-bar={lane.interval ? "" : undefined}
-                      style={
-                        {
-                          ...place,
-                          ...(lane.interval
-                            ? {
-                                "--b0": at(lane.interval.start),
-                                "--b1": at(lane.interval.end),
-                              }
-                            : {}),
-                        } as CSSProperties
-                      }
-                    >
-                      {lane.points.map((point) => (
-                        <Link
-                          key={point.slug}
-                          className="cn-mark"
-                          href={`/projects/${point.slug}`}
-                          style={
-                            {
-                              "--t0": at(point.low),
-                              "--t1": at(point.high),
-                            } as CSSProperties
-                          }
-                        >
-                          {/* Text, not an aria-label. The accessible name is the
-                          same string either way, but real text is also the
-                          anchor text a crawler reads and the name a find-on-
-                          page hits — and on / the plate stands alone, so a
-                          mark whose name lived only in an attribute would be
-                          eight links to eight untitled pages. */}
-                          <span className="sr-only">{point.label}</span>
-                          <span className="cn-err" aria-hidden="true" />
-                          <span
-                            className="cn-glyph"
-                            data-glyph={GLYPH[point.status]}
-                            aria-hidden="true"
-                          />
-                          <span className="cn-num meta" aria-hidden="true">
-                            {point.n}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </Fragment>
-                );
-              })}
-
-              <div className="cn-axis" aria-hidden="true">
-                <span
-                  className="cn-tick data"
-                  style={{ "--t": "0%" } as CSSProperties}
-                >
-                  {firstYear}
-                </span>
-                {yearRules.map((rule) => (
-                  <span
-                    key={rule.year}
-                    className="cn-tick data"
-                    style={{ "--t": rule.at } as CSSProperties}
-                  >
-                    {rule.year}
-                  </span>
-                ))}
-                <span
-                  className="cn-today-label meta"
-                  style={{ "--t": todayAt } as CSSProperties}
-                >
-                  Today
-                </span>
-              </div>
+              ))}
+              {/* `data-sun` is the second plate. The rule and its two end ticks
+              are one element, so the ticks register with it. */}
+              <span
+                className="cn-today"
+                data-sun=""
+                style={{ "--t": todayAt } as CSSProperties}
+              />
             </div>
-          </Reveal>
+
+            {/* The first plate's register marks: four crosshairs just inside
+            the corners of the plate mark, where a printer lays them so a
+            second plate can be squared onto the first. Absolutely
+            positioned, so the grid never counts them as a cell. */}
+            <div className="cn-register" aria-hidden="true">
+              <span className="cn-reg" data-corner="tl" />
+              <span className="cn-reg" data-corner="tr" />
+              <span className="cn-reg" data-corner="bl" />
+              <span className="cn-reg" data-corner="br" />
+            </div>
+
+            {lanes.map((lane, i) => {
+              const place = {
+                "--row": i + 1,
+                "--col": i + 2,
+              } as CSSProperties;
+              return (
+                <Fragment key={lane.key}>
+                  <div className="cn-lane-label" style={place}>
+                    <span className="cn-lane-name text-small font-medium text-ink">
+                      {lane.head}
+                      {lane.tail && (
+                        <span className="cn-lane-tail"> {lane.tail}</span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div
+                    className="cn-lane"
+                    data-bar={lane.interval ? "" : undefined}
+                    style={
+                      {
+                        ...place,
+                        ...(lane.interval
+                          ? {
+                              "--b0": at(lane.interval.start),
+                              "--b1": at(lane.interval.end),
+                            }
+                          : {}),
+                      } as CSSProperties
+                    }
+                  >
+                    {lane.points.map((point) => (
+                      <Link
+                        key={point.slug}
+                        className="cn-mark"
+                        href={`/projects/${point.slug}`}
+                        style={
+                          {
+                            "--t0": at(point.low),
+                            "--t1": at(point.high),
+                          } as CSSProperties
+                        }
+                      >
+                        {/* Text, not an aria-label. The accessible name is the
+                        same string either way, but real text is also the
+                        anchor text a crawler reads and the name a find-on-
+                        page hits — and on / the plate stands alone, so a
+                        mark whose name lived only in an attribute would be
+                        eight links to eight untitled pages. */}
+                        <span className="sr-only">{point.label}</span>
+                        <span className="cn-err" aria-hidden="true" />
+                        <span
+                          className="cn-glyph"
+                          data-glyph={GLYPH[point.status]}
+                          aria-hidden="true"
+                        />
+                        <span className="cn-num meta" aria-hidden="true">
+                          {point.n}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </Fragment>
+              );
+            })}
+
+            <div className="cn-axis" aria-hidden="true">
+              <span
+                className="cn-tick data"
+                style={{ "--t": "0%" } as CSSProperties}
+              >
+                {firstYear}
+              </span>
+              {yearRules.map((rule) => (
+                <span
+                  key={rule.year}
+                  className="cn-tick data"
+                  style={{ "--t": rule.at } as CSSProperties}
+                >
+                  {rule.year}
+                </span>
+              ))}
+              <span
+                className="cn-today-label meta"
+                style={{ "--t": todayAt } as CSSProperties}
+              >
+                Today
+              </span>
+            </div>
+          </div>
         </div>
       </figure>
 

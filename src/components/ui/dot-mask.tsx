@@ -12,11 +12,9 @@ type DotMaskProps = {
 /**
  * Every screenshot resolves through the lattice. The hairline frame is a
  * separate box because a mask eats the border of the element it is on; the
- * inner box carries the `dot-mask` utility (globals.css): a disc mask at the
- * pitch whose `--dot-r` grows 0.45 → 0.71 × pitch on `data-in` from a
- * wrapping <Reveal>, then stays resolved. `dot-mask-box` (components.css)
- * reserves the ratio and fits the image. No JS here; without it, or under
- * reduced motion, the image is simply whole.
+ * inner box carries the `dot-mask` utility (globals.css), a disc mask at the
+ * pitch, and `dot-mask-box` (components.css) reserves the ratio and fits the
+ * image. No JS here.
  */
 export function DotMask({ children, ratio, className }: DotMaskProps) {
   const style = ratio ? ({ "--ratio": ratio } as CSSProperties) : undefined;

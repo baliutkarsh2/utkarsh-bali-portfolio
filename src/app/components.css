@@ -41,15 +41,6 @@
 }
 
 @layer components {
-  /* Shared: a 1.5 px dot in one pitch-square tile. The spine and the progress
-     row repeat it along one axis; underlines (which animate their
-     painted width) use the equivalent repeating gradient from globals.css.
-     At 1.5 px a square and a circle are the same dot. */
-  :root {
-    --dot-1: radial-gradient(circle, currentColor 0.75px, transparent 1px);
-    --stagger: 40ms; /* sibling warm-up offset; Reveal multiplies it by --i */
-  }
-
   /* ═══ Numeral ═══════════════════════════════════════════════════════════════
      A figure, set in the display Didone at 700 with lining tabular numerals.
      Tabular is not cosmetic: figures stack in a column on the work index and
@@ -383,7 +374,7 @@
 
   /* ═══ DotMask ═══════════════════════════════════════════════════════════════
      Every screenshot resolves through the lattice. The mask and its resolve
-     (--dot-r 0.45 → 0.71 × pitch on data-in) are the `dot-mask` utility in
+     are the `dot-mask` utility in
      globals.css; `dot-mask-box` is the box it is applied to: it reserves the
      aspect ratio before the image lands (CLS 0) and makes the image fill it.
      The hairline lives on the frame, outside the mask, or it would be eaten.
@@ -713,7 +704,7 @@
      anywhere in a post. The rehype hooks (heading-anchor, data-line,
      data-highlighted-line, data-rehype-pretty-code-title) are kept from the
      existing pipeline. Images arrive already wrapped by mdx-components.tsx:
-     a <figure> holding a <Reveal> around a <DotMask>, so `.dot-frame` and
+     a <figure> holding a <DotMask>, so `.dot-frame` and
      `.dot-mask-box` above do the resolving and only the figure's rhythm and
      caption are set here.
      ───────────────────────────────────────────────────────────────────────── */
@@ -1023,29 +1014,6 @@
     }
   }
 
-  /* ═══ 404 (§7.8) ════════════════════════════════════════════════════════════
-     The shell at 70svh, top padding clearing the header. Without JS, or when
-     the board reports it cannot draw, the board box goes and "404" is set in
-     Geist display-xl in its place. The board is wrapped in a plain div so the
-     hide applies to a layered rule of ours, not the board's own display. */
-  .not-found {
-    min-height: 70svh;
-    padding-block: calc(3.5rem + var(--space-8)) var(--space-10);
-  }
-
-  .not-found-fallback {
-    display: none;
-  }
-
-  :root:not(.js) .not-found-board,
-  .not-found-board:has([data-board="fallback"]) {
-    display: none;
-  }
-
-  :root:not(.js) .not-found-fallback,
-  .not-found-board:has([data-board="fallback"]) + .not-found-fallback {
-    display: block;
-  }
 }
 
 /* ═══ Hero (home) ═══════════════════════════════════════════════════════════
@@ -1161,74 +1129,6 @@
     z-index: var(--z-sticky);
     background: color-mix(in srgb, var(--ground) 80%, transparent);
   }
-
-  /* The masthead LED is --ink when live, not --sun. The progress row in the
-     sticky sub-bar is this page's one accent (rule 3) and it is on every
-     screen, so a sun dot here would be a double on the first one. The word
-     beside the LED carries the status; the header nav makes the same call
-     for its active-route LED. Off stays --ink-3. */
-  .case-mast .led[data-state="live"] {
-    background: var(--ink);
-  }
-
-  /* The one-number plate: a full-bleed --ground-2 band between hairlines,
-     the figure and its label, then the highlight. Sized by what is on it:
-     a slide with a fixed height is a slide with empty ground on it. */
-  .case-plate {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    padding-block: var(--space-6);
-    border-block: 1px solid var(--line);
-    background: var(--ground-2);
-  }
-
-  @media (width >= 48rem) {
-    .case-plate {
-      gap: var(--space-8);
-      padding-block: var(--space-8);
-    }
-  }
-
-  /* Body on 8 columns with a sticky 3-column rail from column 10 (5 + 3 of
-     8 between 64 and 80rem). Stacked below, the rail after the body. */
-  .case-body {
-    display: grid;
-    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    column-gap: var(--gutter);
-    row-gap: var(--space-10);
-  }
-
-  .case-copy,
-  .case-rail {
-    grid-column: 1 / -1;
-    min-width: 0;
-  }
-
-  @media (width >= 64rem) {
-    .case-copy {
-      grid-column: 1 / span 5;
-    }
-    .case-rail {
-      grid-column: 6 / span 3;
-    }
-    /* Sticky on the rail's child, not the grid item, which stretches to the
-       body's height. Clears the header and the sub-bar (2.75rem plus one
-       row of dots). */
-    .case-rail > * {
-      position: sticky;
-      top: calc(3.5rem + 2.75rem + var(--pitch) + var(--space-4));
-    }
-  }
-
-  @media (width >= 80rem) {
-    .case-copy {
-      grid-column: 1 / span 8;
-    }
-    .case-rail {
-      grid-column: 10 / span 3;
-    }
-  }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
@@ -1304,53 +1204,4 @@
      two-line note at this measure gives visibly uneven word spacing. case.css
      owns the class now: body font, ragged right, like every other paragraph on
      the sheet. */
-}
-
-/* ═════════════════════════════════════════════════════════════════════════════
-   The proof row (#proof). Three figures, each a link into the page where the
-   number is earned. The cell is the link, so the whole thing is one target.
-   ═══════════════════════════════════════════════════════════════════════════ */
-@layer components {
-  .proof-cell {
-    min-width: 0;
-    border-top: 1px solid var(--line);
-  }
-
-  .proof-link {
-    position: relative;
-    display: block;
-    padding-block: var(--space-2) var(--space-3);
-    color: inherit;
-    text-decoration: none;
-  }
-
-  /* The hover fill bleeds to the shell edges, the same gesture a row makes. */
-  .proof-link::before {
-    content: "";
-    position: absolute;
-    inset: 0 calc(-0.5 * var(--gutter));
-    z-index: -1;
-    background: var(--ground-2);
-    opacity: 0;
-    transition: opacity var(--dur-2) var(--ease-snap);
-  }
-
-  .proof-link:hover::before,
-  .proof-link:focus-visible::before {
-    opacity: 1;
-  }
-
-  .proof-link:hover .meta {
-    color: var(--ink);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .proof-link::before {
-      transition: none;
-    }
-  }
-
-  :root[data-motion="reduce"] .proof-link::before {
-    transition: none;
-  }
 }

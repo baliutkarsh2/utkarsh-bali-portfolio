@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { orderedProjects } from "@/content";
 import { hostedPosts, publishedPosts } from "@/lib/writing";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, siteConfig } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = publishedPosts();
@@ -12,7 +12,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     {
-      url: absoluteUrl("/"),
+      // Bare, not "/": the home page's canonical resolves to the origin with
+      // no trailing slash, and a sitemap that disagrees with the canonical is
+      // two URLs for one page.
+      url: siteConfig.url,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,

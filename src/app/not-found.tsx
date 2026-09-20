@@ -11,7 +11,6 @@ import { SpoiledPlate } from "@/components/interactive/spoiled-plate";
 export const metadata: Metadata = {
   title: "Not found",
   description: "The link may be out of date, or I moved it.",
-  robots: { index: false, follow: true },
   // Drop the layout's canonical: a 404 is not a copy of the home page.
   alternates: { canonical: null },
 };
