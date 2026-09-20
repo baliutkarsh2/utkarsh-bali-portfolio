@@ -1022,16 +1022,15 @@
    layout on the site that needs explicit grid placement. Nothing in this
    block animates; spacing inside the blocks is utilities in the JSX.
 
-   One column by default, in the phone order: the name, the photograph, then
-   the lede, the actions and the story. From 80rem it is a two-column grid
+   One column by default, in the phone order: the name, the field, then the
+   lede, the actions and the story. From 80rem it is a two-column grid
    placed by line number: the name across the top, the copy in column 1, the
    photograph in column 2 spanning both rows.
 
-   The photograph replaced a WebGL dot field here. The h1 used to have to
-   pass over the board's empty top-left cells, which the bake guaranteed were
-   blank; a photograph has no blank corner, so the name and the picture are
-   simply neighbours now and `justify-self: start` keeps the h1's box only as
-   wide as "Utkarsh".
+   The h1 used to pass over the board's empty top-left cells, which the bake
+   guaranteed were blank. The field is the whole frame now and has no blank
+   corner, so the name and the picture are simply neighbours and
+   `justify-self: start` keeps the h1's box only as wide as "Utkarsh".
    ───────────────────────────────────────────────────────────────────────── */
 @layer components {
   .hero {
@@ -1043,31 +1042,18 @@
   }
 
   .hero-name,
-  .hero-photo {
+  .hero-board {
     justify-self: start;
   }
 
-  /* The photograph. One column wide on a phone, in a box shorter than the
-     source so it does not eat the whole screen before the copy starts;
-     `object-position` keeps his face in frame when the box crops. From 80rem
-     the box is the source's own ratio and nothing is cropped at all. */
-  .hero-photo {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-width: none;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    object-position: 68% 30%;
-    background: var(--ground-2);
+  /* The dot field sizes itself through the `--board-cols/rows` pair like
+     every other board (board.css); 155 cells at the 6px pitch is wider than
+     the column, so `max-width: 100%` is what actually sets it and the aspect
+     ratio holds the shape. Capped on a tablet, where the column is the page. */
+  .hero-board {
+    max-width: 30rem;
   }
 
-  @media (width >= 48rem) {
-    .hero-photo {
-      aspect-ratio: 4 / 3;
-      object-position: 70% 28%;
-    }
-  }
   @media (width >= 80rem) {
     .hero {
       grid-template-columns: minmax(0, 1fr) calc(96 * var(--pitch));
@@ -1090,13 +1076,11 @@
       grid-column: 1;
       grid-row: 2;
     }
-    .hero-photo {
+    .hero-board {
       grid-column: 2;
       grid-row: 1 / 3;
       align-self: start;
-      /* The source is cropped to exactly this ratio, so nothing is cut. */
-      aspect-ratio: 1800 / 2211;
-      object-position: center;
+      max-width: none;
     }
   }
 

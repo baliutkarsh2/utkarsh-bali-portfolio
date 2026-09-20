@@ -699,15 +699,13 @@
   }
 }
 
-/* board.css hand-rolls the same mark on the three figure modes of `.board`
-   (it predates this utility and is owned by dot-board.tsx). The wiped tone
-   belongs to every plate mark on the sheet, including the two largest ones —
-   the home portrait and the About face — so it is struck here for those three
-   modes at their own inset. If board.css ever adopts `plate-mark`, delete
-   this block; it exists only because the mark is written twice. */
+/* board.css hand-rolls the same mark on both figure modes of `.board` (it
+   predates this utility). The wiped tone belongs to every plate mark on the
+   sheet, so it is struck here at their own inset. If board.css ever adopts
+   `plate-mark`, delete this block; it exists only because the mark is
+   written twice. */
 .board[data-mode="hero"]::after,
-.board[data-mode="still"]::after,
-.board[data-mode="text"]::after {
+.board[data-mode="still"]::after {
   content: "";
   position: absolute;
   inset: calc(-1 * var(--plate-inset));
@@ -717,28 +715,44 @@
   pointer-events: none;
 }
 
-/* ── The plates keep their polarity in the dark ────────────────────────────
-   A photograph does not invert when a site goes dark, and this one especially
-   must not: the field carries value as ink AREA, so on a dark ground the
-   densest passages -- his hair, the shadow under the jaw -- would print the
-   MOST bone and come out the brightest thing on the page. That is a negative,
-   not a dark theme. Checked on screen before this rule existed: his hair was
-   the brightest area of the picture.
+/* The hero hangs on the PLATE, in both themes, and that is not decoration.
+   He is backlit -- the sun is behind him -- so his face is in shadow and only
+   the rim is bright. On paper his skin sits a few percent off the sheet, and
+   every curve that darkens him enough to separate the two takes his face with
+   it: measured across gamma 1.1 / 1.2 / 1.3 against contrast 1.0 / 1.3 /
+   1.45 / 1.6, and by the second step the eye and the brow are gone and he is
+   a silhouette. On the plate the same marks read immediately, warm against
+   near-black, with the rim light doing what it did in the photograph.
 
-   So a board is a print, and a print is ink on paper wherever it hangs. These
-   four tokens are re-declared on the board itself, which is the element
-   dot-board.tsx reads its colours from (cssVar reads getComputedStyle of the
-   figure), so both renderers pick up the paper values without knowing a theme
-   exists. The wash behind the plate mark comes back to paper with them.
+   So this is the one dark ground on the light page, it is the same near-black
+   the 404 and the dark theme use, and the plate mark around it is what a
+   plate mark was always for. Unlayered, beside the rule it overrides. */
+.board[data-mode="hero"]::after {
+  background: #16140f;
+}
 
-   `.board` ONLY, not `.plate-mark`. The first version of this rule scoped to
-   both, and the constellation carries a plate mark: its lane names went to
-   ink on the plate ground and measured 1.02:1. A chart is not a photograph.
-   It is text and marks, it has no polarity to preserve, and it follows the
-   theme like everything else.
+/* ── The monochrome plates keep their polarity in the dark ─────────────────
+   A plate carries value as ink AREA, so on a dark ground its densest passages
+   would print the MOST bone and come out the brightest thing on the figure.
+   That is a negative, not a dark theme. So a plate is a print, and a print is
+   ink on paper wherever it hangs: these tokens are re-declared on the figure
+   itself, which is the element board.ts reads its colours from, so the
+   renderer picks up the paper values without knowing a theme exists, and the
+   wash behind the plate mark comes back to paper with them.
 
-   */
-:root[data-theme="dark"] .board {
+   `[data-mode="still"]` ONLY. Three things this must not reach:
+
+     · `.plate-mark`, which the constellation carries. The first version
+       scoped to both and the chart's lane names went to ink on the plate
+       ground, measuring 1.02:1. A chart has no polarity to preserve.
+     · the hero, which is now a COLOUR field (hero-dots.tsx). Its marks are
+       the photograph's own colours, so it has no ink to keep dark, and its
+       renderer inverts the DIAMETER mapping instead -- on the plate a
+       highlight is made of ink. Pinning it to paper put a bright rectangle
+       of sheet in the middle of a dark page.
+     · anything else that later takes the `.board` class.
+   ─────────────────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] .board[data-mode="still"] {
   --ink: #14120e;
   --ink-2: #4a453c;
   --ground-2: #f1ede6;
@@ -746,7 +760,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .board {
+  :root:not([data-theme="light"]) .board[data-mode="still"] {
     --ink: #14120e;
     --ink-2: #4a453c;
     --ground-2: #f1ede6;

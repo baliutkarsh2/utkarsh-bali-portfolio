@@ -1,10 +1,9 @@
 import type { CSSProperties } from "react";
-import Image from "next/image";
+import { HeroDots } from "@/components/interactive/hero-dots";
 import { Button } from "@/components/ui/button";
 import { Story } from "@/components/sections/story";
 import { profile } from "@/content";
 import { portrait } from "@/content/portrait";
-import heroPortrait from "@/assets/portrait/utkarsh-hero.jpg";
 
 /** The name breaks after its first word: "Utkarsh" / "Bali" (§3). */
 const [firstName, ...restOfName] = profile.name.split(" ");
@@ -23,16 +22,11 @@ const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
  * in it moves. The name is the LCP element on every viewport, plain text in
  * Bodoni 500.
  *
- * The portrait is a photograph. It used to be a WebGL field of dots that
- * assembled over about a second while the whole palette inverted under it --
- * an arrival, a cursor that burnished a highlight into the plate, a tier
- * ladder down to a 2D canvas and then to a still. All of that is gone: one
- * <Image>, one file, no canvas, no client JavaScript, nothing to animate and
- * nothing to fall back to.
- *
- * `priority` because it is above the fold on every viewport, and a static
- * import so the intrinsic size is known at build time and the layout cannot
- * shift while it loads.
+ * The portrait is a COLOUR dot field of the photograph, drawn once. It used
+ * to be a WebGL field of monochrome dots that assembled over about a second
+ * while the whole palette inverted under it, with a cursor that burnished a
+ * highlight into the plate and a tier ladder three deep. The field survived;
+ * the machinery did not. See hero-dots.tsx.
  *
  * Layout lives in `.hero` (components.css): one column in this DOM order on
  * phones and tablets; from 80rem a two-column grid where the h1 spans both
@@ -60,18 +54,10 @@ export function Hero() {
         {surname && <span className="block">{surname}</span>}
       </h1>
 
-      {/* Column 2 from 80rem, directly under the name below that. The source
-          is cropped to 0.814, which is the box's own ratio, so it fills the
-          column with no cover-crop at desktop width; `object-fit: cover` and
-          an object-position only come into play on a phone, where the box is
-          shorter. No caption: it is a picture of a person. */}
-      <Image
-        src={heroPortrait}
-        alt={portrait.alt}
-        className="hero-photo"
-        sizes="(width >= 80rem) 38rem, 100vw"
-        priority
-      />
+      {/* Column 2 from 80rem, directly under the name below that. The box is
+          the layout anchor and holds the field's own ratio, so nothing shifts
+          when the grid lands. No caption: it is a picture of a person. */}
+      <HeroDots alt={portrait.alt} className="hero-board" />
 
       <div className="hero-copy board-above">
         {/* One line under the name, and it is the whole introduction.

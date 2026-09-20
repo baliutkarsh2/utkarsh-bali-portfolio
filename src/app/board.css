@@ -18,13 +18,11 @@
    the sheet. The hero's is wider because its image bleeds toward the page edge
    and a tight mark would read as a border rather than as an impression. */
 .board[data-mode="hero"],
-.board[data-mode="still"],
-.board[data-mode="text"] {
+.board[data-mode="still"] {
   --plate-inset: 22px;
 }
 .board[data-mode="hero"]::before,
-.board[data-mode="still"]::before,
-.board[data-mode="text"]::before {
+.board[data-mode="still"]::before {
   content: "";
   position: absolute;
   inset: calc(-1 * var(--plate-inset));
@@ -81,50 +79,10 @@
   pointer-events: none;
 }
 
-/* Hero and text draw on the viewport, behind the words, so dispersing dots
-   can leave the box and settle onto the fixed page field.
-
-   The position is decided here rather than by a JS attribute, so the first
-   paint already has the final geometry. Flipping absolute to fixed after
-   hydration grew the canvas box from 588 x 732 to the whole viewport and
-   scored 0.53 CLS on the home page, a failing grade, even though not one dot
-   moved. Reduced motion is known before the first paint too: the boot script
-   in <head> sets data-motion, and there the canvas stays in the box.
-
-   The size is 100% of the fixed containing block, which is the layout
-   viewport: the same box documentElement.clientWidth/Height reports and the
-   component measures, so the two never disagree. Not `auto`, which a replaced
-   element resolves to its intrinsic 300 x 150, and not 100vw/100vh, which
-   include a classic scrollbar and the hidden-toolbar height respectively. */
-@media (prefers-reduced-motion: no-preference) {
-  :root:not([data-motion="reduce"]) .board[data-mode="hero"] .board-canvas,
-  :root:not([data-motion="reduce"]) .board[data-mode="text"] .board-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: var(--z-board);
-  }
-}
-
-/* Off-screen boards must not paint over whatever is on screen. */
-.board[data-fixed][data-visible="false"] .board-canvas {
-  display: none;
-}
-
-/* Return visits in a session: the settled portrait fades in over 200 ms. */
-.board[data-fade] .board-canvas {
-  animation: board-fade var(--dur-2) var(--ease-out) both;
-}
-@keyframes board-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
+/* The canvas fills its box. It used to go `position: fixed` over the whole
+   viewport for the hero and the text boards, so dispersing dots could leave
+   the box and settle onto a page-wide field; there is no dispersal and no
+   page-wide field any more. */
 /* Anything that must sit above the hero canvas (the copy, the name). */
 .board-above {
   position: relative;

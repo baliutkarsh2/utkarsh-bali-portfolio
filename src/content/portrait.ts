@@ -1,11 +1,11 @@
 /**
- * What is left of the dot portrait.
+ * What is left of the portrait content.
  *
- * The hero was a photograph turned into a field of dots: `scripts/segment.py`
- * cut the subject out, `scripts/bake-portrait.py` sampled that cutout onto dot
- * grids at three sizes, and the board drew them. The hero is the photograph
- * itself now (src/assets/portrait/utkarsh-hero.jpg), so the three fields and
- * their baked stills are gone.
+ * The hero is a colour dot field of the cut-out, drawn by
+ * src/components/interactive/hero-dots.tsx from a grid image that
+ * scripts/bake-hero.py writes. Nothing about it lives here any more: the
+ * three monochrome luminance fields the old WebGL board loaded are gone with
+ * it, and so are their baked stills.
  *
  * `portraitOg` survives because the social card is not the site: Satori draws
  * it at request time with no canvas and no CSS variables, and a field of
@@ -15,6 +15,6 @@ export { portraitOg } from "./portrait-og";
 
 export const portrait = {
   alt:
-    "Utkarsh Bali on a ridge above the coast at sunset, looking out over the " +
-    "ocean with the sun low behind him",
+    "Utkarsh Bali in profile, rendered as a field of coloured dots: looking " +
+    "out past the camera with the low sun catching the edge of his face",
 } as const;
