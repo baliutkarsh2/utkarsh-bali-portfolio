@@ -16,10 +16,18 @@
 @layer components {
   /* ── Skip link ─────────────────────────────────────────────── */
 
+  /* It lands on the brand, not beside it. At top 1rem, left 1rem it sat
+     16px in from the window while the brand starts on the shell's content
+     edge (x=80 at 1440), so the first Tab on every page showed the pill
+     half over the name, "n Bali" sticking out of its right side, and the
+     pill hanging 4px below the 56px header. Its left edge is now the
+     shell's content edge at every width (the centred shell's margin plus
+     its padding, the sum the brand sits on), and the 44px pill is centred
+     in the 56px bar, so it covers the whole name and nothing else. */
   .skip-link {
     position: fixed;
-    top: 1rem;
-    left: 1rem;
+    top: 0.375rem;
+    left: calc(max(0px, (100% - var(--shell)) / 2) + var(--shell-pad));
     z-index: var(--z-skip);
     display: inline-flex;
     align-items: center;
