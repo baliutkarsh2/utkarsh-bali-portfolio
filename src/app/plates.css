@@ -390,8 +390,12 @@
   color: var(--ink);
 }
 
+/* Balanced: the column is about 290px, and wrapping ragged left two proof
+   lines on one word at each laptop width ("overhead for / nurses",
+   "requirement to / merge"). */
 .record-case-result {
   color: var(--ink-2);
+  text-wrap: balance;
 }
 
 .record-case-result b {
@@ -715,10 +719,13 @@
 }
 
 /* The result: the figure in full ink and medium weight, its label in the
-   reading grey, one line of the reading face. */
+   reading grey, one line of the reading face. On a phone three of them take
+   two lines, and balanced they split even instead of dropping "nurses" or
+   "benchmark" alone under the deck. */
 .toc-result {
   margin-block-start: 0.875rem;
   color: var(--ink-2);
+  text-wrap: balance;
 }
 
 .toc-figure {
@@ -1019,10 +1026,13 @@
   margin-block-start: var(--space-5);
 }
 
+/* Balanced: under the title, `pretty` set two full lines and left "the
+   silence." on a third. */
 .broadside-standfirst {
   margin-block-start: var(--space-5);
   max-width: 52ch;
   color: var(--ink-2);
+  text-wrap: balance;
 }
 
 /* The full-width rule. The one horizontal on this page, and the machine line

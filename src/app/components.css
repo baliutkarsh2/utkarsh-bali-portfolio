@@ -175,10 +175,12 @@
 
   /* The result, set as /projects sets it (.toc-result, .toc-figure): the
      figure in full ink at medium weight, its label in the reading grey, in
-     the reading face. A clause in mono capitals broke mid-phrase on a phone. */
+     the reading face. A clause in mono capitals broke mid-phrase on a phone.
+     Balanced, as .toc-result and .record-case-result are: on a phone `pretty`
+     left "under review" alone under a full line. */
   .row-result {
     margin-top: 0.875rem;
-    text-wrap: pretty;
+    text-wrap: balance;
   }
 
   .row-figure {
