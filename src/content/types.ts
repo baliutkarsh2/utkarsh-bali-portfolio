@@ -17,6 +17,13 @@ export type MediaSlot = {
   width: number;
   height: number;
   caption?: string;
+  /**
+   * The same picture printed for the dark theme, where a figure drawn on
+   * white is otherwise the brightest thing on the page. For a diagram only:
+   * a screenshot is what the screen looked like and is never re-inked.
+   * Same size as `src`.
+   */
+  srcDark?: string;
 };
 
 export type ProjectStatus = "shipped" | "research" | "ongoing";

@@ -225,9 +225,10 @@ export const projects: Project[] = [
     cover: {
       kind: "image",
       src: "/projects/qa-architecture.png",
+      srcDark: "/projects/qa-architecture-dark.png",
       alt: "Architecture diagram of the multi-agent QA system, showing the planner, executor, verifier, and supervisor agents communicating over a message bus within an episode loop",
-      width: 1600,
-      height: 900,
+      width: 1496,
+      height: 780,
     },
     links: [
       {
