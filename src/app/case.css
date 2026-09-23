@@ -342,6 +342,32 @@
     padding-inline: 10px;
   }
 
+  /* On a phone the three screens are a strip you swipe, each about two
+     thirds of the column so the next one shows at the edge. Stacked, they
+     were 2,200px of phone screenshots at full width in the middle of the
+     argument. The strip scrolls inside itself; the page never goes sideways.
+     The block padding is the plate mark's inset, which a scroller would
+     otherwise clip. */
+  @media (width < 48rem) {
+    .plate-grid {
+      grid-auto-flow: column;
+      grid-auto-columns: 68%;
+      column-gap: var(--space-2);
+      padding-block: 10px;
+      /* The strip runs out to the edge of the screen, not the column, so the
+         screen that peeks in is cut by the glass rather than by the grid. */
+      margin-inline-end: calc(-1 * var(--shell-pad));
+      padding-inline-end: var(--shell-pad);
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+    }
+
+    .plate-grid > li {
+      scroll-snap-align: start;
+    }
+  }
+
   @media (width >= 48rem) {
     .plate-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));

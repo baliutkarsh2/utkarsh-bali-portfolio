@@ -7,10 +7,12 @@ import type { MediaSlot } from "@/content";
  * own plate mark with its caption under it, the way a plate is captioned.
  *
  * Three across at >= 48rem (the clinical assistant's 700 x 1482 phone
- * screens), stacked below. It sits inside a movement of its own, so its left
- * edge is the text column's and the running head in the margin says what it
- * is. The column gap is wider than the plate mark's inset twice over, so two
- * marks never touch.
+ * screens); below that, a strip that scrolls sideways inside itself, each
+ * screen about two thirds of the column so the next one shows at the edge.
+ * It sits inside a movement of its own, so its left edge is the text
+ * column's and the running head in the margin says what it is. The column
+ * gap is wider than the plate mark's inset twice over, so two marks never
+ * touch.
  */
 export function Gallery({ media }: { media: MediaSlot[] }) {
   if (media.length === 0) return null;
@@ -40,7 +42,7 @@ export function Gallery({ media }: { media: MediaSlot[] }) {
                   alt={item.alt}
                   width={item.width}
                   height={item.height}
-                  sizes="(min-width: 48rem) 15rem, 100vw"
+                  sizes="(min-width: 48rem) 15rem, 68vw"
                 />
               )}
             </DotMask>
