@@ -482,6 +482,25 @@
     color: var(--ink-3);
   }
 
+  /* A short phone (an SE, or any phone in a browser with its bars showing)
+     cannot hold three display routes and five index rows at full spacing:
+     at 667px the sheet overflowed by 36px and the résumé row sat under the
+     fold of a menu. The routes and the gaps give back the difference; the
+     type and the 48px rows keep their size. */
+  @media (height < 45rem) {
+    .menu-nav {
+      padding-top: var(--space-1);
+    }
+
+    .menu-route {
+      padding-block: 0.75rem 0.875rem;
+    }
+
+    .menu-foot {
+      padding-top: var(--space-4);
+    }
+  }
+
   /* ── Footer ───────────────────────────────────────────────── */
 
   /* The back cover: the same --ground-2 tint as the home page's close, to
