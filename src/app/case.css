@@ -465,6 +465,18 @@
     }
   }
 
+  /* A short laptop (1280x720) still has room for the rail if it rides a
+     step closer to the header: the tallest rail (645px) ends at y717 at a
+     72px offset. Below 720 the rail scrolls with the page rather than be
+     cut off by the fold. If a rail grows, re-measure .case-rail-inner on
+     every slug at 1280x720 and raise this band's floor to match. */
+  @media (width >= 64rem) and (720px <= height < 760px) {
+    .case-rail-inner {
+      position: sticky;
+      top: calc(3.5rem + var(--space-2));
+    }
+  }
+
   .rail-device {
     margin: 0;
   }
