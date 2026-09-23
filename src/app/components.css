@@ -1249,12 +1249,14 @@
      each entry under its own hairline, the year in mono over the honour in
      the display face over one line of detail. The hairlines of a pair sit on
      one line, and the gutter between the pair breaks it, so the grid reads as
-     rows of two rather than as boxes. An odd last entry takes both columns
-     and uses them: the year and the honour in the first, the detail in the
-     second on the honour's baseline, so its one unbroken rule stands over an
-     entry that really is the full width. It used to span both columns with
-     its words in the left half, leaving a 600 x 160 hole under a full-width
-     rule, just above the footer. */
+     rows of two rather than as boxes. An odd last entry is an entry like any
+     other, in the first column under its own half-width rule, and the list
+     simply ends beside it. It used to span both columns with its detail set
+     apart in the second, level with its title: the one entry built
+     differently, and every reviewer read it as a layout slip. A full-width
+     rule over a stacked entry was tried before that and left a hole under
+     the rule; a half-width rule over the last entry reads as the end of the
+     list, which is what it is. */
   .recognition-list {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -1267,30 +1269,6 @@
   @media (width >= 64rem) {
     .recognition-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .recognition-item:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-      /* The list's own two tracks and gutter, so the detail starts exactly
-         where the right-hand entries above it start. */
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: var(--space-8);
-    }
-
-    .recognition-item:last-child:nth-child(odd) .recognition-title {
-      grid-row: 2;
-      align-self: baseline;
-    }
-
-    .recognition-item:last-child:nth-child(odd) .recognition-detail {
-      grid-column: 2;
-      grid-row: 2;
-      align-self: baseline;
-      margin-block-start: 0;
-    }
-
-    .recognition-item:last-child:nth-child(odd) .recognition-arrow {
-      justify-self: end;
     }
   }
 
