@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { Typeset } from "@/components/project/typeset";
 import { Section } from "@/components/ui/section";
 import { achievements } from "@/content";
 
@@ -41,10 +42,10 @@ export function Recognition() {
             <h3 className="recognition-title text-display-s">
               {item.href ? (
                 <Link className="recognition-link stretch-link" href={item.href}>
-                  {item.label}
+                  <Typeset>{item.label}</Typeset>
                 </Link>
               ) : (
-                item.label
+                <Typeset>{item.label}</Typeset>
               )}
             </h3>
             <p className="recognition-detail text-small">{item.detail}</p>

@@ -43,6 +43,17 @@
   margin-block-start: var(--space-3);
 }
 
+/* The display W, pulled in over the lowercase letter after it: Bodoni
+   Moda's kern table leaves "W ork" and "W hat" at display size. Set by
+   <Typeset> (components/project/typeset.tsx), which decides round or tall. */
+.kern-w {
+  margin-inline-end: -0.06em;
+}
+
+.kern-w-tall {
+  margin-inline-end: -0.045em;
+}
+
 .page-mast-lede {
   margin-block-start: var(--space-3);
   max-width: 40rem;

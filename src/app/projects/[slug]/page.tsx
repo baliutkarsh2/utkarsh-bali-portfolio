@@ -11,6 +11,7 @@ import {
 } from "@/content";
 import { ProjectBody } from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
+import { Typeset } from "@/components/project/typeset";
 import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
 
 /** Unknown slugs 404 instead of being rendered on demand. */
@@ -108,7 +109,7 @@ export default async function ProjectPage({
               className="case-name text-display-l"
               style={{ viewTransitionName: `project-${project.slug}` }}
             >
-              {project.name}
+              <Typeset>{project.name}</Typeset>
             </h1>
             <p className="case-tagline text-lede">{project.tagline}</p>
 

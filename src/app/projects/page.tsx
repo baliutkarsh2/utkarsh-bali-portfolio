@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { DeviceMark } from "@/components/project/device-mark";
+import { Typeset } from "@/components/project/typeset";
 import { deviceOf } from "@/content/plates";
 import { orderedProjects, statusLabel, type Project } from "@/content";
 
@@ -64,7 +65,9 @@ export default function ProjectsPage() {
           <p className="meta text-ink-3">
             {count} projects · {firstYear}&ndash;{currentYear}
           </p>
-          <h1 className="page-mast-title text-display-l text-ink">Work</h1>
+          <h1 className="page-mast-title text-display-l text-ink">
+            <Typeset>Work</Typeset>
+          </h1>
           <p className="page-mast-lede text-lede text-ink-2">
             Five on agents, two in research, one with 3,000+ users. Each one
             has a write-up: the problem, what I built, and what came of it.
@@ -136,7 +139,7 @@ export default function ProjectsPage() {
                             viewTransitionName: `project-${project.slug}`,
                           }}
                         >
-                          {project.name}
+                          <Typeset>{project.name}</Typeset>
                         </Link>
                         <ArrowRight className="toc-arrow" aria-hidden="true" />
                       </h2>
