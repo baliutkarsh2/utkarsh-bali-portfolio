@@ -540,14 +540,16 @@
   }
 
   /* The stack is a tag row (components.css): a wrap falls between two
-     entries, never inside "OpenAI API", and no line starts or ends on a
-     middot -- it used to end "OpenAI API ·" and start the next on "AWS".
-     Set in the reading face, so the dot's slot and the line gap are the
-     reading face's. */
+     entries, never inside "OpenAI API", no line starts or ends on a middot
+     -- it used to end "OpenAI API ·" and start the next on "AWS" -- and the
+     last entry never stands alone ("AWS" did, on a phone). Set in the
+     reading face, so the dot's slot and the line gap are the reading
+     face's. The row pulls its block margins in by half that gap, so the
+     margins here give it back. */
   .rail-stack {
     --tag-sep: 1.1em;
-    row-gap: 0.125rem;
-    margin-block: 0.75rem 0;
+    --tag-gap: 0.125rem;
+    margin-block: calc(0.75rem - var(--tag-gap) / 2) calc(var(--tag-gap) / -2);
     color: var(--ink-2);
   }
 

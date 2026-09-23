@@ -755,8 +755,10 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
+/* The tag row pulls its block margins in by half its line gap (the gap is
+   leading on the tags, components.css), so the start margin gives it back. */
 .toc-meta {
-  margin-block-start: 0.625rem;
+  margin-block-start: calc(0.625rem - var(--tag-gap) / 2);
   color: var(--ink-3);
 }
 
