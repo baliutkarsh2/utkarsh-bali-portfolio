@@ -72,7 +72,12 @@ the plate, and six guards against what that does to a portrait:
     read as a badly masked cut-out);
   · hair with range: the floor that keeps it off the plate is applied to its
     local mean and the strands and sheen go back over it, so they still move
-    the dot size (floored dot by dot it was a flat knit cap);
+    the dot size (floored dot by dot it was a flat knit cap). Put back at a
+    gentle 1.5x, never more than 6 L* above the mean of the whole head of
+    hair, and eased onto that mean along the hairline: at 4x, capped only
+    against its own neighbourhood, the photograph's sheen printed as pale
+    taupe blotches on the crown and the light on the fringe as a pale band
+    across the brow, a camouflage cap with a headband;
   · hair prints as hair: every dot in it takes an umber ink (C* 16 at most,
     hue 58, L* 56 to 60), and the sheen prints as bigger dots of it, never
     as lighter ones. The exact solve gave a small hair dot the skin's own
@@ -209,7 +214,13 @@ P = dict(
                # the shadows eased onto the last): it keeps its modelling and
                # never sinks into the plate
                hair_floor=(6.0, 0.7),
-               hair_detail=(4.0, 6.0, 38.0, 10.0),
+               hair_detail=(1.5, 10.0, 38.0, 10.0),
+               # and no hair dot more than this far (L*) above the mean of
+               # the whole head of hair, read at this sigma (lattice steps),
+               # nor above that mean at all at the hairline, fading out this
+               # many pitches in: the light the fringe catches stays a
+               # lighter brown in the hair, not a pale band across the brow
+               hair_wide=(24.0, 6.0, 4.0),
                # and its own warmth, C* in the shadow, hue, C* at the sheen: at
                # plate coverage a hair dot is a small one, and a near-neutral
                # dot reads as grey hair
@@ -581,6 +592,16 @@ def lattice_blur(meta, v, wt, sigma):
     return num[a, b] / np.maximum(den[a, b], 1e-9)
 
 
+def lattice_dist(meta, sel):
+    """How far each dot is from the nearest selected one, in pitches, over the
+    lattice (a pitch is sqrt(2) lattice steps)."""
+    A, B = meta["A"], meta["B"]
+    a, b = A - A.min(), B - B.min()
+    far = np.ones((a.max() + 1, b.max() + 1), bool)
+    far[a[sel], b[sel]] = False
+    return ndi.distance_transform_edt(far)[a, b] / math.sqrt(2)
+
+
 def solid_hair(mk):
     """The hair, short of its edge with the skin: where a dot takes the hair's
     own ink on the plate."""
@@ -668,6 +689,24 @@ def grade(p, look, colour_lin, mk, meta):
             Lh = np.maximum(base, fa + fs * base) + g * (L - base)
             Lh = lo + 2.0 * np.logaddexp(0, (Lh - lo) / 2.0)
             Lh = np.minimum(Lh, np.maximum(L, cap))
+            if "hair_wide" in look:
+                # The sheen is capped against the hair as a whole, not
+                # against its own neighbourhood. The light the fringe catches
+                # is a band wider than any local mean, so it set its own mean
+                # and passed every cap above: on the plate, where light is
+                # what advances, it printed as a pale taupe headband across
+                # the brow and blotches on the crown, around dark holes.
+                wsig, wmargin, reach = look["hair_wide"]
+                wide = lattice_blur(meta, L, hz + 1e-9, wsig)
+                wide = np.maximum(wide, fa + fs * wide)
+                Lh = np.minimum(Lh, wide + wmargin)
+                # And along the hairline the light eases the rest of the way
+                # down to that mean, fading out a few dots in: at 1440@1 the
+                # fringe's last few rows over the brow still printed as a
+                # lighter strip, a headband's lower edge. Eased by distance,
+                # not clamped, so no new edge is drawn where it stops.
+                near = 1 - smoothstep(0, reach, lattice_dist(meta, (mk["skin"] > 0.5) & (hz < 0.5)))
+                Lh = Lh - near * np.maximum(Lh - wide, 0)
         else:
             Lh = np.maximum(L, fa + fs * L)
         L = L * (1 - hz) + Lh * hz
