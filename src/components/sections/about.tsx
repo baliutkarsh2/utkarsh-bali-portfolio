@@ -62,8 +62,9 @@ export function About() {
         </p>
         <p className="about-body text-body">
           Before that I took agent infrastructure into production for the
-          first time, at QualGent (YC X25) in San Francisco. Since my second
-          year at Purdue I&rsquo;ve also done AI research, most recently
+          first time, working remotely for QualGent (YC X25), a San Francisco
+          startup. Since my second year at Purdue I&rsquo;ve also done AI
+          research, most recently
           CLIP-H, which is under review at a NeurIPS 2026 workshop. I finish
           CS and AI at Purdue in December.
         </p>

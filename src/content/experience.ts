@@ -27,7 +27,7 @@ export const experiences: Experience[] = [
   {
     company: "QualGent",
     role: "Software Engineer Intern",
-    location: "San Francisco, CA",
+    location: "San Francisco, CA (remote)",
     dates: "Sep 2025 to Dec 2025",
     sortDate: "2025-09-01",
     summary:

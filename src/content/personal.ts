@@ -20,7 +20,7 @@ export const story: readonly string[] = [
   "Started doing AI research there in my second year, and spent a year on a Microsoft collaboration reading a few million social posts about Minecraft.",
   "Built WalleX, an AI wallpaper app, around the same time. 3,000+ people in 22 countries used it. The first thing I made that had real users in it.",
   "Built a clinical assistant that nurses tested across Indiana hospitals. It cut about 40% of their documentation time, and it runs on the hospital’s own hardware, because patient data should not leave the building.",
-  "Worked at a San Francisco-based YC startup, QualGent (YC X25), reporting to the CTO, and built agent infrastructure into production for the first time.",
+  "Worked remotely for a San Francisco-based YC startup, QualGent (YC X25), reporting to the CTO, and built agent infrastructure into production for the first time.",
   "Co-founded Checkpoint to build agent testing infrastructure. YC told us we were in the top 10% of Summer 2026 applicants, then didn’t interview us. It’s live in private beta.",
   "Spent this summer at Recurly, building the thing that automates the company’s Product Development Lifecycle (PDLC). It turns a product requirement into shipped production software. Also, built a Sales outbound automation tool to assist SDRs.",
   "Spent the last few months on CLIP-H, a framework that helps generate trustworthy clinical hypotheses. It is going into a NeurIPS workshop submission with Purdue and Harvard Business School faculty.",
