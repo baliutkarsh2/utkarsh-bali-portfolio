@@ -699,12 +699,11 @@
   }
 }
 
-/* board.css hand-rolls the same mark on both figure modes of `.board` (it
+/* board.css hand-rolls the same mark on the figure mode of `.board` (it
    predates this utility). The wiped tone belongs to every plate mark on the
-   sheet, so it is struck here at their own inset. If board.css ever adopts
+   sheet, so it is struck here at its own inset. If board.css ever adopts
    `plate-mark`, delete this block; it exists only because the mark is
    written twice. */
-.board[data-mode="hero"]::after,
 .board[data-mode="still"]::after {
   content: "";
   position: absolute;

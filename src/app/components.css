@@ -1050,7 +1050,11 @@
      every other board (board.css); 155 cells at the 6px pitch is wider than
      the column, so `max-width: 100%` is what actually sets it and the aspect
      ratio holds the shape. Capped on a tablet, where the column is the page. */
+  /* The portrait's box has only a ratio of its own (board.css), so the
+     width is set here. */
   .hero-board {
+    position: relative;
+    width: 100%;
     max-width: 30rem;
   }
 
