@@ -929,6 +929,13 @@
      shell edge has no air at the end of it and stops looking set. */
   max-width: 18ch;
   color: var(--ink);
+  /* display-l, sized by the window's height as well as its width. The title
+     sets in five lines, and at 1280x720 five lines at 84px pushed the page's
+     one action, "Read on Medium", and the imprint under the fold. 9.5vh is
+     68px there (four lines, the button at y593) and still 84px at 1440x900.
+     Written out rather than min()-wrapping var(--text-display-l), which
+     computed to an invalid value. */
+  font-size: clamp(3rem, min(6.4vw, 9.5vh), 5.25rem);
 }
 
 @media (width >= 48rem) {
