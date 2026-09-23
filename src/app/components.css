@@ -663,13 +663,18 @@
      one slot to the left and clipped there: whichever item opens a line has
      its dot in the clipped slot, on every line, however it wraps.
 
-     And no tag is left alone on the last line. As flex items the tags
-     wrapped one by one, so a phone set "AGENT INFRASTRUCTURE · QUALGENT
-     (YC X25)" over a lone "SHIPPED", and the Checkpoint stack ended on
-     "AWS" by itself. So the tags are set as text: each is an unbreakable
-     inline run, the only break is the zero-width space after a tag, and the
-     next-to-last tag has none, so the last two move down together. With
-     two tags there is nothing to orphan, and they may still break.
+     And no tag is left alone on a line. As flex items the tags wrapped one
+     by one, so a phone set "AGENT INFRASTRUCTURE · QUALGENT (YC X25)" over
+     a lone "SHIPPED", and the Checkpoint stack ended on "AWS" by itself. So
+     the tags are set as text (TagList, components/project/tag-list.tsx).
+     The row is nowrap, and the only place a line may break is the space in
+     the ", " after a tag: a .tag-break, set at zero size so it takes no
+     room, and there so a copy of the row reads "Next.js, Python" rather
+     than "Next.jsPython". The next-to-last tag's break is nowrap too, so
+     the last two move down together; with two tags there is nothing to
+     orphan, and they may still break. And the lines are balanced, so the
+     tag that binding pushes off the last line does not end up alone on the
+     one above it ("OpenAI Vision / ADB / UI Automator" on the QA rail).
 
      The air between two lines of caps is leading on the tags, since the
      utility owns the list's line-height (at the meta utility's 1.2 the
@@ -687,19 +692,27 @@
     list-style: none;
     color: var(--ink-3);
     clip-path: inset(-0.5em -0.5em -0.5em var(--tag-sep));
+    /* The longhand, so balance does not undo the nowrap as the text-wrap
+       shorthand would. */
+    white-space: nowrap;
+    text-wrap-style: balance;
   }
   .tag-row > li {
     display: inline;
-    white-space: nowrap;
     line-height: calc(1lh + var(--tag-gap));
   }
-  /* The break after a tag: its own white-space, not the tag's nowrap. */
-  .tag-row > li:not(:last-child)::after {
-    content: "\200B";
+  /* In the text, not drawn. Zero size and zero line-height: no width, and
+     no box to push the line down. letter-spacing inherits as a length, so
+     the meta tracking would otherwise still space the two characters. */
+  .tag-break {
+    font-size: 0;
+    line-height: 0;
+    letter-spacing: 0;
+    word-spacing: 0;
     white-space: normal;
   }
-  .tag-row > li:nth-last-child(2):not(:first-child)::after {
-    content: none;
+  .tag-row > li:nth-last-child(2):not(:first-child) > .tag-break {
+    white-space: nowrap;
   }
   .tag-row > li::before {
     /* Drawn but not read: the list already conveys the separation, and
