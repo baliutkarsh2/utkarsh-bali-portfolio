@@ -3,20 +3,24 @@ import { About } from "@/components/sections/about";
 import { Constellation } from "@/components/sections/constellation";
 import { Recognition } from "@/components/sections/recognition";
 import { Record } from "@/components/sections/record";
+import { openGraphBase } from "@/lib/seo";
+
+const description =
+  "Where Utkarsh Bali has worked and what he has built: Recurly, QualGent (YC X25), Purdue AI research, and a Microsoft Research collaboration.";
 
 export const metadata: Metadata = {
   title: "About",
-  description:
-    "Where Utkarsh Bali has worked and what he has built: Recurly, QualGent (YC X25), Purdue AI research, and a Microsoft Research collaboration.",
+  description,
   alternates: { canonical: "/about" },
   // Without this the page inherits the layout's openGraph verbatim, so a
-  // share of /about resolves to the home page and carries the home page's
-  // headline over a card image that says "About".
+  // share of /about resolves to the home page and carries its headline. The
+  // image is not listed here: about/opengraph-image.tsx supplies it, and a
+  // file-based image is added to whatever this object says.
   openGraph: {
+    ...openGraphBase,
     url: "/about",
     title: "About",
-    description:
-      "Where Utkarsh Bali has worked and what he has built: Recurly, QualGent (YC X25), Purdue AI research, and a Microsoft Research collaboration.",
+    description,
   },
 };
 

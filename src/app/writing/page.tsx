@@ -4,18 +4,21 @@ import { DotBoard } from "@/components/interactive/dot-board";
 import { Typeset } from "@/components/project/typeset";
 import { Button } from "@/components/ui/button";
 import { plateById } from "@/content/plates";
+import { openGraphBase } from "@/lib/seo";
 import { formatPostDate, publishedPosts } from "@/lib/writing";
+
+const description =
+  "Occasional essays by Utkarsh Bali on software, life, art, and philosophy.";
 
 export const metadata: Metadata = {
   title: "Writing",
-  description:
-    "Occasional essays by Utkarsh Bali on software, life, art, and philosophy.",
+  description,
   alternates: { canonical: "/writing" },
   openGraph: {
+    ...openGraphBase,
     url: "/writing",
     title: "Writing",
-    description:
-      "Occasional essays by Utkarsh Bali on software, life, art, and philosophy.",
+    description,
   },
 };
 
