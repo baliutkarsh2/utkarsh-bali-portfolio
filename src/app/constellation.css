@@ -325,6 +325,16 @@
     bottom: 0;
   }
 
+  /* Two marks in one lane in consecutive months have windows that abut, and
+     the end caps they meet with crossed the bar between them: a "+" between
+     the two diamonds. Joined, they share one bar with a cap at each outer end
+     (constellation.tsx writes `data-join`), which is what two months side by
+     side are. */
+  .cn-mark[data-join~="low"] .cn-err::before,
+  .cn-mark[data-join~="high"] .cn-err::after {
+    display: none;
+  }
+
   /* Status is the shape, never the colour: a milestone diamond, solid for
      shipped, inked on its left half for ongoing, open for research. Not a
      circle, because the only circles on this site are dots in a picture, and
@@ -332,14 +342,18 @@
      `--cn-mark-size` is the side of the square before it is turned, so the
      diamond stands about 1.4 times that tall. The half fill runs corner to
      corner, which the turn sets upright. `rotate`, not `transform`, so a
-     hover's scale composes with it instead of replacing it. */
+     hover's scale composes with it instead of replacing it.
+
+     The part of a mark that is not inked is `--cn-glyph-paper`: bare page in
+     the legend and the work list, and the plate's own tone on the plate (see
+     below). */
   .cn-glyph {
     display: block;
     flex: none;
     width: var(--cn-mark-size, 8px);
     height: var(--cn-mark-size, 8px);
     border: 1px solid var(--ink);
-    background: transparent;
+    background: var(--cn-glyph-paper, transparent);
     rotate: 45deg;
   }
 
@@ -348,14 +362,24 @@
   }
 
   .cn-glyph[data-glyph="half"] {
-    background: linear-gradient(to top right, var(--ink) 50%, transparent 50%);
+    background: linear-gradient(
+      to top right,
+      var(--ink) 50%,
+      var(--cn-glyph-paper, transparent) 50%
+    );
   }
 
   /* A 2 px knockout in the plate's own tone, so a mark that lands inside an
      employment band is still a mark and not one more dot in the lattice, and
      one that lands on bare plate shows no ring at all. An outline, not a
-     shadow: this site has no shadows, and an outline costs no layout. */
+     shadow: this site has no shadows, and an outline costs no layout.
+
+     The open and half marks are filled with the same tone. Hollow, they let
+     the band's dots and their own error bar show through, so on a phone in
+     dark the open "research" diamonds on the Purdue band read as smudges,
+     and on a laptop the whisker ran through the shape that says the status. */
   .cn-mark .cn-glyph {
+    --cn-glyph-paper: var(--ground-2);
     position: absolute;
     left: calc(50% - var(--cn-mark-size) / 2);
     top: calc(50% - var(--cn-mark-size) / 2);

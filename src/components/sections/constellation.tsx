@@ -142,6 +142,28 @@ function employmentInterval(entry: Experience): Interval {
 /** Half the width of the error bar, in days. `sortDate` is month-accurate. */
 const HALF_MONTH = 15 * DAY;
 
+/**
+ * Two windows closer than this are one run of months. A window is 30 days,
+ * so consecutive months leave a day's gap after a 31-day month and overlap
+ * by a day or two after February.
+ */
+const JOIN_GAP = 2 * DAY;
+
+/**
+ * Which end caps of a mark's error bar meet a neighbour's in the same lane:
+ * "low", "high", both, or none. The marks are in date order.
+ */
+function joinsOf(points: Point[], j: number): string | undefined {
+  const point = points[j];
+  const prev = points[j - 1];
+  const next = points[j + 1];
+  const joins = [
+    prev && point.low - prev.high <= JOIN_GAP ? "low" : "",
+    next && next.low - point.high <= JOIN_GAP ? "high" : "",
+  ].filter(Boolean);
+  return joins.length > 0 ? joins.join(" ") : undefined;
+}
+
 type Point = {
   slug: string;
   status: ProjectStatus;
@@ -479,11 +501,12 @@ export function Constellation({
                       } as CSSProperties
                     }
                   >
-                    {lane.points.map((point) => (
+                    {lane.points.map((point, j) => (
                       <Link
                         key={point.slug}
                         className="cn-mark"
                         href={`/projects/${point.slug}`}
+                        data-join={joinsOf(lane.points, j)}
                         style={
                           {
                             "--t0": at(point.low),
