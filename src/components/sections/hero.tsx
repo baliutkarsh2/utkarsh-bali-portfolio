@@ -22,16 +22,16 @@ const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
  * in it moves. The name is the LCP element on every viewport, plain text in
  * Bodoni 500.
  *
- * The portrait is a COLOUR dot field of the photograph, drawn once. It used
- * to be a WebGL field of monochrome dots that assembled over about a second
- * while the whole palette inverted under it, with a cursor that burnished a
- * highlight into the plate and a tier ladder three deep. The field survived;
- * the machinery did not. See hero-dots.tsx.
+ * The portrait is a colour halftone of him, drawn once: round dots on a
+ * screen that is finest at his profile, dissolving into the page instead of
+ * stopping on the photograph's edges, with no frame around it. See
+ * hero-dots.tsx for the renderer and scripts/bake-hero.py for every decision
+ * in the picture.
  *
  * Layout lives in `.hero` (components.css): one column in this DOM order on
- * phones and tablets; from 80rem a two-column grid where the h1 spans both
- * columns. Fully a server component now -- there is no client island left on
- * this screen.
+ * phones; from 48rem the name, the lede, the actions and the story run down
+ * the left and the portrait is pinned on the right, beside the story the
+ * whole way down.
  */
 export function Hero() {
   return (
@@ -54,9 +54,10 @@ export function Hero() {
         {surname && <span className="block">{surname}</span>}
       </h1>
 
-      {/* Column 2 from 80rem, directly under the name below that. The box is
-          the layout anchor and holds the field's own ratio, so nothing shifts
-          when the grid lands. No caption: it is a picture of a person. */}
+      {/* Column 2 from 48rem, sticky; directly under the name below that.
+          The box holds the field's own 4:5 ratio from CSS alone, so nothing
+          shifts when the canvas draws. No caption: it is a picture of a
+          person. */}
       <HeroDots alt={portrait.alt} className="hero-board" />
 
       <div className="hero-copy board-above">

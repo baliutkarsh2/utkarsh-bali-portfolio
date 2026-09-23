@@ -1022,18 +1022,32 @@
    layout on the site that needs explicit grid placement. Nothing in this
    block animates; spacing inside the blocks is utilities in the JSX.
 
-   One column by default, in the phone order: the name, the field, then the
-   lede, the actions and the story. From 80rem it is a two-column grid
-   placed by line number: the name across the top, the copy in column 1, the
-   photograph in column 2 spanning both rows.
+   One column on a phone, in this order: the name, the portrait, then the
+   lede, the actions and the story. From 48rem, two columns: the name and
+   everything under it on the left, the portrait on the right. That used to
+   start at 80rem, and every tablet and small laptop got a 480px portrait
+   hard left under the name with half the page bare beside it and the
+   actions under the fold.
 
-   The h1 used to pass over the board's empty top-left cells, which the bake
-   guaranteed were blank. The field is the whole frame now and has no blank
-   corner, so the name and the picture are simply neighbours and
-   `justify-self: start` keeps the h1's box only as wide as "Utkarsh".
+   THE PORTRAIT IS STICKY in two columns, and that is what the right half of
+   the page is for. The story is twelve lines -- about two screens -- and
+   with the portrait in the first row only, the right half was bare paper for
+   both of them. Pinned under the header, he stays beside the story the whole
+   way down and leaves with its last line, when the grid area ends. No scroll
+   handler: `position: sticky` inside the grid area, which is the sticky
+   box's containing block, so it stops exactly where the hero does.
+
+   HIS SIZE IS SET BY THE WINDOW, not the column. The column is `auto`, the
+   box has a height and a 4:5 ratio (board.css), and the width follows: the
+   height fits him between the header and the fold, on a 720px laptop as on a
+   1080p panel, and on a tablet he stops where the text column would get too
+   narrow for the three actions to sit on one line. The name spans
+   both tracks so it never has to wrap inside the remainder; the top left of
+   the box is empty sky where the last letter of the name can pass.
    ───────────────────────────────────────────────────────────────────────── */
 @layer components {
   .hero {
+    --hero-top: calc(3.5rem + var(--space-3)); /* the fixed header + a beat */
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     row-gap: var(--space-4);
@@ -1041,32 +1055,32 @@
     padding-block: var(--space-6);
   }
 
-  .hero-name,
-  .hero-board {
+  .hero-name {
     justify-self: start;
   }
 
-  /* The dot field sizes itself through the `--board-cols/rows` pair like
-     every other board (board.css); 155 cells at the 6px pitch is wider than
-     the column, so `max-width: 100%` is what actually sets it and the aspect
-     ratio holds the shape. Capped on a tablet, where the column is the page. */
   .hero-board {
-    max-width: 30rem;
+    position: relative;
+    width: 100%;
   }
 
-  @media (width >= 80rem) {
+  /* Phones: the column's full width, and closer to its neighbours than the
+     row gap would put it. The box's own top is sky (his crown starts a
+     twentieth of the way down) and its bottom is the dissolve, so the grid's
+     gaps read double on both sides: the name floated off the face and the
+     first action fell under the fold of an 844px phone. */
+  @media (width < 48rem) {
+    .hero-board {
+      margin-block: calc(-1 * var(--space-4)) calc(-1 * var(--space-2));
+    }
+  }
+
+  @media (width >= 48rem) {
     .hero {
-      grid-template-columns: minmax(0, 1fr) calc(96 * var(--pitch));
-      /* Two rows, not three. The first used to hold the status line and it
-         is gone, so a third `auto` row plus its row-gap was reserving empty
-         ground above the name for nothing. */
+      grid-template-columns: minmax(0, 1fr) auto;
       grid-template-rows: auto minmax(0, 1fr);
-      column-gap: var(--space-8);
-      /* Tall enough for the board, never taller: on a 1080p panel a full
-         100svh left 227px of empty ground inside the hero. 51rem is 48px pad
-         + 720px board + 48px pad at the 6px pitch; it was 53rem when the
-         board still carried a 30px readout under it. */
-      min-height: min(calc(100svh - 3.5rem), 51rem);
+      column-gap: clamp(var(--space-4), 5vw, var(--space-8));
+      padding-block: var(--space-4) var(--space-6);
     }
     .hero-name {
       grid-column: 1 / -1;
@@ -1080,17 +1094,29 @@
       grid-column: 2;
       grid-row: 1 / 3;
       align-self: start;
-      max-width: none;
+      position: sticky;
+      top: var(--hero-top);
+      width: auto;
+      /* The least of: his natural size; the window's height under the
+         header; about half a tablet; and whatever leaves the text column
+         23rem, the width the three actions need on one line (95vw is the
+         page less the column gap, 1rem is a scrollbar). */
+      height: min(
+        46rem,
+        calc(100svh - var(--hero-top) - var(--space-3)),
+        55vw,
+        calc((95vw - 2 * var(--shell-pad) - 24rem) * 1.25)
+      );
     }
   }
 
   /* A 720px laptop. The name is already capped by height (display-xl); the
      hero's own padding and gaps give back the rest, so the actions sit
      above the fold rather than half under it. */
-  @media (width >= 80rem) and (height < 820px) {
+  @media (width >= 48rem) and (height < 820px) {
     .hero {
       row-gap: var(--space-3);
-      padding-block: var(--space-4);
+      padding-block: var(--space-3) var(--space-4);
     }
   }
 }

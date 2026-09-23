@@ -1,6 +1,10 @@
 /* ─────────────────────────────────────────────────────────────
-   The board. Owned by src/components/interactive/dot-board.tsx.
-   Imported by globals.css after the tokens exist.
+   The board (src/components/interactive/dot-board.tsx) and the hero
+   portrait (src/components/interactive/hero-dots.tsx).
+   Imported by globals.css after the tokens exist. UNLAYERED: anything
+   here beats every rule in @layer components, so nothing in this file
+   sizes or places the portrait -- that is `.hero-board` in
+   components.css, and it has to be able to win.
    ───────────────────────────────────────────────────────────── */
 
 /* The figure box: a fixed number of cells at the page pitch, so it can never
@@ -15,13 +19,11 @@
 }
 
 /* Every figure carries its plate mark: the impression the plate edge leaves in
-   the sheet. The hero's is wider because its image bleeds toward the page edge
-   and a tight mark would read as a border rather than as an impression. */
-.board[data-mode="hero"],
+   the sheet. The portrait does not: it is not a figure in a frame but him on
+   the page, and a mark around a vignetted head reads as an image placeholder. */
 .board[data-mode="still"] {
   --plate-inset: 22px;
 }
-.board[data-mode="hero"]::before,
 .board[data-mode="still"]::before {
   content: "";
   position: absolute;
@@ -44,16 +46,6 @@
   .board {
     --board-cols: var(--board-cols-sm, var(--board-cols-lg, 96));
     --board-rows: var(--board-rows-sm, var(--board-rows-lg, 120));
-  }
-}
-
-/* One column: the caption hangs under the box (absolute, below) and is out of
-   flow, so the box carries the gap before whatever follows it. This lives
-   here rather than in components.css because the `.board { margin: 0 }` reset
-   above is unlayered and would beat any rule inside @layer components. */
-@media (width < 80rem) {
-  .board[data-mode="hero"] {
-    margin-bottom: var(--space-4);
   }
 }
 
@@ -127,15 +119,6 @@ noscript .board-fallback {
   white-space: nowrap;
 }
 
-/* Under a fine pointer the displacement is the cursor. */
-@media (hover: hover) and (pointer: fine) {
-  .board[data-mode="hero"][data-board="settled"],
-  .board[data-mode="hero"][data-board="assembling"],
-  .board[data-mode="hero"][data-board="live"] {
-    cursor: none;
-  }
-}
-
 /* Forced colours (Windows high contrast). A canvas is a bitmap the forced
    palette cannot reach, so the dots keep their own greys against a background
    the user has overridden — which is exactly the contrast they asked the OS to
@@ -170,3 +153,62 @@ noscript .board-fallback {
    where the paper itself measures 8.97:1. A permanent field of grey dots
    behind the page IS the smudge this direction exists to avoid. Dots live
    inside a plate mark now, and nowhere else. */
+
+/* ── The portrait ─────────────────────────────────────────────────────────
+   A 4:5 box with the halftone drawn into it. No plate mark and no wiped
+   tone behind it: the bake vignettes the figure so every dot at the box
+   edge is already nothing, and the box itself is never seen. The ratio is
+   the bake's (every crop in scripts/bake-hero.py is 4:5); the renderer
+   scales the field by the box width alone, so the two must agree or the
+   figure is cut off. Width, placement and `position` are `.hero-board`
+   (components.css): a `position: relative` here would beat its
+   `position: sticky` from outside the layer. */
+.portrait {
+  display: block;
+  aspect-ratio: 4 / 5;
+}
+
+.portrait-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The finished print, drawn by the bake from the same grids. In the DOM
+   always, but out of layout on screen, so its lazy image is never requested
+   there; shown when the canvas cannot run, without JS, and in print. */
+.portrait-still {
+  position: absolute;
+  inset: 0;
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+.portrait[data-state="fallback"] .portrait-still,
+noscript .portrait-still {
+  display: block;
+}
+
+@media (forced-colors: active) {
+  .portrait-canvas {
+    display: none;
+  }
+  .portrait-still {
+    display: block;
+  }
+}
+
+/* Print (§4.9), as the plates do: the canvas goes, the still prints at 50%. */
+@media print {
+  .portrait-canvas {
+    display: none;
+  }
+  .portrait-still {
+    display: block;
+    opacity: 0.5;
+  }
+}
