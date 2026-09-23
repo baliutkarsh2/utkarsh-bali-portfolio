@@ -31,9 +31,44 @@ export const THEME_EVENT = "themechange";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 /**
+ * The page grounds, mirrored from `--ground` in globals.css: paper, and the
+ * plate the dark theme prints on. Browser chrome (the address bar, the tab
+ * strip on Android) reads them from `<meta name="theme-color">`, not from CSS.
+ * The layout declares the pair keyed to the system preference, which is what
+ * `system` follows; a pinned choice adds the pin below.
+ */
+export const GROUND = { light: "#faf8f4", dark: "#16140f" } as const;
+
+/**
+ * A theme-color meta of our own, first in <head>, for a pinned choice.
+ *
+ * The media-keyed pair follows the OS, so a light-OS visitor who chose dark
+ * got a paper toolbar over the plate, and the reverse. The pair is not edited
+ * in place: Next re-renders its own metas on every soft navigation and the
+ * edit is lost. A foreign meta survives them, and the first matching meta in
+ * tree order is the one the browser uses. `system` removes it, and the pair
+ * takes over again.
+ *
+ * Its colour is spelled rgb(), never the hex the pair uses. React adopts any
+ * unowned <meta> in the document whose name and content equal one it is about
+ * to render: at hydration it took a "#16140f" pin as Next's dark meta, and
+ * removed it with the rest on the first soft navigation. The same colour in
+ * another spelling can never match.
+ */
+const PIN_ID = "theme-color-pin";
+
+function rgb(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`;
+}
+
+const PIN_COLOR = { light: rgb(GROUND.light), dark: rgb(GROUND.dark) } as const;
+
+/**
  * Runs inline in <head> before first paint, next to the motion boot script.
  * Without it a dark visitor gets one white frame on every navigation, which is
- * the single most visible bug a theme toggle can have.
+ * the single most visible bug a theme toggle can have. A pinned choice also
+ * pins the toolbar colour here, before the browser first tints it.
  *
  * Wrapped in try/catch because Safari throws on localStorage in some
  * private-browsing configurations; the catch leaves the attribute unset, which
@@ -41,7 +76,26 @@ const DARK_QUERY = "(prefers-color-scheme: dark)";
  */
 export const THEME_BOOT_SCRIPT =
   `try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');` +
-  `if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}`;
+  `if(t==='dark'||t==='light'){document.documentElement.dataset.theme=t;` +
+  `var m=document.createElement('meta');m.name='theme-color';m.id='${PIN_ID}';` +
+  `m.content=t==='dark'?'${PIN_COLOR.dark}':'${PIN_COLOR.light}';` +
+  `document.head.prepend(m)}}catch(e){}`;
+
+/** Pins the toolbar colour to a chosen theme, or unpins it for `system`. */
+function pinThemeColor(next: Theme): void {
+  let pin = document.getElementById(PIN_ID) as HTMLMetaElement | null;
+  if (next === "system") {
+    pin?.remove();
+    return;
+  }
+  if (!pin) {
+    pin = document.createElement("meta");
+    pin.name = "theme-color";
+    pin.id = PIN_ID;
+  }
+  pin.content = PIN_COLOR[next];
+  document.head.prepend(pin);
+}
 
 function root(): HTMLElement | null {
   return typeof document === "undefined" ? null : document.documentElement;
@@ -73,6 +127,7 @@ export function setTheme(next: Theme): void {
   if (!html) return;
   if (next === "system") delete html.dataset.theme;
   else html.dataset.theme = next;
+  pinThemeColor(next);
   try {
     if (next === "system") localStorage.removeItem(THEME_STORAGE_KEY);
     else localStorage.setItem(THEME_STORAGE_KEY, next);

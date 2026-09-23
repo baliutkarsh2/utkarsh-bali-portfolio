@@ -8,22 +8,9 @@ import { SkipLink } from "@/components/layout/skip-link";
 import { profile, socials } from "@/content";
 import { display, mono, text } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
-import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { GROUND, THEME_BOOT_SCRIPT } from "@/lib/theme";
 import { jsonLd, personId, siteConfig } from "@/lib/seo";
 import "./globals.css";
-
-/**
- * The page grounds, mirrored from `--ground` in globals.css: paper, and the
- * plate the dark theme prints on. Browser chrome (the address bar, the tab
- * strip on Android) reads them from the meta tags, not from CSS, so each is
- * keyed to the system preference -- which is also what `system`, the
- * default theme, follows. `color-scheme: light dark` lets the canvas take
- * the right ground before the stylesheet arrives.
- *
- * This was a single #0A0A0B with `color-scheme: dark`, left from the dark
- * dot-board build: a cold black bar over a paper page.
- */
-const GROUND = { light: "#faf8f4", dark: "#16140f" } as const;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -60,6 +47,16 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Browser chrome (the address bar, the tab strip on Android) takes the page
+ * ground from these metas, keyed to the system preference, which is what
+ * `system`, the default theme, follows; a pinned light or dark choice adds a
+ * meta of its own ahead of them (lib/theme.ts). `color-scheme: light dark`
+ * lets the canvas take the right ground before the stylesheet arrives.
+ *
+ * This was a single #0A0A0B with `color-scheme: dark`, left from the dark
+ * dot-board build: a cold black bar over a paper page.
+ */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

@@ -166,6 +166,20 @@
     text-decoration: none;
   }
 
+  /* The result, set as /projects sets it (.toc-result, .toc-figure): the
+     figure in full ink at medium weight, its label in the reading grey, in
+     the reading face. A clause in mono capitals broke mid-phrase on a phone. */
+  .row-result {
+    margin-top: 0.875rem;
+    text-wrap: pretty;
+  }
+
+  .row-figure {
+    font-weight: 500;
+    color: var(--ink);
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
   /* The arrow is an icon, not a word: it may move (§7.3). It sits on the
      title's line, and on hover the row says what it opens beside it. */
   .row-end {

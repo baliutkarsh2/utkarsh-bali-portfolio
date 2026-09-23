@@ -5,6 +5,7 @@ import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { navItems, profile } from "@/content/profile";
+import { Typeset } from "@/components/project/typeset";
 import { ContactLinks } from "@/components/ui/contact-links";
 import { NineDotMark } from "@/components/ui/nine-dot-mark";
 import { SectionSpy } from "@/components/interactive/section-spy";
@@ -218,8 +219,10 @@ export function SiteHeader() {
                     className="menu-route"
                   >
                     {active && <span aria-hidden className="nav-led" />}
+                    {/* Set like the /projects title the route opens on:
+                        Bodoni leaves "W ork" at this size. */}
                     <span className="text-display-l font-medium">
-                      {item.label}
+                      <Typeset>{item.label}</Typeset>
                     </span>
                     <ArrowRight className="menu-route-arrow" aria-hidden="true" />
                   </Link>
