@@ -460,20 +460,16 @@
     color: var(--ink-3);
   }
 
+  /* The stack is a tag row (components.css): a wrap falls between two
+     entries, never inside "OpenAI API", and no line starts or ends on a
+     middot -- it used to end "OpenAI API ·" and start the next on "AWS".
+     Set in the reading face, so the dot's slot and the line gap are the
+     reading face's. */
   .rail-stack {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.125rem 0;
-    margin: 0.75rem 0 0;
-    padding: 0;
-    list-style: none;
+    --tag-sep: 1.1em;
+    row-gap: 0.125rem;
+    margin-block: 0.75rem 0;
     color: var(--ink-2);
-  }
-
-  .rail-stack > li:not(:last-child)::after {
-    content: "·" / "";
-    padding-inline: 0.5rem;
-    color: var(--ink-3);
   }
 
   .rail-links {

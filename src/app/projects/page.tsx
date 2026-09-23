@@ -122,11 +122,13 @@ export default function ProjectsPage() {
             <ol className="toc-list">
               {group.projects.map((project) => {
                 const device = deviceOf(project.slug);
+                // One item per fact, so a wrap can only fall between two of
+                // them and never leaves a middot at either end of a line.
                 const meta = [
                   project.eyebrow,
                   project.org ?? "Independent",
                   statusLabel[project.status],
-                ].join(" · ");
+                ];
 
                 return (
                   <li key={project.slug} className="toc-row">
@@ -151,7 +153,11 @@ export default function ProjectsPage() {
                         {project.metricLabel}
                       </p>
 
-                      <p className="toc-meta meta">{meta}</p>
+                      <ul className="toc-meta tag-row meta">
+                        {meta.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
                     </div>
 
                     {device && (

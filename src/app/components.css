@@ -632,21 +632,38 @@
     color: var(--ink);
   }
 
+  /* A wrap may fall between two tags and never inside one, and no line may
+     start or end on a middot. A trailing dot on every item but the last
+     still ends a wrapped line on one ("PURDUE UNIVERSITY ·"), and a leading
+     dot on every item but the first starts the next line with one. So every
+     item carries its dot in front, in a fixed slot, and the list is pulled
+     one slot to the left and clipped there: whichever item opens a line has
+     its dot in the clipped slot, on every line, however it wraps. The row
+     gap is the leading the caps need once they are two lines -- at the
+     meta utility's 1.2 the second line's caps nearly touched the first's
+     (the utility owns line-height, so the air is a gap, not a leading). */
   .tag-row {
+    --tag-sep: 1.5em;
     display: flex;
     flex-wrap: wrap;
+    row-gap: 0.4em;
     margin: 0;
+    margin-inline-start: calc(-1 * var(--tag-sep));
     padding: 0;
     list-style: none;
     color: var(--ink-3);
+    clip-path: inset(-0.5em -0.5em -0.5em var(--tag-sep));
   }
-  /* The middot trails each item rather than leading the next, so a line
-     that wraps ends with a dot instead of starting with one. */
-  .tag-row > li:not(:last-child)::after {
+  .tag-row > li {
+    white-space: nowrap;
+  }
+  .tag-row > li::before {
     /* Drawn but not read: the list already conveys the separation, and
        generated content otherwise enters the accessibility tree. */
     content: "·" / "";
-    margin-inline: 0.6em;
+    display: inline-block;
+    width: var(--tag-sep);
+    text-align: center;
     color: var(--ink-3);
   }
 
