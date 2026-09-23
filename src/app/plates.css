@@ -161,6 +161,17 @@
   border-bottom: 1px solid var(--line);
 }
 
+/* Stacked, the card closes on the next section's rule instead of its own:
+   the last row's hairline and the "Where I've worked" rule sat 76px apart
+   with nothing between them, which reads as an empty row of the table. Beside
+   the headline (64rem and up) the card is its own column and keeps its
+   closing rule. */
+@media (width < 64rem) {
+  .about-fact:last-child {
+    border-bottom: 0;
+  }
+}
+
 .about-fact dt {
   color: var(--ink-3);
 }
