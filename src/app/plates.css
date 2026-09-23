@@ -386,6 +386,79 @@
    device marks share one right edge.
    ───────────────────────────────────────────────────────────────────────── */
 
+/* The masthead's contents: at 64rem and up a ruled card beside the title,
+   the same object and the same width as the facts card on /about, holding
+   the eight names by year. Below that the rows themselves are the contents
+   and the card would only push them down. */
+.toc-contents {
+  display: none;
+}
+
+@media (width >= 64rem) {
+  .toc-mast {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .toc-contents {
+    display: block;
+    /* The card's top rule on the title's cap line, as on /about. */
+    margin-block-start: calc(var(--text-meta) * 1.2 + var(--space-3) + 0.5rem);
+    border-top: 1px solid var(--line-strong);
+  }
+}
+
+@media (width >= 80rem) {
+  .toc-mast {
+    grid-template-columns: minmax(0, 1fr) 23rem;
+    column-gap: var(--space-10);
+  }
+}
+
+.toc-contents-row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: baseline;
+  padding-block: 0.625rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.toc-contents-year {
+  margin: 0;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One name to a line. Run on with middots they wrapped mid-list in a 23rem
+   card and left a dot hanging at the end of a line, which reads as a stray
+   glyph rather than as punctuation. */
+.toc-contents-list {
+  display: grid;
+  row-gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toc-contents-link {
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: text-decoration-color var(--dur-2) var(--ease-snap);
+}
+
+.toc-contents-link:hover,
+.toc-contents-link:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 .toc {
   --year-col: 0rem;
   --year-gap: 0rem;

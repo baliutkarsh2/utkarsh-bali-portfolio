@@ -59,15 +59,43 @@ export default function ProjectsPage() {
 
   return (
     <>
-      <header className="shell page-mast">
-        <p className="meta text-ink-3">
-          {count} projects · {firstYear}&ndash;{currentYear}
-        </p>
-        <h1 className="page-mast-title text-display-l text-ink">Work</h1>
-        <p className="page-mast-lede text-lede text-ink-2">
-          Five on agents, two in research, one with 3,000+ users. Each one has
-          a write-up: the problem, what I built, and what came of it.
-        </p>
+      <header className="shell page-mast toc-mast">
+        <div className="toc-mast-type">
+          <p className="meta text-ink-3">
+            {count} projects · {firstYear}&ndash;{currentYear}
+          </p>
+          <h1 className="page-mast-title text-display-l text-ink">Work</h1>
+          <p className="page-mast-lede text-lede text-ink-2">
+            Five on agents, two in research, one with 3,000+ users. Each one
+            has a write-up: the problem, what I built, and what came of it.
+          </p>
+        </div>
+
+        {/* The contents, beside the masthead at 64rem and up: all eight
+            names on the first screen, by year, each a link to its write-up.
+            The rows below are tall, and at 1440 only two of them are above
+            the fold; this is where a reader who came for one project finds
+            it without scrolling, and it is what the right half of the
+            masthead is for instead of bare paper. */}
+        <nav className="toc-contents" aria-label="Contents">
+          {groups.map((group) => (
+            <div key={group.year} className="toc-contents-row">
+              <p className="toc-contents-year data">{group.year}</p>
+              <ul className="toc-contents-list">
+                {group.projects.map((project) => (
+                  <li key={project.slug}>
+                    <Link
+                      className="toc-contents-link"
+                      href={`/projects/${project.slug}`}
+                    >
+                      {project.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
       </header>
 
       <div className="shell toc">
