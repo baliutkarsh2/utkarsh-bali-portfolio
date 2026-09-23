@@ -15,6 +15,8 @@ import { Typeset } from "@/components/project/typeset";
 import {
   absoluteUrl,
   jsonLd,
+  OG_CONTENT_TYPE,
+  OG_SIZE,
   openGraphBase,
   personId,
   siteConfig,
@@ -44,6 +46,17 @@ export async function generateMetadata({
       url: `/projects/${slug}`,
       title: project.name,
       description: project.tagline,
+      // The card ./opengraph-image.tsx draws, listed here so its alt can say
+      // what this card shows. Listing it replaces the file-based entry
+      // (whose alt is one string for every project) instead of adding to it.
+      images: [
+        {
+          url: `/projects/${slug}/opengraph-image`,
+          ...OG_SIZE,
+          type: OG_CONTENT_TYPE,
+          alt: `${project.name}: ${project.metric} ${project.metricLabel}`,
+        },
+      ],
     },
     // No `twitter` of its own: one here replaced the layout's and dropped
     // twitter:creator. The card and creator come from the layout, and Next

@@ -3,9 +3,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CSSProperties } from "react";
 import { portraitOg } from "@/content/portrait";
+import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/seo";
 
-export const OG_SIZE = { width: 1200, height: 630 };
-export const OG_CONTENT_TYPE = "image/png";
+// Defined in seo.ts, which a page can import without pulling in next/og: a
+// case study lists its own card in its metadata (projects/[slug]/page.tsx).
+export { OG_CONTENT_TYPE, OG_SIZE };
 
 /* ─────────────────────────────────────────────────────────────
    Tokens, copied from `:root` in globals.css §1. Satori resolves no CSS
