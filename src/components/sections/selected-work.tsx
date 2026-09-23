@@ -30,9 +30,13 @@ const GLYPH: Record<ProjectStatus, "filled" | "half" | "open"> = {
  * used to be an empty 3rem gutter that pushed every title 72px in from the
  * heading above it.
  *
- * The number stays where /projects puts it, in the machine line and at the
- * same size as the rest of the facts; a figure four times the size of the
- * name beside it is the page choosing which fact you should be impressed by.
+ * The result reads as /projects sets it: one line of the reading face under
+ * the standfirst, the figure in full ink at medium weight and the same size
+ * as the words beside it. A figure four times the size of the name would be
+ * the page choosing which fact you should be impressed by; a clause in mono
+ * capitals broke mid-phrase on a phone and read "~3X". The machine line under
+ * it is the category alone, one tag that cannot wrap: the status already
+ * hangs in the margin, and the year with it.
  *
  * "All work" was a lone 16px text link under the list. It is a button now,
  * on the list's own type column, saying how many there are.
@@ -62,7 +66,13 @@ export function SelectedWork() {
               title={project.name}
               subtitle={project.tagline}
               subtitleSize="body"
-              meta={`${project.eyebrow} · ${project.metric} ${project.metricLabel}`}
+              result={
+                <>
+                  <span className="row-figure">{project.metric}</span>{" "}
+                  {project.metricLabel}
+                </>
+              }
+              meta={project.eyebrow}
               href={`/projects/${project.slug}`}
               cta="Case study"
               transitionName={`project-${project.slug}`}

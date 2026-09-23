@@ -14,7 +14,12 @@ type RowProps = {
   subtitle?: ReactNode;
   /** The subtitle's register: `small` (16px, the default) or `body` (18px). */
   subtitleSize?: "small" | "body";
-  /** The meta line: "eyebrow · year · status". */
+  /**
+   * The result, in the reading face under the subtitle: a figure and what it
+   * counts, set as /projects sets it (`.row-figure` on the figure).
+   */
+  result?: ReactNode;
+  /** The machine line: short labels in mono capitals, never a clause. */
   meta?: ReactNode;
   href?: string;
   /** Opens in a new tab, outward arrow, sr-only notice. */
@@ -52,6 +57,7 @@ export function Row({
   title,
   subtitle,
   subtitleSize = "small",
+  result,
   meta,
   href,
   external = false,
@@ -116,7 +122,14 @@ export function Row({
             {subtitle}
           </p>
         )}
-        {meta && <p className={cn("row-meta meta text-ink-3", "mt-3")}>{meta}</p>}
+        {result && (
+          <p className="row-result text-small text-ink-2">{result}</p>
+        )}
+        {meta && (
+          <p className={cn("row-meta meta text-ink-3", result ? "mt-2.5" : "mt-3")}>
+            {meta}
+          </p>
+        )}
       </div>
 
       {href && (
