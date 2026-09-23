@@ -13,12 +13,17 @@ import { jsonLd, personId, siteConfig } from "@/lib/seo";
 import "./globals.css";
 
 /**
- * The page ground, mirrored from `--ground` in globals.css. Browser chrome
- * (the address bar, the tab strip on Android) reads it from the meta tag,
- * not from CSS, and `color-scheme: dark` in the viewport paints the canvas
- * dark before the stylesheet arrives so there is never a white frame.
+ * The page grounds, mirrored from `--ground` in globals.css: paper, and the
+ * plate the dark theme prints on. Browser chrome (the address bar, the tab
+ * strip on Android) reads them from the meta tags, not from CSS, so each is
+ * keyed to the system preference -- which is also what `system`, the
+ * default theme, follows. `color-scheme: light dark` lets the canvas take
+ * the right ground before the stylesheet arrives.
+ *
+ * This was a single #0A0A0B with `color-scheme: dark`, left from the dark
+ * dot-board build: a cold black bar over a paper page.
  */
-const GROUND = "#0A0A0B";
+const GROUND = { light: "#faf8f4", dark: "#16140f" } as const;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -58,8 +63,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: GROUND,
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: GROUND.light },
+    { media: "(prefers-color-scheme: dark)", color: GROUND.dark },
+  ],
+  colorScheme: "light dark",
 };
 
 const personSchema = {
