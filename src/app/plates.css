@@ -1287,6 +1287,10 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 html:has(.spoiled) {
+  /* The browser's own parts -- the scrollbar gutter, form controls -- come
+     across with the sheet, or a light-grey gutter stands beside it. */
+  color-scheme: dark;
+
   --ground: #16140f; /* --plate */
   --ground-2: #221f18; /* --plate-2 */
   --ground-3: #2c2820;
@@ -1356,10 +1360,24 @@ html:has(.spoiled) {
   aspect-ratio: var(--plate-cols) / var(--plate-rows);
 }
 
+/* On a phone the plate is centred in the column, so the mark around it
+   sits on the column's two edges like every other element on the page. Hung
+   left, the mark ran from 4px off the left of a 390 window to 34px short of
+   the right. Below 24rem (a 360 phone) the column cannot hold 64 cells at
+   5px plus the mark and the register mark hanging off its corner, which
+   went 6px past the window; the plate steps down to a 4px pitch, still 64
+   whole cells (spoiled-plate.tsx reads the pitch off this element). */
 @media (width < 48rem) {
   .spoiled-plate {
     --plate-cols: var(--plate-cols-sm, 64);
     --plate-rows: var(--plate-rows-sm, 32);
+    margin-inline: auto;
+  }
+}
+
+@media (width < 24rem) {
+  .spoiled-plate {
+    --pitch: 4px;
   }
 }
 
