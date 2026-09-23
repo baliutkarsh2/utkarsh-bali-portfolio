@@ -22,6 +22,23 @@ export const siteConfig = {
   locale: "en_US",
 } as const;
 
+/** Every share card on the site: see lib/og.tsx. */
+export const OG_SIZE = { width: 1200, height: 630 };
+export const OG_CONTENT_TYPE = "image/png";
+
+/**
+ * The Open Graph fields every page carries. Next does not merge `openGraph`:
+ * a page that sets any field of it replaces the layout's whole object, so
+ * /about, /projects and /writing each shipped a share with no og:type,
+ * og:site_name or og:locale. Every `openGraph` on the site spreads this first.
+ * `type` is the default; a case study or a post overrides it with "article".
+ */
+export const openGraphBase = {
+  type: "website",
+  siteName: siteConfig.name,
+  locale: siteConfig.locale,
+} as const;
+
 /** Person node @id, referenced by CreativeWork author on every case study. */
 export const personId = `${siteConfig.url}/#person`;
 

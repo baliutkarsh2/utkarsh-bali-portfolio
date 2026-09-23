@@ -6,17 +6,20 @@ import { TagList } from "@/components/project/tag-list";
 import { Typeset } from "@/components/project/typeset";
 import { deviceOf } from "@/content/plates";
 import { orderedProjects, statusLabel, type Project } from "@/content";
+import { openGraphBase } from "@/lib/seo";
+
+const description =
+  "Eight projects, 2024 to 2026: agent infrastructure, developer tools, consumer AI and research, each with a write-up.";
 
 export const metadata: Metadata = {
   title: "Work",
-  description:
-    "Eight projects, 2024 to 2026: agent infrastructure, developer tools, consumer AI and research, each with a write-up.",
+  description,
   alternates: { canonical: "/projects" },
   openGraph: {
+    ...openGraphBase,
     url: "/projects",
     title: "Work",
-    description:
-      "Eight projects, 2024 to 2026: agent infrastructure, developer tools, consumer AI and research, each with a write-up.",
+    description,
   },
 };
 

@@ -9,7 +9,7 @@ import { profile, socials } from "@/content";
 import { display, mono, text } from "@/lib/fonts";
 import { MOTION_BOOT_SCRIPT } from "@/lib/motion";
 import { GROUND, THEME_BOOT_SCRIPT } from "@/lib/theme";
-import { jsonLd, personId, siteConfig } from "@/lib/seo";
+import { jsonLd, openGraphBase, personId, siteConfig } from "@/lib/seo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,17 +32,16 @@ export const metadata: Metadata = {
   creator: profile.name,
   alternates: { canonical: "/" },
   openGraph: {
-    type: "website",
+    ...openGraphBase,
     url: siteConfig.url,
-    siteName: profile.name,
     title: siteConfig.title,
     description: siteConfig.description,
-    locale: siteConfig.locale,
   },
+  // No title or description here. Every page inherits this block, so the two
+  // used to be the home page's on /about, /projects and /writing as well.
+  // Left out, Next fills them (and the image) from each page's own openGraph.
   twitter: {
     card: "summary_large_image",
-    title: siteConfig.title,
-    description: siteConfig.description,
     creator: "@ubali07",
   },
 };

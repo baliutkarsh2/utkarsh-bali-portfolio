@@ -12,7 +12,15 @@ import {
 import { ProjectBody } from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
 import { Typeset } from "@/components/project/typeset";
-import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
+import {
+  absoluteUrl,
+  jsonLd,
+  OG_CONTENT_TYPE,
+  OG_SIZE,
+  openGraphBase,
+  personId,
+  siteConfig,
+} from "@/lib/seo";
 
 /** Unknown slugs 404 instead of being rendered on demand. */
 export const dynamicParams = false;
@@ -33,16 +41,26 @@ export async function generateMetadata({
     description: project.tagline,
     alternates: { canonical: `/projects/${slug}` },
     openGraph: {
+      ...openGraphBase,
       type: "article",
       url: `/projects/${slug}`,
       title: project.name,
       description: project.tagline,
+      // The card ./opengraph-image.tsx draws, listed here so its alt can say
+      // what this card shows. Listing it replaces the file-based entry
+      // (whose alt is one string for every project) instead of adding to it.
+      images: [
+        {
+          url: `/projects/${slug}/opengraph-image`,
+          ...OG_SIZE,
+          type: OG_CONTENT_TYPE,
+          alt: `${project.name}: ${project.metric} ${project.metricLabel}`,
+        },
+      ],
     },
-    twitter: {
-      card: "summary_large_image",
-      title: project.name,
-      description: project.tagline,
-    },
+    // No `twitter` of its own: one here replaced the layout's and dropped
+    // twitter:creator. The card and creator come from the layout, and Next
+    // fills the title, description and image from openGraph above.
   };
 }
 

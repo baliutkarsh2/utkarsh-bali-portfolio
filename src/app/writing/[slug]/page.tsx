@@ -6,7 +6,7 @@ import { ColumnRule } from "@/components/writing/column-rule";
 import { TagList } from "@/components/project/tag-list";
 import { Tag } from "@/components/ui/tag";
 import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
-import { absoluteUrl, jsonLd, personId } from "@/lib/seo";
+import { absoluteUrl, jsonLd, openGraphBase, personId } from "@/lib/seo";
 
 export const dynamicParams = false;
 
@@ -26,6 +26,7 @@ export async function generateMetadata({
     description: post.summary,
     alternates: { canonical: `/writing/${slug}` },
     openGraph: {
+      ...openGraphBase,
       type: "article",
       url: `/writing/${slug}`,
       title: post.title,
@@ -33,7 +34,8 @@ export async function generateMetadata({
       publishedTime: post.date,
       tags: post.tags,
     },
-    twitter: { card: "summary_large_image", title: post.title, description: post.summary },
+    // Twitter's card and creator come from the layout; Next fills the rest
+    // from openGraph. A block here would replace the layout's and lose them.
   };
 }
 

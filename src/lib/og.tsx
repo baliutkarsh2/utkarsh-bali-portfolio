@@ -3,9 +3,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CSSProperties } from "react";
 import { portraitOg } from "@/content/portrait";
+import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/seo";
 
-export const OG_SIZE = { width: 1200, height: 630 };
-export const OG_CONTENT_TYPE = "image/png";
+// Defined in seo.ts, which a page can import without pulling in next/og: a
+// case study lists its own card in its metadata (projects/[slug]/page.tsx).
+export { OG_CONTENT_TYPE, OG_SIZE };
 
 /* ─────────────────────────────────────────────────────────────
    Tokens, copied from `:root` in globals.css §1. Satori resolves no CSS
@@ -141,7 +143,8 @@ function loadFonts(): Promise<OgFont[]> {
    Props
    ───────────────────────────────────────────────────────────── */
 export type OgMetric = {
-  /** The figure, e.g. "Top 10%". Set in Bodoni 700 at 150px. */
+  /** The figure, e.g. "Top 10%". Set in Bodoni 700 at 150px, or as large
+   *  as fits when it is too long for that (figureSize). */
   value: string;
   /** What the figure measures, set under it in Plex. */
   label: string;
@@ -201,6 +204,8 @@ const displayText = (size: number, lineHeight: number): CSSProperties => ({
 /** The standfirst. One italic line per plate, which is the whole of the
  *  card's running text — a share card has no prose, so it loads no reading
  *  face to set one in. */
+const STANDFIRST_LINES = 2;
+
 const standfirst = (size: number): CSSProperties => ({
   display: "block",
   fontFamily: "BodoniItalic",
@@ -208,8 +213,87 @@ const standfirst = (size: number): CSSProperties => ({
   fontSize: size,
   lineHeight: 1.34,
   color: INK_2,
-  lineClamp: 2,
+  lineClamp: STANDFIRST_LINES,
 });
+
+/* ─────────────────────────────────────────────────────────────
+   Fitting. Satori measures nothing it can hand back, and `lineClamp` is a
+   guillotine: it ended "NeurIPS 2026" as "NeurIPS 2…" and a two-sentence
+   tagline as "Four agents pl…". So the card sizes and cuts its own copy
+   before Satori sets it, from advance widths measured off the TTFs in
+   src/app/_fonts (rounded up, so an estimate errs towards fitting). The
+   clamps stay as the backstop.
+   ───────────────────────────────────────────────────────────── */
+
+/** Bodoni Moda 700, opsz 96: advance in em by kind of character. The
+ *  measured means are 0.72 (capitals), 0.56 (lower case), 0.59 (figures)
+ *  and 0.25 (space); `%`, at 1.02, is the widest sign. */
+const figureAdvance = (c: string) =>
+  /[A-Z]/.test(c) ? 0.75
+  : /[a-z]/.test(c) ? 0.56
+  : /[0-9]/.test(c) ? 0.6
+  : c === " " ? 0.26
+  : 1.02;
+
+const FIGURE_MAX = 150;
+
+/**
+ * The figure's size: 150px, the plate's number, unless the value is too long
+ * to set at 150 in the column, in which case the largest size that fits.
+ * Every short figure ("Top 10%", "~3x", ">99%") still sets at 150; "NeurIPS
+ * 2026" sets at about 113 instead of losing its year.
+ */
+function figureSize(value: string, width: number): number {
+  const em = [...value].reduce((sum, c) => sum + figureAdvance(c), 0);
+  return Math.min(FIGURE_MAX, Math.floor(width / em));
+}
+
+/** Bodoni Moda italic averages 0.43 to 0.45em a character across the eight
+ *  taglines; the word space is 0.26em. */
+const ITALIC_ADVANCE = 0.46;
+const ITALIC_SPACE = 0.26;
+
+/** How many lines `text` takes at `size` in `width`: a greedy word wrap,
+ *  which is what Satori does, on the average advance. */
+function lineCount(text: string, width: number, size: number): number {
+  let lines = 1;
+  let run = 0;
+  for (const word of text.split(/\s+/)) {
+    const w = word.length * ITALIC_ADVANCE * size;
+    if (run === 0) run = w;
+    else if (run + ITALIC_SPACE * size + w <= width) run += ITALIC_SPACE * size + w;
+    else {
+      lines += 1;
+      run = w;
+    }
+  }
+  return lines;
+}
+
+/**
+ * The standfirst, cut to the room the plate has. Whole sentences first, as
+ * many as fit; only when the first sentence alone is too long, whole words
+ * and an ellipsis, never a word broken in half.
+ */
+function fitStandfirst(text: string, width: number, size: number): string {
+  const fits = (s: string) => lineCount(s, width, size) <= STANDFIRST_LINES;
+  if (fits(text)) return text;
+
+  let kept = "";
+  for (const sentence of text.match(/[^.!?]+[.!?]+[”’")]*(?:\s+|$)/g) ?? []) {
+    if (!fits((kept + sentence).trim())) break;
+    kept += sentence;
+  }
+  if (kept) return kept.trim();
+
+  let words = "";
+  for (const word of text.split(/\s+/)) {
+    const next = words ? `${words} ${word}` : word;
+    if (!fits(`${next}…`)) break;
+    words = next;
+  }
+  return `${words.replace(/[\s,;:.–—-]+$/, "")}…`;
+}
 
 /** The running head. Bodoni at 22px is the smallest the family is allowed to
  *  be set anywhere on the site, and it is cut for it. */
@@ -277,7 +361,8 @@ function Portrait({ height }: { height: number }) {
  * - large: name 2 × 127 + 24 + standfirst 2 × 37 = 352, bottom-aligned with
  *   the 392px engraving, which therefore overhangs the air by 20. That
  *   overhang is why FIGURE_PAD is 24 and not less.
- * - metric: 150 + 22 + 18 + 22 + 59 + 14 + 2 × 35 = 355.
+ * - metric: 150 + 22 + 18 + 22 + 59 + 14 + 2 × 35 = 355 at most; a long
+ *   figure sets smaller (figureSize) and the column is that much shorter.
  * - plain: 3 × 87 + 24 + 2 × 38 = 361, centred rather than hung.
  */
 export async function renderOgCard({
@@ -296,6 +381,7 @@ export async function renderOgCard({
   const figureW =
     (large ? PORTRAIT_LARGE_H : PORTRAIT_SIGNATURE_H) * (portraitOg.w / portraitOg.h);
   const textW = large || signature ? CONTENT_W - px(figureW) - PORTRAIT_GAP : CONTENT_W;
+  const standfirstSize = metric ? 26 : 28;
 
   return new ImageResponse(
     (
@@ -377,7 +463,7 @@ export async function renderOgCard({
               {metric && (
                 <div
                   style={{
-                    ...displayText(150, 1.0),
+                    ...displayText(figureSize(metric.value, textW), 1.0),
                     fontWeight: 700,
                     lineClamp: 1,
                   }}
@@ -389,7 +475,8 @@ export async function renderOgCard({
                 /* 22, measured rather than chosen: Bodoni Moda's content area
                    is 1.525em against a 1.0 line box, so a 150px figure hangs
                    its descender 39px below its own box and "Top 10%" would
-                   otherwise print its p through this line. */
+                   otherwise print its p through this line. A figure set
+                   smaller hangs less, so 22 still clears it. */
                 <div style={{ ...dataText(15, INK_3), lineClamp: 1, marginTop: 22 }}>
                   {metric.label}
                 </div>
@@ -412,11 +499,11 @@ export async function renderOgCard({
               </div>
               <div
                 style={{
-                  ...standfirst(metric ? 26 : 28),
+                  ...standfirst(standfirstSize),
                   marginTop: metric ? 14 : 24,
                 }}
               >
-                {description}
+                {fitStandfirst(description, textW, standfirstSize)}
               </div>
             </div>
 

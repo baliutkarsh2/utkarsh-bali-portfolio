@@ -7,7 +7,11 @@ export const dynamicParams = false;
 
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
-export const alt = "Project case study";
+// No `alt` export. It is one string for all eight cards ("Project case
+// study" was), so each case study lists its card in its own metadata with an
+// alt that names it: generateMetadata in ./page.tsx. generateImageMetadata
+// could carry a per-card alt here, but it moves the card under an id segment
+// that this route cannot prerender, so every card would render on request.
 
 export function generateStaticParams() {
   return orderedProjects.map((project) => ({ slug: project.slug }));
