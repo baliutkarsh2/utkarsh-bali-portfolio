@@ -86,6 +86,7 @@ async function copyText(text: string, source: HTMLElement | null): Promise<boole
  */
 export function CopyEmail({ email, size = "large" }: { email: string; size?: "large" | "small" }) {
   const [state, setState] = useState<CopyState>("rest");
+  const at = email.indexOf("@");
   const addressRef = useRef<HTMLSpanElement>(null);
   const timer = useRef<number | null>(null);
 
@@ -120,7 +121,18 @@ export function CopyEmail({ email, size = "large" }: { email: string; size?: "la
               : "copy-email-address font-medium text-ink"
           }
         >
-          {email}
+          {/* The "@" is its own span so the large size can set it at a
+              smaller optical size (components.css). The text, what is
+              selected and what is copied are all still exactly `email`. */}
+          {at === -1 ? (
+            email
+          ) : (
+            <>
+              {email.slice(0, at)}
+              <span className="copy-email-at">@</span>
+              {email.slice(at + 1)}
+            </>
+          )}
         </span>
         <span className="sr-only">, copy to clipboard</span>
         <span className="copy-email-label meta" aria-hidden="true">
