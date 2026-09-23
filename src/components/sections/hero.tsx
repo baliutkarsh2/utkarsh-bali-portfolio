@@ -29,9 +29,9 @@ const LINK_AT_REST = { "--u-rest": "100%" } as CSSProperties;
  * in the picture.
  *
  * Layout lives in `.hero` (components.css): one column in this DOM order on
- * phones; from 48rem the name, the lede, the actions and the story run down
- * the left and the portrait is pinned on the right, beside the story the
- * whole way down.
+ * phones and portrait tablets; from 56rem (48rem in landscape) the name, the
+ * lede, the actions and the story run down the left and the portrait is
+ * pinned on the right, beside the story the whole way down.
  */
 export function Hero() {
   return (
@@ -54,7 +54,8 @@ export function Hero() {
         {surname && <span className="block">{surname}</span>}
       </h1>
 
-      {/* Column 2 from 48rem, sticky; directly under the name below that.
+      {/* Column 2 from 56rem (48rem in landscape), sticky; directly under
+          the name below that, at most 30rem wide.
           The box holds the field's own 4:5 ratio from CSS alone, so nothing
           shifts when the canvas draws. No caption: it is a picture of a
           person. */}
