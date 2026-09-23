@@ -67,21 +67,31 @@ advances, so everything the photograph lights prints as big pale dots. It has
 its own curve and its own amber skin, a floor so no dot is ever darker than
 the plate, and six guards against what that does to a portrait:
 
-  · no outline: the back of the head gets a soft lift four to six dots deep in
-    the hair's own brown, never a one-dot band (a one-dot amber band there
-    read as a badly masked cut-out);
-  · hair with range: the floor that keeps it off the plate is applied to its
-    local mean and the strands and sheen go back over it, so they still move
-    the dot size (floored dot by dot it was a flat knit cap). Put back at a
-    gentle 1.5x, never more than 6 L* above the mean of the whole head of
-    hair, and eased onto that mean along the hairline: at 4x, capped only
-    against its own neighbourhood, the photograph's sheen printed as pale
-    taupe blotches on the crown and the light on the fringe as a pale band
-    across the brow, a camouflage cap with a headband;
-  · hair prints as hair: every dot in it takes an umber ink (C* 16 at most,
-    hue 58, L* 56 to 60), and the sheen prints as bigger dots of it, never
-    as lighter ones. The exact solve gave a small hair dot the skin's own
-    peach, C* 21 to 32, and the hairline dissolved into the forehead;
+  · dark hair is printed by its light: on a dark ground it is mostly
+    ground. The shadow prints only a small dark dot in every cell (coverage
+    0.06, about a quarter of a pitch across), thickening toward the
+    silhouette away from the sun (0.14, about 0.4 of a pitch), so the crown
+    and the back of the head hold as a soft dark mass rather than a net of
+    specks the plate swallows; the strands, the clumps and the sheen come up
+    out of it as small-to-medium dots, sized by how much light they catch,
+    and away from the sun only in clumps, never as lone specks (glitter).
+    Every way of lifting the shadow off the plate as a whole printed a field
+    of equal pale dots over the whole head: pale taupe blotches (grey hair),
+    or one flat dim mass with a hard edge at the brow (a knit cap). No
+    outline either: at the edge away from the sun the light fades in over the
+    last dozen dots, so the sky caught in the last strands neither traces the
+    head nor floats on the crown as stray patches, and the matte's own soft
+    edge takes the thickened shadow down with it;
+  · hair prints as hair: every dot in it, and the deep shade round the ear
+    and under the head, takes an umber ink (L* 38 to 46, C* 18 to 26, hue
+    62): darker than any skin, so a highlight in it is a bigger brown dot,
+    never a paler one. A pale ink over the hair printed as grey hair, one in
+    the skin's hue as ginger, and the exact solve left the ear's shade a ring
+    of grey dots. It runs out to the silhouette, where the exact solve left
+    a one-dot peach rim. And the hairline is where the skin starts: FACE's
+    line runs under the real hairline above the brow, so on the plate a dot
+    there that samples as light as skin is skin again, in the forehead's own
+    ink, turning to the hair over a dot or two of mixed ink;
   · no glowing rim: the sun side's edge is capped at the lit skin six dots
     in, so the jaw and chin keep a warm rim rather than a near-white
     outline, and a highlight one or two dots wide on that side (brow to
@@ -105,6 +115,8 @@ with the ground (lightest first on paper, darkest first on the plate), and
 `render()` here does the same.
 """
 import argparse
+import functools
+import hashlib
 import json
 import math
 import os
@@ -120,6 +132,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src", "assets", "portrait", "utkarsh-cutout.png")
 OUT = os.path.join(ROOT, "public", "portrait")
 LATTICE_TS = os.path.join(ROOT, "src", "components", "interactive", "hero-lattice.ts")
+# The cut-out the plate's brow zone was placed on: its size and the sha256 of
+# its RGBA pixels. The zone and its threshold are read off this one photograph;
+# on another crop or exposure they would quietly mislabel the forehead, so the
+# bake refuses to run until they are placed again (see forehead).
+BROW_SRC = ((1564, 2728), "94710abb86d261fa5bc762e47fd894df4beb436c223bc4453c48537636a743fd")
 
 # The collar line, cut-out px, top to bottom: the edge between his neck and his
 # shirt. The face and the shirt polygons both run along it, so they partition
@@ -212,26 +229,38 @@ P = dict(
                # to carry a big colour difference, and it comes out magenta:
                # blend toward the target's own hue at the ink's lightness
                natural=(0.12, 0.3),
-               # the hair's soft floor, L* = max(L*, a + b L*), on its local
-               # mean, and the detail over it at this gain (the mean read at
-               # this sigma, in lattice steps, the sheen capped at this L* and
-               # the shadows eased onto the last): it keeps its modelling and
-               # never sinks into the plate
-               hair_floor=(6.0, 0.7),
-               hair_detail=(1.5, 10.0, 38.0, 10.0),
-               # and no hair dot more than this far (L*) above the mean of
-               # the whole head of hair, read at this sigma (lattice steps),
-               # nor above that mean at all at the hairline, fading out this
-               # many pitches in: the light the fringe catches stays a
-               # lighter brown in the hair, not a pale band across the brow
-               hair_wide=(24.0, 6.0, 4.0),
-               # and its own warmth, C* in the shadow, hue, C* at the sheen: at
-               # plate coverage a hair dot is a small one, and a near-neutral
-               # dot reads as grey hair
-               hair=(11.0, 60.0, 16.0),
-               # the far side of the head: the hair lifted to this L*, fading
-               # to nothing this far in (cut-out px, 4 to 6 dots)
-               far_fade=(22.0, 40.0),
+               # the forehead FACE's hairline leaves in the hair: the zone
+               # (cut-out px, placed on BROW_SRC), the L* (as sampled) over
+               # which a dot in it turns from hair to skin, read at this sigma
+               # (lattice steps), and the wider L* ramp its masks move over
+               brow=((740.0, 345.0, 165.0, 68.0), (36.0, 42.0), 1.0, (38.0, 46.0)),
+               # and that forehead's ink: C* at most, hue at least
+               brow_ink=(45.0, 48.0),
+               # the hair printed by its light (see THE PLATE): the L* over
+               # which it comes up from nothing to its sheen, the strands put
+               # back over their local mean at this gain (the strands read at
+               # the first sigma, the mean at the second, in lattice steps),
+               # the power on the rise, the target L* at the sheen, and how
+               # deep inside the matte (cut-out px) the light comes up away
+               # from the sun, so the crown's edge is no outline and carries no
+               # stray clumps of sheen
+               hair_light=(11.0, 27.0, 5.5, (0.8, 2.5), 1.0, 23.0, (30.0, 100.0)),
+               # away from the sun, a lit dot keeps its light only with lit
+               # neighbours: read at this sigma (lattice steps), their share
+               # of its own light over which it goes from none to all of it
+               hair_clump=(1.0, 0.45, 0.6),
+               # the coverage the shadowed hair keeps, so the head holds its
+               # shape against the plate, and away from the sun the coverage
+               # it thickens to toward the silhouette, full this far inside the
+               # matte and gone this far (cut-out px)
+               hair_cov=0.06,
+               hair_edge=(0.14, (20.0, 220.0)),
+               # the far side's deep shade takes the hair's ink below this
+               # target L* (from and to)
+               shade=(16.0, 24.0),
+               # the target's warmth in the hair, C* in the shadow, hue, C* at
+               # the sheen
+               hair=(4.0, 62.0, 9.0),
                # the sun-side rim: its band (cut-out px, about six dots; the
                # lit skin is read from there to half as far again), the sigma
                # it is read at (lattice steps), and how far above that skin
@@ -241,8 +270,9 @@ P = dict(
                # the skin is read (lattice steps), and how far above that it
                # may print (L*)
                ridge_cap=(3.0, 3.0),
-               # the hair's own ink: L* from and to, C* at most, hue
-               hair_ink=(56.0, 60.0, 16.0, 58.0),
+               # the hair's own ink, an umber, from the shadow's specks to the
+               # sheen: L* from and to, C* from and to, hue
+               hair_ink=(38.0, 46.0, 18.0, 26.0, 62.0),
                # the sun side's skin: no ink paler than this L*, none greyer
                # than this C*
                face_ink=(85.5, 21.0),
@@ -599,20 +629,16 @@ def lattice_blur(meta, v, wt, sigma):
     return num[a, b] / np.maximum(den[a, b], 1e-9)
 
 
-def lattice_dist(meta, sel):
-    """How far each dot is from the nearest selected one, in pitches, over the
-    lattice (a pitch is sqrt(2) lattice steps)."""
-    A, B = meta["A"], meta["B"]
-    a, b = A - A.min(), B - B.min()
-    far = np.ones((a.max() + 1, b.max() + 1), bool)
-    far[a[sel], b[sel]] = False
-    return ndi.distance_transform_edt(far)[a, b] / math.sqrt(2)
-
-
 def solid_hair(mk):
-    """The hair, short of its edge with the skin: where a dot takes the hair's
-    own ink on the plate."""
-    return smoothstep(0.5, 0.9, mk["hair"])
+    """Where a dot takes the hair's own ink on the plate: the hair out to the
+    silhouette, short of its edge with the skin, and the far side's deep
+    shade (see separate). Read as the hair's share of what is there, not as
+    the mask itself: at the matte's edge the mask thins with the matte while
+    nothing else is there, and taken short of it the last dot or two kept the
+    exact solve's peach, a one-dot orange rim from the fringe to the crown."""
+    hz = mk["hair"]
+    share = hz / np.maximum(hz + mk["skin"] + mk["shirt"], 1e-3) * smoothstep(0.05, 0.3, hz)
+    return smoothstep(0.3, 0.7, np.maximum(share, mk.get("shade", 0)))
 
 
 def sun_skin(mk):
@@ -673,64 +699,44 @@ def grade(p, look, colour_lin, mk, meta):
     ref = np.average(L, weights=sh + 1e-9)
     L = L * (1 - sh) + (to + contrast * (L - ref)) * sh
     set_chroma(ab, sh, np.minimum(np.hypot(ab[:, 0], ab[:, 1]) * keep, p["shirt_cmax"]), p["shirt_hue"])
-    if "hair_floor" in look:
-        # The hair's floor, L* = max(L*, a + b L*), keeps it off the plate.
-        # On the plate it is applied to the hair's local mean and the detail
-        # goes back on top, so the sheen and the strands still move the dot
-        # size: floored dot by dot, the hair was one flat dim mass.
-        fa, fs = look["hair_floor"]
+    if "hair_light" in look:
+        # THE HAIR ON THE PLATE, printed by its light. On a dark ground dark
+        # hair is mostly ground: every way of lifting its shadows off the
+        # plate printed a field of equal pale dots over the whole head, grey
+        # taupe or a knit cap. So the shadow prints nothing here (the floor
+        # in separate() keeps a speck in every cell, which holds the head's
+        # shape) and only the light comes up: the strands over their local
+        # mean at `gain`, then a rise from `lo` to `hi` onto the sheen's
+        # target, `top`, a mid-sized umber dot (see solve_ink). Not at the
+        # crown's edge on the far side of the light, though: the sky caught
+        # in the last strands up there printed as a line of the biggest dots
+        # tracing the head, an outline. The sun side keeps its lit fringe.
+        lo, hi, gain, (fine, sig), gma, top, (e0, e1) = look["hair_light"]
         hz = mk["hair"]
-        if "hair_detail" in look:
-            # The gain only inside the hair: where the mask is partial the
-            # "detail" is the step to the skin or the ear beside it, and
-            # amplified it printed as a pale rim round both. The sheen stops
-            # at `cap`, the far side of a hair highlight, never skin. Nor at
-            # the silhouette: the light on the crown amplified there traced
-            # the head's edge again. The shadows ease onto `lo`: the plate
-            # cannot print darker than itself, and a target below about L* 8
-            # solves to an ink darker than the ground, which drops the dot and
-            # leaves a hole.
-            gain, sig, cap, lo = look["hair_detail"]
-            base = lattice_blur(meta, L, hz + 1e-9, sig)
-            g = 1 + (gain - 1) * smoothstep(0.7, 1.0, hz) * smoothstep(8, 32, mk["inside"])
-            Lh = np.maximum(base, fa + fs * base) + g * (L - base)
-            Lh = lo + 2.0 * np.logaddexp(0, (Lh - lo) / 2.0)
-            Lh = np.minimum(Lh, np.maximum(L, cap))
-            if "hair_wide" in look:
-                # The sheen is capped against the hair as a whole, not
-                # against its own neighbourhood. The light the fringe catches
-                # is a band wider than any local mean, so it set its own mean
-                # and passed every cap above: on the plate, where light is
-                # what advances, it printed as a pale taupe headband across
-                # the brow and blotches on the crown, around dark holes.
-                wsig, wmargin, reach = look["hair_wide"]
-                wide = lattice_blur(meta, L, hz + 1e-9, wsig)
-                wide = np.maximum(wide, fa + fs * wide)
-                Lh = np.minimum(Lh, wide + wmargin)
-                # And along the hairline the light eases the rest of the way
-                # down to that mean, fading out a few dots in: at 1440@1 the
-                # fringe's last few rows over the brow still printed as a
-                # lighter strip, a headband's lower edge. Eased by distance,
-                # not clamped, so no new edge is drawn where it stops.
-                near = 1 - smoothstep(0, reach, lattice_dist(meta, (mk["skin"] > 0.5) & (hz < 0.5)))
-                Lh = Lh - near * np.maximum(Lh - wide, 0)
-        else:
-            Lh = np.maximum(L, fa + fs * L)
-        L = L * (1 - hz) + Lh * hz
-    if "far_fade" in look:
-        # The far side of the head, on the plate: dark hair against a dark
-        # ground. A soft lift a few dots deep, in the hair's own warm brown
-        # (the chroma below), so its tone carries the silhouette -- never a
-        # one-dot amber outline, which is the look of a badly masked cut-out.
-        Lf, wf = look["far_fade"]
-        ins = mk["inside"]
-        ff = mk["far"] * mk["hair"] * (1 - smoothstep(0, wf, ins)) * (ins > 0)
-        L = L * (1 - ff) + np.maximum(L, Lf) * ff
+        Lg = lin2lab(to_linear(np.array(look["ground"], float) / 255))[0]
+        base = lattice_blur(meta, L, hz + 1e-9, sig)
+        g = 1 + (gain - 1) * smoothstep(0.7, 1.0, hz)
+        # the strands read a little soft, so the light gathers in clumps of
+        # a few dots: read one dot at a time, the grain of the photograph
+        # came up as lone specks over the shadow, glitter rather than hair
+        Ls = lattice_blur(meta, L, hz + 1e-9, fine) if fine else L
+        lit = smoothstep(lo, hi, base + g * (Ls - base)) ** gma
+        away = 1 - mk["sun"]
+        if "hair_clump" in look:
+            # Away from the sun the light comes up only where its neighbours
+            # catch some too. A lone lit dot over the shadow's specks is the
+            # photograph's grain, and at 1x it glittered on the back of the
+            # head like dandruff; a clump of two or three is a strand.
+            csig, r0, r1 = look["hair_clump"]
+            around = lattice_blur(meta, lit, hz + 1e-9, csig) / np.maximum(lit, 1e-3)
+            lit *= 1 - away * (1 - smoothstep(r0, r1, around))
+        lit *= 1 - (1 - smoothstep(e0, e1, mk["inside"])) * away
+        L = L * (1 - hz) + (Lg + (top - Lg) * lit) * hz
     if "hair" in look:
         # warmer as it lightens: a big near-neutral dot is grey hair
         Ch, hh = look["hair"][:2]
         if len(look["hair"]) > 2:
-            Ch = Ch + (look["hair"][2] - Ch) * smoothstep(16, 40, L)
+            Ch = Ch + (look["hair"][2] - Ch) * smoothstep(8, 24, L)
         set_chroma(ab, mk["hair"] * (1 - mk["rim"]), Ch, hh)
     lab = np.concatenate([L[:, None], ab], 1)
     return to_srgb(np.clip(lab2lin(lab), 0, 1)), L
@@ -791,22 +797,34 @@ def solve_ink(look, dark, T, Lt, mk=None):
         face = to_srgb(np.clip(lab2lin(face), 0, 1))
         w = sun_skin(mk)[:, None]
         I = I * (1 - w) + face * w
-    if "hair_ink" in look:
-        # The hair's own ink: an umber, never the skin's peach. A hair dot on
-        # the plate is small, and the exact solve asks a small dot for all of
-        # the target's colour, so it came out at C* 21 to 32 in the skin's
-        # own hue and the hairline dissolved into the forehead. Here the ink
-        # keeps the hair's hue and at most C* 16, and its lightness stops at
-        # 60: the sheen prints as bigger umber dots, not paler ones. The
-        # coverage is solved again against the ink (separate), so the tone
-        # is the target's.
-        lo_, hi_, cmax, hue = look["hair_ink"]
-        a_, b_ = look["ink"][:2]
+    if "brow_ink" in look and "brow" in mk:
+        # The forehead given back to the skin (see forehead) keeps the
+        # forehead's own ink. Its top rows are the darkest skin on it, in the
+        # hair's shadow, and the exact solve took them redder and more
+        # saturated than the rest (C* 50 at hue 44 against C* 45 at 49):
+        # a thin orange line along the new hairline.
+        cmax, hmin = look["brow_ink"]
         lab = lin2lab(to_linear(I))
         C = np.minimum(np.hypot(lab[:, 1], lab[:, 2]), cmax)
+        h = np.radians(np.maximum(np.degrees(np.arctan2(lab[:, 2], lab[:, 1])), hmin))
+        held = to_srgb(np.clip(lab2lin(np.stack([lab[:, 0], C * np.cos(h), C * np.sin(h)], 1)), 0, 1))
+        w = mk["brow"][:, None]
+        I = I * (1 - w) + held * w
+    if "hair_ink" in look:
+        # The hair's own ink: an umber, never the skin's peach and never a
+        # grey. Its lightness follows the hair's light, from a deep brown for
+        # the shadow's specks to a warm mid brown for the sheen, and stops
+        # well short of the skin's (L* 70 and up), so the sheen prints as
+        # bigger brown dots, never as paler ones: a pale ink over the hair
+        # printed as grey hair, and one in the skin's hue as ginger. The
+        # coverage is solved again against the ink (separate), so the tone
+        # is the target's.
+        l0, l1, c0, c1, hue = look["hair_ink"]
+        Lg = lin2lab(to_linear(np.array(look["ground"], float) / 255))[0]
+        t = smoothstep(Lg, look["hair_light"][5], Lt)
+        C = c0 + (c1 - c0) * t
         h = np.radians(hue)
-        Lh = np.clip(np.maximum(a_ * Lt + b_, Lt), lo_, hi_)
-        hair = np.stack([Lh, C * np.cos(h), C * np.sin(h)], 1)
+        hair = np.stack([l0 + (l1 - l0) * t, C * np.cos(h), C * np.sin(h)], 1)
         hair = to_srgb(np.clip(lab2lin(hair), 0, 1))
         w = solid_hair(mk)[:, None]
         I = I * (1 - w) + hair * w
@@ -863,16 +881,16 @@ def palette(ink, live, n, seed=7, groups=None):
 
 
 def hold_hair(look):
-    """The hair's inks after quantising: in its lightness range, under its
-    chroma cap with half a unit to spare for rounding."""
-    lo_, hi_, cmax = look["hair_ink"][:3]
-    cmax -= 0.5
+    """The hair's inks after quantising: in its lightness and chroma range,
+    with half a unit to spare for rounding."""
+    lo_, hi_, cmin, cmax = look["hair_ink"][:4]
+    cmin, cmax = cmin + 0.5, cmax - 0.5
 
     def rule(lab):
         lab = lab.copy()
         lab[:, 0] = np.clip(lab[:, 0], lo_, hi_)
-        C = np.hypot(lab[:, 1], lab[:, 2])
-        lab[:, 1:] *= np.minimum(1, cmax / np.maximum(C, 1e-6))[:, None]
+        C = np.maximum(np.hypot(lab[:, 1], lab[:, 2]), 1e-6)
+        lab[:, 1:] *= (np.clip(C, cmin, cmax) / C)[:, None]
         return lab
     return rule
 
@@ -897,23 +915,106 @@ def lowdisc(A, B):
     return np.mod(0.5 + A * 0.7548776662466927 + B * 0.5698402909980532, 1.0)
 
 
+@functools.lru_cache(maxsize=None)
+def src_print():
+    """The cut-out's size and the sha256 of its RGBA pixels."""
+    im = Image.open(SRC).convert("RGBA")
+    return im.size, hashlib.sha256(np.asarray(im).tobytes()).hexdigest()
+
+
+def cutout_xy(b):
+    """Each dot's centre in cut-out px."""
+    x0, y0, cw = b["q"]["crop"]
+    s = cw / b["q"]["design_w"]
+    return b["X"] * s + x0, b["Y"] * s + y0
+
+
+def forehead(p, look, b):
+    """The plate's own colour and masks where FACE's hairline runs low.
+
+    Above the brow FACE's line runs under the real hairline, so a strip of
+    forehead reads as hair, pressed under the hair's knee in target(). Paper
+    prints it as the hair's lower edge and it passes; on the plate, where the
+    hair prints by its light, the strip is the lightest "hair" on him: a
+    brown headband, or, held down to the rest of the hair, the brim of a cap
+    at the brow. So in a hand-placed zone over it, a dot that samples as
+    light as skin is skin again: the knee undone (never past the forehead's
+    own level just below) and the masks moved from the hair to the skin. The
+    dark lock that crosses it, and the hair above it, stay hair."""
+    colour, mk = b["colour"], dict(b["masks"])
+    if "brow" not in look:
+        return colour, mk
+    assert src_print() == BROW_SRC, (
+        f"the cut-out is {src_print()}, not the one the plate's brow zone was placed on: move "
+        "plate.brow back onto the strip of forehead above FACE's hairline, check its L* ramps, "
+        "then update BROW_SRC")
+    (cx, cy, rx, ry), (l0, l1), sig, (m0, m1) = look["brow"]
+    meta = b["meta"]
+    sx, sy = cutout_xy(b)
+    zone = 1 - smoothstep(0.75, 1.25, np.hypot((sx - cx) / rx, (sy - cy) / ry))
+    lab = lin2lab(np.clip(colour, 0, None))
+    L = lab[:, 0]
+    Lb = lattice_blur(meta, L, np.ones_like(L), sig)
+    s = zone * smoothstep(l0, l1, Lb)
+    # The masks move over a wider ramp than the tone, so the new hairline
+    # turns from the hair's umber to the skin over a dot or two of mixed ink,
+    # as FACE's feathered line does along the rest of it, rather than
+    # stepping from the one straight onto the other.
+    w = mk["hair"] * zone * smoothstep(m0, m1, Lb)
+    knee, kslope = p["hair"][3:5]
+    near = lattice_blur(meta, L, mk["skin"] * (1 - mk["hair"]) + 1e-9, 3.0)
+    Lu = np.maximum(L, np.minimum(np.where(L > knee, knee + (L - knee) / kslope, L), near))
+    lab[:, 0] = L * (1 - s) + Lu * s
+    mk["skin"] = np.clip(mk["skin"] + w, 0, 1)
+    mk["brow"] = b["masks"]["hair"] * s
+    mk["hair"] = mk["hair"] - w
+    return lab2lin(lab), mk
+
+
 def separate(p, b, look, dark):
-    T, Lt = grade(p, look, b["colour"], b["masks"], b["meta"])
-    ink = solve_ink(look, dark, T, Lt, b["masks"])
+    colour, mk = forehead(p, look, b)
+    T, Lt = grade(p, look, colour, mk, b["meta"])
+    if "shade" in look:
+        # The far side's deep shade, round the ear and under the head: skin
+        # too dark for the skin's chroma, which fades out toward black, so
+        # the exact solve printed it as a ring of small grey dots round the
+        # ear, grey hair beside the umber. It takes the hair's ink instead.
+        s0, s1 = look["shade"]
+        far = smoothstep(*p["rim_side"], cutout_xy(b)[0])
+        mk["shade"] = far * (1 - smoothstep(s0, s1, Lt)) * np.clip(1 - mk["shirt"] - mk["rim"], 0, 1)
+    ink = solve_ink(look, dark, T, Lt, mk)
     live = b["w"] * coverage(look, dark, T, ink @ LUMA) > 0.006
+    if "hair_cov" in look:
+        # The hair's own floor, a speck in every cell: the shape of the head.
+        # Toward the silhouette away from the sun it thickens to a small dot,
+        # as the light fades out there (grade), so the crown and the back of
+        # the head read as a soft dark mass against the plate rather than a
+        # net of specks that the plate swallowed. It thickens over several
+        # dots and the matte's own soft edge takes the last one or two down,
+        # so it draws no line round him.
+        hc = look["hair_cov"]
+        if "hair_edge" in look:
+            ec, (r0, r1) = look["hair_edge"]
+            hc = hc + (ec - hc) * (1 - smoothstep(r0, r1, mk["inside"])) * (1 - mk["sun"])
+        # the shadow targets the plate itself and solves to no dot, but its
+        # floor prints: it takes the hair's ink
+        live |= (b["w"] * hc > 0.006) & (mk["hair"] > 0.7)
     groups = []
     if "hair_ink" in look:
-        groups.append((solid_hair(b["masks"]) >= 0.5, hold_hair(look)))
+        groups.append((solid_hair(mk) >= 0.5, hold_hair(look)))
     if "face_ink" in look:
-        groups.append((sun_skin(b["masks"]) >= 0.5, hold_face(look)))
+        groups.append((sun_skin(mk) >= 0.5, hold_face(look)))
     ink = palette(ink, live, p["palette"], groups=groups)
     # solve the coverage again against the ink each dot actually got
     Ip = ink @ LUMA
     c = coverage(look, dark, T, Ip)
     if dark and "floor" in look:
-        c = np.maximum(c, look["floor"] * smoothstep(0.0, 0.3, b["w"]))
+        fl = look["floor"]
+        if "hair_cov" in look:
+            fl = fl + (hc - fl) * mk["hair"]
+        c = np.maximum(c, fl * smoothstep(0.0, 0.3, b["w"]))
     if "shirt_fade" in look:
-        c = c * (1 - look["shirt_fade"] * b["masks"]["shirt"])
+        c = c * (1 - look["shirt_fade"] * mk["shirt"])
     cov = c * b["w"]
     # thin in the dissolve: fewer cells as well as smaller ones
     t0, t1, gma = p["thin"]
@@ -926,7 +1027,7 @@ def separate(p, b, look, dark):
     # darker than it is a hole, on paper one lighter than it is nothing
     Gp = np.array(look["ground"], float) @ LUMA / 255
     d[(Ip < Gp + 0.035) if dark else (Ip > Gp - 0.035)] = 0
-    return dict(ink=ink, d=d, ground=look["ground"])
+    return dict(ink=ink, d=d, ground=look["ground"], masks=mk)
 
 
 # ── the rasteriser: what the canvas does ─────────────────────────────────
@@ -1128,9 +1229,15 @@ def main():
                 n = at_dots(b, back, consts)
                 lab = lin2lab(to_linear(ink))
                 C = np.hypot(lab[:, 1], lab[:, 2])
-                hair = b["masks"]["hair"][n] > 0.9
-                assert C[hair].max() <= 18, f"a plate hair ink is C* {C[hair].max():.1f}"
-                face = sun_skin(b["masks"])[n] >= 1
+                mk = lk["masks"]
+                hair = mk["hair"][n] > 0.9
+                l0, l1, c0, c1, hue = p["plate"]["hair_ink"]
+                hh = np.degrees(np.arctan2(lab[hair, 2], lab[hair, 1]))
+                assert lab[hair, 0].max() <= l1 + 0.5, f"a plate hair ink is L* {lab[hair, 0].max():.1f}"
+                assert C[hair].min() >= c0 - 0.5, f"a plate hair ink is C* {C[hair].min():.1f}, a grey"
+                assert C[hair].max() <= c1 + 0.5, f"a plate hair ink is C* {C[hair].max():.1f}"
+                assert np.abs(hh - hue).max() <= 4, f"a plate hair ink is at hue {hh.min():.0f}-{hh.max():.0f}"
+                face = sun_skin(mk)[n] >= 1
                 assert lab[face, 0].max() <= 86, f"a sun-side skin ink is L* {lab[face, 0].max():.1f}"
                 assert C[face].min() >= 20, f"a sun-side skin ink is C* {C[face].min():.1f}"
             inks = np.unique(np.round(ink * 255).astype(int), axis=0)
