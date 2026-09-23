@@ -615,6 +615,19 @@
   opacity: 1;
 }
 
+/* The stretch-link makes the whole row the target, so the focus ring is the
+   edge of the row's wash, as it is on the home rows (components.css, .row),
+   not a box 2px off the title's caps with the arrow left outside it. Inset,
+   so it stays inside the shell padding the wash already bleeds into. */
+.toc-title a:focus-visible {
+  outline: none;
+}
+
+.toc-row:has(.toc-title a:focus-visible)::after {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
 .toc-list {
   position: relative;
   z-index: 0;
