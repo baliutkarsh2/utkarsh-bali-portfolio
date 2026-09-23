@@ -1362,11 +1362,21 @@
    block animates; spacing inside the blocks is utilities in the JSX.
 
    One column on a phone, in this order: the name, the portrait, then the
-   lede, the actions and the story. From 48rem, two columns: the name and
-   everything under it on the left, the portrait on the right. That used to
-   start at 80rem, and every tablet and small laptop got a 480px portrait
-   hard left under the name with half the page bare beside it and the
-   actions under the fold.
+   lede, the actions and the story. Two columns from 56rem, or from 48rem
+   when the window is wider than it is tall: the name and everything under
+   it on the left, the portrait on the right. That used to start at 80rem,
+   and every tablet and small laptop got a 480px portrait hard left under
+   the name with half the page bare beside it and the actions under the fold.
+
+   A PORTRAIT TABLET KEEPS ONE COLUMN, and the one-column portrait stops at
+   30rem. Two columns at 48rem put an iPad (768 to 834 wide) at 267 to 330px,
+   smaller than on a 390 phone: a thumbnail in the top right with the story
+   running two screens past it. One pixel under 48rem the same box was 712px
+   tall and pushed the lede and the actions below the fold. Capped, the
+   poster fits the first screen from 744 to 895 wide, actions included. A
+   landscape phone or tablet (844x390, 1024x768) is short, not narrow, and
+   keeps two columns from 48rem: a 480px poster there puts the actions two
+   screens down.
 
    THE PORTRAIT IS STICKY in two columns, and that is what the right half of
    the page is for. The story is twelve lines -- about two screens -- and
@@ -1403,18 +1413,21 @@
     width: 100%;
   }
 
-  /* Phones: the column's full width, and closer to its neighbours than the
-     row gap would put it. The box's own top is sky (his crown starts a
-     twentieth of the way down) and its bottom is the dissolve, so the grid's
-     gaps read double on both sides: the name floated off the face and the
-     first action fell under the fold of an 844px phone. */
-  @media (width < 48rem) {
+  /* One column: the column's full width up to 30rem, left on the name's
+     edge, and closer to its neighbours than the row gap would put it. The
+     box's own top is sky (his crown starts a twentieth of the way down) and
+     its bottom is the dissolve, so the grid's gaps read double on both
+     sides: the name floated off the face and the first action fell under
+     the fold of an 844px phone. The cap never touches a phone (350px at
+     390); it is what keeps a portrait tablet's first screen whole. */
+  @media (width < 48rem), (width < 56rem) and (orientation: portrait) {
     .hero-board {
+      max-width: 30rem;
       margin-block: calc(-1 * var(--space-4)) calc(-1 * var(--space-2));
     }
   }
 
-  @media (width >= 48rem) {
+  @media (width >= 56rem), (width >= 48rem) and (orientation: landscape) {
     .hero {
       grid-template-columns: minmax(0, 1fr) auto;
       grid-template-rows: auto minmax(0, 1fr);
@@ -1452,7 +1465,8 @@
   /* A 720px laptop. The name is already capped by height (display-xl); the
      hero's own padding and gaps give back the rest, so the actions sit
      above the fold rather than half under it. */
-  @media (width >= 48rem) and (height < 820px) {
+  @media (width >= 56rem) and (height < 820px),
+    (width >= 48rem) and (orientation: landscape) and (height < 820px) {
     .hero {
       row-gap: var(--space-3);
       padding-block: var(--space-3) var(--space-4);
