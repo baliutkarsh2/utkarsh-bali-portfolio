@@ -17,6 +17,10 @@ const WIDE = "(min-width: 64rem)";
  * was still on the index's h1, and lagged a section behind on the way down.
  */
 const ROOT_MARGIN = "-56px 0px -80% 0px";
+/** The header's height in px, the top of the band. */
+const HEADER_PX = 56;
+/** Within this many px of the bottom counts as the end of the page. */
+const END_SLOP = 2;
 
 type Tracked = {
   index: string;
@@ -44,6 +48,16 @@ function readoutText(_index: string, title: string): string {
  * for the previous one to clear; between sections (or below the last) it is
  * the last one that has scrolled past; above the first (the hero) the readout
  * is empty, which the chrome hides.
+ *
+ * The end of the page is the exception. A last section shorter than the
+ * screen never reaches the band, because the page runs out first: on / the
+ * contact band's top stops at y=492, so with "Get in touch" filling the
+ * screen, and straight after the nav's Contact jump, the readout still said
+ * TRAJECTORY. So when the page is scrolled to its end, the readout names the
+ * lowest section whose top is on screen below the header. A passive scroll
+ * listener, coalesced to one read per frame, catches the end, since reaching
+ * it need not cross the band at all; it costs nothing while the page is
+ * still.
  */
 export function SectionSpy() {
   const pathname = usePathname();
@@ -53,6 +67,7 @@ export function SectionSpy() {
 
     const media = matchMedia(WIDE);
     let io: IntersectionObserver | null = null;
+    let stopScroll: (() => void) | null = null;
 
     const arm = () => {
       disarm();
@@ -78,6 +93,37 @@ export function SectionSpy() {
         if (readout.textContent !== text) readout.textContent = text;
       };
 
+      const atEnd = () =>
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - END_SLOP;
+
+      /** The lowest section whose top is on screen, below the header. */
+      const lastOnScreen = (): Tracked | null => {
+        let found: Tracked | null = null;
+        for (const [section, t] of tracked) {
+          const top = section.getBoundingClientRect().top;
+          if (top >= HEADER_PX && top < window.innerHeight) found = t;
+        }
+        return found;
+      };
+
+      const update = () => {
+        let current: Tracked | null = atEnd() ? lastOnScreen() : null;
+        // Map preserves insertion order, which is DOM order, so the last
+        // intersecting entry is the furthest down the page.
+        if (!current) {
+          for (const t of tracked.values()) {
+            if (t.intersecting) current = t;
+          }
+        }
+        if (!current) {
+          for (const t of tracked.values()) {
+            if (t.passed) current = t;
+          }
+        }
+        write(current ? readoutText(current.index, current.title) : "");
+      };
+
       io = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
@@ -92,27 +138,33 @@ export function SectionSpy() {
             }
           }
 
-          // Map preserves insertion order, which is DOM order, so the last
-          // intersecting entry is the furthest down the page.
-          let current: Tracked | null = null;
-          for (const t of tracked.values()) {
-            if (t.intersecting) current = t;
-          }
-          if (!current) {
-            for (const t of tracked.values()) {
-              if (t.passed) current = t;
-            }
-          }
-          write(current ? readoutText(current.index, current.title) : "");
+          update();
         },
         { rootMargin: ROOT_MARGIN, threshold: 0 },
       );
       for (const section of sections) io.observe(section);
+
+      let frame = 0;
+      const onScroll = () => {
+        if (frame !== 0) return;
+        frame = window.requestAnimationFrame(() => {
+          frame = 0;
+          update();
+        });
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      stopScroll = () => {
+        window.removeEventListener("scroll", onScroll);
+        if (frame !== 0) window.cancelAnimationFrame(frame);
+        frame = 0;
+      };
     };
 
     const disarm = () => {
       io?.disconnect();
       io = null;
+      stopScroll?.();
+      stopScroll = null;
       const readout = document.getElementById(READOUT_ID);
       if (readout && readout.textContent !== "") readout.textContent = "";
     };
