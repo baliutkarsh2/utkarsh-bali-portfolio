@@ -65,7 +65,7 @@ each dot actually got, so quantising costs a little hue, never tone.
 THE PLATE (the dark ground) is not the paper inverted: there, light is what
 advances, so everything the photograph lights prints as big pale dots. It has
 its own curve and its own amber skin, a floor so no dot is ever darker than
-the plate, and four guards against what that does to a portrait:
+the plate, and five guards against what that does to a portrait:
 
   · no outline: the back of the head gets a soft lift four to six dots deep in
     the hair's own brown, never a one-dot band (a one-dot amber band there
@@ -73,6 +73,10 @@ the plate, and four guards against what that does to a portrait:
   · hair with range: the floor that keeps it off the plate is applied to its
     local mean and the strands and sheen go back over it, so they still move
     the dot size (floored dot by dot it was a flat knit cap);
+  · hair prints as hair: every dot in it takes an umber ink (C* 16 at most,
+    hue 58, L* 56 to 60), and the sheen prints as bigger dots of it, never
+    as lighter ones. The exact solve gave a small hair dot the skin's own
+    peach, C* 21 to 32, and the hairline dissolved into the forehead;
   · no glowing rim: the sun side's edge is capped at the lit skin a few dots
     in, so the jaw and chin keep a warm rim rather than a near-white outline;
   · no fused highlights: coverage stops at 0.74 (a dot 0.97 of a pitch across)
@@ -211,6 +215,8 @@ P = dict(
                # skin beside it is read at (lattice steps), and how far above
                # that skin it may print (L*)
                rim_cap=(24.0, 6.0, 2.0),
+               # the hair's own ink: L* from and to, C* at most, hue
+               hair_ink=(56.0, 60.0, 16.0, 58.0),
                shirt=(22.0, 0.12, 0.30), shirt_fade=0.45),
     shirt_hue=255.0,
     shirt_cmax=1.2,
@@ -561,6 +567,12 @@ def lattice_blur(meta, v, wt, sigma):
     return num[a, b] / np.maximum(den[a, b], 1e-9)
 
 
+def solid_hair(mk):
+    """The hair, short of its edge with the skin: where a dot takes the hair's
+    own ink on the plate."""
+    return smoothstep(0.5, 0.9, mk["hair"])
+
+
 def grade(p, look, colour_lin, mk, meta):
     """Each ground's own grade of the target: the plate's curve, amber skin,
     hair and the two edges of the head; the shirt squeezed on both. Returns
@@ -653,7 +665,7 @@ def coverage(look, dark, T, Ip):
     return np.clip(c, 0, look["cmax"])
 
 
-def solve_ink(look, dark, T, Lt):
+def solve_ink(look, dark, T, Lt, mk=None):
     """The ink each dot wants before quantising: its lightness from the
     target's, its colour so that ink over ground averages to the target."""
     G = np.array(look["ground"], float) / 255
@@ -682,6 +694,25 @@ def solve_ink(look, dark, T, Lt):
         own = lin2lab(to_linear(T))
         own[:, 0] = cap
         I = np.where(over[:, None], gamut(to_srgb(np.clip(lab2lin(own), 0, 1))), I)
+    if "hair_ink" in look:
+        # The hair's own ink: an umber, never the skin's peach. A hair dot on
+        # the plate is small, and the exact solve asks a small dot for all of
+        # the target's colour, so it came out at C* 21 to 32 in the skin's
+        # own hue and the hairline dissolved into the forehead. Here the ink
+        # keeps the hair's hue and at most C* 16, and its lightness stops at
+        # 60: the sheen prints as bigger umber dots, not paler ones. The
+        # coverage is solved again against the ink (separate), so the tone
+        # is the target's.
+        lo_, hi_, cmax, hue = look["hair_ink"]
+        a_, b_ = look["ink"][:2]
+        lab = lin2lab(to_linear(I))
+        C = np.minimum(np.hypot(lab[:, 1], lab[:, 2]), cmax)
+        h = np.radians(hue)
+        Lh = np.clip(np.maximum(a_ * Lt + b_, Lt), lo_, hi_)
+        hair = np.stack([Lh, C * np.cos(h), C * np.sin(h)], 1)
+        hair = to_srgb(np.clip(lab2lin(hair), 0, 1))
+        w = solid_hair(mk)[:, None]
+        I = I * (1 - w) + hair * w
     return I
 
 
@@ -695,14 +726,58 @@ def gamut(I):
     return np.clip(g + ch * t[:, None], 0, 1)
 
 
-def palette(ink, live, n, seed=7):
-    """k-means in Lab over the inks of the dots that print, nearest ink each."""
-    lab = lin2lab(to_linear(ink[live]))
-    cent, idx = kmeans2(lab, n, iter=40, minit="++", rng=np.random.default_rng(seed))
-    rgb = np.round(to_srgb(np.clip(lab2lin(cent), 0, 1)) * 255) / 255
+def palette(ink, live, n, seed=7, groups=None):
+    """k-means in Lab over the inks of the dots that print, nearest ink each.
+
+    `groups` quantises regions apart: a list of (member mask, rule), each
+    with its share of the n inks, the rest taking what is left. A shared
+    palette snapped a hair dot to the nearest skin ink; apart, a region's
+    inks are averages of its own, and `rule` (Lab centroids in, Lab out)
+    holds them to the region's limits after rounding error."""
+    if not groups:
+        lab = lin2lab(to_linear(ink[live]))
+        cent, idx = kmeans2(lab, n, iter=40, minit="++", rng=np.random.default_rng(seed))
+        rgb = np.round(to_srgb(np.clip(lab2lin(cent), 0, 1)) * 255) / 255
+        out = np.zeros_like(ink)
+        out[live] = rgb[idx]
+        return out
     out = np.zeros_like(ink)
-    out[live] = rgb[idx]
+    rest = live.copy()
+    parts = []
+    for member, rule in groups:
+        sel = live & member & rest
+        rest &= ~sel
+        parts.append((sel, rule))
+    total = live.sum()
+    sizes = [max(8, int(round(n * sel.sum() / total))) for sel, _ in parts]
+    parts.append((rest, None))
+    sizes.append(n - sum(sizes))
+    for (sel, rule), k in zip(parts, sizes):
+        if not sel.any():
+            continue
+        lab = lin2lab(to_linear(ink[sel]))
+        cent, idx = kmeans2(lab, min(k, int(sel.sum())), iter=40, minit="++",
+                            rng=np.random.default_rng(seed))
+        if rule is not None:
+            cent = rule(cent)
+        rgb = np.round(to_srgb(np.clip(lab2lin(cent), 0, 1)) * 255) / 255
+        out[sel] = rgb[idx]
     return out
+
+
+def hold_hair(look):
+    """The hair's inks after quantising: in its lightness range, under its
+    chroma cap with half a unit to spare for rounding."""
+    lo_, hi_, cmax = look["hair_ink"][:3]
+    cmax -= 0.5
+
+    def rule(lab):
+        lab = lab.copy()
+        lab[:, 0] = np.clip(lab[:, 0], lo_, hi_)
+        C = np.hypot(lab[:, 1], lab[:, 2])
+        lab[:, 1:] *= np.minimum(1, cmax / np.maximum(C, 1e-6))[:, None]
+        return lab
+    return rule
 
 
 def lowdisc(A, B):
@@ -713,9 +788,12 @@ def lowdisc(A, B):
 
 def separate(p, b, look, dark):
     T, Lt = grade(p, look, b["colour"], b["masks"], b["meta"])
-    ink = solve_ink(look, dark, T, Lt)
+    ink = solve_ink(look, dark, T, Lt, b["masks"])
     live = b["w"] * coverage(look, dark, T, ink @ LUMA) > 0.006
-    ink = palette(ink, live, p["palette"])
+    groups = []
+    if "hair_ink" in look:
+        groups.append((solid_hair(b["masks"]) >= 0.5, hold_hair(look)))
+    ink = palette(ink, live, p["palette"], groups=groups)
     # solve the coverage again against the ink each dot actually got
     Ip = ink @ LUMA
     c = coverage(look, dark, T, Ip)
@@ -836,6 +914,18 @@ def decode(grid, c):
     return X, Y, R, ink[j, i] / 255
 
 
+def at_dots(b, grid, c):
+    """For each dot `decode` returns, in its order, that dot's index in the
+    build: the masks at the place the page draws it."""
+    code = np.asarray(grid)[c["rows"]:, :, 0]
+    j, i = np.nonzero(code)
+    A = c["a0"] + 2 * i + (j & 1)
+    B = c["b0"] + j
+    MA, MB = b["meta"]["A"], b["meta"]["B"]
+    look = {(int(x), int(y)): k for k, (x, y) in enumerate(zip(MA, MB))}
+    return np.array([look[(int(x), int(y))] for x, y in zip(A, B)])
+
+
 def write_lattice(lattice):
     lines = [
         "/**",
@@ -910,6 +1000,13 @@ def main():
                 assert inkL.max() <= 92.5, f"plate ink at L* {inkL.max():.1f} is lighter than --bone"
                 dmax = np.asarray(back)[consts["rows"]:, :, 0].max() / 255 * consts["dmax"]
                 assert dmax <= 0.99, f"a plate dot is {dmax:.2f} of a pitch across"
+                # the hair prints in its own umber: read at each decoded
+                # dot's own place on the screen
+                n = at_dots(b, back, consts)
+                lab = lin2lab(to_linear(ink))
+                C = np.hypot(lab[:, 1], lab[:, 2])
+                hair = b["masks"]["hair"][n] > 0.9
+                assert C[hair].max() <= 18, f"a plate hair ink is C* {C[hair].max():.1f}"
             inks = np.unique(np.round(ink * 255).astype(int), axis=0)
             report[f"hero-grid{band}{suffix}.webp"] = dict(
                 bytes=os.path.getsize(gp), size=list(grid.size), dots=int(len(X)), inks=int(len(inks)))
