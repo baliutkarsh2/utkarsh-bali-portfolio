@@ -58,6 +58,9 @@ type Grid = {
 };
 
 const cache = new Map<string, Promise<Grid>>();
+/** The grids already read, by src: a switch to one of these draws in the
+ *  same frame as the ground flips, with no promise tick in between. */
+const ready = new Map<string, Grid>();
 
 function readGrid(img: HTMLImageElement, L: Lattice, dark: boolean): Grid {
   const { cols, rows } = L;
@@ -116,7 +119,9 @@ function loadGrid(phone: boolean, dark: boolean): Promise<Grid> {
         return;
       }
       try {
-        resolve(readGrid(img, L, dark));
+        const g = readGrid(img, L, dark);
+        ready.set(src, g);
+        resolve(g);
       } catch (e) {
         reject(e);
       }
@@ -140,7 +145,37 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
     let disposed = false;
     let grid: Grid | null = null;
     let wanted = "";
+    let wantPhone = false;
+    let wantDark = false;
     let raf = 0;
+    let idle: { src: string; cancel: () => void } | null = null;
+
+    // THE OTHER GROUND, READ AHEAD. Only the grid on screen is asked for at
+    // load, so the first theme switch used to wait on a request: the page
+    // ground flipped at once and the canvas kept the other ground's inks
+    // until the new grid arrived, a muddy near-negative of him for a frame
+    // on a fast line and over a second on a slow one. Once a band has drawn,
+    // its other grid (about 19 KB) is fetched and read while the page is
+    // idle, once, so a switch finds it in `ready`. Safari has no
+    // requestIdleCallback, hence the timer.
+    const prefetch = () => {
+      const phoneBand = wantPhone;
+      const otherDark = !wantDark;
+      const src = gridSrc(phoneBand, otherDark);
+      if (idle?.src === src || cache.has(src)) return;
+      idle?.cancel();
+      const go = () => {
+        idle = null;
+        if (!disposed) loadGrid(phoneBand, otherDark).catch(() => {});
+      };
+      if (typeof window.requestIdleCallback === "function") {
+        const id = window.requestIdleCallback(go, { timeout: 5000 });
+        idle = { src, cancel: () => window.cancelIdleCallback(id) };
+      } else {
+        const id = window.setTimeout(go, 1200);
+        idle = { src, cancel: () => window.clearTimeout(id) };
+      }
+    };
 
     const draw = () => {
       const canvas = canvasRef.current;
@@ -174,6 +209,7 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
         c.fill();
       }
       box.dataset.state = "static";
+      prefetch();
     };
 
     const schedule = () => {
@@ -183,14 +219,33 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
 
     const phone = window.matchMedia(PHONE);
     // Which grid is a function of two things, the width band and the theme,
-    // and either can change under a drawn field. Ask again on both; a grid
-    // already read comes back from the cache without a request.
+    // and either can change under a drawn field. Ask again on both. A grid
+    // already read is drawn in the frame the change lands in: the rAF runs
+    // before that frame paints, so the new ground and its inks arrive
+    // together. One still on its way leaves the box EMPTY until it comes:
+    // an empty box for a moment is nothing, the old ground's inks on the new
+    // ground are a negative of his face.
     const boot = () => {
       const isPhone = phone.matches;
       const dark = resolvedTheme() === "dark";
       const src = gridSrc(isPhone, dark);
       if (src === wanted) return schedule();
       wanted = src;
+      wantPhone = isPhone;
+      wantDark = dark;
+      const hit = ready.get(src);
+      if (hit) {
+        grid = hit;
+        return schedule();
+      }
+      grid = null;
+      cancelAnimationFrame(raf);
+      const canvas = canvasRef.current;
+      const c = canvas?.getContext("2d");
+      if (canvas && c) {
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.clearRect(0, 0, canvas.width, canvas.height);
+      }
       loadGrid(isPhone, dark).then(
         (g) => {
           if (disposed || src !== wanted) return;
@@ -228,6 +283,7 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
+      idle?.cancel();
       ro.disconnect();
       window.removeEventListener("resize", schedule);
       window.removeEventListener("beforeprint", onBeforePrint);
