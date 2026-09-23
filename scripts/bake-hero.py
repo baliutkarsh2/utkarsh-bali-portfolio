@@ -25,8 +25,8 @@ THE SCREEN is a 45-degree square lattice laid out in log-polar space,
 z = C + exp(u + iv). The map is conformal, so every cell stays square and
 every dot stays round; the pitch grows in proportion to the distance from the
 pole C, which sits off the frame to the left of his face. So the screen is
-finest where the expression is (nose 3.2, mouth 3.5, eye 3.9 design px) and
-coarsens toward the hair and the ear (4.5 to 4.9), the neck (4.4) and the
+finest where the expression is (nose 3.2, mouth 3.5, eye 3.8 design px) and
+coarsens toward the hair and the ear (4.3 to 4.8), the neck (4.6) and the
 shoulder (5.7, and 6.6 at the corner). A uniform screen fine enough for the
 eye costs 14% more dots and reads flatter.
 
@@ -104,20 +104,23 @@ the plate, and six guards against what that does to a portrait:
     blob brighter than the page's type.
 
 NO FRAME EDGE IS EVER VISIBLE. He is printed as a bust: the head, the neck,
-the collar and both shoulders in full, the chest dissolving. The shoulder
-dissolves off the bottom and right edges -- the photograph's own frame cuts it
-at x 1564, just past the box's right edge at 1530 -- along a vignette rather
-than along the box: the corner between them rounded off, the right side drawn
-in at the shoulder's height so its line fades before the frame instead of
-meeting it in a corner, and the whole edge wavering a little. The shirt's near
-edge, from the neckline down the sleeve, dissolves the same way, so it reads as
-a soft sleeve and not as a line cut by hand, and his arm past it does not print
-at all: at the bottom of the frame it was a few stray skin-coloured specks
-beside a grey shirt. A 26 px feather runs round all four sides, so no dot ever
-touches the box (asserted below, on the decoded grids). In the dissolve the
-dots thin as well as shrink, cells dropping out on a low-discrepancy sequence,
-so the shoulder ends in sparse marks the way an edition print does rather than
-in a fading grid.
+the collar, both shoulders and the top of the chest in full, the chest
+dissolving below. The shoulder dissolves off the bottom and right edges --
+the photograph's own frame cuts it at x 1564, inside the box's right edge at
+1579, so the right edge dissolves off that frame rather than the box
+(asserted below) -- along a vignette rather than along the box: the corner
+between them rounded off, the right side drawn in at the shoulder's height so
+its line fades before the frame instead of meeting it in a corner, and the
+whole edge wavering a little. The shirt's near edge, from the neckline down
+the sleeve, dissolves the same way, narrow at the V and wider toward the
+bottom, where it rounds into the bottom's dissolve, so it reads as a soft
+sleeve running down from the V and not as a line cut by hand, and his arm
+past it does not print at all: at the bottom of the frame it was a few stray
+skin-coloured specks beside a grey shirt. A 26 px feather runs round all four
+sides, so no dot ever touches the box (asserted below, on the decoded grids).
+In the dissolve the dots thin as well as shrink, cells dropping out on a
+low-discrepancy sequence, so the shoulder ends in sparse marks the way an
+edition print does rather than in a fading grid.
 
 DRAW ORDER is part of the picture: where two DMAX 1.5 discs overlap, the one
 drawn last wins. The renderer draws inks from the least to the most contrast
@@ -147,6 +150,10 @@ LATTICE_TS = os.path.join(ROOT, "src", "components", "interactive", "hero-lattic
 # on another crop or exposure they would quietly mislabel the forehead, so the
 # bake refuses to run until they are placed again (see forehead).
 BROW_SRC = ((1564, 2728), "94710abb86d261fa5bc762e47fd894df4beb436c223bc4453c48537636a743fd")
+# The photograph's own frame: the cut-out's size in px. Its right edge cuts
+# the far shoulder straight, so the right dissolve runs off it wherever the
+# crop reaches past it (weights), and no dot may reach it (main).
+FRAME = (1564, 2728)
 
 # The collar line, cut-out px, top to bottom: the edge between his neck and his
 # shirt, down to the neckline's V. The face and the shirt polygons both run
@@ -177,8 +184,11 @@ SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1700, 700), (1700, 1900), (420,
          (420, 1110), (860, 1110)] + COLLAR[::-1]
 
 P = dict(
-    # crop in cut-out px: left, top, width (height = width * 5/4)
-    crop=(430, 0, 1100),
+    # crop in cut-out px: left, top, width (height = width * 5/4). At 1100
+    # wide the V sat 157 design px off the frame's bottom and the dissolve
+    # left him a face on a collar; 1170 prints the top of the chest. The left
+    # edge keeps the face where it sat on the page, and the top keeps the hair
+    crop=(409, 0, 1170),
     design_w=620.0,
     # the screen: pitch at the face centre and at the far (bottom-right) corner
     pitch_face=3.8,
@@ -188,7 +198,7 @@ P = dict(
     prefilter=0.40,        # gaussian sigma as a fraction of the local pitch
     dmax=1.5,              # largest diameter, in pitches
     # the dissolve off the right and the bottom edges (design px)
-    dissolve=(90.0, 105.0),
+    dissolve=(90.0, 95.0),
     # the bottom-right corner's radius, in dissolve widths, and how far the
     # edge wavers (dissolve widths): at 0.25 it made a lump on the right edge
     # at the stripe's height, and on a phone a torn edge
@@ -197,11 +207,13 @@ P = dict(
     # and how far in (design px) the right edge's dissolve starts at the
     # shoulder's height, easing out to the frame between these heights, so
     # the shoulder's line fades before the frame instead of meeting it
-    bow=(60.0, 430.0, 680.0),
-    # the shirt's near edge (NEAR): its dissolve runs this far into the shirt
-    # (design px), and comes in over these heights below the V (cut-out px),
-    # so the neckline itself stays whole
-    near=(50.0, (1095.0, 1175.0)),
+    bow=(60.0, 404.27, 639.32),
+    # the shirt's near edge (NEAR): its dissolve's width (design px) at the V
+    # and at the frame's bottom; the heights below the V (cut-out px) it comes
+    # in over, so the neckline itself stays whole; and how much of it lies
+    # outside the edge along the sleeve (dissolve widths), gone between these
+    # heights, above the arm
+    near=((40.0, 90.0), (1095.0, 1200.0), (0.75, (1180.0, 1350.0))),
     edge_feather=26.0,
     # thinning in the dissolve: the keep-probability ramps from 0 to 1 over
     # this range of the vignette, and survivors take back this power of it
@@ -393,7 +405,8 @@ def target(p):
     x0, y0, w = p["crop"]
     h = w * 5 / 4
     m = 60
-    box = (max(0, int(x0 - m)), max(0, int(y0 - m)), min(1564, int(x0 + w + m)), min(2728, int(y0 + h + m)))
+    assert src_print()[0] == FRAME, f"the cut-out is {src_print()[0]}, not the frame {FRAME}"
+    box = (max(0, int(x0 - m)), max(0, int(y0 - m)), min(FRAME[0], int(x0 + w + m)), min(FRAME[1], int(y0 + h + m)))
     im = np.asarray(Image.open(SRC).convert("RGBA").crop(box), float) / 255
     col, a = to_linear(im[..., :3]), im[..., 3]
     # push colour outward past the silhouette so blurs don't pull in matte black
@@ -641,15 +654,25 @@ def weights(p, X, Y, a):
     dr, db = p["dissolve"]
     rc = p["corner"]
     bow, y1, y2 = p["bow"]
-    u, v = (W - X - bow * (1 - smoothstep(y1, y2, Y))) / dr, (H - Y) / db
+    # the right edge is the box's, or the photograph's own frame where the
+    # crop runs past it: the shoulder is gone before its straight cut
+    Wr = min(W, (FRAME[0] - x0) * s)
+    u, v = (Wr - X - bow * (1 - smoothstep(y1, y2, Y))) / dr, (H - Y) / db
     cu, cv = np.maximum(rc - u, 0), np.maximum(rc - v, 0)
     t = np.where((cu > 0) & (cv > 0), rc - np.hypot(cu, cv), np.minimum(u, v))
     fade = smoothstep(0, 1, t + waver) ** 1.2
     # the shirt's near edge, in its own dissolve widths into the shirt, and
-    # nothing past it: the arm does not print
-    dn, (g0, g1) = p["near"]
+    # nothing past it: the arm does not print. Narrow at the V and wider
+    # toward the frame's bottom, where it rounds into the bottom's dissolve.
+    # Down the sleeve, where only sky lies past the edge, most of it lies
+    # outside: the silhouette prints as shrinking dots and the full ones
+    # follow the sleeve's slant down from the V. All inside, it pushed them in
+    # under the V faster than the sleeve slants away, and back out below: a
+    # bite out of the chest. By the arm it is all inside again
+    (n0, n1), (g0, g1), (c0, (h0, h1)) = p["near"]
     sy = Y / s + y0
-    tn = across(NEAR, X / s + x0, sy) * s / dn
+    dn = n0 + (n1 - n0) * smoothstep(g0, y0 + w * 5 / 4, sy)
+    tn = across(NEAR, X / s + x0, sy) * s / dn + c0 * (1 - smoothstep(h0, h1, sy))
     fade = fade * (1 - smoothstep(g0, g1, sy) * (1 - smoothstep(0, 1, tn + waver) ** 1.2))
     fe = p["edge_feather"]
     for dist in (X, W - X, Y, H - Y):
@@ -1284,6 +1307,9 @@ def main():
             # nothing may touch the box: the feather guarantees it, this proves it
             W, H = consts["designW"], consts["designW"] * 5 / 4
             assert (X - R).min() > 0 and (X + R).max() < W and (Y - R).min() > 0 and (Y + R).max() < H
+            # nor the photograph's own frame, where the far shoulder is cut
+            x0, _, cw = p["crop"]
+            assert ((X + R) * cw / W + x0).max() < FRAME[0], "a dot reaches the photograph's frame"
             if name == "dark":
                 # the plate's guards: no ink lighter than --bone, so nothing on
                 # him outshines the page's type, and no dot past a pitch, so
