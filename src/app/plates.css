@@ -869,6 +869,35 @@
   }
 }
 
+/* ── The sky in the dark ──────────────────────────────────────────────────
+   globals.css pins every still plate to paper in the dark, on the rule that
+   a print stays a print. The sky is the one plate that rule makes wrong: it
+   is the only still board left on the site, so the rule reached nothing else,
+   and on the dark page it put a 500px cream square -- the brightest thing on
+   the screen, well over the title -- with the night drawn dark-on-light and
+   no plate mark left to see. So the sky takes the page's own tokens back
+   (`inherit` from the figure, which has the dark values) and prints as its
+   own negative: the stars in bone on the dark plate ground, the empty sky
+   as nothing (board.ts, `invert`). Five selectors deep to outrank the
+   four-deep pin. */
+:root[data-theme="dark"] .broadside-plate .sky-board[data-mode="still"] {
+  --ink: inherit;
+  --ink-2: inherit;
+  --ground-2: inherit;
+  --dot-off: inherit;
+  --plate-polarity: invert;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .broadside-plate .sky-board[data-mode="still"] {
+    --ink: inherit;
+    --ink-2: inherit;
+    --ground-2: inherit;
+    --dot-off: inherit;
+    --plate-polarity: invert;
+  }
+}
+
 /* The same drop from the eyebrow as .page-mast-title. This rule used to set
    `margin: 0`, which silently beat the `mt-8` in the markup (an unlayered
    rule outranks a utility) and sat the eyebrow 12px over the title's caps. */

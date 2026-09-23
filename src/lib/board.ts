@@ -44,6 +44,13 @@ export type BoardOptions = {
   colors: BoardColors;
   /** Deterministic seed for scatter vectors and assembly noise. */
   seed?: number;
+  /**
+   * Print the field as its own negative: ink where the positive leaves bare
+   * paper. Only for a plate whose picture is light marks on a dark field (the
+   * sky), set on a dark ground, where the positive would be a sheet of paper
+   * pasted onto the page. See NEG_GAMMA.
+   */
+  invert?: boolean;
 };
 
 export type Board = {
@@ -105,6 +112,27 @@ const MIN_DEVICE_PX = 0.0;
 const INK_DIA_MAX = 1.42;
 
 /**
+ * The negative (`invert`), for the sky on a dark ground.
+ *
+ * The positive prints the night as a field of ink and the stars as the paper
+ * it leaves bare. On the dark theme that is a cream square on a black page,
+ * the brightest thing on it, with the sky drawn dark-on-light. The negative
+ * inks what the positive leaves bare instead, with the page's own ink (bone
+ * in the dark): a cell prints the paper the positive would have shown ABOVE
+ * the field's own ground, so the empty sky prints nothing, the Milky Way a
+ * haze of fine marks and a star a full one. The gamma keeps the haze under
+ * the stars; measured offline against the shipped field, 1.0 greys the whole
+ * disc and 2.0 loses the Milky Way. Still one ink, still value by area.
+ */
+const NEG_GAMMA = 1.5;
+
+/** The paper a cell leaves bare in the positive, 0..1. */
+function paperOf(L: number): number {
+  const inked = Math.pow(Math.max(L, DEEP_FLOOR), LIFT);
+  return 1 - Math.pow(1 - inked, INK_GAIN);
+}
+
+/**
  * The burin and the stochastic screen are both gone; gl-board.ts carries the
  * measurement and the reasoning, and the two renderers must not drift.
  *
@@ -163,8 +191,30 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   const H = field.h;
 
   // ── Static per-cell data ────────────────────────────────────────────────
+  //
+  // A zero byte is "no cell": nothing is drawn there. In the positive that is
+  // also how the bake writes its brightest highlights -- the absence of a mark
+  // IS the highlight -- so a negative has to tell the two apart, or the
+  // brightest stars print as black holes. An empty cell between a row's first
+  // and last cells is inside the field and prints as full light; one outside
+  // that span is the corner of the box and stays empty.
+  const invert = opts.invert === true;
+  const rowFrom = new Int32Array(H).fill(W);
+  const rowTo = new Int32Array(H).fill(-1);
+  if (invert) {
+    for (let j = 0; j < H; j++) {
+      for (let i = 0; i < W; i++) {
+        if (bytes[j * W + i] === 0) continue;
+        if (i < rowFrom[j]) rowFrom[j] = i;
+        rowTo[j] = i;
+      }
+    }
+  }
+  const inField = (i: number, j: number) =>
+    bytes[j * W + i] > 0 || (invert && i >= rowFrom[j] && i <= rowTo[j]);
+
   let n = 0;
-  for (let i = 0; i < bytes.length; i++) if (bytes[i] > 0) n++;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (inField(i, j)) n++;
   const gx = new Uint16Array(n);
   const gy = new Uint16Array(n);
   const lum = new Float32Array(n); // 0..1
@@ -177,15 +227,19 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   const [cx0, cy0] = field.center;
   const maxDist = Math.hypot(W, H) * 0.6;
   let lit = 0;
+  // The field's own ground: the paper its darkest cell leaves bare. The
+  // negative prints only what rises above it.
+  let groundL = 1;
   {
     let k = 0;
     for (let j = 0; j < H; j++) {
       for (let i = 0; i < W; i++) {
+        if (!inField(i, j)) continue;
         const v = bytes[j * W + i];
-        if (v === 0) continue;
         gx[k] = i;
         gy[k] = j;
-        const L = v / 255;
+        const L = v === 0 ? 1 : v / 255;
+        if (v > 0 && L >= UNLIT && L < groundL) groundL = L;
         lum[k] = L;
         if (L >= UNLIT) lit++;
         const dist = Math.hypot(i - cx0, j - cy0) / maxDist;
@@ -199,6 +253,8 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       }
     }
   }
+  const groundPaper = paperOf(groundL);
+  const negSpan = Math.max(1e-6, 1 - groundPaper);
 
   // ── Dynamic state, CSS px ────────────────────────────────────────────────
   const px = new Float32Array(n); // displacement from the (moving) home
@@ -345,8 +401,9 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       // integrates into one flat grey. The ink is always full black now, the
       // paper always full white, and the grey is an optical average of
       // hard-edged marks.
-      const inked = Math.pow(Math.max(L, DEEP_FLOOR), LIFT);
-      let coverage = Math.pow(1 - inked, INK_GAIN);
+      let coverage = invert
+        ? Math.pow(Math.max(0, paperOf(L) - groundPaper) / negSpan, NEG_GAMMA)
+        : 1 - paperOf(L);
       coverage *= grow;
       let dia = Math.min(1.128 * Math.sqrt(Math.max(coverage, 0)), INK_DIA_MAX);
       if (t > 0) dia *= 1 - t;

@@ -110,7 +110,9 @@ export default function WritingPage() {
             is ink emerging from bare paper; this is a solid field of ink with
             2,307 stars punched out of it as holes of paper. Same screen, same
             transfer, opposite polarity -- which is why it belongs beside the
-            portrait rather than looking like a different site. */}
+            portrait rather than looking like a different site. On the dark
+            page it prints as its own negative instead, the stars in bone on
+            the plate (plates.css, "The sky in the dark"). */}
         <figure className="broadside-plate">
           <DotBoard
             source={sky.id}
