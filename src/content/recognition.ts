@@ -31,7 +31,9 @@ export const achievements: Achievement[] = [
     year: "2023 to 2026",
   },
   {
-    label: "KVPY 2021, All India Rank 1638",
+    // "All India Rank" is one name; the no-break space keeps a phone from
+    // setting "All" at the end of one line and "India Rank 1638" on the next.
+    label: "KVPY 2021, All India Rank 1638",
     detail:
       "India’s national fellowship for students headed into research science, run by IISc.",
     year: "2021",
