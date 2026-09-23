@@ -71,9 +71,8 @@
      paints it above the section ground but below the row's own hairline, so
      hairlines are never swallowed by the fill.
 
-     Columns: gutter (index + LED) · main · trailing (numeral, 12rem) · arrow.
-     Below 48rem the trailing slot drops under the title, left-aligned, and the
-     arrow is hidden; the whole row is still the link.
+     Columns: gutter (index or year) · main · arrow. Below 48rem the arrow is
+     hidden; the whole row is still the link.
      ───────────────────────────────────────────────────────────────────────── */
   .row {
     --row-bleed: var(--shell-pad);
@@ -89,11 +88,10 @@
     color: var(--ink);
   }
 
-  /* The trailing slot (a numeral) drops under the title on narrow screens. */
-  .row[data-trailing] {
-    grid-template-areas:
-      "gutter main"
-      "gutter trailing";
+  /* Nothing in the gutter, no gutter: the title sits on the column edge. */
+  .row:not([data-gutter]) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "main";
   }
 
   /* Close a list of rows with a bottom hairline on the container:
@@ -127,6 +125,19 @@
     opacity: 1;
   }
 
+  /* The whole row is the target, so the focus ring is the edge of the row's
+     own wash rather than a box around the title's text, which drew a ring
+     round the one word of a four-line target. Inset, so it stays inside the
+     shell padding the wash already bleeds into. */
+  .row-link:focus-visible {
+    outline: none;
+  }
+
+  .row:has(.row-link:focus-visible)::before {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+
   .row-gutter {
     grid-area: gutter;
     display: flex;
@@ -155,30 +166,50 @@
     text-decoration: none;
   }
 
-  .row-trailing {
-    grid-area: trailing;
-    min-width: 0;
-  }
-
-  /* The arrow is an icon, not a word: it may move 2 px (§7.3). */
-  .row-arrow {
+  /* The arrow is an icon, not a word: it may move (§7.3). It sits on the
+     title's line, and on hover the row says what it opens beside it. */
+  .row-end {
     grid-area: arrow;
     display: none;
     align-self: start;
     justify-self: end;
-    width: 1rem;
-    height: 1rem;
-    margin-top: 0.35em;
+    align-items: center;
+    gap: 0.625rem;
+    /* Centred on the first line of a display-s title. */
+    height: calc(var(--text-display-s) * var(--text-display-s--line-height));
     color: var(--ink-3);
+    transition: color var(--dur-2) var(--ease-snap);
+  }
+
+  .row-arrow {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: transform var(--dur-2) var(--ease-snap);
+  }
+
+  .row-cta {
+    opacity: 0;
+    translate: 4px 0;
     transition:
-      transform var(--dur-2) var(--ease-snap),
-      color var(--dur-2) var(--ease-snap);
+      opacity var(--dur-2) var(--ease-snap),
+      translate var(--dur-2) var(--ease-snap);
+  }
+
+  .row[data-link]:hover .row-end,
+  .row:has(.row-link:focus-visible) .row-end {
+    color: var(--ink);
   }
 
   .row[data-link]:hover .row-arrow,
   .row:has(.row-link:focus-visible) .row-arrow {
-    color: var(--ink);
-    transform: translate(2px, 0);
+    transform: translate(3px, 0);
+  }
+
+  .row[data-link]:hover .row-cta,
+  .row:has(.row-link:focus-visible) .row-cta {
+    opacity: 1;
+    translate: 0 0;
   }
 
   .row[data-external]:hover .row-arrow,
@@ -188,42 +219,119 @@
 
   @media (width >= 48rem) {
     .row {
-      grid-template-columns: 3rem minmax(0, 1fr) 1.5rem;
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
       grid-template-areas: "gutter main arrow";
       column-gap: 1.5rem;
       padding-block: 1.75rem;
     }
-    /* The trailing column holds the longest metric, "Top 10%", at size m:
-       Doto advances 0.6em, so seven glyphs are 210px at the 5px pitch and
-       252px at 6px. 14rem and 16rem hold it without wrapping or overflow. */
-    .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 14rem 1.5rem;
-      grid-template-areas: "gutter main trailing arrow";
+    .row:not([data-gutter]) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "main arrow";
     }
-    .row-trailing {
-      text-align: right;
-      justify-self: end;
-    }
-    .row-arrow {
-      display: block;
+    .row-end {
+      display: inline-flex;
     }
   }
-  @media (width >= 80rem) {
-    .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 16rem 1.5rem;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .row::before,
     .row-gutter,
-    .row-arrow {
+    .row-end,
+    .row-arrow,
+    .row-cta {
       transition: none;
     }
   }
   :root[data-motion="reduce"] .row::before,
   :root[data-motion="reduce"] .row-gutter,
-  :root[data-motion="reduce"] .row-arrow {
+  :root[data-motion="reduce"] .row-end,
+  :root[data-motion="reduce"] .row-arrow,
+  :root[data-motion="reduce"] .row-cta {
+    transition: none;
+  }
+
+  /* ═══ Selected work (home) ══════════════════════════════════════════════════
+     The row's gutter becomes the page's 12rem margin (with the 1.5rem column
+     gap), carrying the year over the status mark; the titles then start on
+     the same x as the chart's plot below. On a phone the margin folds into
+     one line above the title. */
+  .work-rows .row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "gutter"
+      "main";
+    row-gap: 0.625rem;
+  }
+
+  .work-rows .row-gutter {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 1rem;
+  }
+
+  .work-year {
+    color: var(--ink-2);
+  }
+
+  /* The status is the chart's own milestone mark at the size of the plate's
+     key, so the list teaches the three shapes the plate below uses. */
+  .work-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .work-status .cn-glyph {
+    --cn-mark-size: 7px;
+  }
+
+  .work-rows .row-subtitle {
+    max-width: 44rem;
+    text-wrap: pretty;
+  }
+
+  .work-more {
+    margin-top: var(--space-5);
+  }
+
+  .work-more .btn {
+    gap: 0.625rem;
+  }
+
+  .work-more-arrow {
+    width: 1rem;
+    height: 1rem;
+    transition: transform var(--dur-2) var(--ease-snap);
+  }
+
+  .work-more .btn:hover .work-more-arrow {
+    transform: translateX(3px);
+  }
+
+  @media (width >= 48rem) {
+    .work-rows .row {
+      grid-template-columns: 10.5rem minmax(0, 1fr) auto;
+      grid-template-areas: "gutter main arrow";
+      row-gap: 0.75rem;
+      padding-block: 2rem;
+    }
+
+    .work-rows .row-gutter {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.625rem;
+    }
+
+    .work-more {
+      padding-left: 12rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .work-more-arrow {
+      transition: none;
+    }
+  }
+  :root[data-motion="reduce"] .work-more-arrow {
     transition: none;
   }
 

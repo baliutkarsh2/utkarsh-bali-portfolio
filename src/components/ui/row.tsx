@@ -10,13 +10,20 @@ type RowProps = {
   gutter?: ReactNode;
   /** The row's name in display-s (Bodoni 500). Pass text, or your own heading. */
   title: ReactNode;
-  /** One line under the title, small --ink-2. */
+  /** One line under the title, --ink-2. */
   subtitle?: ReactNode;
+  /** The subtitle's register: `small` (16px, the default) or `body` (18px). */
+  subtitleSize?: "small" | "body";
   /** The meta line: "eyebrow · year · status". */
   meta?: ReactNode;
   href?: string;
   /** Opens in a new tab, outward arrow, sr-only notice. */
   external?: boolean;
+  /**
+   * What the link opens, said beside the arrow on hover ("Case study").
+   * Decorative: the title is the link's name.
+   */
+  cta?: string;
   /** `view-transition-name` on the title, e.g. "project-checkpoint", shared with the case-study h1. */
   transitionName?: string;
   /** The heading element for the title. "h3" under a section h2; "h2" on index pages under the h1. */
@@ -28,26 +35,27 @@ type RowProps = {
  * index, writing, recognition and prev/next. The whole
  * row is the link: the title's anchor carries `stretch-link`, so there is
  * never an <a> inside an <a>, and any inner link opts out with
- * `relative z-10`. Hover fills --ground-2 out to the shell edges, the index
- * lights to --ink and the arrow moves 2 px; nothing else moves.
+ * `relative z-10`. Hover fills --ground-2 out to the shell edges, the gutter
+ * lights to --ink and the arrow moves; nothing else moves.
+ *
+ * The gutter column exists only when something is in it (`data-gutter`). A
+ * row without one used to keep an empty 3rem column and a 1.5rem gap anyway,
+ * so its title sat 72px in from the heading above it for no visible reason.
  *
  * The title's heading level is the consumer's call (`titleAs`, default h3),
  * because the same row sits under an h1 on index pages and under an h2
  * inside a section.
- *
- * Four props are gone because no call site ever passed them: `trailing` (the
- * right slot, for a <Numeral> that no longer exists), `led`/`ledLabel` (a 6px
- * lamp beside the index, which took <Led> with it), `children` and
- * `className`.
  */
 export function Row({
   index,
   gutter,
   title,
   subtitle,
+  subtitleSize = "small",
   meta,
   href,
   external = false,
+  cta,
   transitionName,
   titleAs: TitleTag = "h3",
 }: RowProps) {
@@ -72,17 +80,21 @@ export function Row({
   );
 
   const Arrow = external ? ArrowUpRight : ArrowRight;
+  const hasGutter = Boolean(index || gutter);
 
   return (
     <div
       className="row"
       data-link={href ? "" : undefined}
       data-external={external ? "" : undefined}
+      data-gutter={hasGutter ? "" : undefined}
     >
-      <div className="row-gutter meta">
-        {index && <span aria-hidden="true">{index}</span>}
-        {gutter}
-      </div>
+      {hasGutter && (
+        <div className="row-gutter meta">
+          {index && <span aria-hidden="true">{index}</span>}
+          {gutter}
+        </div>
+      )}
 
       <div className="row-main">
         <TitleTag
@@ -95,14 +107,24 @@ export function Row({
           {titleContent}
         </TitleTag>
         {subtitle && (
-          <p className={cn("row-subtitle text-ink-2", "mt-1.5 text-small")}>
+          <p
+            className={cn(
+              "row-subtitle text-ink-2",
+              subtitleSize === "body" ? "mt-2 text-body" : "mt-1.5 text-small",
+            )}
+          >
             {subtitle}
           </p>
         )}
-        {meta && <p className={cn("row-meta meta text-ink-3", "mt-2.5")}>{meta}</p>}
+        {meta && <p className={cn("row-meta meta text-ink-3", "mt-3")}>{meta}</p>}
       </div>
 
-      {href && <Arrow className="row-arrow" aria-hidden="true" />}
+      {href && (
+        <span className="row-end" aria-hidden="true">
+          {cta && <span className="row-cta meta">{cta}</span>}
+          <Arrow className="row-arrow" />
+        </span>
+      )}
     </div>
   );
 }
