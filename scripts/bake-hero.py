@@ -25,10 +25,10 @@ THE SCREEN is a 45-degree square lattice laid out in log-polar space,
 z = C + exp(u + iv). The map is conformal, so every cell stays square and
 every dot stays round; the pitch grows in proportion to the distance from the
 pole C, which sits off the frame to the left of his face. So the screen is
-finest where the expression is (nose 3.4, mouth 3.8, eye 4.3 design px) and
-coarsens toward the hair and the ear (5.1 to 5.5) and the dissolving shoulder
-(6.6 at the corner). A uniform screen fine enough for the eye costs 14% more
-dots and reads flatter.
+finest where the expression is (nose 3.2, mouth 3.5, eye 3.9 design px) and
+coarsens toward the hair and the ear (4.5 to 4.9), the neck (4.4) and the
+shoulder (5.7, and 6.6 at the corner). A uniform screen fine enough for the
+eye costs 14% more dots and reads flatter.
 
 THE PHOTOGRAPH NEEDS HELP. He is backlit: the face is in shadow, almost
 without chroma, and the sunset is only on the rim. Printed straight it is one
@@ -52,8 +52,9 @@ into rim light and sky between the hair strands into grey-blue patches:
   · the low sun: vermilion-gold on the profile and a thin band inside the
     matte edge, on the sun side only and never on the shirt;
   · the shirt: squeezed toward one pale cool grey (paper) or one deep one
-    (plate), keeping an eighth of its contrast, so it never competes with the
-    face.
+    (plate), keeping an eighth of its contrast -- a tenth on paper, where its
+    navy stripe printed as a grey band across the chest -- so it never
+    competes with the face.
 
 THE INK. For every dot the ink's lightness comes from the target's; the
 coverage is then solved so ink over the ground averages to the target's
@@ -102,12 +103,21 @@ the plate, and six guards against what that does to a portrait:
     and no ink is lighter than --bone, so the teeth stay dots, not a white
     blob brighter than the page's type.
 
-NO FRAME EDGE IS EVER VISIBLE. The shoulder dissolves off the bottom and right
-edges and a 26 px feather runs round all four sides, so no dot ever touches
-the box (asserted below, on the decoded grids). In the dissolve the dots thin
-as well as shrink, cells dropping out on a low-discrepancy sequence, so the
-shoulder ends in sparse marks the way an edition print does rather than in a
-fading grid.
+NO FRAME EDGE IS EVER VISIBLE. He is printed as a bust: the head, the neck,
+the collar and both shoulders in full, the chest dissolving. The shoulder
+dissolves off the bottom and right edges -- the photograph's own frame cuts it
+at x 1564, just past the box's right edge at 1530 -- along a vignette rather
+than along the box: the corner between them rounded off, the right side drawn
+in at the shoulder's height so its line fades before the frame instead of
+meeting it in a corner, and the whole edge wavering a little. The shirt's near
+edge, from the neckline down the sleeve, dissolves the same way, so it reads as
+a soft sleeve and not as a line cut by hand, and his arm past it does not print
+at all: at the bottom of the frame it was a few stray skin-coloured specks
+beside a grey shirt. A 26 px feather runs round all four sides, so no dot ever
+touches the box (asserted below, on the decoded grids). In the dissolve the
+dots thin as well as shrink, cells dropping out on a low-discrepancy sequence,
+so the shoulder ends in sparse marks the way an edition print does rather than
+in a fading grid.
 
 DRAW ORDER is part of the picture: where two DMAX 1.5 discs overlap, the one
 drawn last wins. The renderer draws inks from the least to the most contrast
@@ -139,40 +149,63 @@ LATTICE_TS = os.path.join(ROOT, "src", "components", "interactive", "hero-lattic
 BROW_SRC = ((1564, 2728), "94710abb86d261fa5bc762e47fd894df4beb436c223bc4453c48537636a743fd")
 
 # The collar line, cut-out px, top to bottom: the edge between his neck and his
-# shirt. The face and the shirt polygons both run along it, so they partition
-# the figure there.
-COLLAR = [(1085, 805), (1045, 905), (985, 1010), (915, 1090), (880, 1150), (870, 1300)]
+# shirt, down to the neckline's V. The face and the shirt polygons both run
+# along it, so they partition the figure there.
+COLLAR = [(1085, 805), (1045, 905), (985, 1010), (915, 1090), (894, 1096)]
+# The shirt's near edge, top to bottom: from the V down the near sleeve's
+# silhouette, then between the shirt and his arm, which reaches forward out of
+# the frame at the bottom left. Everything past it dissolves (see weights).
+NEAR = [(894, 1092), (888, 1125), (884, 1160), (875, 1195), (866, 1225), (853, 1252), (843, 1288),
+        (830, 1322), (850, 1400), (866, 1500), (880, 1900)]
 # The face, the neck and the throat: the hairline, the sideburn, the jaw under
-# the ear, then down the collar and back round outside the silhouette.
+# the ear, then down the collar to the V and back round outside the
+# silhouette. It stops at the V: below it everything is shirt, the sleeve and
+# the arm included, so no dot at the shirt's edge is skin-coloured. Taken as
+# skin, the sleeve printed a sunlit orange seam down the shirt's edge and the
+# arm olive and brown specks beside it.
 FACE = [(505, 440), (560, 425), (620, 412), (680, 398), (740, 384), (800, 374), (860, 390),
         (910, 418), (952, 448), (972, 505), (985, 580), (1002, 650), (1030, 720),
-        (1070, 780)] + COLLAR + [(760, 1300), (420, 1000), (420, 450)]
+        (1070, 780)] + COLLAR + [(860, 1110), (420, 1110), (420, 450)]
 # The whole ear: the helix, the concha and the tragus, and the skin in front
 # of it down toward the jaw. Covering only the helix left the concha between
 # this and the face, in the hair, and on the plate it printed in the hair's
 # grey-taupe ink, a grey patch with a hard seam against the peach helix.
 EAR = (1100, 560, 75, 120)
-SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1450, 1300)] + COLLAR[::-1]
+# The whole shirt, the far shoulder out past the photograph's own edge (x 1564)
+# and the chest down past the crop: any of it left out prints as hair.
+SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1700, 700), (1700, 1900), (420, 1900),
+         (420, 1110), (860, 1110)] + COLLAR[::-1]
 
 P = dict(
     # crop in cut-out px: left, top, width (height = width * 5/4)
-    crop=(430, 10, 920),
+    crop=(430, 0, 1100),
     design_w=620.0,
     # the screen: pitch at the face centre and at the far (bottom-right) corner
-    pitch_face=4.2,
+    pitch_face=3.8,
     pitch_far=6.6,
     pole_angle=180.0,
     face=(760, 620),
     prefilter=0.40,        # gaussian sigma as a fraction of the local pitch
     dmax=1.5,              # largest diameter, in pitches
-    # head: everything inside this ellipse (cut-out px) prints in full; the
-    # dissolve starts at r0 and is gone by r1 (in ellipse radii)
-    head=(840, 470, 470, 520, 1.0, 1.55),
-    dissolve=(150.0, 170.0),
+    # the dissolve off the right and the bottom edges (design px)
+    dissolve=(90.0, 105.0),
+    # the bottom-right corner's radius, in dissolve widths, and how far the
+    # edge wavers (dissolve widths): at 0.25 it made a lump on the right edge
+    # at the stripe's height, and on a phone a torn edge
+    corner=2.2,
+    waver=0.13,
+    # and how far in (design px) the right edge's dissolve starts at the
+    # shoulder's height, easing out to the frame between these heights, so
+    # the shoulder's line fades before the frame instead of meeting it
+    bow=(60.0, 430.0, 680.0),
+    # the shirt's near edge (NEAR): its dissolve runs this far into the shirt
+    # (design px), and comes in over these heights below the V (cut-out px),
+    # so the neckline itself stays whole
+    near=(50.0, (1095.0, 1175.0)),
     edge_feather=26.0,
     # thinning in the dissolve: the keep-probability ramps from 0 to 1 over
     # this range of the vignette, and survivors take back this power of it
-    thin=(0.04, 0.45, 0.25),
+    thin=(0.03, 0.7, 0.25),
     # tone
     denoise=(6.0, 3.0),
     base=(7.0, 14.0),
@@ -212,10 +245,11 @@ P = dict(
     band_amt=0.6,
     rim_side=(700, 950),
     rim_top=(180, 260),
+    rim_bottom=(1095, 1150),
     fringe_cap=30.0,
     # separation: ink lightness = clip(a * L_target + b, lo, hi)
     paper=dict(ground=(250, 248, 244), ink=(0.45, 11.0, 15.0, 54.0), cmax=0.94,
-               shirt=(90.0, 0.12, 0.30), shirt_fade=0.3),
+               shirt=(86.0, 0.10, 0.30), shirt_fade=0.2),
     plate=dict(ground=(22, 20, 15), ink=(0.55, 53.0, 56.0, 92.0), cmax=0.74, floor=0.10,
                # cmax 0.74 is a dot 0.97 of a pitch across, and no ink is lighter
                # than --bone (#efe9dc, L* 92.5): see THE PLATE and solve_ink
@@ -276,7 +310,7 @@ P = dict(
                # the sun side's skin: no ink paler than this L*, none greyer
                # than this C*
                face_ink=(85.5, 21.0),
-               shirt=(22.0, 0.12, 0.30), shirt_fade=0.45),
+               shirt=(23.0, 0.12, 0.30), shirt_fade=0.4),
     shirt_hue=255.0,
     shirt_cmax=1.2,
     palette=160,
@@ -432,6 +466,9 @@ def target(p):
     # of sky on top of his head is not rim light
     rl, rc, rh, rcap = p["rim"]
     sun = (1 - smoothstep(*p["rim_side"], X)) * smoothstep(*p["rim_top"], Y) * (1 - shirt)
+    # and down to the neckline's V: below it the sun catches the shirt's edge
+    # and his arm, and rim-lit they printed as an orange tail off the throat
+    sun = sun * (1 - smoothstep(*p["rim_bottom"], Y))
     rim = smoothstep(rl - 6, rl + 6, ndi.gaussian_filter(L0, 1.5)) * a * sun
     inside = ndi.distance_transform_edt(a > 0.5)
     band = (1 - smoothstep(4, p["rim_band"], inside)) * sun
@@ -573,20 +610,47 @@ def sample(p, lab, alpha, origin, masks, X, Y, pitch):
     return colour, a, mk
 
 
+def across(line, x, y):
+    """Each point's distance from a polyline that runs down the page: positive
+    on its right, negative on its left."""
+    P = np.asarray(line, float)
+    d = np.full(np.shape(x), np.inf)
+    left = np.zeros(np.shape(x), bool)
+    for (ax, ay), (bx, by) in zip(P[:-1], P[1:]):
+        ex, ey = bx - ax, by - ay
+        t = np.clip(((x - ax) * ex + (y - ay) * ey) / (ex * ex + ey * ey), 0, 1)
+        d = np.minimum(d, np.hypot(x - ax - t * ex, y - ay - t * ey))
+        if ey:
+            left ^= ((ay > y) != (by > y)) & (x < ax + (y - ay) * ex / ey)
+    return np.where(left, -d, d)
+
+
 def weights(p, X, Y, a):
-    """(silhouette x vignette, the vignette alone). The vignette is the head
-    ellipse's dissolve, the dissolve off the bottom and right, and the thin
-    feather on all four sides."""
+    """(silhouette x vignette, the vignette alone). The vignette is the
+    dissolve off the bottom and right, the one along the shirt's near edge,
+    and the thin feather on all four sides."""
     x0, y0, w = p["crop"]
     s = p["design_w"] / w
     W, H = p["design_w"], frame_h(p)
-    cx, cy, rx, ry, r0, r1 = p["head"]
-    sx = X / s + x0
-    sy = Y / s + y0
-    r = np.hypot((sx - cx) / rx, (sy - cy) / ry)
-    fade = 1 - smoothstep(r0, r1, r)
+    # the edge wavers a little, the same field on every edge that dissolves
+    waver = p["waver"] * (np.sin(X / 37.0 + Y / 61.0 + 1.3) * 0.5 + np.sin(Y / 23.0 - X / 71.0 + 0.4) * 0.3
+                          + np.sin((X + Y) / 13.0 + 2.1) * 0.2)
+    # the right and bottom edges, in dissolve widths from each, with the
+    # corner between them rounded off, so the shoulder ends in an irregular
+    # vignette rather than along the box
     dr, db = p["dissolve"]
-    fade = fade * smoothstep(0, 1, (W - X) / dr) ** 1.2 * smoothstep(0, 1, (H - Y) / db) ** 1.2
+    rc = p["corner"]
+    bow, y1, y2 = p["bow"]
+    u, v = (W - X - bow * (1 - smoothstep(y1, y2, Y))) / dr, (H - Y) / db
+    cu, cv = np.maximum(rc - u, 0), np.maximum(rc - v, 0)
+    t = np.where((cu > 0) & (cv > 0), rc - np.hypot(cu, cv), np.minimum(u, v))
+    fade = smoothstep(0, 1, t + waver) ** 1.2
+    # the shirt's near edge, in its own dissolve widths into the shirt, and
+    # nothing past it: the arm does not print
+    dn, (g0, g1) = p["near"]
+    sy = Y / s + y0
+    tn = across(NEAR, X / s + x0, sy) * s / dn
+    fade = fade * (1 - smoothstep(g0, g1, sy) * (1 - smoothstep(0, 1, tn + waver) ** 1.2))
     fe = p["edge_feather"]
     for dist in (X, W - X, Y, H - Y):
         fade = fade * smoothstep(0, fe, dist)
@@ -693,7 +757,7 @@ def grade(p, look, colour_lin, mk, meta):
         near = lattice_blur(meta, L, face + 1e-9, sig)
         ss = sun_skin(mk)
         L = L * (1 - ss) + np.minimum(L, near + margin) * ss
-    # the shirt: one hue family, an eighth of its contrast
+    # the shirt: one hue family, an eighth of its contrast (a tenth on paper)
     to, contrast, keep = look["shirt"]
     sh = mk["shirt"]
     ref = np.average(L, weights=sh + 1e-9)
@@ -1023,6 +1087,10 @@ def separate(p, b, look, dark):
     cov = np.where(keep, np.minimum(c * b["edge"], cov / np.maximum(q, 1e-3) ** gma), 0)
     d = coverage_to_d(cov, p["dmax"])
     d[cov < 0.006] = 0
+    # and a cell the solve left empty stays empty: in the dissolve the
+    # survivors' boost could lift one over the threshold, in the palette's
+    # filler for an empty cell, black -- a speck in the pale shirt
+    d[~live & (b["fade"] < 1)] = 0
     # no dot may print on the wrong side of the ground: on the plate a dot
     # darker than it is a hole, on paper one lighter than it is nothing
     Gp = np.array(look["ground"], float) @ LUMA / 255
