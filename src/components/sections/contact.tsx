@@ -54,7 +54,9 @@ export function Contact() {
 
         {/* An inline link in a sentence, so no `tap`: on a touch screen that
             utility makes the anchor a 44px inline-flex box, which opened the
-            paragraph's lines to 34px apart around it. */}
+            paragraph's lines to 34px apart around it. The arrow is inside the
+            link, a hair off the word: outside it, it touched the "y" with a
+            full space after it, and the focus ring cut through it. */}
         {essay && (
           <p className="contact-essay text-small text-ink-2">
             Also{" "}
@@ -65,12 +67,12 @@ export function Contact() {
               className="dot-underline text-ink"
             >
               an essay
+              <ArrowUpRight
+                className="inline-block size-[0.9em] align-[-0.1em] ml-[0.15em] text-ink-3"
+                aria-hidden="true"
+              />
               <span className="sr-only"> (opens in a new tab)</span>
-            </a>
-            <ArrowUpRight
-              className="inline-block size-[0.9em] align-[-0.1em] text-ink-3"
-              aria-hidden="true"
-            />{" "}
+            </a>{" "}
             on {essay.external?.publisher ?? "the web"}: {essay.title}.
           </p>
         )}
