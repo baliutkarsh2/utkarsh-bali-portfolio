@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { SpoiledPlate } from "@/components/interactive/spoiled-plate";
+import { GROUND } from "@/lib/theme";
 
 /**
  * Next collects metadata from the not-found convention when it renders a 404
@@ -13,6 +14,17 @@ export const metadata: Metadata = {
   description: "The link may be out of date, or I moved it.",
   // Drop the layout's canonical: a 404 is not a copy of the home page.
   alternates: { canonical: null },
+};
+
+/**
+ * The 404 is drawn on the plate in either theme (see below), so the browser
+ * chrome takes the plate too. Collected the same way as the metadata above
+ * (resolve-metadata's collectViewport). Without it the layout's pair tinted a
+ * light-system visitor's address bar paper over a dark sheet.
+ */
+export const viewport: Viewport = {
+  themeColor: GROUND.dark,
+  colorScheme: "dark",
 };
 
 /**
