@@ -661,23 +661,57 @@
      dot on every item but the first starts the next line with one. So every
      item carries its dot in front, in a fixed slot, and the list is pulled
      one slot to the left and clipped there: whichever item opens a line has
-     its dot in the clipped slot, on every line, however it wraps. The row
-     gap is the leading the caps need once they are two lines -- at the
-     meta utility's 1.2 the second line's caps nearly touched the first's
-     (the utility owns line-height, so the air is a gap, not a leading). */
+     its dot in the clipped slot, on every line, however it wraps.
+
+     And no tag is left alone on a line. As flex items the tags wrapped one
+     by one, so a phone set "AGENT INFRASTRUCTURE · QUALGENT (YC X25)" over
+     a lone "SHIPPED", and the Checkpoint stack ended on "AWS" by itself. So
+     the tags are set as text (TagList, components/project/tag-list.tsx).
+     The row is nowrap, and the only place a line may break is the space in
+     the ", " after a tag: a .tag-break, set at zero size so it takes no
+     room, and there so a copy of the row reads "Next.js, Python" rather
+     than "Next.jsPython". The next-to-last tag's break is nowrap too, so
+     the last two move down together; with two tags there is nothing to
+     orphan, and they may still break. And the lines are balanced, so the
+     tag that binding pushes off the last line does not end up alone on the
+     one above it ("OpenAI Vision / ADB / UI Automator" on the QA rail).
+
+     The air between two lines of caps is leading on the tags, since the
+     utility owns the list's line-height (at the meta utility's 1.2 the
+     second line's caps nearly touched the first's): the parent's line plus
+     --tag-gap. Half of that gap would sit above the first line and below
+     the last, so the list's block margins take it back and a one-line row
+     sits exactly where it did. */
   .tag-row {
     --tag-sep: 1.5em;
-    display: flex;
-    flex-wrap: wrap;
-    row-gap: 0.4em;
+    --tag-gap: 0.4em;
     margin: 0;
+    margin-block: calc(var(--tag-gap) / -2);
     margin-inline-start: calc(-1 * var(--tag-sep));
     padding: 0;
     list-style: none;
     color: var(--ink-3);
     clip-path: inset(-0.5em -0.5em -0.5em var(--tag-sep));
+    /* The longhand, so balance does not undo the nowrap as the text-wrap
+       shorthand would. */
+    white-space: nowrap;
+    text-wrap-style: balance;
   }
   .tag-row > li {
+    display: inline;
+    line-height: calc(1lh + var(--tag-gap));
+  }
+  /* In the text, not drawn. Zero size and zero line-height: no width, and
+     no box to push the line down. letter-spacing inherits as a length, so
+     the meta tracking would otherwise still space the two characters. */
+  .tag-break {
+    font-size: 0;
+    line-height: 0;
+    letter-spacing: 0;
+    word-spacing: 0;
+    white-space: normal;
+  }
+  .tag-row > li:nth-last-child(2):not(:first-child) > .tag-break {
     white-space: nowrap;
   }
   .tag-row > li::before {
@@ -1249,12 +1283,14 @@
      each entry under its own hairline, the year in mono over the honour in
      the display face over one line of detail. The hairlines of a pair sit on
      one line, and the gutter between the pair breaks it, so the grid reads as
-     rows of two rather than as boxes. An odd last entry takes both columns
-     and uses them: the year and the honour in the first, the detail in the
-     second on the honour's baseline, so its one unbroken rule stands over an
-     entry that really is the full width. It used to span both columns with
-     its words in the left half, leaving a 600 x 160 hole under a full-width
-     rule, just above the footer. */
+     rows of two rather than as boxes. An odd last entry is an entry like any
+     other, in the first column under its own half-width rule, and the list
+     simply ends beside it. It used to span both columns with its detail set
+     apart in the second, level with its title: the one entry built
+     differently, and every reviewer read it as a layout slip. A full-width
+     rule over a stacked entry was tried before that and left a hole under
+     the rule; a half-width rule over the last entry reads as the end of the
+     list, which is what it is. */
   .recognition-list {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -1267,30 +1303,6 @@
   @media (width >= 64rem) {
     .recognition-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .recognition-item:last-child:nth-child(odd) {
-      grid-column: 1 / -1;
-      /* The list's own two tracks and gutter, so the detail starts exactly
-         where the right-hand entries above it start. */
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: var(--space-8);
-    }
-
-    .recognition-item:last-child:nth-child(odd) .recognition-title {
-      grid-row: 2;
-      align-self: baseline;
-    }
-
-    .recognition-item:last-child:nth-child(odd) .recognition-detail {
-      grid-column: 2;
-      grid-row: 2;
-      align-self: baseline;
-      margin-block-start: 0;
-    }
-
-    .recognition-item:last-child:nth-child(odd) .recognition-arrow {
-      justify-self: end;
     }
   }
 

@@ -699,16 +699,28 @@
   }
 }
 
-/* Balanced: a deck is two or three lines, and `pretty` let two of the
-   eight trail off on a two-word stub ("a user.", "in it."). Two even lines
-   also leave more air beside the device. */
+/* Pretty on a phone, balanced from 48rem. On a phone a deck is three to
+   five lines in a narrow column, and balancing that many evens them out by
+   shortening every one: the lines ran 15 to 20 per cent short of the
+   measure ("Takes a product requirement / and turns it into merged pull"),
+   so the column looked narrow and ragged. `pretty` fills each line and
+   still keeps a lone word off the last. From 48rem a deck is two or three
+   lines beside the device, where `pretty` let two of the eight trail off
+   on a two-word stub ("a user.", "in it.") and two even lines leave more
+   air beside the device. */
 .toc-standfirst {
   margin-block-start: 0.625rem;
   max-width: 44rem;
   color: var(--ink-2);
   font-size: var(--text-body);
   line-height: 1.55;
-  text-wrap: balance;
+  text-wrap: pretty;
+}
+
+@media (width >= 48rem) {
+  .toc-standfirst {
+    text-wrap: balance;
+  }
 }
 
 @media (width >= 80rem) {
@@ -719,13 +731,22 @@
 }
 
 /* The result: the figure in full ink and medium weight, its label in the
-   reading grey, one line of the reading face. On a phone three of them take
-   two lines, and balanced they split even instead of dropping "nurses" or
-   "benchmark" alone under the deck. */
+   reading grey, one line of the reading face. On a phone a few take two
+   lines; balanced, they split into two short halves ("NeurIPS 2026
+   workshop / submission, under review") and the result read as a narrow
+   block under a full-width deck, so there it is `pretty`, which fills the
+   first line and keeps the second from being one word. From 48rem every
+   result fits on one line, and balance stays as the guard for a longer one. */
 .toc-result {
   margin-block-start: 0.875rem;
   color: var(--ink-2);
-  text-wrap: balance;
+  text-wrap: pretty;
+}
+
+@media (width >= 48rem) {
+  .toc-result {
+    text-wrap: balance;
+  }
 }
 
 .toc-figure {
@@ -734,8 +755,10 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
+/* The tag row pulls its block margins in by half its line gap (the gap is
+   leading on the tags, components.css), so the start margin gives it back. */
 .toc-meta {
-  margin-block-start: 0.625rem;
+  margin-block-start: calc(0.625rem - var(--tag-gap) / 2);
   color: var(--ink-3);
 }
 

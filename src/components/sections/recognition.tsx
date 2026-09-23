@@ -17,9 +17,8 @@ import { achievements } from "@/content";
  * title on each: 860 px of page at 1440 for seven lines of fact, with the
  * right half of every row bare because no honour is longer than half the
  * shell. Set in two columns the section is half as tall and uses the width.
- * An odd last entry takes both columns rather than leaving a hole beside it,
- * with its detail in the second column on the title's baseline; it is the
- * teaching line, which is also the longest.
+ * An odd last entry (the teaching line) is set exactly like the rest, in the
+ * first column, and the list ends beside it.
  *
  * Its own markup rather than <Row>: a row is a full-width list item with a
  * gutter, and this is a grid of short entries.

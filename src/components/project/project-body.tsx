@@ -5,6 +5,7 @@ import type { Project } from "@/content";
 import { deviceOf } from "@/content/plates";
 import { DeviceMark } from "@/components/project/device-mark";
 import { Gallery } from "@/components/project/gallery";
+import { TagList } from "@/components/project/tag-list";
 import { DotMask } from "@/components/ui/dot-mask";
 import { CODA, MOVEMENTS, hasCoda } from "@/lib/corpus";
 
@@ -251,11 +252,7 @@ function ProjectRail({ project }: { project: Project }) {
 
         <div className="rail-block">
           <h2 className="rail-label meta">Built with</h2>
-          <ul className="rail-stack tag-row text-small">
-            {project.stack.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+          <TagList items={project.stack} className="rail-stack text-small" />
         </div>
 
         {project.links.length > 0 && (

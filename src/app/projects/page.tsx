@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { DeviceMark } from "@/components/project/device-mark";
+import { TagList } from "@/components/project/tag-list";
 import { Typeset } from "@/components/project/typeset";
 import { deviceOf } from "@/content/plates";
 import { orderedProjects, statusLabel, type Project } from "@/content";
@@ -153,11 +154,7 @@ export default function ProjectsPage() {
                         {project.metricLabel}
                       </p>
 
-                      <ul className="toc-meta tag-row meta">
-                        {meta.map((item) => (
-                          <li key={item}>{item}</li>
-                        ))}
-                      </ul>
+                      <TagList items={meta} className="toc-meta meta" />
                     </div>
 
                     {device && (

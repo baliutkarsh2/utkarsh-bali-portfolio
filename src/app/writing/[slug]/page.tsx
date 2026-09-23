@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ColumnRule } from "@/components/writing/column-rule";
-import { Tag, TagRow } from "@/components/ui/tag";
+import { TagList } from "@/components/project/tag-list";
+import { Tag } from "@/components/ui/tag";
 import { formatPostDate, getPost, hostedPosts } from "@/lib/writing";
 import { absoluteUrl, jsonLd, personId } from "@/lib/seo";
 
@@ -136,7 +137,7 @@ export default async function PostPage({ params }: PageProps<"/writing/[slug]">)
 
             {post.tags.length > 0 && (
               <div className="mt-6">
-                <TagRow items={post.tags} label="Tags" />
+                <TagList items={post.tags} className="meta" label="Tags" />
               </div>
             )}
           </header>
