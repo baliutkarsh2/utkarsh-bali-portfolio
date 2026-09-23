@@ -7,6 +7,7 @@
    four things they hold are unlike each other:
 
      .page-mast     every inner page's masthead
+     .about-mast    /about           a profile's opening, and its record
      .toc           /projects        the index, grouped by year
      .broadside     /writing         one essay, set as a broadside
      .column        /writing/[slug]  one measure, a drop cap, marginalia
@@ -45,6 +46,334 @@
 .page-mast-lede {
   margin-block-start: var(--space-3);
   max-width: 40rem;
+}
+
+/* ── /about: the masthead is a profile's opening ─────────────────────────────
+   A kicker, a two-line headline, the standfirst and body on the reading
+   measure, and the facts as a ruled card. At 64rem and up the card hangs to
+   the right of the headline and the copy, its top rule on the headline's cap
+   line, so the first screen is a person on the left and the facts on the
+   right, and neither half of it is bare paper. */
+.about-mast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "kicker" "title" "copy" "facts";
+  padding-block: calc(3.5rem + var(--space-6)) var(--space-6);
+}
+
+@media (width >= 48rem) {
+  .about-mast {
+    padding-block: calc(3.5rem + var(--space-8)) var(--space-8);
+  }
+}
+
+@media (width >= 64rem) {
+  .about-mast {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "kicker kicker"
+      "title  facts"
+      "copy   facts";
+    column-gap: var(--space-8);
+  }
+}
+
+@media (width >= 80rem) {
+  .about-mast {
+    grid-template-columns: minmax(0, 1fr) 23rem;
+    column-gap: var(--space-10);
+  }
+}
+
+.about-kicker {
+  grid-area: kicker;
+  margin: 0;
+  color: var(--ink-3);
+}
+
+/* Between display-m and display-l: a headline that is a sentence, not a
+   one-word page name. Sized so it sets in two lines beside the card at 1280
+   and 1440, "Software engineer, building / agent infrastructure." */
+.about-title {
+  grid-area: title;
+  margin-block: var(--space-3) 0;
+  max-width: 16ch;
+  font-size: clamp(2.5rem, 4.4vw, 3.75rem);
+  line-height: 1.02;
+  color: var(--ink);
+}
+
+@media (width >= 64rem) {
+  .about-title {
+    max-width: none;
+  }
+}
+
+.about-copy {
+  grid-area: copy;
+  margin-block-start: var(--space-5);
+  max-width: 40rem;
+}
+
+.about-lede {
+  margin: 0;
+  color: var(--ink);
+}
+
+.about-body {
+  margin-block: var(--space-3) 0;
+  color: var(--ink-2);
+}
+
+.about-facts {
+  grid-area: facts;
+  align-self: start;
+  margin: var(--space-6) 0 0;
+  border-top: 1px solid var(--line-strong);
+}
+
+/* The card's top rule sits on the headline's cap line: the headline's box
+   starts --space-3 under the kicker and its caps a few pixels under that. */
+@media (width >= 64rem) {
+  .about-facts {
+    margin-block-start: calc(var(--space-3) + 0.5rem);
+  }
+}
+
+.about-fact {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: baseline;
+  padding-block: 0.875rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.about-fact dt {
+  color: var(--ink-3);
+}
+
+.about-fact dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  text-wrap: pretty;
+}
+
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--ink);
+}
+
+.about-link svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+  color: var(--ink-3);
+  transition:
+    translate var(--dur-2) var(--ease-snap),
+    color var(--dur-1) var(--ease-snap);
+}
+
+.about-link:hover svg,
+.about-link:focus-visible svg {
+  translate: 2px -2px;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-link svg {
+    transition: none;
+  }
+}
+
+/* ── /about: the record ──────────────────────────────────────────────────────
+   Every lane of the chart as an entry (record.tsx), on three columns at 80rem
+   and up: a margin for the employer, the role and the dateline; the text
+   column on the reading measure; and the case studies that came out of it.
+   The columns are the page's own twelve: three, six and three. Between 64 and
+   80rem the case studies drop under the text in the text column; below 64rem
+   the margin folds into a head row, which is what a margin does on a narrow
+   page. */
+/* No closing rule: the next section's head brings one, and two hairlines a
+   section gap apart read as an empty band. */
+.record {
+  padding-block: var(--space-3) var(--section-y);
+}
+
+.record-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.record-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "margin" "body" "work";
+  row-gap: var(--space-3);
+  padding-block: var(--space-5) var(--space-6);
+  border-top: 1px solid var(--line);
+}
+
+@media (width >= 64rem) {
+  .record-entry {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-areas:
+      "margin margin body body body body body body"
+      ".      .      work work work work work work";
+    column-gap: var(--gutter);
+  }
+}
+
+@media (width >= 80rem) {
+  .record-entry {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-areas: "margin margin margin body body body body body body work work work";
+    row-gap: 0;
+  }
+}
+
+.record-margin {
+  grid-area: margin;
+  min-width: 0;
+}
+
+.record-name {
+  margin: 0;
+  color: var(--ink);
+}
+
+.record-role {
+  margin: 0.5rem 0 0;
+  max-width: 16rem;
+  color: var(--ink-2);
+}
+
+.record-when {
+  margin: 0.625rem 0 0;
+  color: var(--ink-3);
+}
+
+.record-body {
+  grid-area: body;
+  min-width: 0;
+  max-width: 40rem;
+}
+
+.record-lede {
+  margin: 0;
+  color: var(--ink);
+}
+
+.record-points {
+  margin-block-start: var(--space-3);
+  color: var(--ink-2);
+}
+
+.record-work {
+  grid-area: work;
+  min-width: 0;
+}
+
+@media (width >= 64rem) and (width < 80rem) {
+  .record-work {
+    padding-block-start: var(--space-1);
+  }
+}
+
+@media (width >= 80rem) {
+  .record-work {
+    padding-block-start: 0.5rem;
+  }
+}
+
+.record-work-label {
+  margin: 0;
+  color: var(--ink-3);
+}
+
+.record-cases {
+  display: grid;
+  row-gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A case study: its name in full ink with the arrow, and the one result it is
+   known for under it. The whole block is the link; the name takes the
+   underline on hover, the arrow its 2px. */
+.record-case {
+  display: grid;
+  row-gap: 0.25rem;
+  color: var(--ink);
+}
+
+.record-case-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-size: var(--text-small);
+  line-height: var(--text-small--line-height);
+  font-weight: 500;
+  text-decoration-line: underline;
+  text-decoration-color: var(--rule-mid);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: text-decoration-color var(--dur-2) var(--ease-snap);
+}
+
+.record-case-name svg {
+  flex: none;
+  width: 0.8125rem;
+  height: 0.8125rem;
+  align-self: center;
+  color: var(--ink-3);
+  transition:
+    translate var(--dur-2) var(--ease-snap),
+    color var(--dur-1) var(--ease-snap);
+}
+
+.record-case:hover .record-case-name,
+.record-case:focus-visible .record-case-name {
+  text-decoration-color: currentColor;
+}
+
+.record-case:hover svg,
+.record-case:focus-visible svg {
+  translate: 2px 0;
+  color: var(--ink);
+}
+
+.record-case-result {
+  color: var(--ink-2);
+}
+
+.record-case-result b {
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: lining-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .record-case-name,
+  .record-case-name svg {
+    transition: none;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
