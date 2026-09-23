@@ -1,18 +1,19 @@
 import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
 import { experiences, projects, statusLabel } from "@/content";
-import { cn } from "@/lib/utils";
 import type { Experience, Project, ProjectStatus } from "@/content";
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   The work constellation — /about §02, "Where I've worked".
+   The work constellation — the close of / ("Where the work went") and
+   /about §02 ("Where I've worked"). One chart, drawn the same on both.
 
    A time × employer chart. x is the date, y is the employer lane; an
    employment interval is a band of ink dots at the page pitch, a project is a
    marked point on the month it landed. Nothing here is a picture of data that
-   the page does not also say in words: the plate is followed by a numbered
-   <ol> of the same eight projects in date order, which is the key to the
-   markers and the whole content of the section with the stylesheet off.
+   the page does not also say in words: every mark is a link whose text names
+   the project, its month, its lane, its role and its status, so with the
+   stylesheet off the plate is a list of eight links. On /about the record
+   (record.tsx) follows it and sets every lane out in full.
 
    The decisions worth stating, because they are the ones a reader would
    otherwise have to reverse-engineer:
@@ -85,12 +86,6 @@ const MONTH_INDEX = new Map(
  */
 const NOW = Date.now();
 
-/** "2026-05-01" → "May 2026" in the abbreviated form `experience.dates` uses. */
-function shortMonthLabel(iso: string): string {
-  const d = new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`));
-  return `${MONTHS[d.getUTCMonth()].slice(0, 3)} ${d.getUTCFullYear()}`;
-}
-
 /** "2026-05-01" → the UTC epoch of the first of that month. */
 function monthStart(iso: string): number {
   const t = Date.parse(`${iso.slice(0, 10)}T00:00:00Z`);
@@ -148,19 +143,12 @@ function employmentInterval(entry: Experience): Interval {
 const HALF_MONTH = 15 * DAY;
 
 type Point = {
-  n: number;
   slug: string;
-  name: string;
   status: ProjectStatus;
   /** The middle of the project's month, and the ±15 day window around it. */
   centre: number;
   low: number;
   high: number;
-  when: string;
-  /** "Oct 2024", for the work dateline of a lane with no employment record. */
-  shortWhen: string;
-  role: string;
-  tagline: string;
   /** “Checkpoint, February 2026, Checkpoint, Co-founder & CTO, Ongoing”. */
   label: string;
 };
@@ -175,19 +163,6 @@ type Lane = {
   tail: string;
   name: string;
   kind: LaneKind;
-  role: string;
-  /** The employment dateline, verbatim from the record. "" where there is none. */
-  dates: string;
-  location: string;
-  /** The standfirst and the bullets, verbatim. Never summarised, never cut. */
-  summary: string;
-  bullets: string[];
-  /**
-   * Why a lane has no employment dateline. A lane that is a company he founded,
-   * or a category rather than a place, is not missing data — it is a different
-   * kind of row, and it says so in its own first line.
-   */
-  note: string;
   interval: Interval | null;
   sortKey: number;
   points: Point[];
@@ -215,14 +190,6 @@ function employerFor(org: string | undefined): Experience | undefined {
   );
 }
 
-/** "Purdue University" → "purdue-university", for the record's heading ids. */
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
 function splitName(name: string): { head: string; tail: string } {
   const space = name.indexOf(" ");
   return space === -1
@@ -230,7 +197,7 @@ function splitName(name: string): { head: string; tail: string } {
     : { head: name.slice(0, space), tail: name.slice(space + 1) };
 }
 
-/** Ascending, oldest first, so the numbering runs with the time axis. */
+/** Ascending, oldest first, so a lane's marks run with the time axis. */
 const inDateOrder: Project[] = [...projects].sort(
   (a, b) =>
     a.sortDate.localeCompare(b.sortDate) || a.name.localeCompare(b.name),
@@ -246,19 +213,13 @@ const lanes: Lane[] = (() => {
       ...splitName(entry.company),
       name: entry.company,
       kind: "employer",
-      role: entry.role,
-      dates: entry.dates,
-      location: entry.location,
-      summary: entry.summary,
-      bullets: entry.bullets,
-      note: "",
       interval,
       sortKey: interval.start,
       points: [],
     });
   }
 
-  inDateOrder.forEach((project, i) => {
+  for (const project of inDateOrder) {
     const employer = employerFor(project.org);
     const key = employer ? employer.company : (project.org ?? INDEPENDENT);
     let lane = byKey.get(key);
@@ -269,15 +230,6 @@ const lanes: Lane[] = (() => {
         ...splitName(key),
         name: key,
         kind: key === INDEPENDENT ? "independent" : "venture",
-        role: "",
-        dates: "",
-        location: "",
-        summary: "",
-        bullets: [],
-        note:
-          key === INDEPENDENT
-            ? "Built on my own, start to finish."
-            : "My own company.",
         interval: null,
         sortKey: Number.NEGATIVE_INFINITY,
         points: [],
@@ -288,33 +240,20 @@ const lanes: Lane[] = (() => {
     const start = monthStart(project.sortDate);
     const centre = start + HALF_MONTH;
     const when = monthLabel(project.sortDate);
-    const laneName = lane.name;
 
     lane.points.push({
-      n: i + 1,
       slug: project.slug,
-      name: project.name,
       status: project.status,
       centre,
       low: centre - HALF_MONTH,
       high: centre + HALF_MONTH,
-      when,
-      shortWhen: shortMonthLabel(project.sortDate),
-      role: project.role,
-      tagline: project.tagline,
-      label: `${project.name}, ${when}, ${laneName}, ${project.role}, ${statusLabel[project.status]}`,
+      label: `${project.name}, ${when}, ${lane.name}, ${project.role}, ${statusLabel[project.status]}`,
     });
 
     if (lane.kind !== "employer") {
       lane.sortKey = Math.max(lane.sortKey, centre);
-      // A lane with no employment record borrows its role from the work that
-      // sits in it, de-duplicated.
-      const roles = lane.points
-        .map((p) => p.role)
-        .filter((r, j, all) => all.indexOf(r) === j);
-      lane.role = roles.join(" · ");
     }
-  });
+  }
 
   return [...byKey.values()].sort((a, b) => {
     // The residual lane is always last: it is a category, not a place.
@@ -395,53 +334,19 @@ for (
 
 const todayAt = at(NOW);
 
-/** Spelled out: these are counts inside a sentence, not figures on a plate. */
-const WORDS = [
-  "no",
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "ten",
-];
-const word = (n: number) => WORDS[n] ?? String(n);
-
-/**
- * The margin dateline. An employer prints its employment record verbatim; a
- * lane that has none prints the span of the work that sits in it instead. It
- * used to prefix that with "Work dated", to mark that a work span is not an
- * employment interval. The note under the lane already makes that distinction
- * in words a reader recognises, and the plate draws no band for it either.
- */
-function dateline(lane: Lane): string {
-  if (lane.dates) return lane.dates;
-  const months = lane.points.map((p) => p.shortWhen);
-  if (months.length === 0) return "";
-  const span =
-    months.length === 1
-      ? months[0]
-      : `${months[0]} to ${months[months.length - 1]}`;
-  return span;
-}
-
 type ConstellationProps = {
   /**
-   * `record` (/about §02) — the plate, its caption, the numbered key, and the
-   * record: six lanes with their roles, datelines and every bullet verbatim.
-   *
-   * `chart` (/ §02) — the plate and its legend, and nothing else.
-   * The key and the record are what you read AFTER the ten-second scan, and
-   * they live on /about; on the home page the chart IS the scan, and the last
-   * thing before the close. Two views of one dataset, not one section twice.
+   * The plate and its legend, and nothing else. There used to be a `record`
+   * variant that followed the plate with a numbered key and the employment
+   * record; /about sets the record itself now (record.tsx), so the chart is
+   * the one rendering and this is kept only so the call sites read as what
+   * they are.
    */
-  variant?: "record" | "chart";
-  /** The section index in its page's own numbering. */
-  /** Only the SectionSpy's hook; never rendered. */
+  variant?: "chart";
+  /**
+   * The section index in its page's own numbering. Only the SectionSpy's
+   * hook; never rendered.
+   */
   index?: string;
   title: string;
   /** The fragment id. /about keeps `experience`: /experience 308s to it. */
@@ -457,13 +362,11 @@ type ConstellationProps = {
  * because the head carries the legend on its right.
  */
 export function Constellation({
-  variant = "record",
   index = "",
   title,
   id,
   readout,
 }: ConstellationProps) {
-  const bleed = variant === "chart";
   const headingId = `${id}-title`;
 
   return (
@@ -509,7 +412,7 @@ export function Constellation({
         </ul>
       </div>
 
-      <figure className={cn("cn", bleed && "cn-full")}>
+      <figure className="cn">
         <div className="cn-frame">
           <div
             className="cn-plot plate-mark"
@@ -601,9 +504,6 @@ export function Constellation({
                           data-glyph={GLYPH[point.status]}
                           aria-hidden="true"
                         />
-                        <span className="cn-num meta" aria-hidden="true">
-                          {point.n}
-                        </span>
                       </Link>
                     ))}
                   </div>
@@ -625,131 +525,6 @@ export function Constellation({
           </div>
         </div>
       </figure>
-
-      {variant === "record" && (
-        <>
-          <h3 className="cn-sub caption text-ink-3">
-            The {word(inDateOrder.length)} projects, in date order
-          </h3>
-          <ol className="cn-index">
-            {inDateOrder.map((project, i) => {
-              const lane = lanes.find((l) =>
-                l.points.some((p) => p.slug === project.slug),
-              );
-              return (
-                <li key={project.slug}>
-                  <Link
-                    className="cn-index-link"
-                    href={`/projects/${project.slug}`}
-                  >
-                    <span className="cn-index-gutter" aria-hidden="true">
-                      <span className="cn-index-n meta">{i + 1}</span>
-                      <span
-                        className="cn-glyph"
-                        data-glyph={GLYPH[project.status]}
-                      />
-                    </span>
-                    <span className="cn-index-name text-body font-medium text-ink">
-                      {project.name}
-                    </span>
-                    <span className="cn-index-meta data text-ink-3">
-                      {monthLabel(project.sortDate)} ·{" "}
-                      {lane?.name ?? INDEPENDENT} ·{" "}
-                      {statusLabel[project.status]}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
-
-          {/* The record. The plate is the ten-second scan; this is what you read
-          after it. Laid on the plan's margin grammar (§5.5): the employer,
-          the role and the dateline hang in a margin column the width of the
-          chart's own lane-label gutter, which leaves the measure clear for the
-          prose. Below 64rem the margin folds into a head row above the type,
-          which is what a margin does on a narrow page.
-
-          Every lane but Microsoft has a case study, and the numbered index
-          is directly above this, so the depth is one click away and these
-          entries stay short. Microsoft is the exception the section exists
-          for: fourteen months of employment band with no marker on it and no
-          case study anywhere, so its line is the only record of that work. */}
-          <h3 className="cn-sub caption text-ink-3">The record</h3>
-          <ol className="cn-record">
-            {lanes.map((lane) => {
-              const headingId = `lane-${slugify(lane.key)}`;
-              return (
-                <li key={lane.key}>
-                  <article
-                    className="cn-record-entry"
-                    aria-labelledby={headingId}
-                  >
-                    <div className="cn-record-margin">
-                      <h4
-                        id={headingId}
-                        className="cn-record-name text-small font-medium text-ink"
-                      >
-                        {lane.name}
-                      </h4>
-                      {lane.role && (
-                        <p className="cn-record-role text-small text-ink-2">
-                          {lane.role}
-                        </p>
-                      )}
-                      {dateline(lane) && (
-                        <p className="cn-record-when data text-ink-3">
-                          {dateline(lane)}
-                        </p>
-                      )}
-                      {lane.location && (
-                        <p className="cn-record-where data text-ink-3">
-                          {lane.location}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="cn-record-body">
-                      {/* The standfirst. An employer's is its own summary; a lane
-                      with no employment record says so here, in the same slot,
-                      so the entry never renders as a gap. */}
-                      <p className="cn-record-lede text-lede text-ink">
-                        {lane.summary || lane.note}
-                      </p>
-
-                      {lane.bullets.length > 0 && (
-                        <ul className="cn-record-list dot-list text-body text-ink-2">
-                          {lane.bullets.map((bullet) => (
-                            <li key={bullet}>{bullet}</li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {/* No employment record means no bullets to print, so the
-                      lane prints the work that put it on the chart instead:
-                      each project and its own one line, from projects.ts. The
-                      numbered key above already links every one of them, so
-                      these are text and not a third link to the same page. */}
-                      {lane.bullets.length === 0 && lane.points.length > 0 && (
-                        <ul className="cn-record-list dot-list text-body text-ink-2">
-                          {lane.points.map((point) => (
-                            <li key={point.slug}>
-                              <b className="font-medium text-ink">
-                                {point.name}
-                              </b>{" "}
-                              {point.tagline}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
-          </ol>
-        </>
-      )}
     </section>
   );
 }
