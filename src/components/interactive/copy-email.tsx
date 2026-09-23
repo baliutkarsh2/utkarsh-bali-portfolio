@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Check, Copy } from "lucide-react";
 import { profile } from "@/content/profile";
 
 type CopyState = "rest" | "copied" | "failed";
 
 const LABEL: Record<CopyState, string> = {
-  rest: "Click to copy",
+  rest: "Copy",
   copied: "Copied",
   failed: "Select it manually",
 };
@@ -155,12 +156,18 @@ function Chop() {
 }
 
 /**
- * The address is real text in Bodoni display-m; the address is the
- * button. The meta label beside it is the only thing that changes, with no
- * transition (it is information, and words never animate). It is a polite
- * live region and a sibling of the button, not a child: a button's children
- * are presentational, so a status inside it would be flattened into the
- * button's name and never announced.
+ * The address is real text and it is the button, with its label beside it
+ * INSIDE the same button: one target, one hover. The label used to be a
+ * sibling floating 70px away, past a 22px slot reserved for a chop that is
+ * invisible until someone copies, so "CLICK TO COPY" read as a stray caption
+ * rather than as part of the control. Now it is a hairline chip ("Copy",
+ * then "Copied" with a tick) whose width is fixed to its longest word, so it
+ * never moves, and the chop is struck just past it without reserving space.
+ *
+ * The chip is aria-hidden; the button's name is the address plus ", copy to
+ * clipboard". The live region stays a sibling of the button, not a child: a
+ * button's children are presentational, so a status inside it would be
+ * flattened into its name and never announced.
  */
 export function CopyEmail({ email, size = "large" }: { email: string; size?: "large" | "small" }) {
   const [state, setState] = useState<CopyState>("rest");
@@ -209,38 +216,32 @@ export function CopyEmail({ email, size = "large" }: { email: string; size?: "la
       data-size={size}
       data-chop={chopped ? (struck ? "struck" : "set") : undefined}
     >
-      <button type="button" className="copy-email-button tap" onClick={onClick}>
+      <button type="button" className="copy-email-button" onClick={onClick}>
         <span
           ref={addressRef}
           className={
             size === "small"
-              ? "copy-email-address text-small font-medium text-ink"
-              : "copy-email-address text-display-m font-medium text-ink"
+              ? "copy-email-address text-body font-medium text-ink"
+              : "copy-email-address font-medium text-ink"
           }
         >
           {email}
         </span>
         <span className="sr-only">, copy to clipboard</span>
+        <span className="copy-email-label meta" aria-hidden="true">
+          {state === "copied" ? (
+            <Check className="copy-email-icon" />
+          ) : (
+            <Copy className="copy-email-icon" />
+          )}
+          <span className="copy-email-word">{LABEL[state]}</span>
+          {/* In the DOM from the first byte at opacity 0 and out of flow, so
+              striking it shifts nothing. It hangs off the chip, whose width
+              is fixed, so a mark pressed into paper does not slide when the
+              word beside it changes. */}
+          <Chop />
+        </span>
       </button>
-      {/* Before the label, not after it. The label's own width changes with its
-          words ("Click to copy" → "Copied"), and a chop downstream of that slid
-          53px sideways a beat after it was struck and slid back 1.2s later — a
-          mark pressed into paper does not move. Here it is fixed to the
-          address's right edge and the label does the moving, as it always did.
-          In the DOM from the first byte at opacity 0, so striking it shifts
-          nothing: decorative and silent, the live region below is the
-          affordance. */}
-      <Chop />
-      <span className="copy-email-label meta" aria-hidden="true">
-        {state === "rest" ? (
-          <>
-            <span className="copy-hint-fine">{LABEL.rest}</span>
-            <span className="copy-hint-coarse">Tap to copy</span>
-          </>
-        ) : (
-          LABEL[state]
-        )}
-      </span>
       {/* Only the change is spoken. With the resting hint in the region a
           screen reader heard "Copied", then "Click to copy" 1.2 s later, on
           top of the button's own name it had just read. */}

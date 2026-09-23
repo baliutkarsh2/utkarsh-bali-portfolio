@@ -394,63 +394,164 @@
 
   /* ── Footer ───────────────────────────────────────────────── */
 
-  /* Positioned above the board like every `main > *`: the hero and 404
-     canvases are position: fixed at z 0 inside their section, and a short
-     page (404) can have the footer on screen while dots are still dispersing. */
+  /* The back cover: the same --ground-2 tint as the home page's close, to
+     the trim, so on / the two are one panel and everywhere else the page ends
+     on a definite edge instead of a loose block of links on paper.
+     Positioned above the board like every main > *: the hero and 404
+     canvases are position: fixed at z 0 inside their section. */
   .site-footer {
     position: relative;
     z-index: var(--z-content);
-    padding-block: 0 var(--space-4);
+    margin-top: var(--space-6);
+    background: var(--ground-2);
   }
 
-  /* The rule is on the content row, not the footer: every other hairline on
-     the site is inset to the page column, and a full-bleed rule under an
-     unfilled block reads as a stray. On .shell it would still be 40px wider
-     on each side than the section rules, since that box carries the padding. */
-  /* One block now that the mission line is gone. It used to be a
-     space-between pair with the identity right-aligned against it; with one
-     child, space-between put a right-aligned block at the left edge of the
-     row, which read as a bug. Left edge, left aligned, on the same column as
-     everything above it. */
-  .footer-top {
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--line);
+  /* Home has its own close directly above, in the same tint: the footer
+     starts where the band stops and is only the colophon. */
+  body:has(.contact-band) .site-footer {
+    margin-top: 0;
   }
 
-  .footer-identity p {
+  body:has(.contact-band) .footer-contact {
+    display: none;
+  }
+
+  /* Every other route: a compact close. Title and address on the left, the
+     profiles index on the right from 64rem, exactly as the home close sets
+     them, one size down. */
+  .footer-contact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-5);
+    padding-block: var(--space-8) var(--space-6);
+  }
+
+  .footer-kicker {
     margin: 0;
   }
 
-  /* The close lives once, on the home page; every other route ends here, so
-     the address sits above the links as one small click-to-copy line. */
   .footer-address {
-    margin-top: var(--space-5);
+    margin-top: var(--space-3);
   }
 
-  .footer-links {
-    margin-top: var(--space-4);
+  @media (width >= 64rem) {
+    .footer-contact {
+      grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+      column-gap: var(--space-10);
+      align-items: start;
+    }
   }
 
-  .footer-links-list {
+  /* Below 64rem the index is the last thing in the block and runs the full
+     column, so its closing rule and the colophon's were two identical lines
+     48px apart. The index's rule is the colophon's rule there. Scoped away
+     from /, where this block is hidden but still the bar's sibling. */
+  @media (width < 64rem) {
+    body:not(:has(.contact-band)) .footer-contact {
+      padding-bottom: 0;
+    }
+
+    body:not(:has(.contact-band)) .footer-contact + .footer-bar {
+      border-top: 0;
+    }
+  }
+
+  /* The colophon line. The rule is on this content row, not on the footer:
+     every other hairline on the site is inset to the page column. */
+  .footer-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem var(--space-4);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+
+  /* The mark, then the facts. On a phone the facts are a column flush under
+     the name and the mark sits on the first line; from 48rem they are one
+     line, separated by the site's 3px dot. */
+  .footer-colophon {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    color: var(--ink-3);
+  }
+
+  .footer-mark {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 1lh;
+    color: var(--ink);
+  }
+
+  .footer-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    margin: 0;
+  }
+
+  /* A 3px ink dot between facts, the site's own separator. */
+  .footer-sep {
+    display: none;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+
+  @media (width >= 48rem) {
+    .footer-colophon {
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .footer-facts {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.25rem 0.75rem;
+    }
+
+    .footer-sep {
+      display: block;
+    }
+  }
+
+  .footer-nav-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem var(--space-3);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* The dotted underline, and the colour transition that goes with it, come
-     from the dot-underline utility on the same element (utilities outrank
-     this layer, so a transition here would be dead). Only the colours live
-     here. */
   .footer-link {
     color: var(--ink-2);
-    text-decoration: none;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition:
+      color var(--dur-1) var(--ease-snap),
+      text-decoration-color var(--dur-2) var(--ease-snap);
   }
 
-  .footer-link:hover {
+  .footer-link:hover,
+  .footer-link:focus-visible {
     color: var(--ink);
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /* On a phone the colophon and the links stack. */
+  @media (width < 48rem) {
+    .footer-bar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 
   /* ── Nine-dot mark ────────────────────────────────────────── */
