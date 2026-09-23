@@ -85,8 +85,8 @@ export const otherWork: (Experience & { key: string })[] = [
     company: "Checkpoint",
     role: "Co-founder & CTO",
     location: "",
-    dates: "Feb 2026 to Present",
-    sortDate: "2026-02-01",
+    dates: "Apr 2026 to Present",
+    sortDate: "2026-04-01",
     summary:
       "I co-founded Checkpoint with Ayushman Gupta and Aaditya Gaur, and I lead its engineering.",
     bullets: [

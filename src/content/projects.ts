@@ -48,7 +48,7 @@ export const projects: Project[] = [
     tagline:
       "CI/CD for AI agents. Adversarial test suites that run before an agent ever meets a user.",
     year: "2026",
-    sortDate: "2026-02-01",
+    sortDate: "2026-04-01",
     status: "ongoing",
     featured: true,
     metric: "Top 10%",

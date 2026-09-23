@@ -179,9 +179,9 @@ type Point = {
   centre: number;
   low: number;
   high: number;
-  /** "Feb 2026", for the label the mark shows under the pointer. */
+  /** "Apr 2026", for the label the mark shows under the pointer. */
   shortWhen: string;
-  /** “Checkpoint, February 2026, Checkpoint, Co-founder & CTO, Ongoing”. */
+  /** “Checkpoint, April 2026, Checkpoint, Co-founder & CTO, Ongoing”. */
   label: string;
 };
 
