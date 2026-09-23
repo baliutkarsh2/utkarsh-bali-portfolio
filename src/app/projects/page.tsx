@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DotBoard } from "@/components/interactive/dot-board";
-import { deviceOf, plateById } from "@/content/plates";
-import { orderedProjects, statusLabel } from "@/content";
+import { ArrowRight } from "lucide-react";
+import { DeviceMark } from "@/components/project/device-mark";
+import { deviceOf } from "@/content/plates";
+import { orderedProjects, statusLabel, type Project } from "@/content";
 
 export const metadata: Metadata = {
   title: "Work",
@@ -18,139 +19,149 @@ export const metadata: Metadata = {
 };
 
 /**
- * The Work index: eight rows, newest first, each one a year, a name, a
- * sentence and a machine line.
+ * The Work index: eight rows, newest first, grouped by year.
  *
- * It used to be a contents page in the printed sense, and the apparatus went
- * with it. The eight headline figures were set as a right-hand column of
- * Bodoni numerals at three sizes graded by "reach", each carrying a
- * superscript reference mark — `*  †  ‡  §  ‖  ¶  **  ††` — that anchored to
- * a critical apparatus at the foot of the page, eight notes with lemmas and
- * links back to the figure. Rows were unequal in height by design and every
- * row's text was indented in proportion to how long ago the work started, so
- * the left margin encoded the chronology.
+ * Each row answers the three questions a reader brings to an index, in the
+ * order they bring them: what is it (the name and one sentence), did it work
+ * (the result, set in the reading face with the figure in full ink, on a line
+ * of its own rather than buried at the end of a machine line), and where did
+ * it happen (eyebrow, organisation, status, in mono). The project's device
+ * hangs at the right edge: the mechanism of that project drawn as a diagram
+ * of rules, bars and dots, the same mark the case study shows at full size.
  *
- * All of it worked and none of it was for the reader. A figure set four times
- * the size of the name beside it is the page shouting which fact it would
- * like you to be impressed by, and a number whose label is three screens away
- * behind a dagger is a number you cannot check. What a person wants from an
- * index is to find the thing and know what it is. So: one uniform row, the
- * metric stated in the same line as the rest of the facts and at the same
- * size as them, and no furniture that has to be explained before it can be
- * read.
+ * The year is a group label, said once per group against a heavier rule,
+ * instead of repeated on every row beside a vertical spine: three groups read
+ * as three groups without a second axis to explain. It is set as a figure in
+ * the display face and rides the margin while its rows pass, so the margin is
+ * never a strip of bare paper with a date at the top of it.
  *
- * Server component, no rail, nothing that animates: every project route and
- * every figure is in the HTML with JavaScript switched off.
+ * A strip used to sit under the standfirst: projects per quarter as a band of
+ * graded dot density. At its real size it read as a loading bar, and nobody
+ * who came to find a project needed the quarterly histogram first. Gone.
+ *
+ * Server component. Nothing here animates, and every route and figure is in
+ * the HTML with JavaScript switched off.
  */
 export default function ProjectsPage() {
   const count = orderedProjects.length;
-  const years = orderedProjects.map((p) => p.sortDate.slice(0, 4));
-  const currentYear = years[0];
-  const firstYear = years[years.length - 1];
-  const rule = plateById.get("rule-quarters");
+  const yearOf = (p: Project) => p.sortDate.slice(0, 4);
+  const firstYear = yearOf(orderedProjects[count - 1]);
+  const currentYear = yearOf(orderedProjects[0]);
+
+  // Already newest-first, so a group is a run of equal years.
+  const groups: { year: string; projects: Project[] }[] = [];
+  for (const project of orderedProjects) {
+    const year = yearOf(project);
+    const last = groups[groups.length - 1];
+    if (last && last.year === year) last.projects.push(project);
+    else groups.push({ year, projects: [project] });
+  }
 
   return (
     <>
-      <header className="shell pt-20 pb-8 md:pt-24 md:pb-10">
-        <p className="meta text-ink-3">
-          {count} projects · {firstYear}&ndash;{currentYear}
-        </p>
-        <h1 className="mt-6 text-display-l text-ink">Work</h1>
-        <p className="measure mt-6 text-lede text-ink-2">
-          Five on agents, two in research, one with 3,000+ users.
-        </p>
+      <header className="shell page-mast toc-mast">
+        <div className="toc-mast-type">
+          <p className="meta text-ink-3">
+            {count} projects · {firstYear}&ndash;{currentYear}
+          </p>
+          <h1 className="page-mast-title text-display-l text-ink">Work</h1>
+          <p className="page-mast-lede text-lede text-ink-2">
+            Five on agents, two in research, one with 3,000+ users. Each one
+            has a write-up: the problem, what I built, and what came of it.
+          </p>
+        </div>
 
-        {/* A rule whose ink thickens where the work landed: seven quarters,
-            Q4 2024 to Q2 2026, counted off the real dates. You read it the
-            way you read a printed rule of graded weight — the eye takes the
-            shape of two years, not seven numbers. The hole is Q1 2025. */}
-        {rule && (
-          <figure className="toc-rule">
-            <DotBoard
-              source={rule.id}
-              alt={rule.alt}
-              fallback={rule.still}
-              className="rule-board"
-            />
-            <figcaption className="caption">{rule.subject}.</figcaption>
-          </figure>
-        )}
-      </header>
-
-      <div className="shell toc pb-4">
-        <ol className="toc-list">
-          {orderedProjects.map((project, i) => {
-            const year = years[i];
-            // The list is already newest-first, so a year is new the moment
-            // it differs from the row above it.
-            const firstOfYear = i === 0 || years[i - 1] !== year;
-            const device = deviceOf(project.slug);
-
-            // Everything the row says about itself, in one line and in one
-            // size. The metric is the last item because it is the strongest,
-            // not because it is a different kind of fact.
-            const meta = [
-              project.eyebrow,
-              project.org ?? project.role,
-              statusLabel[project.status],
-              `${project.metric} ${project.metricLabel}`,
-            ]
-              .filter(Boolean)
-              .join(" · ");
-
-            return (
-              <li key={project.slug} className="toc-row">
-                {/* The year is data, not decoration: it is the label on the
-                    axis the date rule draws. Full ink on the first row of
-                    each year, so the three groups separate without a second
-                    rule. */}
-                <span
-                  className="toc-year data"
-                  data-first={firstOfYear ? "" : undefined}
-                >
-                  {year}
-                </span>
-
-                <div className="toc-body">
-                  <h2 className="toc-title text-display-s font-medium text-balance">
+        {/* The contents, beside the masthead at 64rem and up: all eight
+            names on the first screen, by year, each a link to its write-up.
+            The rows below are tall, and at 1440 only two of them are above
+            the fold; this is where a reader who came for one project finds
+            it without scrolling, and it is what the right half of the
+            masthead is for instead of bare paper. */}
+        <nav className="toc-contents" aria-label="Contents">
+          {groups.map((group) => (
+            <div key={group.year} className="toc-contents-row">
+              <p className="toc-contents-year data">{group.year}</p>
+              <ul className="toc-contents-list">
+                {group.projects.map((project) => (
+                  <li key={project.slug}>
                     <Link
-                      className="stretch-link"
+                      className="toc-contents-link"
                       href={`/projects/${project.slug}`}
-                      style={{ viewTransitionName: `project-${project.slug}` }}
                     >
                       {project.name}
                     </Link>
-                  </h2>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </header>
 
-                  {/* Every row carries its sentence. Under the old design
-                      only the current year did, so five of eight projects
-                      were a name and a machine line — the page thinned as it
-                      receded, which is a nice idea about a contents page and
-                      a bad one about work someone came here to read. */}
-                  <p className="toc-standfirst text-lede">{project.tagline}</p>
+      <div className="shell toc">
+        {groups.map((group) => (
+          <section
+            key={group.year}
+            className="toc-group"
+            aria-label={`Projects from ${group.year}`}
+          >
+            {/* The group's label: the year as a figure in the display face,
+                and the count under it. Sticky in the margin at 48rem and up,
+                so the year stays beside the rows it heads while they pass. */}
+            <p className="toc-year">
+              <span className="toc-year-n text-display-s">{group.year}</span>
+              <span className="toc-year-count meta">
+                {group.projects.length}{" "}
+                {group.projects.length === 1 ? "project" : "projects"}
+              </span>
+            </p>
 
-                  <p className="toc-meta meta">{meta}</p>
-                </div>
+            <ol className="toc-list">
+              {group.projects.map((project) => {
+                const device = deviceOf(project.slug);
+                const meta = [
+                  project.eyebrow,
+                  project.org ?? "Independent",
+                  statusLabel[project.status],
+                ].join(" · ");
 
-                {/* The project's own device: a small engraved diagram of the
-                    mechanism that project actually is. Hidden below 64rem,
-                    where there is no band to put it in; the same device
-                    appears full size on the case study, which is where a
-                    phone reader meets it. */}
-                {device && (
-                  <div className="toc-device" aria-hidden="true">
-                    <DotBoard
-                      source={device.id}
-                      alt=""
-                      fallback={device.still}
-                      className="device-board"
-                    />
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ol>
+                return (
+                  <li key={project.slug} className="toc-row">
+                    <div className="toc-body">
+                      <h2 className="toc-title text-display-s">
+                        <Link
+                          className="stretch-link"
+                          href={`/projects/${project.slug}`}
+                          style={{
+                            viewTransitionName: `project-${project.slug}`,
+                          }}
+                        >
+                          {project.name}
+                        </Link>
+                        <ArrowRight className="toc-arrow" aria-hidden="true" />
+                      </h2>
+
+                      <p className="toc-standfirst">{project.tagline}</p>
+
+                      <p className="toc-result text-small">
+                        <span className="toc-figure">{project.metric}</span>{" "}
+                        {project.metricLabel}
+                      </p>
+
+                      <p className="toc-meta meta">{meta}</p>
+                    </div>
+
+                    {device && (
+                      <div className="toc-device">
+                        <DeviceMark plate={device} />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        ))}
       </div>
     </>
   );

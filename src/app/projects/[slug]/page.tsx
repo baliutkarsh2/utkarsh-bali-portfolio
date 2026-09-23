@@ -9,11 +9,7 @@ import {
   statusLabel,
   type Project,
 } from "@/content";
-import { Gallery } from "@/components/project/gallery";
-import {
-  ProjectBody,
-  ProjectColophon,
-} from "@/components/project/project-body";
+import { ProjectBody } from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
 import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
 
@@ -50,40 +46,26 @@ export async function generateMetadata({
 }
 
 /**
- * A case study, as one plate rather than a template around a paragraph.
+ * A case study: a masthead, the argument, and the way to the next one.
  *
- * The measurement that decided this: a case study on this site averages 198
- * words — 317 at the longest, 136 at the shortest. Around those 198 words the
- * page this replaces wrapped a sticky sub-bar, a scroll-progress row, a
- * masthead, a full-bleed number band, five numbered section blocks, a sticky
- * 20rem rail and a two-row prev/next footer. The scaffolding outweighed the
- * content by an order of magnitude, which is exactly why it read as a template.
+ * The masthead is the name, its one sentence, and a row of facts the way a
+ * magazine sets them over a profile: role, organisation, status, and the
+ * result -- the figure in the display face, its label under it in the reading
+ * face. That row replaces a single mono "spec line" and a second mono line
+ * for the figure, both of which asked a reader to parse a string of middots
+ * to find out who he was on the project and whether it worked.
  *
- * What is here instead, in order:
+ * Under it the sheet (project-body.tsx): the movements in a margin-and-text
+ * pair, and the rail beside them with the project's device, its stack and its
+ * links. The page is laid on one grid from top to bottom: every running head
+ * hangs in the same margin, the name, every standfirst and every step share
+ * one left edge, and the rail and the facts row share the right one.
  *
- *   · the frontispiece — the name at display-l, a one-line spec, and the
- *     headline figure set very large and bled off the right edge of the sheet;
- *   · four movements, each opening on its own first sentence set in the display
- *     italic across a wider measure, with "How it works" drawn as a three-stage
- *     schematic from the three `architecture` strings every project has;
- *   · the number again, at the close of Impact;
- *   · the plates, where there are screenshots; the colophon; the foot.
+ * Accents: none. --sun is licensed to three places site-wide and no case
+ * study is one of them.
  *
- * Deleted, on purpose: the sub-bar (a sticky bar takes 44px off every screen of
- * a page people actually read — the running head hangs in the margin instead,
- * where a running head goes), the progress row, the number band, the numbered
- * block heads, and the rail.
- *
- * The dot field is absent from the body of this page and that is the point:
- * this is the document the machine printed, and a document does not contain its
- * press. The lattice belongs to the home board and to the image masks.
- *
- * Accents: none. --sun is licensed to three places site-wide and no case study
- * is one of them, so the figure, the rules and the schematic are all --ink.
- *
- * Motion: none. Nothing on this page has a cold state, so reduced motion and
- * JavaScript-off both render exactly what everyone else sees — the only moving
- * parts left are the shared image masks, which resolve themselves in CSS.
+ * Motion: hover only. Nothing on this page has a cold state, so reduced
+ * motion and JavaScript-off both render exactly what everyone else sees.
  */
 export default async function ProjectPage({
   params,
@@ -94,12 +76,12 @@ export default async function ProjectPage({
 
   const adjacent = adjacentProjects(slug);
 
-  const spec = [
-    project.eyebrow,
-    project.org ?? "Independent",
-    project.role,
-    project.year,
-    statusLabel[project.status],
+  // An independent build says so in its role, so it has no organisation cell.
+  const facts: { label: string; value: string }[] = [
+    { label: "Role", value: project.role },
+    ...(project.org ? [{ label: "Organization", value: project.org }] : []),
+    { label: "Year", value: project.year },
+    { label: "Status", value: statusLabel[project.status] },
   ];
 
   return (
@@ -109,64 +91,75 @@ export default async function ProjectPage({
         dangerouslySetInnerHTML={{ __html: jsonLd(buildSchema(project)) }}
       />
 
-      <article className="plate">
-        {/* Frontispiece. The margin column opens with the way back, which is
-            the only navigation this page needs above the fold; the h1 shares
-            `project-{slug}` with the index row's title, so the name morphs
-            into place and nothing else moves. */}
-        <header className="frontis sheet-row shell">
-          <div>
-            <Link href="/projects" className="frontis-back data tap">
+      <article className="case">
+        <header className="case-head shell">
+          <div className="case-head-margin">
+            <Link href="/projects" className="case-back data tap">
               <ArrowLeft aria-hidden="true" />
-              <span className="dot-underline">Work</span>
+              <span className="dot-underline">All work</span>
             </Link>
           </div>
 
-          <div>
-            <p className="spec-line data">
-              {/* Keyed on the index, not the value: spec is
-                  [eyebrow, org, role, year, status] and two of those being
-                  equal would silently drop a span. */}
-              {spec.map((item, i) => (
-                <span key={i}>{item}</span>
-              ))}
-            </p>
+          <div className="case-head-main">
+            <p className="case-eyebrow meta">{project.eyebrow}</p>
+            {/* Shares `project-{slug}` with the index row's title, so the
+                name morphs into place and nothing else moves. */}
             <h1
-              className="frontis-name text-display-l"
+              className="case-name text-display-l"
               style={{ viewTransitionName: `project-${project.slug}` }}
             >
               {project.name}
             </h1>
-            <p className="frontis-tagline text-lede">{project.tagline}</p>
-            {/* The number, said once, in the masthead, at the size of the
-                other facts about the project.
+            <p className="case-tagline text-lede">{project.tagline}</p>
 
-                It used to be a screen of its own: the metric set in Bodoni at
-                display-l and bled off the right edge of the sheet, the only
-                element on the site permitted to leave the page, with the
-                label under it in italic. On this project that meant "Top 10%"
-                a foot tall above a case study whose own Impact section says
-                "We didn't get an interview." A figure given a whole screen is
-                the page insisting on being impressive before it has been
-                useful, and the reader has to scroll past it to reach the
-                work. */}
-            <p className="frontis-metric meta">
-              {project.metric} {project.metricLabel}
-            </p>
+            <dl className="case-facts">
+              {facts.map((fact) => (
+                <div key={fact.label} className="case-fact">
+                  <dt className="meta">{fact.label}</dt>
+                  <dd className="text-small">{fact.value}</dd>
+                </div>
+              ))}
+              <div className="case-fact case-fact-result">
+                <dt className="meta">Result</dt>
+                <dd>
+                  <span className="case-stat text-display-s">
+                    <Stat value={project.metric} />
+                  </span>
+                  <span className="case-stat-label text-small">
+                    {project.metricLabel}
+                  </span>
+                </dd>
+              </div>
+            </dl>
           </div>
         </header>
 
         <ProjectBody project={project} />
-
-        {project.media && project.media.length > 0 && (
-          <Gallery media={project.media} />
-        )}
-
-        <ProjectColophon project={project} />
       </article>
 
       {adjacent && <ProjectNav prev={adjacent.prev} next={adjacent.next} />}
     </>
+  );
+}
+
+/**
+ * The result figure, with its signs set in the reading face.
+ *
+ * Bodoni Moda draws `+`, `<` and `>` as hairlines: at the 30 px this figure
+ * is set at, the plus in "3K+" and the angle in "<1%" were a pixel wide and
+ * read as a smudge beside the numeral, so "3K+" looked like "3K" with dirt on
+ * it. Source Serif's signs carry a stroke that holds at this size; the digits
+ * and letters stay in the display face.
+ */
+function Stat({ value }: { value: string }) {
+  return value.split(/([+<>])/).map((part, i) =>
+    /^[+<>]$/.test(part) ? (
+      <span key={i} className="case-stat-sign">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
   );
 }
 

@@ -1189,15 +1189,97 @@
   }
 
   /* ═══ Recognition ═══════════════════════════════════════════════════════════
-     The row gutter is drawn for a two-digit index; here it carries a year
-     span ("2024 to 2026"). On a phone it wraps onto two lines in 4rem. */
-  .recognition .row {
-    grid-template-columns: 4rem minmax(0, 1fr);
+     A grid of short entries (recognition.tsx): two columns at 64rem and up,
+     each entry under its own hairline, the year in mono over the honour in
+     the display face over one line of detail. The hairlines of a pair sit on
+     one line, and the gutter between the pair breaks it, so the grid reads as
+     rows of two rather than as boxes. An odd last entry takes both columns. */
+  .recognition-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 
-  @media (width >= 48rem) {
-    .recognition .row {
-      grid-template-columns: 7rem minmax(0, 1fr) 1.5rem;
+  @media (width >= 64rem) {
+    .recognition-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .recognition-item:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .recognition-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: start;
+    column-gap: var(--space-2);
+    padding-block: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+
+  .recognition-year {
+    grid-column: 1;
+    margin: 0;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .recognition-title {
+    grid-column: 1;
+    margin: 0.625rem 0 0;
+    color: var(--ink);
+  }
+
+  .recognition-link {
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+    transition: text-decoration-color var(--dur-2) var(--ease-snap);
+  }
+
+  .recognition-item[data-link]:hover .recognition-link,
+  .recognition-link:focus-visible {
+    text-decoration-color: var(--rule-mid);
+  }
+
+  .recognition-detail {
+    grid-column: 1;
+    margin: 0.5rem 0 0;
+    max-width: 40rem;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  /* The arrow rides the year's line at the entry's right edge, and moves 2px
+     on hover: the one thing on the entry that does. */
+  .recognition-arrow {
+    grid-column: 2;
+    grid-row: 1;
+    width: 1rem;
+    height: 1rem;
+    color: var(--ink-3);
+    transition:
+      translate var(--dur-2) var(--ease-snap),
+      color var(--dur-1) var(--ease-snap);
+  }
+
+  .recognition-item[data-link]:hover .recognition-arrow,
+  .recognition-item:has(.recognition-link:focus-visible) .recognition-arrow {
+    translate: 2px 0;
+    color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .recognition-arrow {
+      transition: none;
     }
   }
 

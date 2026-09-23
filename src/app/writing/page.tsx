@@ -72,7 +72,7 @@ export default function WritingPage() {
 
   return (
     <>
-      <header className="shell broadside pt-20 pb-6 md:pt-24">
+      <header className="shell broadside broadside-head">
         {/* The type is one grid child so the plate beside it can be the other.
             Without the wrapper the figure has to span rows it cannot name --
             `grid-row: 1 / -1` resolves against the EXPLICIT grid, which has no
@@ -83,7 +83,7 @@ export default function WritingPage() {
 
           {/* The essay's title is the page's h1, because the essay is the
             page. The masthead line above says which room you are in. */}
-          <h1 className="broadside-title mt-8 text-display-l">{title}</h1>
+          <h1 className="broadside-title text-display-l">{title}</h1>
 
           {lead.summary && (
             <p className="broadside-standfirst text-lede">{lead.summary}</p>

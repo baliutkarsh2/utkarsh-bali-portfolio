@@ -1,99 +1,70 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   THE PLATE BOOK — /projects/[slug]
+   THE CASE STUDY — /projects/[slug]
 
-   A case study on this site averages 198 words (max 317, min 136). The page
-   this replaces wrapped those 198 words in a sticky sub-bar, a scroll-progress
-   row, a masthead, a number plate, five numbered blocks, a sticky rail and a
-   prev/next footer: an order of magnitude more scaffolding than content, which
-   is exactly why it read as a template. It was one.
+   One grid from the masthead to the foot, three columns at 64rem and up:
 
-   So this is not a reading page with furniture on it. It is one composed
-   object — a plate printed on a sheet:
+     margin   the way back, and every movement's running head
+     text     the name, the tagline, every standfirst, the copy, the steps
+     rail     the project's device, its stack and its links, riding beside
+              the argument (sticky where the window is tall enough to hold it)
 
-     · a frontispiece: the name, a spec line, and the headline figure set very
-       large and bled off the right edge of the sheet. It is the only element
-       on the site permitted to leave the page.
-     · four movements (Problem, Approach, How it works, Impact; Learnings on
-       the one project that has them), each opening with a standfirst in the
-       display italic across a wider measure before dropping to the body
-       measure. A reader who reads only the four italic lines has the case.
-     · a schematic, not a list: every project has exactly three `architecture`
-       strings, so they are drawn as a three-stage figure with directed rules.
-     · the running head in the margin, not in a bar across the top. A sticky
-       bar steals 44px from every screen of a page people actually read.
-     · Impact closing on the frontispiece figure again. The argument ends where
-       it started, on its number.
+   The facts row under the tagline spans text and rail, so the top of the page
+   uses the full sheet, and every rule on the page starts at the margin's left
+   edge and stops at the rail -- a hairline painted on `.shell` would span its
+   padding box and run past every other rule on the site, so no rule here is
+   drawn on a `.shell`.
 
-   Ink on paper. No accent: --sun is licensed to three places site-wide and none
-   of them is here. No shadow, no radius, no gradient as fill; the plate mark is
-   the one container. Nothing here animates, so reduced motion is the state that
-   renders — there is no cold state to decide before first paint.
+   Below 64rem the margin folds into a head row over each movement and the
+   rail follows the movements, which is what a margin does on a narrow page.
+
+   Ink on paper. No accent: --sun is licensed to three places site-wide and
+   none of them is here. The plate mark is the one container.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
-  /* ═══ The sheet ═══════════════════════════════════════════════════════════
-     One two-column grid for the whole plate: a margin column that carries the
-     running head, and the type column. Every band on the page — frontispiece,
-     movement, plates, colophon — is laid on it, so the name, every standfirst
-     and the colophon share one left edge.
-
-     Below 64rem the margin column folds and its content becomes a head row
-     above the type, which is what a margin does on a narrow page.
-     ─────────────────────────────────────────────────────────────────────── */
-  .plate {
-    /* The margin column. 7.5rem holds "How it works" on two lines at 11px. */
-    --plate-margin: 7.5rem;
-    /* The standfirst measure. Wider than --measure by design: the italic line
-       is the argument, and it is set to be read across, not down. */
-    --plate-lede: 52rem;
-  }
-
-  /* The press does not appear in the document it printed — and this route
-     used to have to say so, with `:root:has(.plate) .field-light { display:
-     none }`. It measured the cost of leaving it on: a pointer resting on a
-     paragraph took the background contrast under that paragraph from 8.97:1
-     to 1.05:1. That measurement is why the field light is now deleted
-     site-wide rather than hidden here (board.css). No page contains its
-     press. */
-
-  .sheet-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: var(--space-2);
+  .case,
+  .case-foot {
+    --case-margin: 0rem;
+    --case-rail: 0rem;
+    --case-gap: var(--gutter);
   }
 
   @media (width >= 64rem) {
-    .sheet-row {
-      grid-template-columns: var(--plate-margin) minmax(0, 1fr);
-      column-gap: var(--gutter);
-      row-gap: 0;
+    .case,
+    .case-foot {
+      --case-margin: 8rem;
+      --case-rail: 16rem;
+      --case-gap: var(--space-4);
     }
   }
 
   @media (width >= 80rem) {
-    .plate {
-      --plate-margin: 9rem;
+    .case,
+    .case-foot {
+      --case-margin: 9rem;
+      --case-rail: 17rem;
+      --case-gap: var(--space-6);
     }
   }
 
-  /* ═══ Frontispiece ════════════════════════════════════════════════════════
-     Clears the 3.5rem fixed header, then a full band: back link in the margin,
-     spec line, name, tagline.
-     ─────────────────────────────────────────────────────────────────────── */
-  .frontis {
-    padding-block: calc(3.5rem + var(--space-6)) 0;
+  /* ═══ The masthead ═══════════════════════════════════════════════════════ */
+  .case-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-4);
+    padding-block: calc(3.5rem + var(--space-5)) var(--space-8);
   }
 
-  @media (width >= 48rem) {
-    .frontis {
+  @media (width >= 64rem) {
+    .case-head {
+      grid-template-columns: var(--case-margin) minmax(0, 1fr);
+      column-gap: var(--gutter);
+      row-gap: 0;
       padding-block-start: calc(3.5rem + var(--space-8));
     }
   }
 
-  /* The back link is the margin's first running head: on a narrow page it sits
-     above the spec line, on a wide one it hangs in the margin beside it. It is
-     the only navigation above the fold, and it is a real anchor. */
-  .frontis-back {
+  .case-back {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -101,100 +72,149 @@
     transition: color var(--dur-1) var(--ease-snap);
   }
 
-  .frontis-back:hover,
-  .frontis-back:focus-visible {
+  .case-back:hover,
+  .case-back:focus-visible {
     color: var(--ink);
   }
 
-  .frontis-back svg {
-    width: 0.75rem;
-    height: 0.75rem;
+  .case-back svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
     flex: none;
-    transition: transform var(--dur-2) var(--ease-snap);
+    transition: translate var(--dur-2) var(--ease-snap);
   }
 
-  .frontis-back:hover svg {
-    transform: translateX(-2px);
+  .case-back:hover svg {
+    translate: -2px 0;
   }
 
-  /* The spec line: eyebrow · organisation · role · year · status. One line of
-     data, not a four-up table of labelled cells. The separator is generated
-     with empty alt text so it is painted but never announced. */
-  .spec-line {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 0.5rem;
+  /* The back link sits on the eyebrow's line. */
+  @media (width >= 64rem) {
+    .case-head-margin {
+      padding-block-start: 0.05rem;
+    }
+
+    .case-back {
+      margin-block-start: -0.2rem;
+    }
+  }
+
+  .case-eyebrow {
     margin: 0;
     color: var(--ink-3);
   }
 
-  .spec-line > span + span::before {
-    content: "·" / "";
-    margin-inline-end: 0.5rem;
-    color: var(--rule-mid);
-  }
-
-  .frontis-name {
+  .case-name {
     margin-block: var(--space-3) 0;
     color: var(--ink);
   }
 
-  .frontis-tagline {
+  .case-tagline {
     margin-block: var(--space-3) 0;
+    max-width: 44rem;
     color: var(--ink-2);
-    max-width: var(--plate-lede);
   }
 
-  /* The headline number, in the masthead's own machine grammar. It used to be
-     a display-l numeral bled off the right edge of the sheet with a screen to
-     itself; see the note in the route. */
-  .frontis-metric {
-    margin-block-start: 1.25rem;
-    color: var(--ink-3);
+  /* ── The facts ──────────────────────────────────────────────────────────
+     Role, organisation, year, status, and the result -- label over value,
+     under one rule. The result takes two tracks: its figure is set in the
+     display face and its label is a phrase. */
+  .case-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) var(--gutter);
+    margin: var(--space-6) 0 0;
+    padding-block-start: var(--space-3);
+    border-top: 1px solid var(--line-strong);
   }
 
-  /* ═══ Movements ═══════════════════════════════════════════════════════════ */
-  .movements {
-    margin-block-start: var(--space-10);
-  }
-
-  /* `.plates-band` is the gallery: not a movement of the argument, but the same
-     band on the same sheet, so it takes the same rule and the same rhythm. */
-  /* 129px between movements became 81px: the same tightening the section
-     token got, applied to the one route --section-y cannot reach. The top
-     padding stays at 32px so an anchored landing still clears the sub-bar --
-     :root:has(.case-bar) scroll-padding-top is a measured 7.25rem and puts a
-     movement's padding box at 116px, so its head lands at 148 against a bar
-     that ends at 106. */
-  .movement,
-  .plates-band {
-    border-top: 1px solid var(--line);
-    padding-block: var(--space-4) var(--space-5);
-  }
-
-  @media (width >= 64rem) {
-    .movement,
-    .plates-band {
-      padding-block: var(--space-4) var(--space-6);
+  @media (width >= 48rem) {
+    .case-facts {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
     }
   }
 
-  /* The running head. In the margin at ≥64rem and sticky there, so the reader
-     always knows which movement they are in without a bar over the type; a row
-     above the type below that, where there is no margin to hang it in.
-     `align-self: start` because a grid item stretches to its row by default and
-     a stretched item cannot stick. */
-  .movement-head {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
+  .case-fact {
+    min-width: 0;
   }
 
-  /* A hanging roman numeral is a mark, not a heading. `text-wrap: nowrap`
-     overrides the balance the base layer gives every display size, which would
-     otherwise try to break "III" across two lines in a 7.5rem margin. It is
-     aria-hidden in the TSX; the <h2> beside it carries the name. */
+  .case-fact dt {
+    color: var(--ink-3);
+  }
+
+  .case-fact dd {
+    margin: 0.625rem 0 0;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  .case-fact-result {
+    grid-column: 1 / -1;
+  }
+
+  @media (width >= 48rem) {
+    .case-fact-result {
+      grid-column: span 2;
+    }
+  }
+
+  .case-stat {
+    display: block;
+    margin-block-start: -0.125rem;
+    color: var(--ink);
+    font-variant-numeric: lining-nums;
+  }
+
+  .case-stat-sign {
+    font-family: var(--font-sans);
+    font-weight: 400;
+  }
+
+  .case-stat-label {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--ink-2);
+  }
+
+  /* ═══ The sheet: movements and rail ══════════════════════════════════════ */
+  .case-sheet {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (width >= 64rem) {
+    .case-sheet {
+      grid-template-columns: minmax(0, 1fr) var(--case-rail);
+      column-gap: var(--case-gap);
+    }
+  }
+
+  .movements {
+    min-width: 0;
+  }
+
+  .movement {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-3);
+    border-top: 1px solid var(--line);
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  @media (width >= 64rem) {
+    .movement {
+      grid-template-columns: var(--case-margin) minmax(0, 1fr);
+      column-gap: var(--gutter);
+      row-gap: 0;
+      padding-block: var(--space-4) var(--space-8);
+    }
+  }
+
+  /* The running head. Sticky in the margin at >= 64rem, so the reader always
+     knows which movement they are in without a bar over the type.
+     `align-self: start`, because a stretched grid item cannot stick. */
   .movement-title {
     margin: 0;
     color: var(--ink-3);
@@ -205,343 +225,431 @@
       position: sticky;
       top: calc(3.5rem + var(--space-3));
       align-self: start;
-      display: block;
     }
 
     .movement-title {
-      margin-block-start: 0.5rem;
+      padding-block-start: 0.55rem;
     }
   }
 
-  /* The standfirst: the block's own first sentence, set in the display italic
-     across --plate-lede. Everything under it drops to the body measure, so the
-     line the reader is meant to be able to read alone is also the only line set
-     wide. --ink, not --ink-2: it is the claim. */
+  .movement-main {
+    min-width: 0;
+  }
+
+  /* The standfirst: the block's own first sentence, in the display italic.
+     --ink, not --ink-2: it is the claim. (Set upright it was tried and is
+     wrong: a five-line Bodoni roman standfirst at 30px is a slab, and the
+     italic's lighter colour is what lets it lead the copy without shouting.) */
   .standfirst {
     margin: 0;
-    max-width: var(--plate-lede);
+    max-width: 40rem;
     font-style: italic;
     color: var(--ink);
   }
 
+  /* Impact's standfirst is the page's pull quote: a size up, hung on a rule. */
+  .standfirst-quote {
+    max-width: 44rem;
+    padding-inline-start: var(--space-3);
+    border-inline-start: 2px solid var(--ink);
+  }
+
+  .standfirst-quote p {
+    margin: 0;
+  }
+
   .movement-copy {
-    margin-block: var(--space-4) 0;
+    margin-block: var(--space-3) 0;
     max-width: var(--measure);
     color: var(--ink-2);
   }
 
-  /* ═══ The schematic ═══════════════════════════════════════════════════════
-     Every project carries exactly three `architecture` strings — an input, a
-     transformation, an output — so "How it works" is drawn rather than listed:
-     three plates joined by directed rules. The stages run down rather than
-     across because the three sentences are 15 to 65 words each; three columns
-     stretched to the tallest of those is a figure made mostly of empty ground,
-     and it would break at 390px anyway.
+  .movement-copy + .movement-copy {
+    margin-block-start: var(--space-2);
+  }
 
-     A project with any other number of stages degrades to `.stage-list`, an
-     ordered list of hairlined rows. Nothing here depends on the count being 3.
-     ─────────────────────────────────────────────────────────────────────── */
-  .schematic {
+  /* ═══ How it works: three steps ══════════════════════════════════════════ */
+  .steps {
     margin: var(--space-6) 0 0;
-    max-width: var(--plate-lede);
+    max-width: 44rem;
   }
 
-  .schematic-stages {
-    display: grid;
-    /* The gap is the connector's track: --space-6 of paper with a 3rem rule
-       and its arrowhead drawn in it. */
-    row-gap: var(--space-6);
+  .steps-list {
     margin: 0;
     padding: 0;
     list-style: none;
+    border-top: 1px solid var(--line-strong);
   }
 
-  .stage {
-    position: relative;
-    border: 1px solid var(--rule-mid);
-    background: var(--ground);
-  }
-
-  /* The stage's head band: its index over a hairline, the way a plate in a
-     printed figure is numbered. */
-  .stage-index {
-    margin: 0;
-    padding: 0.625rem var(--space-2);
-    border-bottom: 1px solid var(--line);
-    color: var(--ink-3);
-  }
-
-  .stage-text {
-    margin: 0;
-    padding: var(--space-2);
-    color: var(--ink-2);
-  }
-
-  /* The directed rule between stages: a 1px line down the gap with a chevron
-     at its foot. Drawn on the following stage so the last one has none, and
-     built from borders so it prints and survives forced colours. */
-  .stage + .stage::before,
-  .stage + .stage::after {
-    content: "";
-    position: absolute;
-    left: var(--space-4);
-    pointer-events: none;
-  }
-
-  .stage + .stage::before {
-    top: calc(-1 * var(--space-6));
-    width: 1px;
-    height: var(--space-6);
-    background: var(--rule-mid);
-  }
-
-  .stage + .stage::after {
-    top: calc(-1 * var(--space-1) - 1px);
-    width: 7px;
-    height: 7px;
-    margin-left: -3px;
-    border-right: 1px solid var(--rule-mid);
-    border-bottom: 1px solid var(--rule-mid);
-    transform: rotate(45deg);
-  }
-
-  .schematic-caption {
-    margin-block: var(--space-3) 0;
-    color: var(--ink-2);
-  }
-
-  /* The degraded form: a plain ordered list of hairlined rows. */
-  .stage-list {
-    display: grid;
-    row-gap: 0;
-    margin: var(--space-4) 0 0;
-    padding: 0;
-    max-width: var(--plate-lede);
-    list-style: none;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .stage-list > li {
+  .step {
     display: grid;
     grid-template-columns: 2.5rem minmax(0, 1fr);
     column-gap: var(--space-2);
-    border-top: 1px solid var(--line);
-    padding-block: var(--space-2);
+    padding-block: 1.125rem 1.25rem;
+    border-bottom: 1px solid var(--line);
   }
 
-  /* ═══ Recessed plates ═════════════════════════════════════════════════════
-     Screenshots are pressed into the sheet, not floated over it: the image sits
-     in its --ground-2 well (the shared `.dot-frame`) and the plate mark is
-     struck a little outside it. The one container on the site, used here for
-     the only thing on the page that is a picture.
-     ─────────────────────────────────────────────────────────────────────── */
-  .plate-figure {
-    --plate-inset: 12px;
-    margin: var(--space-6) 0 0;
-    max-width: var(--plate-lede);
+  @media (width >= 48rem) {
+    .step {
+      grid-template-columns: 3.5rem minmax(0, 1fr);
+    }
   }
 
-  .plate-figure figcaption,
-  .plate-grid figcaption {
-    margin-block-start: var(--space-2);
+  /* The step's figure. The display face's lining numeral at 28px, which is
+     above the 21px floor, in the rule grey so it marks the sequence without
+     outranking the sentence beside it. */
+  .step-n {
+    font-family: var(--font-display);
+    font-optical-sizing: none;
+    font-variation-settings: "opsz" 26;
+    font-weight: 500;
+    font-size: 1.75rem;
+    line-height: 1;
+    font-variant-numeric: lining-nums;
+    color: var(--ink-3);
+    padding-block-start: 0.125rem;
+  }
+
+  .step-text {
+    margin: 0;
     color: var(--ink-2);
   }
 
-  /* Capped at --plate-lede like the schematic and the cover, so the standfirst,
-     every figure and every plate on the sheet share one right edge. */
+  .steps-caption {
+    margin-block-start: var(--space-2);
+    color: var(--ink-3);
+  }
+
+  /* ═══ Figures ════════════════════════════════════════════════════════════ */
+  .case-figure.plate-mark {
+    --plate-inset: 12px;
+    margin: var(--space-8) 12px 12px;
+    max-width: 44rem;
+  }
+
   .plate-grid {
     display: grid;
-    row-gap: var(--space-8);
-    margin: 0;
+    row-gap: var(--space-6);
+    margin: var(--space-3) 0 0;
     padding: 0;
-    max-width: var(--plate-lede);
+    max-width: 48rem;
     list-style: none;
   }
 
   .plate-grid > li {
     --plate-inset: 10px;
     min-width: 0;
+    padding-inline: 10px;
   }
 
-  @media (width >= 64rem) {
+  /* On a phone the three screens are a strip you swipe, each about two
+     thirds of the column so the next one shows at the edge. Stacked, they
+     were 2,200px of phone screenshots at full width in the middle of the
+     argument. The strip scrolls inside itself; the page never goes sideways.
+     The block padding is the plate mark's inset, which a scroller would
+     otherwise clip. */
+  @media (width < 48rem) {
     .plate-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      /* Wider than --gutter on purpose: two plate marks at 10px each eat 20px
-         of the gap, and the marks must not touch. */
-      column-gap: var(--space-6);
+      grid-auto-flow: column;
+      grid-auto-columns: 68%;
+      column-gap: var(--space-2);
+      padding-block: 10px;
+      /* The strip runs out to the edge of the screen, not the column, so the
+         screen that peeks in is cut by the glass rather than by the grid. */
+      margin-inline-end: calc(-1 * var(--shell-pad));
+      padding-inline-end: var(--shell-pad);
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+    }
+
+    .plate-grid > li {
+      scroll-snap-align: start;
     }
   }
 
-  /* ═══ The close ═══════════════════════════════════════════════════════════
-     Impact ends on the frontispiece figure, whole this time and inside the type
-     column. The number the page opened on is the number it closes on.
-     ─────────────────────────────────────────────────────────────────────── */
-  /* ═══ Colophon ════════════════════════════════════════════════════════════
-     Stack, links and the NDA note at the foot of the plate, where an imprint
-     goes. This is what the sticky rail was, minus the stickiness and minus its
-     three headings: a rail that follows 198 words down the page is a rail that
-     is empty for most of them.
-     ─────────────────────────────────────────────────────────────────────── */
-  .colophon {
-    border-top: 1px solid var(--line-strong);
+  @media (width >= 48rem) {
+    .plate-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: var(--space-4);
+    }
+  }
+
+  .plate-caption {
+    margin-block: calc(10px + var(--space-2)) 0;
+    color: var(--ink-3);
+  }
+
+  /* ═══ The rail ═══════════════════════════════════════════════════════════
+     Below 64rem: a band after the movements, under its own rule. At 64rem and
+     up: the third column, starting on the first movement's rule so the two
+     read as one line broken by the gutter, and riding beside the argument. */
+  .case-rail {
+    min-width: 0;
+    border-top: 1px solid var(--line);
     padding-block: var(--space-4) var(--space-6);
   }
 
-  .colophon-stack {
+  .case-rail-inner {
+    display: grid;
+    row-gap: var(--space-5);
+  }
+
+  @media (width < 64rem) {
+    .case-rail-inner {
+      grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+      column-gap: var(--space-5);
+      align-items: start;
+    }
+
+    .rail-device {
+      grid-row: span 3;
+    }
+  }
+
+  @media (width < 36rem) {
+    .case-rail-inner {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rail-device {
+      grid-row: auto;
+      max-width: 15rem;
+    }
+  }
+
+  @media (width >= 64rem) {
+    .case-rail {
+      padding-block-end: var(--space-8);
+    }
+  }
+
+  @media (width >= 64rem) and (height >= 760px) {
+    .case-rail-inner {
+      position: sticky;
+      top: calc(3.5rem + var(--space-4));
+    }
+  }
+
+  .rail-device {
     margin: 0;
-    max-width: var(--plate-lede);
+  }
+
+  /* The device on its plate: the wiped tone and the deboss, the site's one
+     container, with the mark at a whole number of pixels per cell. */
+  .rail-plate {
+    padding: var(--space-2);
+    background: var(--ground-2);
+    border: 1px solid var(--line);
+    border-radius: var(--plate-radius);
+    color: var(--ink);
+  }
+
+  .rail-device figcaption {
+    margin-block-start: 0.75rem;
+    color: var(--ink-3);
+    text-wrap: pretty;
+  }
+
+  .rail-block {
+    min-width: 0;
+  }
+
+  .rail-label {
+    margin: 0;
+    color: var(--ink-3);
+  }
+
+  .rail-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.125rem 0;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
     color: var(--ink-2);
   }
 
-  .colophon-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-4);
-    margin: var(--space-4) 0 0;
+  .rail-stack > li:not(:last-child)::after {
+    content: "·" / "";
+    padding-inline: 0.5rem;
+    color: var(--ink-3);
+  }
+
+  .rail-links {
+    display: grid;
+    row-gap: 0.25rem;
+    margin: 0.5rem 0 0;
     padding: 0;
     list-style: none;
   }
 
-  .colophon-link {
+  .rail-link {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    color: var(--ink-2);
+    color: var(--ink);
     transition: color var(--dur-1) var(--ease-snap);
   }
 
-  .colophon-link:hover,
-  .colophon-link:focus-visible {
+  .rail-link svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+    flex: none;
+    color: var(--ink-3);
+    transition:
+      translate var(--dur-2) var(--ease-snap),
+      color var(--dur-1) var(--ease-snap);
+  }
+
+  .rail-link:hover svg,
+  .rail-link:focus-visible svg {
+    translate: 2px -2px;
     color: var(--ink);
   }
 
-  .colophon-link svg {
-    width: 0.75rem;
-    height: 0.75rem;
-    flex: none;
-    transition: transform var(--dur-2) var(--ease-snap);
-  }
-
-  .colophon-link:hover svg {
-    transform: translate(2px, -2px);
-  }
-
-  .colophon-note {
-    margin: var(--space-4) 0 0;
-    max-width: var(--measure);
+  .rail-note {
+    margin: 0;
     color: var(--ink-3);
+    text-wrap: pretty;
   }
 
-  /* ═══ The foot ════════════════════════════════════════════════════════════
-     Prev and next, as a mono label and a name. They used to be two project
-     names at reading size, restating a quarter of the work index under a page
-     of 198 words; they do the same navigational work at half the height like
-     this. A third element used to outrank them — the catchword; see the note
-     in project-nav.tsx for what it was and why it went.
-     ─────────────────────────────────────────────────────────────────────── */
-  .plate-foot {
+  /* ═══ The foot: previous and next ════════════════════════════════════════
+     Two halves of one band under a heavier rule, each a whole-card link with
+     the project's name and sentence. The next half mirrors the previous one,
+     so the two read as the two directions they are. */
+  .case-foot {
+    padding-block: 0 var(--space-8);
+  }
+
+  .case-foot-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: var(--space-4);
-    align-items: end;
+    grid-template-columns: minmax(0, 1fr);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  @media (width >= 48rem) {
+    .case-foot-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .foot-card {
+    position: relative;
+    display: grid;
+    align-content: start;
+    row-gap: 0.625rem;
+    padding: var(--space-4) var(--space-2) var(--space-5);
+    color: var(--ink);
+    transition: background-color var(--dur-2) var(--ease-snap);
+  }
+
+  .foot-card + .foot-card {
     border-top: 1px solid var(--line);
-    padding-block: var(--space-4) var(--space-10);
   }
 
-  /* Stacked rather than spread: two short mono lines read as one block of
-     data. Spread across the foot, at 390px the longer name ("LLM Multi-Agent
-     QA System") would have to wrap. */
-  .foot-rows {
-    display: grid;
-    row-gap: var(--space-1);
-    min-width: 0;
+  @media (width >= 48rem) {
+    .foot-card {
+      padding-inline: var(--space-4);
+    }
+
+    .foot-card:first-child {
+      padding-inline-start: 0;
+    }
+
+    .foot-card + .foot-card {
+      border-top: 0;
+      border-inline-start: 1px solid var(--line);
+      text-align: end;
+      justify-items: end;
+      padding-inline-end: 0;
+    }
   }
 
-  .foot-row {
+  @media (width < 48rem) {
+    .foot-card {
+      padding-inline: 0;
+    }
+  }
+
+  .foot-label {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.5rem;
-    justify-self: start;
-    min-width: 0;
-    color: var(--ink-2);
-    transition: color var(--dur-1) var(--ease-snap);
+    color: var(--ink-3);
   }
 
-  .foot-row:hover,
-  .foot-row:focus-visible {
+  .foot-label svg {
+    width: 0.8125rem;
+    height: 0.8125rem;
+    transition: translate var(--dur-2) var(--ease-snap);
+  }
+
+  .foot-card:hover .foot-label svg {
+    translate: -3px 0;
+  }
+
+  .foot-card[data-next]:hover .foot-label svg {
+    translate: 3px 0;
+  }
+
+  .foot-name {
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+    transition: text-decoration-color var(--dur-2) var(--ease-snap);
+  }
+
+  .foot-card:hover .foot-name,
+  .foot-card:focus-visible .foot-name {
+    text-decoration-color: var(--rule-mid);
+  }
+
+  .foot-tagline {
+    max-width: 30rem;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+
+  .foot-card:hover .foot-label,
+  .foot-card:focus-visible .foot-label {
     color: var(--ink);
   }
 
-  .plate-foot .foot-label {
-    flex: none;
-    color: var(--ink-3);
+  @media (prefers-reduced-motion: reduce) {
+    .foot-label svg,
+    .case-back svg,
+    .rail-link svg {
+      transition: none;
+    }
   }
-}
-
-/* ═══ The two figure sizes ══════════════════════════════════════════════════
-   Deliberately unlayered. <Numeral> carries `text-numeral-l`, a Tailwind
-   utility, and the utilities layer beats the components layer whatever the
-   selector specificity is;
-
-/* ── The device ───────────────────────────────────────────────────────────
-   The project's own mark, in the movement about the mechanism it draws. The
-   wiped tone comes with it from globals.css and is the whole frame it needs:
-   a full plate mark here would compete with the figure that carries this page,
-   which is the metric bled off the trim.
-
-   It hangs at the head of the movement's own column rather than centring,
-   because the reading column is set ragged-right and a centred figure inside
-   it reads as a different grid. */
-.device-figure {
-  margin: var(--space-5) 0 var(--space-4);
-}
-
-.device-figure .caption {
-  margin-block-start: var(--space-2);
-  max-width: 34ch;
-  color: var(--ink-3);
-}
-
-.device-figure .board::before {
-  content: none;
 }
 
 /* ═══ Print ═════════════════════════════════════════════════════════════════
-   Case studies get printed, and a bleed that is a decision on screen is a
-   truncation on A4: the printer's own margin already trims the sheet, so the
-   figure sits inside the type area and prints whole. The running head stops
-   sticking (there is nothing to stick to on paper) and no stage or plate is
+   Case studies get printed. The running heads and the rail stop sticking
+   (there is nothing to stick to on paper), and no step, plate or card is
    allowed to break across a page.
    ═════════════════════════════════════════════════════════════════════════ */
 @media print {
-  .movement-head {
+  .movement-head,
+  .case-rail-inner {
     position: static;
   }
 
-  /* A movement is deliberately not in this list. Several of them are more than
-     half an A4 page, and `break-inside: avoid` on a box that size buys a clean
-     break at the cost of a hand's width of empty paper above it. The things
-     that must not be cut in half are the ones that stop meaning anything when
-     they are: a stage of the schematic, a plate, the closing figure. */
-  .stage,
-  .plate-figure,
+  .step,
+  .case-figure,
   .plate-grid > li,
-  .colophon,
-  .plate-foot {
+  .case-rail,
+  .foot-card {
     break-inside: avoid;
   }
 
-  .plate-foot {
-    padding-block-end: 0;
-  }
-
-  /* No orphaned running head: a movement's numeral and name go with its
-     standfirst, never alone at the foot of a page. */
   .movement-head {
     break-after: avoid;
   }
 
-  .frontis {
+  .case-head {
     padding-block-start: 0;
   }
 }
