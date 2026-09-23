@@ -6,8 +6,8 @@
    pages this file dresses are deliberately unlike each other, because the
    four things they hold are unlike each other:
 
-     .toc           /projects        a contents page: figures right,
-                                      chronology in the left margin
+     .page-mast     every inner page's masthead
+     .toc           /projects        the index, grouped by year
      .broadside     /writing         one essay, set as a broadside
      .column        /writing/[slug]  one measure, a drop cap, marginalia
      .spoiled       404              a sheet that came off the press wrong
@@ -20,122 +20,163 @@
    ───────────────────────────────────────────────────────────── */
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   1. /projects — The Contents Page
+   0. The masthead every inner page opens on
    ═══════════════════════════════════════════════════════════════════════════
 
-   Two axes, both read off the data, both visible at a glance:
+   An eyebrow in mono, the page's name in the display face, a standfirst.
+   Clears the 3.5rem fixed header with the page's own top padding and hands
+   off to the first band with no rule of its own: the band below brings one.
+   ───────────────────────────────────────────────────────────────────────── */
 
-     LEFT   a hairline runs the height of the list. Every row's year is set
-            against it, and every row's text starts at a distance from it
-            proportional to how long ago the work began. The ragged left
-            margin is therefore the chronology itself: the steps between rows
-            are the real gaps between the dates, not a rhythm.
+.page-mast {
+  padding-block: calc(3.5rem + var(--space-6)) var(--space-6);
+}
 
-     RIGHT  a column of figures in the display face at 700, at three sizes.
-            The size is how far the number reaches (see REACH in page.tsx),
-            which is uncorrelated with the date, so the column reads as a
-            skyline rather than a ramp.
+@media (width >= 48rem) {
+  .page-mast {
+    padding-block: calc(3.5rem + var(--space-8)) var(--space-8);
+  }
+}
 
-   The heights are unequal on purpose: rows from the current year carry a
-   standfirst, older rows carry a title and one machine line. A contents page
-   thins as it recedes.
+.page-mast-title {
+  margin-block-start: var(--space-3);
+}
 
-   FOOT   the eight labels that used to sit under the eight figures, as one
-          critical apparatus under a short rule. The figures column is worth
-          having only if it is figures; a superscript reference mark carries
-          the reader from a number to its note and the note carries them
-          back, which is a contract print has kept for four centuries and
-          which needs no JavaScript to keep here.
+.page-mast-lede {
+  margin-block-start: var(--space-3);
+  max-width: 40rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. /projects — the index
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Three year groups, each a heavier rule with the year hung in the margin
+   beside it, and under it the rows of that year on hairlines that start at
+   the text column. One left edge for every name, standfirst and result; the
+   device marks share one right edge.
    ───────────────────────────────────────────────────────────────────────── */
 
 .toc {
-  --year-col: 3.25rem; /* "2026" in 13px tabular mono, right-aligned */
-  --rule-gap: 1.25rem; /* rule to the flush-left row */
+  --year-col: 0rem;
+  --year-gap: 0rem;
+  --dev-w: 0rem;
+  padding-block-end: var(--space-8);
+}
+
+@media (width >= 48rem) {
+  .toc {
+    --year-col: 4.5rem;
+    --year-gap: var(--gutter);
+    --dev-w: 6.5rem;
+  }
+}
+
+@media (width >= 64rem) {
+  .toc {
+    --year-col: 9rem;
+    --dev-w: 8rem;
+  }
+}
+
+.toc-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-top: 1px solid var(--line-strong);
+}
+
+@media (width >= 48rem) {
+  .toc-group {
+    grid-template-columns: var(--year-col) minmax(0, 1fr);
+    column-gap: var(--year-gap);
+  }
+}
+
+/* The group label: the year as a figure, the same size as the titles it heads
+   so the two share a baseline, and the count in mono under it. On a phone it
+   is one line of its own under the group rule. In the margin it rides with
+   its rows (sticky, `align-self: start` because a stretched grid item cannot
+   stick) and lets go at the next group's rule. */
+.toc-year {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0;
+  padding-block-start: 1rem;
+}
+
+.toc-year-n {
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.toc-year-count {
+  color: var(--ink-3);
+}
+
+@media (width >= 48rem) {
+  .toc-year {
+    position: sticky;
+    top: 3.5rem;
+    align-self: start;
+    display: grid;
+    justify-items: start;
+    row-gap: 0.5rem;
+    padding-block: var(--toc-pad) var(--space-2);
+  }
 }
 
 .toc-list {
-  position: relative;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* The date rule. One hairline for the whole list, so it is an axis and not a
-   row decoration. Drawn at the year column's edge, from the first row's top
-   hairline to the last row's foot. */
-.toc-list::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  inset-inline-start: var(--year-col);
-  width: 1px;
-  background: var(--line-strong);
-}
-
-
 /* ── A row ────────────────────────────────────────────────────────────────
-   Three columns: the year against the rule, the body, the figure. The body's
-   own start is the chronology; --t is 0 for the newest project and 1 for the
-   oldest, written inline by the page. */
-.toc-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--year-col) minmax(0, 1fr) var(--dev-col, 0);
-  align-items: start;
-  padding-block: 1.5rem;
-  /* The row is what an apparatus note returns to, and 6rem clears the 3.5rem
-     fixed header with a hand's width to spare at every viewport. It also
-     carries tabindex="-1", which is programmatically focusable and never a
-     tab stop — so the outline below only ever fires for a pointer or a
-     script, never for someone tabbing through the list. */
-  scroll-margin-block-start: 6rem;
-  outline: none;
-}
-
-/* Where the reader came back to, and where they are. The fill is the row's
-   own hover ground, so the return uses a signal the page already has; nothing
-   here changes a box. */
-.toc-row:target::after {
-  opacity: 1;
-}
-
-.toc-row:target .toc-year {
-  color: var(--ink);
+   The body and the device. The row's hairline starts at the text column, so
+   the rule at the top of a group is the only one that crosses the margin. */
+.toc {
+  --toc-pad: 1.5rem;
 }
 
 @media (width >= 48rem) {
-  .toc-row {
-    padding-block: 1.75rem;
+  .toc {
+    --toc-pad: 2rem;
   }
 }
 
-/* The row's own hairline starts where the row starts, so the rules step
-   rightward down the page and the chronology is legible even in the
-   furniture. It never crosses the year column, which keeps the date rule
-   reading as a spine rather than as one cell of a table. */
-.toc-row::before {
-  content: "";
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-end: 0;
-  inset-inline-start: calc(var(--year-col) + var(--rule-gap));
-  height: 1px;
-  background: var(--line);
+.toc-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--dev-w);
+  column-gap: var(--space-4);
+  align-items: start;
+  padding-block: var(--toc-pad);
 }
 
-/* Hover fills from the date rule to the right edge — never across the rule,
-   so the axis stays an axis, and never past the row's own box: a negative
-   inset here bled the fill into the shell's padding and made the whole
-   document 20 px wider than the viewport at every width. */
+.toc-row + .toc-row {
+  border-top: 1px solid var(--line);
+}
+
+/* On a phone the year line sits right above the first row. */
+@media (width < 48rem) {
+  .toc-row:first-child {
+    padding-block-start: var(--space-2);
+  }
+}
+
+/* The hover ground: the row's own box plus a little air on each side, drawn
+   behind everything in it. `inset-inline` stays inside the shell's padding so
+   the page never grows sideways. */
 .toc-row::after {
   content: "";
   position: absolute;
   inset-block: 0;
-  inset-inline-end: 0;
-  inset-inline-start: calc(var(--year-col) + 1px);
+  inset-inline: calc(-1 * var(--space-2)) calc(-1 * min(var(--space-2), var(--shell-pad)));
+  z-index: -1;
   background: var(--ground-2);
   opacity: 0;
-  transition: opacity var(--dur-1) var(--ease-snap);
+  transition: opacity var(--dur-2) var(--ease-snap);
   pointer-events: none;
 }
 
@@ -144,120 +185,25 @@
   opacity: 1;
 }
 
-/* The row's content sits above its own hover fill. This rule read
-   `.toc-year, .toc-body, .toc-fig` until the figure column was deleted, and
-   the deletion matched `.toc-fig` inside the selector LIST and took the whole
-   rule with it -- so the fill, which has no z-index of its own, painted over
-   every row it was meant to sit behind. Hovering a project blanked it.
-
-   `.toc-device` is in the list now and never was: it is a plain div, so the
-   positioned ::after painted over the engraved plate even while the text was
-   correct. The first fix left the picture half of every row still vanishing
-   into the fill. */
-.toc-year,
-.toc-body,
-.toc-device {
+.toc-list {
   position: relative;
-  z-index: 1;
-}
-
-/* ── The quarterly rule ───────────────────────────────────────────────────
-   A band of ink at the page pitch under the standfirst, ten cells tall and
-   the full measure wide, whose local density is the number of projects that
-   landed in that quarter. It reads as a printed rule of graded weight rather
-   than as a chart, which is the point: nobody counts it, they see the shape
-   of two years.
-
-   Full measure and no plate mark. A mark would make it a figure; it is
-   furniture, and furniture is what separates a masthead from a list. */
-.toc-rule {
-  margin: var(--space-6) 0 0;
-  max-width: 46rem;
-}
-
-/* No mark and no wiped tone. Both say "a plate was pressed here", and this is
-   not a plate: it is a rule, and a rule sits ON the sheet. The tone reads as a
-   panel the moment the thing inside it is furniture rather than a picture. */
-.toc-rule .board::before,
-.toc-rule .board::after {
-  content: none;
-}
-
-.toc-rule .caption {
-  margin-block-start: var(--space-2);
-  color: var(--ink-3);
-}
-
-/* ── The devices ──────────────────────────────────────────────────────────
-   A printer's device is a mark that stands for the press that made the book,
-   and it belongs in a contents page's margin. Each of these is a diagram of
-   what that project actually DOES -- Checkpoint's five suites with the fourth
-   stopping at row three, App Crawler's depth-first plunge -- drawn at the page
-   pitch, so the eight of them are made of exactly the same marks as his face.
-
-   The column only exists where there is room for it. Below 64rem it is zero
-   wide and the plate is not rendered at all, because eight 180px devices
-   would add 1,440px to a phone page that is already 3,000 long, and a mark
-   you have to scroll past is not a mark, it is an obstacle. */
-.toc-device {
-  display: none;
-}
-
-@media (width >= 64rem) {
-  .toc-row {
-    --dev-col: 9rem;
-  }
-
-  .toc-device {
-    display: block;
-    /* Hangs from the row's own top line, beside the title rather than beside
-       the standfirst, so a lead row and a plain row put their device at the
-       same height. */
-    padding-inline-end: var(--space-4);
-  }
-
-  /* The wiped tone stays and the border does not, which is the right pair
-     here: the tint says an area was pressed, and a full plate mark would
-     claim each device is a figure the page is ABOUT. On this page the eight
-     numerals are that, and the devices are marks in the margin beside them.
-     Both come from globals.css §plate-mark via board.css's own copy. */
-  .toc-device .board::before {
-    content: none;
-  }
-}
-
-.toc-year {
-  padding-inline-end: 0.85rem;
-  text-align: right;
-  color: var(--ink-3);
-  /* The mono ascender and the display-s cap height do not start on the same
-     line; this drops the year onto the title's first baseline. */
-  padding-block-start: 0.55rem;
-  transition: color var(--dur-1) var(--ease-snap);
-}
-
-/* The first row of each year says the year in full ink: reading down, the
-   three groups separate without a second rule. */
-.toc-year[data-first] {
-  color: var(--ink-2);
-}
-
-.toc-row:hover .toc-year {
-  color: var(--ink);
+  z-index: 0;
 }
 
 .toc-body {
   min-width: 0;
-  padding-inline-start: var(--rule-gap);
-  padding-inline-end: 1.5rem;
 }
 
 .toc-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
   margin: 0;
+  color: var(--ink);
 }
 
 .toc-title a {
-  color: var(--ink);
+  color: inherit;
   text-decoration-line: underline;
   text-decoration-color: transparent;
   text-decoration-thickness: 1px;
@@ -270,34 +216,104 @@
   text-decoration-color: var(--rule-mid);
 }
 
+/* The arrow arrives on hover, from a little behind where it lands. */
+.toc-arrow {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  align-self: center;
+  color: var(--ink-2);
+  opacity: 0;
+  translate: -4px 0;
+  transition:
+    opacity var(--dur-2) var(--ease-snap),
+    translate var(--dur-2) var(--ease-snap);
+}
+
+.toc-row:hover .toc-arrow,
+.toc-row:focus-within .toc-arrow {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toc-arrow {
+    translate: 0 0;
+  }
+}
+
 .toc-standfirst {
-  margin-block-start: 0.5rem;
-  max-width: 58ch;
+  margin-block-start: 0.625rem;
+  max-width: 44rem;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+@media (width >= 80rem) {
+  .toc-standfirst {
+    font-size: 1.25rem;
+    line-height: 1.5;
+  }
+}
+
+/* The result: the figure in full ink and medium weight, its label in the
+   reading grey, one line of the reading face. */
+.toc-result {
+  margin-block-start: 0.875rem;
   color: var(--ink-2);
 }
 
+.toc-figure {
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 .toc-meta {
-  margin-block-start: 0.75rem;
+  margin-block-start: 0.625rem;
   color: var(--ink-3);
 }
 
-/* ── Below 48rem the year keeps its place against the rule and the body
-      takes the rest. The chronology survives as the order of the list. ── */
-@media (width < 48rem) {
-  .toc-row {
-    grid-template-columns: var(--year-col) minmax(0, 1fr);
+/* ── The device ───────────────────────────────────────────────────────────
+   The project's mechanism, drawn in dots on one grid (device-mark.tsx). No
+   frame: it is a mark in the margin, not a thumbnail of something else, and
+   a tinted panel at this size is what made eight of them read as eight
+   broken images. Ink-2 at rest, full ink when its row is the one in hand. */
+.toc-device {
+  display: none;
+}
+
+@media (width >= 48rem) {
+  .toc-device {
+    display: block;
+    color: var(--ink-2);
+    transition: color var(--dur-2) var(--ease-snap);
   }
 
-  .toc-body {
-    padding-inline-end: 0;
+  .toc-row:hover .toc-device,
+  .toc-row:focus-within .toc-device {
+    color: var(--ink);
   }
+}
 
-  /* A 22px standfirst in a 278px column is five lines, and five lines is a
-     paragraph rather than a standfirst — it pushed the second project off a
-     390px screen on its own. The reading size instead. */
-  .toc-standfirst {
-    font-size: var(--text-body);
-    line-height: var(--text-body--line-height);
+/* ── The mark itself, shared with the case study ─────────────────────────── */
+.device-mark {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background-color: currentColor;
+  mask: var(--mark) center / contain no-repeat;
+  -webkit-mask: var(--mark) center / contain no-repeat;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+@media (forced-colors: active) {
+  .device-mark {
+    forced-color-adjust: none;
+    background-color: CanvasText;
   }
 }
 
