@@ -452,11 +452,22 @@
     font-variation-settings: "opsz" 30;
   }
 
-  .text-display-s,
   .text-numeral-l,
   .text-numeral {
     font-optical-sizing: none;
     font-variation-settings: "opsz" 26;
+  }
+
+  /* The smallest tier is set for 1x hairline survival rather than by the
+     reading-distance rule above. At 24-30px on a DPR 1 panel, opsz 26 thins
+     a hairline to under a device pixel: the crossbar of the H in "CLIP-H" and
+     the hyphen before it printed as one pale row, and the row title read
+     "CLIP-II" on home, on /projects and in a case study's footer. The cut
+     Bodoni drew for small print keeps the crossbar a solid stroke there, and
+     at 2x it is still a Didone. */
+  .text-display-s {
+    font-optical-sizing: none;
+    font-variation-settings: "opsz" 14;
   }
 
   ::selection {

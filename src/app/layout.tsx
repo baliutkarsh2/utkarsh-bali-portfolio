@@ -98,9 +98,16 @@ export default function RootLayout({
     // suppressHydrationWarning: the boot script adds `.js` and may set
     // data-motion before React hydrates, and both are expected to differ
     // from the server-rendered attributes.
+    //
+    // data-scroll-behavior: globals.css makes the root scroll smooth for
+    // in-page anchors, and without this Next scrolls to a new route's hash
+    // under that setting too, so the header's Contact from /about ran the
+    // whole home page past in a streak before it reached the band. With it,
+    // a route change jumps and a same-page anchor still glides.
     <html
       lang="en"
       className={`${display.variable} ${text.variable} ${mono.variable}`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>

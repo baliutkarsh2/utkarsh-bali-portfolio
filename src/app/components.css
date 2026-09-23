@@ -161,9 +161,16 @@
     color: var(--ink);
   }
 
+  /* Tabbing to a row, the browser scrolls only the title's anchor into
+     view, but the focus wash and ring are the whole row. The third home row
+     landed with its title flush on the bottom edge and its subtitle, result,
+     meta and the bottom of the ring below the fold. What a row carries under
+     its title measures 121-233px across widths (155 at 1440, 210 at 768, 233
+     at 390), so 15rem of margin brings the row in whole at every one. */
   .row-link {
     color: inherit;
     text-decoration: none;
+    scroll-margin-block-end: 15rem;
   }
 
   /* The result, set as /projects sets it (.toc-result, .toc-figure): the
