@@ -223,9 +223,10 @@
   /* ── The theme control ─────────────────────────────────────────────────
      A 36px target with no box at rest (a box around a glyph is what made the
      old control read as a checkbox), a --ground-2 wash on hover like a row's,
-     and one 20px glyph for the state: sun, crescent, or half disc. All three
-     are in the SVG; the root's data-theme, set before first paint, decides
-     which one shows, so the glyph is right on frame one. */
+     and one 20px glyph for the scheme on screen: the sun on paper, the
+     crescent on the plate. Both are in the SVG; the root's data-theme, set
+     before first paint, or with no choice made the OS's colour scheme,
+     decides which one shows, so the glyph is right on frame one. */
   .theme-toggle {
     position: relative;
     display: inline-grid;
@@ -284,23 +285,47 @@
       transform 360ms var(--ease-out);
   }
 
-  :root[data-theme="light"] .theme-glyph[data-glyph="light"],
-  :root[data-theme="dark"] .theme-glyph[data-glyph="dark"],
-  :root:not([data-theme="light"]):not([data-theme="dark"])
-    .theme-glyph[data-glyph="system"] {
+  /* Paper shows the sun, the plate the crescent. */
+  :root:not([data-theme="dark"]) .theme-glyph[data-glyph="light"],
+  :root[data-theme="dark"] .theme-glyph[data-glyph="dark"] {
     opacity: 1;
     transform: none;
+  }
+
+  /* With no choice made the OS decides, and a dark OS is the plate. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .theme-glyph[data-glyph="light"] {
+      opacity: 0;
+      transform: rotate(-60deg) scale(0.6);
+    }
+    :root:not([data-theme]) .theme-glyph[data-glyph="dark"] {
+      opacity: 1;
+      transform: none;
+    }
   }
 
   /* A small answer to the pointer: the sun turns an eighth, which lands its
      rays exactly where they were; the crescent tips. */
   @media (hover: hover) {
-    :root[data-theme="light"]
+    :root:not([data-theme="dark"])
       .theme-toggle:hover
       .theme-glyph[data-glyph="light"] {
       transform: rotate(45deg);
     }
     :root[data-theme="dark"] .theme-toggle:hover .theme-glyph[data-glyph="dark"] {
+      transform: rotate(-14deg);
+    }
+  }
+
+  @media (hover: hover) and (prefers-color-scheme: dark) {
+    :root:not([data-theme])
+      .theme-toggle:hover
+      .theme-glyph[data-glyph="light"] {
+      transform: rotate(-60deg) scale(0.6);
+    }
+    :root:not([data-theme])
+      .theme-toggle:hover
+      .theme-glyph[data-glyph="dark"] {
       transform: rotate(-14deg);
     }
   }
