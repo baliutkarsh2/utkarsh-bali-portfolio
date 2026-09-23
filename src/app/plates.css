@@ -664,6 +664,19 @@
   display: block;
 }
 
+/* The masthead clears the fixed header by the same amount every inner page's
+   does (.page-mast), so the eyebrow sits on one line across /about, /projects
+   and here. It used to be Tailwind padding 24px shorter than the others. */
+.broadside-head {
+  padding-block: calc(3.5rem + var(--space-6)) var(--space-4);
+}
+
+@media (width >= 48rem) {
+  .broadside-head {
+    padding-block: calc(3.5rem + var(--space-8)) var(--space-6);
+  }
+}
+
 /* ── The plate on the broadside ───────────────────────────────────────────
    /writing carried one essay and the largest rectangle of bare paper on the
    site: at 1440 everything right of x=830 and below the masthead was empty,
@@ -680,13 +693,45 @@
    The board sizes itself from its own field (96 x 96 lattice cells) and caps
    at the column, so the square never drives the layout. */
 .broadside-plate {
+  --sky-inset: 22px;
   margin: var(--space-6) 0 0;
+  /* The plate mark is struck --sky-inset outside the field, so the figure
+     carries that much padding: the mark lands inside the column instead of
+     hanging past the shell's right edge. */
+  padding: var(--sky-inset);
+  width: fit-content;
+  max-width: 100%;
 }
 
+/* The field is 96 cells square and is drawn at the cell pitch, not scaled to
+   its box -- so the box has to be a whole 96 cells at whatever pitch it gets.
+   It was capped at min(40vw, 30rem) on a 6 px pitch, which is 480 px of box
+   for 576 px of sky: the disc came out with a flat right side and a flat
+   bottom. The pitch is set here per width so the square always fits whole. */
+.sky-board {
+  --pitch: 3px;
+}
+
+@media (width >= 30rem) {
+  .sky-board {
+    --pitch: 4px;
+  }
+}
+
+@media (width >= 48rem) {
+  .sky-board {
+    --pitch: 5px;
+  }
+}
+
+/* The caption hangs on the plate mark's left edge, where every other plate's
+   caption on the site starts, not inside the figure's padding. */
 .broadside-plate .caption {
-  margin-block-start: var(--space-3);
-  max-width: 30ch;
+  margin-block-start: calc(var(--sky-inset) + 0.75rem);
+  margin-inline-start: calc(-1 * var(--sky-inset));
+  max-width: 100%;
   color: var(--ink-3);
+  text-wrap: balance;
 }
 
 @media (width >= 64rem) {
@@ -694,21 +739,35 @@
      block and the plate is the other. */
   .broadside {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) min(40vw, 30rem);
+    grid-template-columns: minmax(0, 1fr) auto;
     column-gap: var(--space-8);
     align-items: start;
   }
 
   .broadside-plate {
     margin: 0;
-    /* Hangs from the masthead's own top line rather than from the title's
-       cap, so the plate and the eyebrow start together. */
-    padding-block-start: var(--space-2);
+    /* The mark is the figure's own top edge, so this puts it on the
+       eyebrow's cap line. */
+    margin-block-start: 0.125rem;
+    margin-inline-end: calc(-1 * var(--sky-inset));
+  }
+
+  .sky-board {
+    --pitch: 4px;
   }
 }
 
+@media (width >= 80rem) {
+  .sky-board {
+    --pitch: 5px;
+  }
+}
+
+/* The same drop from the eyebrow as .page-mast-title. This rule used to set
+   `margin: 0`, which silently beat the `mt-8` in the markup (an unlayered
+   rule outranks a utility) and sat the eyebrow 12px over the title's caps. */
 .broadside-title {
-  margin: 0;
+  margin: var(--space-3) 0 0;
   /* Most of the width, not all of it: a display-l line that runs to the
      shell edge has no air at the end of it and stops looking set. */
   max-width: 18ch;
@@ -1266,10 +1325,47 @@ html:has(.spoiled) {
   pointer-events: none;
 }
 
-/* The docket now carries the plate mark's clearance, so the copy only has to
-   clear the docket. */
+/* Under the plate on a phone; the plate mark's inset is the clearance. */
 .spoiled-copy {
-  margin-block-start: var(--space-5);
+  margin-block-start: calc(var(--mark-inset) + var(--space-4));
+}
+
+/* At 64rem and up the sheet is one composition across the fold: the plate on
+   the left, the copy beside it, centred on the plate's own height. Stacked,
+   the plate and four short lines took the left 40% of the screen and left
+   the rest of a 1440 fold bare, which on the page whose whole subject is a
+   sheet that did not print read as a page that had not loaded. The column
+   gap clears the plate mark and the register mark that hangs off its
+   corner. The fallback shares the plate's cell, since only one of the two
+   is ever displayed. */
+@media (width >= 64rem) {
+  .spoiled {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 34rem);
+    column-gap: calc(var(--mark-inset) + var(--space-10));
+    align-items: center;
+    align-content: center;
+    /* An `auto` track takes the free space, and the plate then sat 68px in
+       from the column every other page starts on. */
+    justify-content: start;
+  }
+
+  .spoiled-fallback,
+  .spoiled-plate {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* The plate mark lands on the page's left column, not in its margin. */
+  .spoiled-plate {
+    margin-inline-start: var(--mark-inset);
+  }
+
+  .spoiled-copy {
+    grid-column: 2;
+    grid-row: 1;
+    margin-block-start: 0;
+  }
 }
 
 .spoiled-title {
