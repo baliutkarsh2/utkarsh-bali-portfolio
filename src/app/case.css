@@ -143,10 +143,14 @@
     color: var(--ink);
   }
 
+  /* Balanced, as the /projects decks are: a two-line lede under the name,
+     and the `pretty` it inherits from .text-lede still left "meets a user."
+     and "users in it." alone on the second line. */
   .case-tagline {
     margin-block: var(--space-3) 0;
     max-width: 44rem;
     color: var(--ink-2);
+    text-wrap: balance;
   }
 
   /* ── The facts ──────────────────────────────────────────────────────────

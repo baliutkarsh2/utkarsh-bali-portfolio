@@ -1019,10 +1019,13 @@
   margin-block-start: var(--space-5);
 }
 
+/* Balanced: under the title, `pretty` set two full lines and left "the
+   silence." on a third. */
 .broadside-standfirst {
   margin-block-start: var(--space-5);
   max-width: 52ch;
   color: var(--ink-2);
+  text-wrap: balance;
 }
 
 /* The full-width rule. The one horizontal on this page, and the machine line
