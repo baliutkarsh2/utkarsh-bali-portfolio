@@ -8,7 +8,8 @@ import type { Experience, Project, ProjectStatus } from "@/content";
    /about §02 ("Where I've worked"). One chart, drawn the same on both.
 
    A time × employer chart. x is the date, y is the employer lane; an
-   employment interval is a band of ink dots at the page pitch, a project is a
+   employment interval is a band of ink dots at the page pitch (so is the
+   span of a company he founded that is still running), a project is a
    marked point on the month it landed. Nothing here is a picture of data that
    the page does not also say in words: every mark is a link whose text names
    the project, its month, its lane, its role and its status, so with the
@@ -286,6 +287,22 @@ const lanes: Lane[] = (() => {
     if (lane.kind !== "employer") {
       lane.sortKey = Math.max(lane.sortKey, centre);
     }
+  }
+
+  /* A company he founded has no employment record to read a band from, so
+     its lane used to carry its milestone and nothing else: Checkpoint, the
+     company the hero says he is building, stopped as one diamond in February
+     while Purdue, the other thing still running, ran on to TODAY. A venture
+     whose work is ongoing is a span that is still running, and it is drawn
+     the way the chart already draws one: the band, open at TODAY, from the
+     month its first project landed. Both ends are read off data the lane
+     already holds (a project's month, its status), so no date is made up
+     here, and a venture whose work has all shipped keeps its diamonds only. */
+  for (const lane of byKey.values()) {
+    if (lane.kind !== "venture" || lane.interval) continue;
+    if (!lane.points.some((p) => p.status === "ongoing")) continue;
+    const start = Math.min(...lane.points.map((p) => p.low));
+    lane.interval = { start, end: Math.max(NOW, start + DAY), open: true };
   }
 
   return [...byKey.values()].sort((a, b) => {
