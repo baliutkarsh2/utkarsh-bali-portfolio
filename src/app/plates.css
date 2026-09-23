@@ -1329,6 +1329,15 @@ html:has(.spoiled) {
   background: #16140f;
 }
 
+/* The sheet is dark whatever the theme, so the theme control has nothing to
+   switch here: it showed the sun on the plate and a click changed only its
+   own glyph, which reads as a broken button. Hidden rather than removed, so
+   it keeps its track in the bar and nothing beside it moves; `visibility`
+   also takes it out of the tab order. */
+html:has(.spoiled) .theme-toggle {
+  visibility: hidden;
+}
+
 /* The sheet fills the fold and its contents are centred in it, which is why
    nothing inside may be sized in `ch`: the copy is centred, so a rewrap when
    the webfont lands changes the block's height and moves the plate above it.
