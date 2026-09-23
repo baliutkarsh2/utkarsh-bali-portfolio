@@ -181,13 +181,18 @@
   color: var(--ink);
   font-size: var(--text-small);
   line-height: var(--text-small--line-height);
-  text-wrap: pretty;
+  /* A fact is a line or two. `pretty` only stops a one-word orphan, and
+     STUDYING still ended on "psychology" alone. */
+  text-wrap: balance;
 }
 
+/* Two columns of two, on a grid rather than a wrapping row: wrapped, the
+   second column started at "GitHub" on one line and 8px further right at
+   "Email" on the next, a ragged edge in the most scanned box on the page. */
 .about-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 0.25rem 1.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -296,9 +301,13 @@
   max-width: 40rem;
 }
 
+/* The lede is two or three lines, well inside the six Chrome will balance,
+   and it ended "under it." on a line of its own. The bullets under it are
+   longer and stay on `pretty`. */
 .record-lede {
   margin: 0;
   color: var(--ink);
+  text-wrap: balance;
 }
 
 .record-points {
@@ -609,6 +618,19 @@
   opacity: 1;
 }
 
+/* The stretch-link makes the whole row the target, so the focus ring is the
+   edge of the row's wash, as it is on the home rows (components.css, .row),
+   not a box 2px off the title's caps with the arrow left outside it. Inset,
+   so it stays inside the shell padding the wash already bleeds into. */
+.toc-title a:focus-visible {
+  outline: none;
+}
+
+.toc-row:has(.toc-title a:focus-visible)::after {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
 .toc-list {
   position: relative;
   z-index: 0;
@@ -666,13 +688,16 @@
   }
 }
 
+/* Balanced: a deck is two or three lines, and `pretty` let two of the
+   eight trail off on a two-word stub ("a user.", "in it."). Two even lines
+   also leave more air beside the device. */
 .toc-standfirst {
   margin-block-start: 0.625rem;
   max-width: 44rem;
   color: var(--ink-2);
   font-size: var(--text-body);
   line-height: 1.55;
-  text-wrap: pretty;
+  text-wrap: balance;
 }
 
 @media (width >= 80rem) {
@@ -929,6 +954,13 @@
      shell edge has no air at the end of it and stops looking set. */
   max-width: 18ch;
   color: var(--ink);
+  /* display-l, sized by the window's height as well as its width. The title
+     sets in five lines, and at 1280x720 five lines at 84px pushed the page's
+     one action, "Read on Medium", and the imprint under the fold. 9.5vh is
+     68px there (four lines, the button at y593) and still 84px at 1440x900.
+     Written out rather than min()-wrapping var(--text-display-l), which
+     computed to an invalid value. */
+  font-size: clamp(3rem, min(6.4vw, 9.5vh), 5.25rem);
 }
 
 @media (width >= 48rem) {
@@ -1311,6 +1343,15 @@ html:has(.spoiled) {
   --selection-fg: #16140f; /* 5.47:1 under the selection ground */
 
   background: #16140f;
+}
+
+/* The sheet is dark whatever the theme, so the theme control has nothing to
+   switch here: it showed the sun on the plate and a click changed only its
+   own glyph, which reads as a broken button. Hidden rather than removed, so
+   it keeps its track in the bar and nothing beside it moves; `visibility`
+   also takes it out of the tab order. */
+html:has(.spoiled) .theme-toggle {
+  visibility: hidden;
 }
 
 /* The sheet fills the fold and its contents are centred in it, which is why

@@ -1334,12 +1334,14 @@
     outline-offset: 4px;
   }
 
+  /* Balanced, not pretty: a detail is two or three lines, and `pretty` only
+     stops a one-word orphan -- the KVPY line still ended on "by IISc." */
   .recognition-detail {
     grid-column: 1;
     margin: 0.5rem 0 0;
     max-width: 40rem;
     color: var(--ink-2);
-    text-wrap: pretty;
+    text-wrap: balance;
   }
 
   /* The arrow rides the year's line at the entry's right edge, and moves 2px

@@ -27,6 +27,10 @@ import { CODA, MOVEMENTS, hasCoda } from "@/lib/corpus";
  * movements, as the colophon did.
  */
 
+/** The cover spans the two movement columns; one list for both prints. */
+const COVER_SIZES =
+  "(min-width: 80rem) 48rem, (min-width: 64rem) 40rem, 100vw";
+
 /**
  * The first sentence, and everything after it.
  *
@@ -76,13 +80,27 @@ export function ProjectBody({ project }: { project: Project }) {
           {cover && (
             <figure className="case-figure plate-mark">
               <DotMask ratio={`${cover.width} / ${cover.height}`}>
+                {/* A diagram with a dark print carries both; case.css shows
+                    the one that matches the theme. The other is display:
+                    none, so a lazy image is never fetched and never read. */}
                 <Image
                   src={cover.src}
                   alt={cover.alt}
                   width={cover.width}
                   height={cover.height}
-                  sizes="(min-width: 80rem) 48rem, (min-width: 64rem) 40rem, 100vw"
+                  sizes={COVER_SIZES}
+                  className={cover.srcDark ? "cover-light" : undefined}
                 />
+                {cover.srcDark && (
+                  <Image
+                    src={cover.srcDark}
+                    alt={cover.alt}
+                    width={cover.width}
+                    height={cover.height}
+                    sizes={COVER_SIZES}
+                    className="cover-dark"
+                  />
+                )}
               </DotMask>
             </figure>
           )}

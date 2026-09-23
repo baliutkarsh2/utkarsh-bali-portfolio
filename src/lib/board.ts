@@ -213,6 +213,27 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   const inField = (i: number, j: number) =>
     bytes[j * W + i] > 0 || (invert && i >= rowFrom[j] && i <= rowTo[j]);
 
+  // The negative's rim. The bake antialiases the disc's edge, so its outer
+  // cells are part sky and part the paper outside it, and they come out
+  // LIGHTER than the sky's own ground (the top row runs 100-208 against a
+  // ground of 53). The positive inks them a little less, which is a clean
+  // circle; the negative prints anything above ground, so they printed as a
+  // ring of dots round the disc -- quantised, with flat runs wherever the
+  // circle ran tangent to the grid, a stitched polygon with four flat sides.
+  // A cell that touches anything outside the field is the rim, and the
+  // negative leaves it bare: a one-cell erosion. Measured on the sky, no
+  // rim cell is a star (not one of them is a zero byte), and the ring inside
+  // it prints at a third of the interior's density, so no second ring shows.
+  const RIM = 1;
+  const outside = (i: number, j: number) =>
+    i < 0 || j < 0 || i >= W || j >= H || !inField(i, j);
+  const onRim = (i: number, j: number) => {
+    for (let dj = -RIM; dj <= RIM; dj++)
+      for (let di = -RIM; di <= RIM; di++)
+        if (outside(i + di, j + dj)) return true;
+    return false;
+  };
+
   let n = 0;
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (inField(i, j)) n++;
   const gx = new Uint16Array(n);
@@ -221,6 +242,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
   const delay = new Float32Array(n); // assembly start, ms
   const scx = new Float32Array(n); // scatter vector, CSS px
   const scy = new Float32Array(n);
+  const rim = new Uint8Array(n); // 1: the negative's rim, printed bare
   const cellIndex = new Int32Array(W * H).fill(-1);
 
   const rand = rng(opts.seed ?? 11);
@@ -248,6 +270,7 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
         const len = 60 + rand() * 200;
         scx[k] = Math.cos(ang) * len;
         scy[k] = Math.sin(ang) * len - 40;
+        if (invert && onRim(i, j)) rim[k] = 1;
         cellIndex[j * W + i] = k;
         k++;
       }
@@ -402,7 +425,9 @@ export function createBoard(canvas: HTMLCanvasElement, field: BoardField, opts: 
       // paper always full white, and the grey is an optical average of
       // hard-edged marks.
       let coverage = invert
-        ? Math.pow(Math.max(0, paperOf(L) - groundPaper) / negSpan, NEG_GAMMA)
+        ? rim[i]
+          ? 0
+          : Math.pow(Math.max(0, paperOf(L) - groundPaper) / negSpan, NEG_GAMMA)
         : 1 - paperOf(L);
       coverage *= grow;
       let dia = Math.min(1.128 * Math.sqrt(Math.max(coverage, 0)), INK_DIA_MAX);
