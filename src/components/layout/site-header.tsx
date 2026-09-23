@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { navItems, profile, socials } from "@/content/profile";
+import { ArrowRight } from "lucide-react";
+import { navItems, profile } from "@/content/profile";
+import { ContactLinks } from "@/components/ui/contact-links";
 import { NineDotMark } from "@/components/ui/nine-dot-mark";
 import { SectionSpy } from "@/components/interactive/section-spy";
 import { ThemeToggle } from "@/components/interactive/theme-toggle";
@@ -182,17 +184,27 @@ export function SiteHeader() {
         className="menu"
         onClose={() => setMenuOpen(false)}
       >
+        {/* The bar is the header again, glyph for glyph, so opening the menu
+            changes one word (Menu → Close) and nothing jumps. The toggle is
+            repeated because the modal makes the header's own copy inert. */}
         <div className="menu-bar shell">
           {homeLink}
-          <button
-            type="button"
-            onClick={closeMenu}
-            className="menu-close meta tap"
-          >
-            Close
-          </button>
+          <div className="site-tools">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={closeMenu}
+              className="menu-close meta tap"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
+        {/* The routes are set flush on the page column, where the mark and
+            every heading start; the current-route LED hangs in the margin
+            rather than indenting the label. Each row is the whole width, so
+            the target is the row and the arrow says so. */}
         <nav aria-label="Primary" className="menu-nav shell">
           <ul className="menu-nav-list">
             {navItems.map((item) => {
@@ -203,10 +215,13 @@ export function SiteHeader() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     onClick={closeMenu}
-                    className="menu-route text-display-l font-medium"
+                    className="menu-route"
                   >
                     {active && <span aria-hidden className="nav-led" />}
-                    {item.label}
+                    <span className="text-display-l font-medium">
+                      {item.label}
+                    </span>
+                    <ArrowRight className="menu-route-arrow" aria-hidden="true" />
                   </Link>
                 </li>
               );
@@ -214,27 +229,18 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <ul className="menu-socials shell meta">
-          {socials.map((social) => {
-            const external = social.kind !== "email";
-            return (
-              <li key={social.kind}>
-                <a
-                  href={social.href}
-                  {...(external
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  className="menu-social tap"
-                >
-                  {social.label}
-                  {external && (
-                    <span className="sr-only"> (opens in a new tab)</span>
-                  )}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+        {/* The foot of the sheet is the same index that closes every page,
+            with the address as its first row: a tap opens the mail app, the
+            rest open his profiles and the résumé. Pinned to the bottom of the
+            screen (the dialog is a column), so the sheet is the routes above
+            and the ways to reach him below, each where a thumb expects it.
+            It used to be a bare address and a row of mono capitals in which
+            the one-letter "X" took a 44px touch box and stood twice as far
+            from its neighbours as they did from each other. */}
+        <div className="menu-foot shell">
+          <p className="menu-foot-label meta">Get in touch</p>
+          <ContactLinks email className="menu-links" />
+        </div>
       </dialog>
     </header>
   );
