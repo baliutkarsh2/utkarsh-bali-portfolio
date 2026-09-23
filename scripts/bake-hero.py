@@ -65,7 +65,7 @@ each dot actually got, so quantising costs a little hue, never tone.
 THE PLATE (the dark ground) is not the paper inverted: there, light is what
 advances, so everything the photograph lights prints as big pale dots. It has
 its own curve and its own amber skin, a floor so no dot is ever darker than
-the plate, and five guards against what that does to a portrait:
+the plate, and six guards against what that does to a portrait:
 
   · no outline: the back of the head gets a soft lift four to six dots deep in
     the hair's own brown, never a one-dot band (a one-dot amber band there
@@ -77,8 +77,12 @@ the plate, and five guards against what that does to a portrait:
     hue 58, L* 56 to 60), and the sheen prints as bigger dots of it, never
     as lighter ones. The exact solve gave a small hair dot the skin's own
     peach, C* 21 to 32, and the hairline dissolved into the forehead;
-  · no glowing rim: the sun side's edge is capped at the lit skin a few dots
-    in, so the jaw and chin keep a warm rim rather than a near-white outline;
+  · no glowing rim: the sun side's edge is capped at the lit skin six dots
+    in, so the jaw and chin keep a warm rim rather than a near-white
+    outline, and a highlight one or two dots wide on that side (brow to
+    nose, lower lip to chin) falls to the skin around it, so it cannot
+    print as a pale seam. No ink on that skin is paler than L* 86 or
+    greyer than C* 21: it prints as lit skin, not as bone;
   · no fused highlights: coverage stops at 0.74 (a dot 0.97 of a pitch across)
     and no ink is lighter than --bone, so the teeth stay dots, not a white
     blob brighter than the page's type.
@@ -160,6 +164,8 @@ P = dict(
     stubble=((835, 820, 185, 115), (665, 868, 70, 52), (780, 700, 90, 50)),
     stubble_sigma=7.0,
     teeth=(645, 750, 56, 20, 22.0, 1.0),
+    # the near eye's white and catchlight: a highlight that is a feature
+    catchlight=(754, 483, 30, 16),
     # (cx, cy, rx, ry, dL): soft dodges (+) and burns (-)
     burn=((735, 712, 22, 34, -8.0), (880, 810, 120, 90, 6.0), (748, 451, 72, 8, 11.0),
           (742, 506, 62, 10, 7.0), (640, 832, 36, 24, 8.0), (1115, 560, 50, 100, -5.0)),
@@ -211,12 +217,20 @@ P = dict(
                # the far side of the head: the hair lifted to this L*, fading
                # to nothing this far in (cut-out px, 4 to 6 dots)
                far_fade=(22.0, 40.0),
-               # the sun-side rim: its band (cut-out px), the sigma the lit
-               # skin beside it is read at (lattice steps), and how far above
-               # that skin it may print (L*)
-               rim_cap=(24.0, 6.0, 2.0),
+               # the sun-side rim: its band (cut-out px, about six dots; the
+               # lit skin is read from there to half as far again), the sigma
+               # it is read at (lattice steps), and how far above that skin
+               # it may print (L*)
+               rim_cap=(48.0, 6.0, 2.0),
+               # a thin highlight on the sun side's skin: how far round it
+               # the skin is read (lattice steps), and how far above that it
+               # may print (L*)
+               ridge_cap=(3.0, 3.0),
                # the hair's own ink: L* from and to, C* at most, hue
                hair_ink=(56.0, 60.0, 16.0, 58.0),
+               # the sun side's skin: no ink paler than this L*, none greyer
+               # than this C*
+               face_ink=(85.5, 21.0),
                shirt=(22.0, 0.12, 0.30), shirt_fade=0.45),
     shirt_hue=255.0,
     shirt_cmax=1.2,
@@ -573,6 +587,14 @@ def solid_hair(mk):
     return smoothstep(0.5, 0.9, mk["hair"])
 
 
+def sun_skin(mk):
+    """The sun side's skin, rim included, where a highlight has to stay skin:
+    not the hair, and not the lips, the teeth or the eye's catchlight, which
+    are highlights that ARE the feature."""
+    face = np.clip(mk["skin"] + mk["rim"], 0, 1) * (1 - mk["hair"])
+    return smoothstep(0.35, 0.65, mk["sun"] * face * (1 - mk["spare"]))
+
+
 def grade(p, look, colour_lin, mk, meta):
     """Each ground's own grade of the target: the plate's curve, amber skin,
     hair and the two edges of the head; the shirt squeezed on both. Returns
@@ -602,6 +624,21 @@ def grade(p, look, colour_lin, mk, meta):
         band = mk["sun"] * (1 - smoothstep(width * 0.6, width, ins))
         near = lattice_blur(meta, L, mk["skin"] * smoothstep(width, width * 1.5, ins) + 1e-9, sig)
         L = L * (1 - band) + np.minimum(L, near + margin) * band
+    if "ridge_cap" in look:
+        # A thin highlight on the sun side. The light that grazes the brow,
+        # the bridge of the nose, the lower lip and the chin is a line one or
+        # two dots wide, and on the plate a line of the biggest, palest dots
+        # is a seam: from the brow onto the nose and from the lip down the
+        # chin it read as scars across a grin that paper prints as a smile.
+        # So a dot there may print only a little above the skin around it,
+        # read over the lattice. A broad highlight (the cheek) IS the skin
+        # around it and keeps its level; the lips, the teeth and the eye's
+        # catchlight are left alone.
+        sig, margin = look["ridge_cap"]
+        face = np.clip(mk["skin"] + mk["rim"], 0, 1) * (1 - mk["hair"])
+        near = lattice_blur(meta, L, face + 1e-9, sig)
+        ss = sun_skin(mk)
+        L = L * (1 - ss) + np.minimum(L, near + margin) * ss
     # the shirt: one hue family, an eighth of its contrast
     to, contrast, keep = look["shirt"]
     sh = mk["shirt"]
@@ -694,6 +731,20 @@ def solve_ink(look, dark, T, Lt, mk=None):
         own = lin2lab(to_linear(T))
         own[:, 0] = cap
         I = np.where(over[:, None], gamut(to_srgb(np.clip(lab2lin(own), 0, 1))), I)
+    if "face_ink" in look:
+        # The sun side's skin prints as lit skin at its lightest: no paler
+        # than L* 86 and no greyer than C* 21, in the target's own hue.
+        # Past that the solve ran a highlight to cream, rgb(255,225,208).
+        cap, cmin = look["face_ink"]
+        lab = lin2lab(to_linear(I))
+        own = lin2lab(to_linear(T))
+        C = np.hypot(lab[:, 1], lab[:, 2])
+        Co = np.maximum(np.hypot(own[:, 1], own[:, 2]), 1e-6)
+        ab = np.where((C < cmin)[:, None], own[:, 1:] * (np.maximum(Co, cmin) / Co)[:, None], lab[:, 1:])
+        face = np.concatenate([np.minimum(lab[:, :1], cap), ab], 1)
+        face = to_srgb(np.clip(lab2lin(face), 0, 1))
+        w = sun_skin(mk)[:, None]
+        I = I * (1 - w) + face * w
     if "hair_ink" in look:
         # The hair's own ink: an umber, never the skin's peach. A hair dot on
         # the plate is small, and the exact solve asks a small dot for all of
@@ -780,6 +831,20 @@ def hold_hair(look):
     return rule
 
 
+def hold_face(look):
+    """The sun side's skin inks after quantising: no paler than its cap, and
+    half a unit clear of its chroma floor."""
+    cap, cmin = look["face_ink"]
+
+    def rule(lab):
+        lab = lab.copy()
+        lab[:, 0] = np.minimum(lab[:, 0], cap)
+        C = np.maximum(np.hypot(lab[:, 1], lab[:, 2]), 1e-6)
+        lab[:, 1:] *= np.maximum(1, (cmin + 0.5) / C)[:, None]
+        return lab
+    return rule
+
+
 def lowdisc(A, B):
     """A threshold in [0, 1) per lattice cell from a rank-1 lattice on the
     plastic number: evenly spread, never a visible grid."""
@@ -793,6 +858,8 @@ def separate(p, b, look, dark):
     groups = []
     if "hair_ink" in look:
         groups.append((solid_hair(b["masks"]) >= 0.5, hold_hair(look)))
+    if "face_ink" in look:
+        groups.append((sun_skin(b["masks"]) >= 0.5, hold_face(look)))
     ink = palette(ink, live, p["palette"], groups=groups)
     # solve the coverage again against the ink each dot actually got
     Ip = ink @ LUMA
@@ -868,6 +935,16 @@ def build(p, phone=False):
     lab, alpha, origin, masks = target(q)
     X, Y, pitch, meta = screen(q)
     colour, a, mk = sample(q, lab, alpha, origin, masks, X, Y, pitch)
+    # the highlights that are features (the lips, the teeth, the catchlight),
+    # read at the dot's centre
+    x0, y0, cw = q["crop"]
+    sx = X * cw / q["design_w"] + x0
+    sy = Y * cw / q["design_w"] + y0
+    spare = np.zeros_like(X)
+    for (cx, cy, rx, ry) in (q["lips"][:4], q["teeth"][:4], q["catchlight"]):
+        r = np.hypot((sx - cx) / rx, (sy - cy) / ry)
+        spare = np.maximum(spare, 1 - smoothstep(0.75, 1.25, r))
+    mk["spare"] = spare
     w, fade = weights(q, X, Y, a)
     return dict(X=X, Y=Y, colour=colour, w=w, fade=fade, edge=smoothstep(0.12, 0.95, a),
                 masks=mk, meta=meta, q=q)
@@ -1000,13 +1077,16 @@ def main():
                 assert inkL.max() <= 92.5, f"plate ink at L* {inkL.max():.1f} is lighter than --bone"
                 dmax = np.asarray(back)[consts["rows"]:, :, 0].max() / 255 * consts["dmax"]
                 assert dmax <= 0.99, f"a plate dot is {dmax:.2f} of a pitch across"
-                # the hair prints in its own umber: read at each decoded
-                # dot's own place on the screen
+                # the hair prints in its own umber, and the sun side's skin
+                # as skin: read at each decoded dot's own place on the screen
                 n = at_dots(b, back, consts)
                 lab = lin2lab(to_linear(ink))
                 C = np.hypot(lab[:, 1], lab[:, 2])
                 hair = b["masks"]["hair"][n] > 0.9
                 assert C[hair].max() <= 18, f"a plate hair ink is C* {C[hair].max():.1f}"
+                face = sun_skin(b["masks"])[n] >= 1
+                assert lab[face, 0].max() <= 86, f"a sun-side skin ink is L* {lab[face, 0].max():.1f}"
+                assert C[face].min() >= 20, f"a sun-side skin ink is C* {C[face].min():.1f}"
             inks = np.unique(np.round(ink * 255).astype(int), axis=0)
             report[f"hero-grid{band}{suffix}.webp"] = dict(
                 bytes=os.path.getsize(gp), size=list(grid.size), dots=int(len(X)), inks=int(len(inks)))
