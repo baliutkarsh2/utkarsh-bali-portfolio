@@ -648,6 +648,12 @@
   color: var(--ink);
 }
 
+/* Tabbing to a row, the browser scrolls only this link into view, but the
+   wash and the ring are the whole row, and every other row came in cut by
+   the fold at 1440x900 and 1280x720. A row runs 157-194px under its title on
+   a laptop and up to 288px on a phone, where the longest title takes two
+   lines; the margin clears the tallest with a line of ground under it, as
+   .row-link's does on home. */
 .toc-title a {
   color: inherit;
   text-decoration-line: underline;
@@ -655,6 +661,7 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 0.16em;
   transition: text-decoration-color var(--dur-2) var(--ease-snap);
+  scroll-margin-block-end: 19rem;
 }
 
 .toc-row:hover .toc-title a,
