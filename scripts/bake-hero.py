@@ -130,7 +130,11 @@ COLLAR = [(1085, 805), (1045, 905), (985, 1010), (915, 1090), (880, 1150), (870,
 FACE = [(505, 440), (560, 425), (620, 412), (680, 398), (740, 384), (800, 374), (860, 390),
         (910, 418), (952, 448), (972, 505), (985, 580), (1002, 650), (1030, 720),
         (1070, 780)] + COLLAR + [(760, 1300), (420, 1000), (420, 450)]
-EAR = (1115, 555, 52, 112)
+# The whole ear: the helix, the concha and the tragus, and the skin in front
+# of it down toward the jaw. Covering only the helix left the concha between
+# this and the face, in the hair, and on the plate it printed in the hair's
+# grey-taupe ink, a grey patch with a hard seam against the peach helix.
+EAR = (1100, 560, 75, 120)
 SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1450, 1300)] + COLLAR[::-1]
 
 P = dict(
@@ -352,6 +356,9 @@ def target(p):
     face = np.maximum(poly_mask((H, W), box, FACE, 6), ell(*EAR, 0.25))
     shirt = np.clip(poly_mask((H, W), box, SHIRT, 6) * (1 - 0.9 * face), 0, 1)
     hairz = np.clip((1 - face) * (1 - shirt), 0, 1) * smoothstep(0.05, 0.5, a)
+    # and the hair gives way faster across the ear's soft edge, so its ink
+    # stops outside the ellipse rather than on it
+    hairz *= 1 - ell(*EAR, 0.25)
 
     # ── tone ──
     Ld = _bilateral(L0, *p["denoise"])
