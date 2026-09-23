@@ -43,6 +43,17 @@
   margin-block-start: var(--space-3);
 }
 
+/* The display W, pulled in over the lowercase letter after it: Bodoni
+   Moda's kern table leaves "W ork" and "W hat" at display size. Set by
+   <Typeset> (components/project/typeset.tsx), which decides round or tall. */
+.kern-w {
+  margin-inline-end: -0.06em;
+}
+
+.kern-w-tall {
+  margin-inline-end: -0.045em;
+}
+
 .page-mast-lede {
   margin-block-start: var(--space-3);
   max-width: 40rem;
@@ -148,6 +159,17 @@
   align-items: baseline;
   padding-block: 0.875rem;
   border-bottom: 1px solid var(--line);
+}
+
+/* Stacked, the card closes on the next section's rule instead of its own:
+   the last row's hairline and the "Where I've worked" rule sat 76px apart
+   with nothing between them, which reads as an empty row of the table. Beside
+   the headline (64rem and up) the card is its own column and keeps its
+   closing rule. */
+@media (width < 64rem) {
+  .about-fact:last-child {
+    border-bottom: 0;
+  }
 }
 
 .about-fact dt {
@@ -760,41 +782,71 @@
    because a broadside is one composition -- title, standfirst, imprint and
    plate on one sheet -- and stacking it would have made the page a list of
    two things. Below 64rem there is no second column to put it in, so it
-   falls under the imprint at the full measure, which is what a broadside
-   does on a narrower sheet.
+   falls under the imprint, which is what a broadside does on a narrower
+   sheet.
 
-   The board sizes itself from its own field (96 x 96 lattice cells) and caps
-   at the column, so the square never drives the layout. */
+   The field is 96 cells square and is drawn at the cell pitch, not scaled to
+   its box, so the box has to be a whole 96 cells at whatever pitch it gets.
+   Anything that clamps it -- a max-width, a grid track that came out a few
+   pixels short -- does not shrink the picture, it crops it: the disc comes
+   out with a flat right side and a flat bottom. So nothing here clamps the
+   board. The pitch is chosen so the square always fits whole, and the plate
+   mark (drawn by board.css at --plate-inset around the board) is placed by
+   the figure's padding, which is the same number. */
+.broadside-head {
+  /* The phone plate is measured off the column: 100cqi below is the
+     masthead's content box, which is the column every other edge sits on. */
+  container-type: inline-size;
+}
+
+/* On a phone the plate mark spans the column exactly, as every rule and
+   right edge on the page does -- a mark 18px short of them read as a slip,
+   and at 360 the same fixed box did not fit the column at all and cropped
+   the disc. The pitch steps with the window so the inset (what is left of
+   the column either side of 96 cells, halved) stays between 16px and about
+   64px, and the disc sits centred in its mark. */
 .broadside-plate {
-  --sky-inset: 22px;
+  --pitch: 2.5px;
+  --sky-inset: calc((100cqi - 96 * var(--pitch)) / 2);
+  width: 100%;
   margin: var(--space-6) 0 0;
-  /* The plate mark is struck --sky-inset outside the field, so the figure
-     carries that much padding: the mark lands inside the column instead of
-     hanging past the shell's right edge. */
   padding: var(--sky-inset);
-  width: fit-content;
-  max-width: 100%;
 }
 
-/* The field is 96 cells square and is drawn at the cell pitch, not scaled to
-   its box -- so the box has to be a whole 96 cells at whatever pitch it gets.
-   It was capped at min(40vw, 30rem) on a 6 px pitch, which is 480 px of box
-   for 576 px of sky: the disc came out with a flat right side and a flat
-   bottom. The pitch is set here per width so the square always fits whole. */
-.sky-board {
-  --pitch: 3px;
+@media (width >= 22.5rem) {
+  .broadside-plate {
+    --pitch: 3px;
+  }
 }
 
-@media (width >= 30rem) {
-  .sky-board {
+@media (width >= 28.5rem) {
+  .broadside-plate {
     --pitch: 4px;
   }
 }
 
-@media (width >= 48rem) {
-  .sky-board {
+@media (width >= 34.5rem) {
+  .broadside-plate {
     --pitch: 5px;
   }
+}
+
+/* From a tablet up the column is far wider than the disc, and a mark
+   spanning it would be a 700-900px square of empty plate. The figure takes
+   its own size instead: 96 cells and the standard inset, hung on the left. */
+@media (width >= 48rem) {
+  .broadside-plate {
+    --sky-inset: 22px;
+    width: fit-content;
+  }
+}
+
+/* The board's plate mark is struck at the figure's inset, whatever that
+   resolves to. Here rather than in board.css because it belongs to this
+   composition; unlayered and one class stronger than board.css's
+   `.board[data-mode="still"]`, so it wins without !important. */
+.broadside-plate .board.sky-board {
+  --plate-inset: var(--sky-inset);
 }
 
 /* The caption hangs on the plate mark's left edge, where every other plate's
@@ -817,22 +869,54 @@
     align-items: start;
   }
 
+  /* The figure is the `auto` track, so it is exactly 96 cells and its
+     padding, and its right edge -- the plate mark -- is the column's right
+     edge, the same x as the header's toggle. It used to hang the mark past
+     the column with a negative end margin and cap itself at 100% of the
+     track; the negative margin shrank the track by the inset, the cap then
+     clamped the board 22px under 96 cells, and the canvas, which still drew
+     all 96, was cut off down the right side and along the bottom. */
   .broadside-plate {
+    --pitch: 4px;
     margin: 0;
     /* The mark is the figure's own top edge, so this puts it on the
        eyebrow's cap line. */
     margin-block-start: 0.125rem;
-    margin-inline-end: calc(-1 * var(--sky-inset));
-  }
-
-  .sky-board {
-    --pitch: 4px;
   }
 }
 
 @media (width >= 80rem) {
-  .sky-board {
+  .broadside-plate {
     --pitch: 5px;
+  }
+}
+
+/* ── The sky in the dark ──────────────────────────────────────────────────
+   globals.css pins every still plate to paper in the dark, on the rule that
+   a print stays a print. The sky is the one plate that rule makes wrong: it
+   is the only still board left on the site, so the rule reached nothing else,
+   and on the dark page it put a 500px cream square -- the brightest thing on
+   the screen, well over the title -- with the night drawn dark-on-light and
+   no plate mark left to see. So the sky takes the page's own tokens back
+   (`inherit` from the figure, which has the dark values) and prints as its
+   own negative: the stars in bone on the dark plate ground, the empty sky
+   as nothing (board.ts, `invert`). Five selectors deep to outrank the
+   four-deep pin. */
+:root[data-theme="dark"] .broadside-plate .sky-board[data-mode="still"] {
+  --ink: inherit;
+  --ink-2: inherit;
+  --ground-2: inherit;
+  --dot-off: inherit;
+  --plate-polarity: invert;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .broadside-plate .sky-board[data-mode="still"] {
+    --ink: inherit;
+    --ink-2: inherit;
+    --ground-2: inherit;
+    --dot-off: inherit;
+    --plate-polarity: invert;
   }
 }
 
@@ -853,40 +937,47 @@
   }
 }
 
+/* The title is the link to the essay, and a five-line link cannot wear the
+   usual affordances: an underline on hover ruled five lines like a sheet of
+   writing paper, and the focus ring, which follows each line box, came out
+   as a staircase with its top edge through the eyebrow. So hover is the ink
+   easing a step lighter, focus is one rectangle round the whole title, and
+   the explicit action under the standfirst is what says where it goes. */
 .broadside-title a {
   color: inherit;
-  text-decoration-line: underline;
-  text-decoration-color: transparent;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.12em;
-  transition: text-decoration-color var(--dur-2) var(--ease-snap);
+  text-decoration: none;
+  transition: color var(--dur-2) var(--ease-snap);
 }
 
-.broadside-title a:hover,
+.broadside-title a:hover {
+  color: var(--ink-2);
+}
+
 .broadside-title a:focus-visible {
-  text-decoration-color: var(--rule-mid);
+  outline: none;
 }
 
-/* The outward arrow, sized off the title rather than in pixels, so it stays
-   the same optical weight through the whole display-l clamp. Set on the last
-   line, riding the cap height. */
-.broadside-arrow {
-  display: inline-block;
-  width: 0.3em;
-  height: 0.3em;
-  margin-inline-start: 0.14em;
-  vertical-align: 0.42em;
-  stroke-width: 1.5;
-  color: var(--ink-3);
-  transition:
-    color var(--dur-1) var(--ease-snap),
-    translate var(--dur-2) var(--ease-snap);
+/* Drawn rather than an outline so the bottom can clear the descenders: at
+   the display leading the last line's "y" hangs well below the h1's box, and
+   a uniform outline-offset ran the ring through it. */
+.broadside-title {
+  position: relative;
 }
 
-.broadside-title a:hover .broadside-arrow,
-.broadside-title a:focus-visible .broadside-arrow {
-  color: var(--ink);
-  translate: 0.06em -0.06em;
+.broadside-title:has(a:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: -0.12em -0.12em -0.3em;
+  border: 2px solid var(--focus);
+  pointer-events: none;
+}
+
+/* The way to the essay, said in words. The title is a link, but its only
+   visible sign on a touch screen was an 8px arrow hanging after the fifth
+   line, which read as a stray glyph. */
+.broadside-action {
+  display: flex;
+  margin-block-start: var(--space-5);
 }
 
 .broadside-standfirst {
@@ -1196,6 +1287,10 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 html:has(.spoiled) {
+  /* The browser's own parts -- the scrollbar gutter, form controls -- come
+     across with the sheet, or a light-grey gutter stands beside it. */
+  color-scheme: dark;
+
   --ground: #16140f; /* --plate */
   --ground-2: #221f18; /* --plate-2 */
   --ground-3: #2c2820;
@@ -1265,10 +1360,24 @@ html:has(.spoiled) {
   aspect-ratio: var(--plate-cols) / var(--plate-rows);
 }
 
+/* On a phone the plate is centred in the column, so the mark around it
+   sits on the column's two edges like every other element on the page. Hung
+   left, the mark ran from 4px off the left of a 390 window to 34px short of
+   the right. Below 24rem (a 360 phone) the column cannot hold 64 cells at
+   5px plus the mark and the register mark hanging off its corner, which
+   went 6px past the window; the plate steps down to a 4px pitch, still 64
+   whole cells (spoiled-plate.tsx reads the pitch off this element). */
 @media (width < 48rem) {
   .spoiled-plate {
     --plate-cols: var(--plate-cols-sm, 64);
     --plate-rows: var(--plate-rows-sm, 32);
+    margin-inline: auto;
+  }
+}
+
+@media (width < 24rem) {
+  .spoiled-plate {
+    --pitch: 4px;
   }
 }
 

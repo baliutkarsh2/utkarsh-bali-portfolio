@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { DotBoard } from "@/components/interactive/dot-board";
+import { Typeset } from "@/components/project/typeset";
+import { Button } from "@/components/ui/button";
 import { plateById } from "@/content/plates";
 import { formatPostDate, publishedPosts } from "@/lib/writing";
 
@@ -60,14 +61,18 @@ export default function WritingPage() {
 
   const external = lead.external;
 
+  // The title stays a link, but it no longer carries the arrow: an 8px
+  // glyph after the fifth line of a display title read as a stray mark, and
+  // the action under the standfirst says where the link goes in words.
   const title = external ? (
     <a href={lead.href} target="_blank" rel="noopener noreferrer">
-      {lead.title}
-      <ArrowUpRight aria-hidden="true" className="broadside-arrow" />
+      <Typeset>{lead.title}</Typeset>
       <span className="sr-only"> (opens in a new tab)</span>
     </a>
   ) : (
-    <Link href={lead.href}>{lead.title}</Link>
+    <Link href={lead.href}>
+      <Typeset>{lead.title}</Typeset>
+    </Link>
   );
 
   return (
@@ -88,6 +93,21 @@ export default function WritingPage() {
           {lead.summary && (
             <p className="broadside-standfirst text-lede">{lead.summary}</p>
           )}
+
+          {/* The page's one job is to send a reader to the essay, so it says
+              so: a real control, 44px tall on a phone, under the standfirst
+              where a reader who has just finished it is looking. */}
+          <p className="broadside-action">
+            {external ? (
+              <Button variant="secondary" href={lead.href} external>
+                Read on {external.publisher}
+              </Button>
+            ) : (
+              <Button variant="secondary" href={lead.href}>
+                Read the essay
+              </Button>
+            )}
+          </p>
 
           <hr className="broadside-rule" />
 
@@ -110,7 +130,9 @@ export default function WritingPage() {
             is ink emerging from bare paper; this is a solid field of ink with
             2,307 stars punched out of it as holes of paper. Same screen, same
             transfer, opposite polarity -- which is why it belongs beside the
-            portrait rather than looking like a different site. */}
+            portrait rather than looking like a different site. On the dark
+            page it prints as its own negative instead, the stars in bone on
+            the plate (plates.css, "The sky in the dark"). */}
         <figure className="broadside-plate">
           <DotBoard
             source={sky.id}

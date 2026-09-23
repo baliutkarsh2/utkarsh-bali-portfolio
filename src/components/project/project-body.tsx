@@ -233,7 +233,7 @@ function ProjectRail({ project }: { project: Project }) {
 
         <div className="rail-block">
           <h2 className="rail-label meta">Built with</h2>
-          <ul className="rail-stack text-small">
+          <ul className="rail-stack tag-row text-small">
             {project.stack.map((item) => (
               <li key={item}>{item}</li>
             ))}

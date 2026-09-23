@@ -150,6 +150,9 @@ export function DotBoard({ source, alt, fallback, className }: DotBoardProps) {
           ink: cssVar(figure, "--ink", "#14120e"),
           off: cssVar(figure, "--dot-off", "rgba(20,18,14,0.06)"),
         },
+        // Read from the cascade like the ink, so the theme decides it: the sky
+        // prints as its own negative on the dark ground (plates.css).
+        invert: cssVar(figure, "--plate-polarity", "positive") === "invert",
       });
       if (!board) {
         setStatus("fallback");

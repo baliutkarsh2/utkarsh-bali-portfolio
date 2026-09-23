@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Project } from "@/content";
+import { Typeset } from "@/components/project/typeset";
 
 /**
  * The foot of a case study: the previous and the next project, each with its
@@ -24,7 +25,9 @@ export function ProjectNav({ prev, next }: { prev: Project; next: Project }) {
             <ArrowLeft aria-hidden="true" />
             Previous
           </span>
-          <span className="foot-name text-display-s">{prev.name}</span>
+          <span className="foot-name text-display-s">
+            <Typeset>{prev.name}</Typeset>
+          </span>
           <span className="foot-tagline text-small">{prev.tagline}</span>
         </Link>
         <Link
@@ -37,7 +40,9 @@ export function ProjectNav({ prev, next }: { prev: Project; next: Project }) {
             Next
             <ArrowRight aria-hidden="true" />
           </span>
-          <span className="foot-name text-display-s">{next.name}</span>
+          <span className="foot-name text-display-s">
+            <Typeset>{next.name}</Typeset>
+          </span>
           <span className="foot-tagline text-small">{next.tagline}</span>
         </Link>
       </div>

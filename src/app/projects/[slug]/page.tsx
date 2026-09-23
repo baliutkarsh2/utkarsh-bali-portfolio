@@ -11,6 +11,7 @@ import {
 } from "@/content";
 import { ProjectBody } from "@/components/project/project-body";
 import { ProjectNav } from "@/components/project/project-nav";
+import { Typeset } from "@/components/project/typeset";
 import { absoluteUrl, jsonLd, personId, siteConfig } from "@/lib/seo";
 
 /** Unknown slugs 404 instead of being rendered on demand. */
@@ -94,9 +95,11 @@ export default async function ProjectPage({
       <article className="case">
         <header className="case-head shell">
           <div className="case-head-margin">
-            <Link href="/projects" className="case-back data tap">
+            {/* On the eyebrow's line from 64rem, and set as the eyebrow is:
+                the mono label, not a 13px readout beside an 11px one. */}
+            <Link href="/projects" className="case-back data lg:meta tap">
               <ArrowLeft aria-hidden="true" />
-              <span className="dot-underline">All work</span>
+              <span className="case-back-label">All work</span>
             </Link>
           </div>
 
@@ -108,7 +111,7 @@ export default async function ProjectPage({
               className="case-name text-display-l"
               style={{ viewTransitionName: `project-${project.slug}` }}
             >
-              {project.name}
+              <Typeset>{project.name}</Typeset>
             </h1>
             <p className="case-tagline text-lede">{project.tagline}</p>
 
