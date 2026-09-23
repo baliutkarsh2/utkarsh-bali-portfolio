@@ -1489,6 +1489,32 @@
     }
   }
 
+  /* The primary's hover lifts the fill, and "lift" points a different way in
+     each theme. On paper the fill is ink and the lift goes into the ink:
+     --ink-2, as the button's own rule has it. In the dark the fill is bone,
+     and the same --ink-2 is bone-2, the khaki the site uses for secondary
+     text: the one filled control greyed out under the cursor, which is what a
+     disabled button looks like. There the lift goes the other way, to a
+     brighter sheet of the same paper. The --ground label on #fbf8f1 only
+     gains contrast. This is the site's only primary button, so the token
+     lives with it; it is the same remap globals.css does for every other
+     token, in the same two places. */
+  .hero-actions {
+    --primary-hover: var(--ink-2);
+  }
+  :root[data-theme="dark"] .hero-actions {
+    --primary-hover: #fbf8f1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .hero-actions {
+      --primary-hover: #fbf8f1;
+    }
+  }
+  .hero-actions .btn[data-variant="primary"]:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+
   /* The actions on a phone: a two-column grid (the utilities in hero.tsx),
      the primary across both, the other two a matched pair under it. The
      Résumé link is the text register everywhere else; here it takes the
