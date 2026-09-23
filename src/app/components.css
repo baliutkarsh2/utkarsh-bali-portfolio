@@ -802,14 +802,6 @@
     height: 1.625rem;
   }
 
-  /* The chop hangs off the chip's right edge, out of flow. */
-  .copy-email-label > .chop {
-    position: absolute;
-    top: 50%;
-    left: calc(100% + 0.75rem);
-    translate: 0 -50%;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .copy-email-address,
     .copy-email-label {
