@@ -248,7 +248,17 @@
 
   /* The employment band. Clipped rather than sized, so the dot lattice is
      anchored to the track and not to the bar: two lanes whose jobs overlap in
-     time show dots in the same columns. */
+     time show dots in the same columns.
+
+     The clip edges are snapped to the lattice. Cut at the exact date, an
+     edge fell through a row of dots and the band opened with a row of half
+     dots, which read as a dashed rule above every bar, a hard crop. Rounded
+     to the nearest multiple of the pitch, measured from the track's edge
+     where the tile starts, an edge always falls between two rows and a band
+     is whole dots end to end. The shift is at most half a pitch, 2.5px, a
+     few days on a chart whose marks claim a month. The exact cut is kept
+     for a browser without round(), where a var() that failed at computed
+     time would unset the clip and draw the band down the whole track. */
   .cn-lane[data-bar]::after {
     content: "";
     position: absolute;
@@ -260,6 +270,15 @@
     background-image: var(--cn-dots);
     background-size: var(--pitch) var(--pitch);
     clip-path: inset(var(--b0) 0 calc(100% - var(--b1)) 0);
+  }
+
+  @supports (width: round(nearest, 1%, 1px)) {
+    .cn-lane[data-bar]::after {
+      clip-path: inset(
+        round(nearest, var(--b0), var(--pitch)) 0
+          calc(100% - round(nearest, var(--b1), var(--pitch))) 0
+      );
+    }
   }
 
   /* ═══ Marks ════════════════════════════════════════════════════════════════
@@ -487,6 +506,17 @@
       width: auto;
       height: var(--cn-band);
       clip-path: inset(0 calc(100% - var(--b1)) 0 var(--b0));
+    }
+
+    /* Snapped to the lattice, as on a phone, measured from the lane's left
+       edge where the tile starts. */
+    @supports (width: round(nearest, 1%, 1px)) {
+      .cn-lane[data-bar]::after {
+        clip-path: inset(
+          0 calc(100% - round(nearest, var(--b1), var(--pitch))) 0
+            round(nearest, var(--b0), var(--pitch))
+        );
+      }
     }
 
     .cn-mark {
