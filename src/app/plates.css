@@ -926,40 +926,47 @@
   }
 }
 
+/* The title is the link to the essay, and a five-line link cannot wear the
+   usual affordances: an underline on hover ruled five lines like a sheet of
+   writing paper, and the focus ring, which follows each line box, came out
+   as a staircase with its top edge through the eyebrow. So hover is the ink
+   easing a step lighter, focus is one rectangle round the whole title, and
+   the explicit action under the standfirst is what says where it goes. */
 .broadside-title a {
   color: inherit;
-  text-decoration-line: underline;
-  text-decoration-color: transparent;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.12em;
-  transition: text-decoration-color var(--dur-2) var(--ease-snap);
+  text-decoration: none;
+  transition: color var(--dur-2) var(--ease-snap);
 }
 
-.broadside-title a:hover,
+.broadside-title a:hover {
+  color: var(--ink-2);
+}
+
 .broadside-title a:focus-visible {
-  text-decoration-color: var(--rule-mid);
+  outline: none;
 }
 
-/* The outward arrow, sized off the title rather than in pixels, so it stays
-   the same optical weight through the whole display-l clamp. Set on the last
-   line, riding the cap height. */
-.broadside-arrow {
-  display: inline-block;
-  width: 0.3em;
-  height: 0.3em;
-  margin-inline-start: 0.14em;
-  vertical-align: 0.42em;
-  stroke-width: 1.5;
-  color: var(--ink-3);
-  transition:
-    color var(--dur-1) var(--ease-snap),
-    translate var(--dur-2) var(--ease-snap);
+/* Drawn rather than an outline so the bottom can clear the descenders: at
+   the display leading the last line's "y" hangs well below the h1's box, and
+   a uniform outline-offset ran the ring through it. */
+.broadside-title {
+  position: relative;
 }
 
-.broadside-title a:hover .broadside-arrow,
-.broadside-title a:focus-visible .broadside-arrow {
-  color: var(--ink);
-  translate: 0.06em -0.06em;
+.broadside-title:has(a:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: -0.12em -0.12em -0.3em;
+  border: 2px solid var(--focus);
+  pointer-events: none;
+}
+
+/* The way to the essay, said in words. The title is a link, but its only
+   visible sign on a touch screen was an 8px arrow hanging after the fifth
+   line, which read as a stray glyph. */
+.broadside-action {
+  display: flex;
+  margin-block-start: var(--space-5);
 }
 
 .broadside-standfirst {
