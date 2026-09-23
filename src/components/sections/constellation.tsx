@@ -86,6 +86,12 @@ const MONTH_INDEX = new Map(
  */
 const NOW = Date.now();
 
+/** "2026-05-01" → "May 2026", the abbreviated form the mark's label uses. */
+function shortMonthLabel(iso: string): string {
+  const d = new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`));
+  return `${MONTHS[d.getUTCMonth()].slice(0, 3)} ${d.getUTCFullYear()}`;
+}
+
 /** "2026-05-01" → the UTC epoch of the first of that month. */
 function monthStart(iso: string): number {
   const t = Date.parse(`${iso.slice(0, 10)}T00:00:00Z`);
@@ -166,11 +172,14 @@ function joinsOf(points: Point[], j: number): string | undefined {
 
 type Point = {
   slug: string;
+  name: string;
   status: ProjectStatus;
   /** The middle of the project's month, and the ±15 day window around it. */
   centre: number;
   low: number;
   high: number;
+  /** "Feb 2026", for the label the mark shows under the pointer. */
+  shortWhen: string;
   /** “Checkpoint, February 2026, Checkpoint, Co-founder & CTO, Ongoing”. */
   label: string;
 };
@@ -265,10 +274,12 @@ const lanes: Lane[] = (() => {
 
     lane.points.push({
       slug: project.slug,
+      name: project.name,
       status: project.status,
       centre,
       low: centre - HALF_MONTH,
       high: centre + HALF_MONTH,
+      shortWhen: shortMonthLabel(project.sortDate),
       label: `${project.name}, ${when}, ${lane.name}, ${project.role}, ${statusLabel[project.status]}`,
     });
 
@@ -355,6 +366,18 @@ for (
 }
 
 const todayAt = at(NOW);
+
+/**
+ * Which way a mark's label hangs. Centred over the diamond, except near
+ * either end of the plot, where a centred label would run past the plate's
+ * edge: there it starts at the diamond and runs inward.
+ */
+function tipAlign(t: number): "start" | "end" | undefined {
+  const x = (t - domainStart) / span;
+  if (x < 0.15) return "start";
+  if (x > 0.75) return "end";
+  return undefined;
+}
 
 type ConstellationProps = {
   /**
@@ -507,6 +530,7 @@ export function Constellation({
                         className="cn-mark"
                         href={`/projects/${point.slug}`}
                         data-join={joinsOf(lane.points, j)}
+                        data-tip={tipAlign(point.centre)}
                         style={
                           {
                             "--t0": at(point.low),
@@ -527,6 +551,20 @@ export function Constellation({
                           data-glyph={GLYPH[point.status]}
                           aria-hidden="true"
                         />
+                        {/* The name under the pointer. Eight diamonds are eight
+                        links, and the lanes name employers, not projects: on
+                        QualGent's lane nothing said which diamond was App
+                        Crawler until you clicked it. Hidden from assistive
+                        tech, because the sr-only label above already is the
+                        link's name and says more. */}
+                        <span className="cn-tip" aria-hidden="true">
+                          <span className="cn-tip-name text-ink">
+                            {point.name}
+                          </span>{" "}
+                          <span className="cn-tip-when data text-ink-3">
+                            {point.shortWhen}
+                          </span>
+                        </span>
                       </Link>
                     ))}
                   </div>
