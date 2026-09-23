@@ -64,6 +64,14 @@
     }
   }
 
+  /* Flex, so the link is a flex item and not an inline box on the margin's
+     line: an inline-flex sat on the reading face's 27px strut and landed 8px
+     under the eyebrow beside it whatever its own size. */
+  .case-head-margin {
+    display: flex;
+    align-items: flex-start;
+  }
+
   .case-back {
     display: inline-flex;
     align-items: center;
@@ -88,14 +96,40 @@
     translate: -2px 0;
   }
 
-  /* The back link sits on the eyebrow's line. */
-  @media (width >= 64rem) {
-    .case-head-margin {
-      padding-block-start: 0.05rem;
-    }
+  /* The underline is the hover, not a rest state: at rest the label sits
+     beside the eyebrow as another label, not as a link to be read. */
+  .case-back-label {
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--dur-2) var(--ease-snap);
+  }
 
+  .case-back:hover .case-back-label,
+  .case-back:focus-visible .case-back-label {
+    text-decoration-color: currentColor;
+  }
+
+  /* The back link sits on the eyebrow's line: the same mono label (the
+     markup switches `data` for `meta` at lg), both boxes at the top of the
+     grid row, so the two share a baseline with no nudging. The old -0.2rem
+     margin and 0.05rem padding tried to line a 13px sentence-case line up
+     with an 11px caps one and left it 9px low. The arrow is sized to the
+     caps. */
+  @media (width >= 64rem) {
+    .case-back svg {
+      width: 0.75rem;
+      height: 0.75rem;
+    }
+  }
+
+  /* On a touch screen at that width `tap` makes the link 44px tall with the
+     label centred in it; pull the box up by half the difference so the label
+     still lands on the eyebrow's line. */
+  @media (width >= 64rem) and (pointer: coarse) {
     .case-back {
-      margin-block-start: -0.2rem;
+      margin-block: calc((var(--text-meta) * 1.2 - 44px) / 2);
     }
   }
 

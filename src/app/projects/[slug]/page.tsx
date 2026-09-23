@@ -95,9 +95,11 @@ export default async function ProjectPage({
       <article className="case">
         <header className="case-head shell">
           <div className="case-head-margin">
-            <Link href="/projects" className="case-back data tap">
+            {/* On the eyebrow's line from 64rem, and set as the eyebrow is:
+                the mono label, not a 13px readout beside an 11px one. */}
+            <Link href="/projects" className="case-back data lg:meta tap">
               <ArrowLeft aria-hidden="true" />
-              <span className="dot-underline">All work</span>
+              <span className="case-back-label">All work</span>
             </Link>
           </div>
 
