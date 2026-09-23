@@ -858,6 +858,19 @@
     opacity: 0;
   }
 
+  /* On a 360 phone the footer's address and chip fill the column, and the
+     chop hung off the chip's right edge ran 6px past the window -- enough to
+     widen the page and let it pan sideways on every route, struck or not
+     (it is in the layout at opacity 0). There it is struck under the chip
+     instead, in the air above the footer's first rule. */
+  @media (width < 24rem) {
+    .copy-email[data-size="small"] .copy-email-label > .chop {
+      top: calc(100% + 0.5rem);
+      left: 50%;
+      translate: -50% 0;
+    }
+  }
+
   .copy-email[data-chop] .chop {
     opacity: 1;
   }
