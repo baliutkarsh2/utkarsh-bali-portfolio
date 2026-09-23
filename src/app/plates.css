@@ -760,41 +760,71 @@
    because a broadside is one composition -- title, standfirst, imprint and
    plate on one sheet -- and stacking it would have made the page a list of
    two things. Below 64rem there is no second column to put it in, so it
-   falls under the imprint at the full measure, which is what a broadside
-   does on a narrower sheet.
+   falls under the imprint, which is what a broadside does on a narrower
+   sheet.
 
-   The board sizes itself from its own field (96 x 96 lattice cells) and caps
-   at the column, so the square never drives the layout. */
+   The field is 96 cells square and is drawn at the cell pitch, not scaled to
+   its box, so the box has to be a whole 96 cells at whatever pitch it gets.
+   Anything that clamps it -- a max-width, a grid track that came out a few
+   pixels short -- does not shrink the picture, it crops it: the disc comes
+   out with a flat right side and a flat bottom. So nothing here clamps the
+   board. The pitch is chosen so the square always fits whole, and the plate
+   mark (drawn by board.css at --plate-inset around the board) is placed by
+   the figure's padding, which is the same number. */
+.broadside-head {
+  /* The phone plate is measured off the column: 100cqi below is the
+     masthead's content box, which is the column every other edge sits on. */
+  container-type: inline-size;
+}
+
+/* On a phone the plate mark spans the column exactly, as every rule and
+   right edge on the page does -- a mark 18px short of them read as a slip,
+   and at 360 the same fixed box did not fit the column at all and cropped
+   the disc. The pitch steps with the window so the inset (what is left of
+   the column either side of 96 cells, halved) stays between 16px and about
+   64px, and the disc sits centred in its mark. */
 .broadside-plate {
-  --sky-inset: 22px;
+  --pitch: 2.5px;
+  --sky-inset: calc((100cqi - 96 * var(--pitch)) / 2);
+  width: 100%;
   margin: var(--space-6) 0 0;
-  /* The plate mark is struck --sky-inset outside the field, so the figure
-     carries that much padding: the mark lands inside the column instead of
-     hanging past the shell's right edge. */
   padding: var(--sky-inset);
-  width: fit-content;
-  max-width: 100%;
 }
 
-/* The field is 96 cells square and is drawn at the cell pitch, not scaled to
-   its box -- so the box has to be a whole 96 cells at whatever pitch it gets.
-   It was capped at min(40vw, 30rem) on a 6 px pitch, which is 480 px of box
-   for 576 px of sky: the disc came out with a flat right side and a flat
-   bottom. The pitch is set here per width so the square always fits whole. */
-.sky-board {
-  --pitch: 3px;
+@media (width >= 22.5rem) {
+  .broadside-plate {
+    --pitch: 3px;
+  }
 }
 
-@media (width >= 30rem) {
-  .sky-board {
+@media (width >= 28.5rem) {
+  .broadside-plate {
     --pitch: 4px;
   }
 }
 
-@media (width >= 48rem) {
-  .sky-board {
+@media (width >= 34.5rem) {
+  .broadside-plate {
     --pitch: 5px;
   }
+}
+
+/* From a tablet up the column is far wider than the disc, and a mark
+   spanning it would be a 700-900px square of empty plate. The figure takes
+   its own size instead: 96 cells and the standard inset, hung on the left. */
+@media (width >= 48rem) {
+  .broadside-plate {
+    --sky-inset: 22px;
+    width: fit-content;
+  }
+}
+
+/* The board's plate mark is struck at the figure's inset, whatever that
+   resolves to. Here rather than in board.css because it belongs to this
+   composition; unlayered and one class stronger than board.css's
+   `.board[data-mode="still"]`, so it wins without !important. */
+.broadside-plate .board.sky-board {
+  --plate-inset: var(--sky-inset);
 }
 
 /* The caption hangs on the plate mark's left edge, where every other plate's
@@ -817,21 +847,24 @@
     align-items: start;
   }
 
+  /* The figure is the `auto` track, so it is exactly 96 cells and its
+     padding, and its right edge -- the plate mark -- is the column's right
+     edge, the same x as the header's toggle. It used to hang the mark past
+     the column with a negative end margin and cap itself at 100% of the
+     track; the negative margin shrank the track by the inset, the cap then
+     clamped the board 22px under 96 cells, and the canvas, which still drew
+     all 96, was cut off down the right side and along the bottom. */
   .broadside-plate {
+    --pitch: 4px;
     margin: 0;
     /* The mark is the figure's own top edge, so this puts it on the
        eyebrow's cap line. */
     margin-block-start: 0.125rem;
-    margin-inline-end: calc(-1 * var(--sky-inset));
-  }
-
-  .sky-board {
-    --pitch: 4px;
   }
 }
 
 @media (width >= 80rem) {
-  .sky-board {
+  .broadside-plate {
     --pitch: 5px;
   }
 }
