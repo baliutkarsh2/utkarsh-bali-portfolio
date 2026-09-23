@@ -60,10 +60,24 @@ coverage is then solved so ink over the ground averages to the target's
 luminance in the gamma-encoded space a canvas blends in, and the ink's colour
 so the average hits the target's colour. The inks are clustered to a palette
 (k-means in Lab, nearest ink), and the coverage is solved AGAIN against the ink
-each dot actually got, so quantising costs a little hue, never tone. The dark
-ground has its own curve and its own amber skin, a floor so no dot is ever
-darker than the plate, and a faint golden band on the far side of the head so
-the back of his hair keeps an edge against it.
+each dot actually got, so quantising costs a little hue, never tone.
+
+THE PLATE (the dark ground) is not the paper inverted: there, light is what
+advances, so everything the photograph lights prints as big pale dots. It has
+its own curve and its own amber skin, a floor so no dot is ever darker than
+the plate, and four guards against what that does to a portrait:
+
+  · no outline: the back of the head gets a soft lift four to six dots deep in
+    the hair's own brown, never a one-dot band (a one-dot amber band there
+    read as a badly masked cut-out);
+  · hair with range: the floor that keeps it off the plate is applied to its
+    local mean and the strands and sheen go back over it, so they still move
+    the dot size (floored dot by dot it was a flat knit cap);
+  · no glowing rim: the sun side's edge is capped at the lit skin a few dots
+    in, so the jaw and chin keep a warm rim rather than a near-white outline;
+  · no fused highlights: coverage stops at 0.74 (a dot 0.97 of a pitch across)
+    and no ink is lighter than --bone, so the teeth stay dots, not a white
+    blob brighter than the page's type.
 
 NO FRAME EDGE IS EVER VISIBLE. The shoulder dissolves off the bottom and right
 edges and a 26 px feather runs round all four sides, so no dot ever touches
@@ -166,7 +180,10 @@ P = dict(
     # separation: ink lightness = clip(a * L_target + b, lo, hi)
     paper=dict(ground=(250, 248, 244), ink=(0.45, 11.0, 15.0, 54.0), cmax=0.94,
                shirt=(90.0, 0.12, 0.30), shirt_fade=0.3),
-    plate=dict(ground=(22, 20, 15), ink=(0.55, 53.0, 56.0, 97.0), cmax=0.92, floor=0.10,
+    plate=dict(ground=(22, 20, 15), ink=(0.55, 53.0, 56.0, 92.0), cmax=0.74, floor=0.10,
+               # cmax 0.74 is a dot 0.97 of a pitch across, and no ink is lighter
+               # than --bone (#efe9dc, L* 92.5): see THE PLATE and solve_ink
+               ink_cap=92.0,
                curve=((0, 0), (20, 12), (35, 22), (50, 32), (60, 39), (70, 48), (80, 59),
                       (90, 74), (95, 83), (100, 90)),
                chroma=1.1,
@@ -176,14 +193,24 @@ P = dict(
                # to carry a big colour difference, and it comes out magenta:
                # blend toward the target's own hue at the ink's lightness
                natural=(0.12, 0.3),
-               # the hair's soft floor, L* = max(L*, a + b L*): it keeps its
-               # modelling and never sinks into the plate
-               hair_floor=(10.0, 0.5),
-               # and its own warmth: at plate coverage a hair dot is a small
-               # one, and a near-neutral small dot reads as grey hair
-               hair=(11.0, 62.0),
-               # the far side of the head: L*, C*, hue, width (cut-out px)
-               far_band=(34.0, 22.0, 66.0, 12.0),
+               # the hair's soft floor, L* = max(L*, a + b L*), on its local
+               # mean, and the detail over it at this gain (the mean read at
+               # this sigma, in lattice steps, the sheen capped at this L* and
+               # the shadows eased onto the last): it keeps its modelling and
+               # never sinks into the plate
+               hair_floor=(6.0, 0.7),
+               hair_detail=(4.0, 6.0, 38.0, 10.0),
+               # and its own warmth, C* in the shadow, hue, C* at the sheen: at
+               # plate coverage a hair dot is a small one, and a near-neutral
+               # dot reads as grey hair
+               hair=(11.0, 60.0, 16.0),
+               # the far side of the head: the hair lifted to this L*, fading
+               # to nothing this far in (cut-out px, 4 to 6 dots)
+               far_fade=(22.0, 40.0),
+               # the sun-side rim: its band (cut-out px), the sigma the lit
+               # skin beside it is read at (lattice steps), and how far above
+               # that skin it may print (L*)
+               rim_cap=(24.0, 6.0, 2.0),
                shirt=(22.0, 0.12, 0.30), shirt_fade=0.45),
     shirt_hue=255.0,
     shirt_cmax=1.2,
@@ -382,7 +409,7 @@ def target(p):
 
     out = np.stack([np.clip(Lc, 0, 100), ab[..., 0], ab[..., 1]], -1)
     masks = dict(shirt=shirt, skin=skin * (1 - rim_c), hair=hz, far=far * (1 - 0.7 * skin), rim=rim_c,
-                 inside=inside)
+                 sun=sun, inside=inside)
     return out, a, box[:2], masks
 
 
@@ -443,7 +470,7 @@ def screen(p):
 
 
 # ── sampling ─────────────────────────────────────────────────────────────
-MASKS = ("shirt", "skin", "hair", "far", "rim")
+MASKS = ("shirt", "skin", "hair", "far", "rim", "sun")
 
 
 def sample(p, lab, alpha, origin, masks, X, Y, pitch):
@@ -517,10 +544,27 @@ def coverage_to_d(c, dmax):
     return np.interp(c, cov[m], ds[m])
 
 
-def grade(p, look, colour_lin, mk):
+def lattice_blur(meta, v, wt, sigma):
+    """A weighted gaussian blur of one value per dot, over the lattice: the
+    neighbours are the dots next to it on the screen, whatever the local
+    pitch. `sigma` is in lattice steps (a pitch is sqrt(2) of them). Dots with
+    no weight near them read whatever weight is nearest, so it also carries a
+    region's value a little way past its edge."""
+    A, B = meta["A"], meta["B"]
+    a, b = A - A.min(), B - B.min()
+    num = np.zeros((a.max() + 1, b.max() + 1))
+    den = np.zeros_like(num)
+    num[a, b] = v * wt
+    den[a, b] = wt
+    num = ndi.gaussian_filter(num, sigma)
+    den = ndi.gaussian_filter(den, sigma)
+    return num[a, b] / np.maximum(den[a, b], 1e-9)
+
+
+def grade(p, look, colour_lin, mk, meta):
     """Each ground's own grade of the target: the plate's curve, amber skin,
-    floor and far band; the shirt squeezed on both. Returns the target in
-    gamma-encoded sRGB and its L*."""
+    hair and the two edges of the head; the shirt squeezed on both. Returns
+    the target in gamma-encoded sRGB and its L*."""
     lab = lin2lab(np.clip(colour_lin, 0, None))
     L = lab[:, 0]
     ab = lab[:, 1:].copy()
@@ -533,11 +577,19 @@ def grade(p, look, colour_lin, mk):
         C_s, h_l, h_s = look["skin"]
         set_chroma(ab, mk["skin"], C_s * smoothstep(6, 42, L) * (1 - 0.35 * smoothstep(78, 94, L)),
                    h_s + (h_l - h_s) * smoothstep(22, 58, L))
-    if "far_band" in look:
-        Lb, Cb, hb, wb = look["far_band"]
-        fb = mk["far"] * (1 - smoothstep(2, wb, mk["inside"])) * (mk["inside"] > 0)
-        L = L * (1 - fb) + np.maximum(L, Lb) * fb
-        set_chroma(ab, fb, Cb, hb)
+    if "rim_cap" in look:
+        # The sun side's edge, on the plate. The photograph's backlit rim is
+        # the lightest skin on him, and on a dark ground lightest means the
+        # biggest, palest dots: along the profile, the jaw and the chin they
+        # printed as a near-white outline, where paper prints the same band as
+        # small vermilion dots that sink into the page. So the band is capped
+        # at the lit skin a few dots in (read over the lattice), and keeps its
+        # sunset chroma: a warm rim, not a pale one.
+        width, sig, margin = look["rim_cap"]
+        ins = mk["inside"]
+        band = mk["sun"] * (1 - smoothstep(width * 0.6, width, ins))
+        near = lattice_blur(meta, L, mk["skin"] * smoothstep(width, width * 1.5, ins) + 1e-9, sig)
+        L = L * (1 - band) + np.minimum(L, near + margin) * band
     # the shirt: one hue family, an eighth of its contrast
     to, contrast, keep = look["shirt"]
     sh = mk["shirt"]
@@ -545,12 +597,46 @@ def grade(p, look, colour_lin, mk):
     L = L * (1 - sh) + (to + contrast * (L - ref)) * sh
     set_chroma(ab, sh, np.minimum(np.hypot(ab[:, 0], ab[:, 1]) * keep, p["shirt_cmax"]), p["shirt_hue"])
     if "hair_floor" in look:
+        # The hair's floor, L* = max(L*, a + b L*), keeps it off the plate.
+        # On the plate it is applied to the hair's local mean and the detail
+        # goes back on top, so the sheen and the strands still move the dot
+        # size: floored dot by dot, the hair was one flat dim mass.
         fa, fs = look["hair_floor"]
         hz = mk["hair"]
-        L = L * (1 - hz) + np.maximum(L, fa + fs * L) * hz
+        if "hair_detail" in look:
+            # The gain only inside the hair: where the mask is partial the
+            # "detail" is the step to the skin or the ear beside it, and
+            # amplified it printed as a pale rim round both. The sheen stops
+            # at `cap`, the far side of a hair highlight, never skin. Nor at
+            # the silhouette: the light on the crown amplified there traced
+            # the head's edge again. The shadows ease onto `lo`: the plate
+            # cannot print darker than itself, and a target below about L* 8
+            # solves to an ink darker than the ground, which drops the dot and
+            # leaves a hole.
+            gain, sig, cap, lo = look["hair_detail"]
+            base = lattice_blur(meta, L, hz + 1e-9, sig)
+            g = 1 + (gain - 1) * smoothstep(0.7, 1.0, hz) * smoothstep(8, 32, mk["inside"])
+            Lh = np.maximum(base, fa + fs * base) + g * (L - base)
+            Lh = lo + 2.0 * np.logaddexp(0, (Lh - lo) / 2.0)
+            Lh = np.minimum(Lh, np.maximum(L, cap))
+        else:
+            Lh = np.maximum(L, fa + fs * L)
+        L = L * (1 - hz) + Lh * hz
+    if "far_fade" in look:
+        # The far side of the head, on the plate: dark hair against a dark
+        # ground. A soft lift a few dots deep, in the hair's own warm brown
+        # (the chroma below), so its tone carries the silhouette -- never a
+        # one-dot amber outline, which is the look of a badly masked cut-out.
+        Lf, wf = look["far_fade"]
+        ins = mk["inside"]
+        ff = mk["far"] * mk["hair"] * (1 - smoothstep(0, wf, ins)) * (ins > 0)
+        L = L * (1 - ff) + np.maximum(L, Lf) * ff
     if "hair" in look:
-        wh = mk["hair"] * (1 - mk["rim"]) * (1 - mk["far"] * (mk["inside"] < 14))
-        set_chroma(ab, wh, look["hair"][0], look["hair"][1])
+        # warmer as it lightens: a big near-neutral dot is grey hair
+        Ch, hh = look["hair"][:2]
+        if len(look["hair"]) > 2:
+            Ch = Ch + (look["hair"][2] - Ch) * smoothstep(16, 40, L)
+        set_chroma(ab, mk["hair"] * (1 - mk["rim"]), Ch, hh)
     lab = np.concatenate([L[:, None], ab], 1)
     return to_srgb(np.clip(lab2lin(lab), 0, 1)), L
 
@@ -581,7 +667,26 @@ def solve_ink(look, dark, T, Lt):
         nat = to_srgb(np.clip(lab2lin(np.concatenate([Li[:, None], lab[:, 1:]], 1)), 0, 1))
         wn = 1 - smoothstep(*look["natural"], c)
         I = I * (1 - wn[:, None]) + nat * wn[:, None]
-    # gamut: pull toward the ink's own grey until every channel fits
+    I = gamut(I)
+    if "ink_cap" in look:
+        # Where the coverage is clipped at cmax, the solve asks the ink to make
+        # up the rest and it runs to white: the teeth printed near-white discs
+        # at the largest size, fused into one blob, brighter than the page's
+        # own type. No ink on the plate is lighter than --bone; a highlight
+        # prints a little darker than the photograph instead, in the target's
+        # own hue -- past white the solve has no hue left, and a capped white
+        # is a cold grey.
+        cap = look["ink_cap"]
+        lab = lin2lab(to_linear(I))
+        over = lab[:, 0] > cap
+        own = lin2lab(to_linear(T))
+        own[:, 0] = cap
+        I = np.where(over[:, None], gamut(to_srgb(np.clip(lab2lin(own), 0, 1))), I)
+    return I
+
+
+def gamut(I):
+    """Pull toward the ink's own grey until every channel fits."""
     g = (I @ LUMA)[:, None]
     ch = I - g
     lo_ = np.where(ch < 0, (0 - g) / np.minimum(ch, -1e-6), np.inf).min(1)
@@ -607,7 +712,7 @@ def lowdisc(A, B):
 
 
 def separate(p, b, look, dark):
-    T, Lt = grade(p, look, b["colour"], b["masks"])
+    T, Lt = grade(p, look, b["colour"], b["masks"], b["meta"])
     ink = solve_ink(look, dark, T, Lt)
     live = b["w"] * coverage(look, dark, T, ink @ LUMA) > 0.006
     ink = palette(ink, live, p["palette"])
@@ -797,6 +902,14 @@ def main():
             # nothing may touch the box: the feather guarantees it, this proves it
             W, H = consts["designW"], consts["designW"] * 5 / 4
             assert (X - R).min() > 0 and (X + R).max() < W and (Y - R).min() > 0 and (Y + R).max() < H
+            if name == "dark":
+                # the plate's guards: no ink lighter than --bone, so nothing on
+                # him outshines the page's type, and no dot past a pitch, so
+                # the highlights stay dots rather than fusing into a blob
+                inkL = lin2lab(to_linear(ink))[:, 0]
+                assert inkL.max() <= 92.5, f"plate ink at L* {inkL.max():.1f} is lighter than --bone"
+                dmax = np.asarray(back)[consts["rows"]:, :, 0].max() / 255 * consts["dmax"]
+                assert dmax <= 0.99, f"a plate dot is {dmax:.2f} of a pitch across"
             inks = np.unique(np.round(ink * 255).astype(int), axis=0)
             report[f"hero-grid{band}{suffix}.webp"] = dict(
                 bytes=os.path.getsize(gp), size=list(grid.size), dots=int(len(X)), inks=int(len(inks)))

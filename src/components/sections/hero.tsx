@@ -88,8 +88,14 @@ export function Hero() {
           </a>
         </p>
 
-        <div className="hero-actions mt-8 flex flex-wrap items-center gap-3">
-          <Button variant="primary" href="#work" className="max-md:w-full">
+        {/* On a phone the three are one block: the primary across both
+            columns, the other two under it as a matched pair of boxes (the
+            Résumé link takes the secondary's box there, in components.css).
+            Left to wrap as a row they read as an accident: a full-width bar
+            over one small box, a bare link and half a row of nothing. From
+            48rem they sit in one row as before. */}
+        <div className="hero-actions mt-8 flex flex-wrap items-center gap-3 max-md:grid max-md:grid-cols-2">
+          <Button variant="primary" href="#work" className="max-md:col-span-2">
             View work
           </Button>
           <Button variant="secondary" href={`mailto:${profile.email}`}>

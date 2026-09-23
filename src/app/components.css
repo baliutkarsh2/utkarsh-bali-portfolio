@@ -1388,6 +1388,35 @@
       padding-block: var(--space-3) var(--space-4);
     }
   }
+
+  /* The actions on a phone: a two-column grid (the utilities in hero.tsx),
+     the primary across both, the other two a matched pair under it. The
+     Résumé link is the text register everywhere else; here it takes the
+     secondary's box -- the same hairline, height and padding -- so the pair
+     reads as two equal choices, not one box and a stray link. The dotted
+     underline stays off inside the box: a box is already the affordance.
+     Without a résumé, "Get in touch" spans the row alone. */
+  @media (width < 48rem) {
+    .hero-actions > .btn:nth-child(2):last-child {
+      grid-column: 1 / -1;
+    }
+    .hero-actions .btn[data-variant="text"] {
+      padding-inline: 1.25rem;
+      border-color: var(--line-strong);
+      color: var(--ink);
+    }
+    .hero-actions .btn[data-variant="text"]:hover {
+      background: var(--ground-2);
+      border-color: var(--ink-2);
+    }
+    .hero-actions .btn[data-variant="text"]:active {
+      background: var(--ground-3);
+    }
+    .hero-actions .btn[data-variant="text"] > .btn-label {
+      background-image: none;
+      padding-bottom: 0;
+    }
+  }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════════
