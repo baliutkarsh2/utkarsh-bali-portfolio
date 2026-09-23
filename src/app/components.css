@@ -733,6 +733,17 @@
     letter-spacing: -0.008em;
   }
 
+  /* Bodoni's "@" at the address's optical size is a sub-pixel hairline
+     ring round an italic-looking "a": on a phone the ring all but vanished
+     and the address read "baliutkarsh2 a gmail.com", with the "2" touching
+     it. The "@" alone is set at the smallest optical size, which is the cut
+     Bodoni drew to survive small print, so its ring has weight, and it gets
+     a hair of room on each side. Same face, same size. */
+  .copy-email[data-size="large"] .copy-email-at {
+    font-variation-settings: "opsz" 6;
+    margin-inline: 0.04em;
+  }
+
   .copy-email-button:hover .copy-email-address {
     text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
   }
@@ -800,14 +811,6 @@
   }
   .copy-email[data-size="small"] .copy-email-label {
     height: 1.625rem;
-  }
-
-  /* The chop hangs off the chip's right edge, out of flow. */
-  .copy-email-label > .chop {
-    position: absolute;
-    top: 50%;
-    left: calc(100% + 0.75rem);
-    translate: 0 -50%;
   }
 
   @media (prefers-reduced-motion: reduce) {

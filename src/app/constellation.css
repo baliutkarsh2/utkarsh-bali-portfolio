@@ -120,13 +120,6 @@
     min-width: 0;
   }
 
-  /* No key below it on /, so the key numbers have nothing to point at. The
-     shape is the message there; the name of a mark is in the mark, which is a
-     link. */
-  .cn-full .cn-num {
-    display: none;
-  }
-
   /* ═══ The plate ════════════════════════════════════════════════════════════
      Phones: an axis gutter and one column per lane; a header band for the
      vertical labels and a tall track under it. The track height is a constant,
@@ -255,7 +248,17 @@
 
   /* The employment band. Clipped rather than sized, so the dot lattice is
      anchored to the track and not to the bar: two lanes whose jobs overlap in
-     time show dots in the same columns. */
+     time show dots in the same columns.
+
+     The clip edges are snapped to the lattice. Cut at the exact date, an
+     edge fell through a row of dots and the band opened with a row of half
+     dots, which read as a dashed rule above every bar, a hard crop. Rounded
+     to the nearest multiple of the pitch, measured from the track's edge
+     where the tile starts, an edge always falls between two rows and a band
+     is whole dots end to end. The shift is at most half a pitch, 2.5px, a
+     few days on a chart whose marks claim a month. The exact cut is kept
+     for a browser without round(), where a var() that failed at computed
+     time would unset the clip and draw the band down the whole track. */
   .cn-lane[data-bar]::after {
     content: "";
     position: absolute;
@@ -267,6 +270,15 @@
     background-image: var(--cn-dots);
     background-size: var(--pitch) var(--pitch);
     clip-path: inset(var(--b0) 0 calc(100% - var(--b1)) 0);
+  }
+
+  @supports (width: round(nearest, 1%, 1px)) {
+    .cn-lane[data-bar]::after {
+      clip-path: inset(
+        round(nearest, var(--b0), var(--pitch)) 0
+          calc(100% - round(nearest, var(--b1), var(--pitch))) 0
+      );
+    }
   }
 
   /* ═══ Marks ════════════════════════════════════════════════════════════════
@@ -313,6 +325,16 @@
     bottom: 0;
   }
 
+  /* Two marks in one lane in consecutive months have windows that abut, and
+     the end caps they meet with crossed the bar between them: a "+" between
+     the two diamonds. Joined, they share one bar with a cap at each outer end
+     (constellation.tsx writes `data-join`), which is what two months side by
+     side are. */
+  .cn-mark[data-join~="low"] .cn-err::before,
+  .cn-mark[data-join~="high"] .cn-err::after {
+    display: none;
+  }
+
   /* Status is the shape, never the colour: a milestone diamond, solid for
      shipped, inked on its left half for ongoing, open for research. Not a
      circle, because the only circles on this site are dots in a picture, and
@@ -320,14 +342,18 @@
      `--cn-mark-size` is the side of the square before it is turned, so the
      diamond stands about 1.4 times that tall. The half fill runs corner to
      corner, which the turn sets upright. `rotate`, not `transform`, so a
-     hover's scale composes with it instead of replacing it. */
+     hover's scale composes with it instead of replacing it.
+
+     The part of a mark that is not inked is `--cn-glyph-paper`: bare page in
+     the legend and the work list, and the plate's own tone on the plate (see
+     below). */
   .cn-glyph {
     display: block;
     flex: none;
     width: var(--cn-mark-size, 8px);
     height: var(--cn-mark-size, 8px);
     border: 1px solid var(--ink);
-    background: transparent;
+    background: var(--cn-glyph-paper, transparent);
     rotate: 45deg;
   }
 
@@ -336,14 +362,24 @@
   }
 
   .cn-glyph[data-glyph="half"] {
-    background: linear-gradient(to top right, var(--ink) 50%, transparent 50%);
+    background: linear-gradient(
+      to top right,
+      var(--ink) 50%,
+      var(--cn-glyph-paper, transparent) 50%
+    );
   }
 
   /* A 2 px knockout in the plate's own tone, so a mark that lands inside an
      employment band is still a mark and not one more dot in the lattice, and
      one that lands on bare plate shows no ring at all. An outline, not a
-     shadow: this site has no shadows, and an outline costs no layout. */
+     shadow: this site has no shadows, and an outline costs no layout.
+
+     The open and half marks are filled with the same tone. Hollow, they let
+     the band's dots and their own error bar show through, so on a phone in
+     dark the open "research" diamonds on the Purdue band read as smudges,
+     and on a laptop the whisker ran through the shape that says the status. */
   .cn-mark .cn-glyph {
+    --cn-glyph-paper: var(--ground-2);
     position: absolute;
     left: calc(50% - var(--cn-mark-size) / 2);
     top: calc(50% - var(--cn-mark-size) / 2);
@@ -351,24 +387,9 @@
     transition: transform var(--dur-2) var(--ease-snap);
   }
 
-  /* The key number, matching the <ol> below. */
-  .cn-num {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(9px, -50%);
-    color: var(--ink-3);
-    transition: color var(--dur-1) var(--ease-snap);
-  }
-
   .cn-mark:hover .cn-glyph,
   .cn-mark:focus-visible .cn-glyph {
     transform: scale(1.4);
-  }
-
-  .cn-mark:hover .cn-num,
-  .cn-mark:focus-visible .cn-num {
-    color: var(--ink);
   }
 
   /* The ring belongs on the mark, not on its 51 × 20 hit box. */
@@ -379,6 +400,13 @@
   .cn-mark:focus-visible .cn-glyph {
     outline: 2px solid var(--focus);
     outline-offset: 3px;
+  }
+
+  /* The mark's name, shown under the pointer and on focus from 48rem (see
+     the transpose below). A phone has no hover, and its 51px columns have no
+     room beside a mark for a name. */
+  .cn-tip {
+    display: none;
   }
 
   /* ═══ Time axis ════════════════════════════════════════════════════════════ */
@@ -400,161 +428,17 @@
     white-space: nowrap;
   }
 
-  /* ═══ The key, and the roster ══════════════════════════════════════════════
-     The plate is a picture of the eight links below it. With the stylesheet or
-     the script off, this list is the section. */
-  .cn-sub {
-    margin-top: var(--space-6);
-    font-weight: 400;
-  }
-
-  .cn-index {
-    margin: var(--space-2) 0 0;
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--line);
-  }
-
-  .cn-index > li {
-    border-bottom: 1px solid var(--line);
-  }
-
-  .cn-index-link {
-    display: grid;
-    grid-template-columns: 3.5rem minmax(0, 1fr);
-    align-items: center;
-    padding: 0.75rem;
-    margin-inline: -0.75rem;
-    color: inherit;
-    text-decoration: none;
-    transition: background-color var(--dur-2) var(--ease-snap);
-  }
-
-  .cn-index-link:hover {
-    background: var(--ground-2);
-  }
-
-  .cn-index-gutter {
-    grid-column: 1;
-    grid-row: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-  }
-
-  .cn-index-n {
-    color: var(--ink-3);
-  }
-
-  .cn-index-name {
-    grid-column: 2;
-    grid-row: 1;
-    display: block;
-    min-width: 0;
-  }
-
-  .cn-index-meta {
-    grid-column: 2;
-    grid-row: 2;
-    display: block;
-    min-width: 0;
-    margin-top: 0.125rem;
-  }
-
-  /* ═══ The record ═══════════════════════════════════════════════════════════
-     The plate is the scan; this is the reading. It is laid on the plan's margin
-     grammar (§5.5): a margin column carrying the employer, the role and the
-     dateline, and a type column carrying the prose. Below 64rem the margin
-     folds and becomes a head row above the type, which is what a margin does on
-     a narrow page.
-
-     Type registers are the only ones the content allows. The employer and the
-     role are Source Serif at 16 px — Bodoni is forbidden below 21 px, and a
-     10.5 rem margin cannot hold a display size. The dateline and the location
-     are Plex Mono, which is the one thing Plex Mono is for and never sets a
-     sentence. The standfirst is the lede at 22 px and the bullets are body at
-     18/1.62 on `dot-list`, the register components.css already declares for
-     exactly this content. Nothing here is a chip and nothing is a card. */
-  .cn-record {
-    /* 68ch of Source Serif 4 at 18 px. A `ch` would re-resolve against each
-       element's own size and give the 22 px standfirst a wider line than the
-       bullets it introduces; one length keeps the block on one right edge. */
-    --cn-measure: 38rem;
-    /* The same width as the chart's lane-label gutter (--cn-label-w), so the
-       record's type column starts on the same axis as the plate's plot area.
-       12rem is what a full employment dateline needs to set on one line at
-       13px mono, once the 1.5rem gutter is taken out of it. Keep the two in
-       step: the alignment is the point. */
-    --cn-margin: 12rem;
-
-    margin: var(--space-2) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .cn-record > li {
-    border-top: 1px solid var(--line);
-  }
-
-  .cn-record > li:last-child {
-    border-bottom: 1px solid var(--line);
-  }
-
-  .cn-record-entry {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: var(--space-2);
-    padding-block: var(--space-5);
-  }
-
-  .cn-record-margin > * + * {
-    margin-top: 0.25rem;
-  }
-
-  /* The two mono lines are one dateline in two parts; they sit tighter to each
-     other than to the role above them. */
-  .cn-record-when + .cn-record-where {
-    margin-top: 0;
-  }
-
-  .cn-record-name {
-    margin: 0;
-  }
-
-  /* Greedy wrapping, deliberately. `balance` equalises line lengths, which on
-     a three-word role gives "Software / Engineer Intern" where the reader
-     wants "Software Engineer / Intern"; the margin is set to hold a full
-     dateline on one line, so what is left to wrap wraps better unbalanced. */
-  .cn-record-role,
-  .cn-record-when,
-  .cn-record-where {
-    text-wrap: wrap;
-  }
-
-  .cn-record-body {
-    min-width: 0;
-  }
-
-  .cn-record-lede,
-  .cn-record-list {
-    max-width: var(--cn-measure);
-  }
-
-  .cn-record-list {
-    margin-top: var(--space-3);
-  }
-
   /* ═══════════════════════════════════════════════════════════════════════════
      ≥ 48rem — the transpose. Time becomes the inline axis: lanes are rows,
      labels move to a left gutter and set horizontally, the error bar lies
-     down, the key number moves above its mark. Every property the base layout
-     set on the other axis is reset here, never left to cascade.
+     down. Every property the base layout set on the other axis is reset
+     here, never left to cascade.
      ═════════════════════════════════════════════════════════════════════════ */
   @media (width >= 48rem) {
     .cn-plot {
       /* The plot area starts 12rem into the page column, the same x as the
-         titles in the work list above and the type column of the record
-         below: one margin grammar for the whole page. The label column is
+         titles in the work list on / and the record on /about: one margin
+         grammar for the whole site. The label column is
          12rem less the plate inset, because the plot itself is inset. */
       --plate-inset: 20px;
       --cn-label-w: calc(12rem - var(--plate-inset));
@@ -655,6 +539,17 @@
       clip-path: inset(0 calc(100% - var(--b1)) 0 var(--b0));
     }
 
+    /* Snapped to the lattice, as on a phone, measured from the lane's left
+       edge where the tile starts. */
+    @supports (width: round(nearest, 1%, 1px)) {
+      .cn-lane[data-bar]::after {
+        clip-path: inset(
+          0 calc(100% - round(nearest, var(--b1), var(--pitch))) 0
+            round(nearest, var(--b0), var(--pitch))
+        );
+      }
+    }
+
     .cn-mark {
       top: 0;
       bottom: 0;
@@ -691,8 +586,53 @@
       bottom: auto;
     }
 
-    .cn-num {
-      transform: translate(-50%, calc(-50% - 17px));
+    /* The label hangs over its diamond, clear of the mark grown under the
+       pointer, on paper with a hairline round it, the way the plate's own
+       captions sit. Centred, except near either end of the plot, where it
+       starts at the diamond and runs inward (constellation.tsx writes
+       `data-tip`) so it never crosses the plate's edge. The mark under the
+       pointer rises one step, so its label is over the lanes after it. */
+    .cn-mark:hover,
+    .cn-mark:focus-visible {
+      z-index: 2;
+    }
+
+    .cn-tip {
+      position: absolute;
+      bottom: calc(50% + 12px);
+      left: 50%;
+      display: flex;
+      align-items: baseline;
+      column-gap: 0.625rem;
+      padding: 0.3125rem 0.625rem 0.375rem;
+      border: 1px solid var(--line-strong);
+      background: var(--ground);
+      white-space: nowrap;
+      pointer-events: none;
+      translate: -50% 0;
+      opacity: 0;
+    }
+
+    .cn-mark[data-tip="start"] .cn-tip {
+      translate: -0.875rem 0;
+    }
+
+    .cn-mark[data-tip="end"] .cn-tip {
+      left: auto;
+      right: 50%;
+      translate: 0.875rem 0;
+    }
+
+    /* The reading serif at the small size, set tight: a label, not a line
+       of text. The month is Plex Mono, which is what it is for. */
+    .cn-tip-name {
+      font-family: var(--font-sans);
+      font-size: var(--text-small);
+      line-height: 1.3;
+    }
+
+    .cn-mark:focus-visible .cn-tip {
+      opacity: 1;
     }
 
     .cn-axis {
@@ -706,30 +646,18 @@
       top: 0.75rem;
       translate: -50% 0;
     }
+  }
 
-    /* The names start 12rem into the column, the x of the plot above and of
-       the record's type column below, with the number and the mark in the
-       margin, as the work list on / hangs its year and status. */
-    .cn-index-link {
-      grid-template-columns:
-        calc(12rem - var(--gutter)) minmax(0, 1fr)
-        22rem;
-      column-gap: var(--gutter);
+  @media (width >= 48rem) and (hover: hover) {
+    .cn-mark:hover .cn-tip {
+      opacity: 1;
     }
+  }
 
-    .cn-index-gutter {
-      grid-row: 1;
-    }
-
-    .cn-index-meta {
-      grid-column: 3;
-      grid-row: 1;
-      margin-top: 0;
-      text-align: right;
-    }
-
-    .cn-record-entry {
-      padding-block: var(--space-6);
+  /* A short fade, and none under either reduced-motion switch. */
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion="reduce"]) .cn-tip {
+      transition: opacity var(--dur-1) var(--ease-snap);
     }
   }
 
@@ -766,32 +694,10 @@
     }
   }
 
-  /* The margin column proper. 64rem is where the plan's sheet grammar opens
-     its margin, and it is where 10.5 rem plus the full 38 rem measure fit
-     inside the shell without squeezing either. The gap is --space-3, the same
-     1.5 rem the chart puts between its lane labels and the plot, so the two
-     type columns share one left edge. */
-  @media (width >= 64rem) {
-    .cn-record-entry {
-      grid-template-columns: var(--cn-margin) minmax(0, 1fr);
-      row-gap: 0;
-    }
-
-    .cn-record-margin {
-      /* A margin note hangs at the top of its band, not in the middle of it. */
-      align-self: start;
-      /* The gap is padding inside the margin column rather than a grid gap, so
-         the type column starts at exactly `--cn-margin` — the same x as the
-         chart's plot area, whose lane labels pad by the same 1.5 rem inside
-         the same 10.5 rem. Measured: both at x=256 on a 1440 screen. */
-      padding-right: var(--space-3);
-    }
-  }
-
   /* This site prints. Browsers drop background images on paper by default,
      which would print the plate as six empty lanes — the one place the chart
      genuinely is the content, so the bands, the marks and the datum ask for
-     their ink back. The key and the roster need nothing. */
+     their ink back. */
   @media print {
     .cn-lane[data-bar]::after,
     .cn-glyph[data-glyph="filled"],
@@ -800,11 +706,6 @@
     .cn-today-label {
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
-    }
-
-    .cn-index-link {
-      margin-inline: 0;
-      padding-inline: 0;
     }
   }
 }
