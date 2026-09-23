@@ -14,7 +14,7 @@ import type { Experience, Project, ProjectStatus } from "@/content";
    <ol> of the same eight projects in date order, which is the key to the
    markers and the whole content of the section with the stylesheet off.
 
-   Three decisions worth stating, because they are the ones a reader would
+   The decisions worth stating, because they are the ones a reader would
    otherwise have to reverse-engineer:
 
    1. Real DOM, not SVG. Every mark is an absolutely positioned element whose
@@ -36,15 +36,24 @@ import type { Experience, Project, ProjectStatus } from "@/content";
       the TODAY rule, which is the one --sun licence this chart holds.
 
    4. Nothing moves. The plate used to arrive by being PRINTED: a hard roller
-      edge crossed it once at about 1500 CSS px/s, everything behind the edge
-      already there. It was one `clip-path` keyframe, and a visitor without
-      JavaScript never saw it. Everything is present at first paint now.
-      the CSS never clips at all and the finished plate is the first paint.
+      edge crossed it once, everything behind the edge already there. A
+      visitor without JavaScript never saw it. Everything is present at first
+      paint now; the CSS never clips and the finished plate is the first
+      paint.
 
-      The four crosshairs inside the plate mark's corners and the ticks on
-      the ends of the TODAY rule are register marks — the first plate's and
-      the second plate's. `data-sun` on the vermilion pair is where the
-      second plate is told it may arrive a beat after the black one.
+      There used to be four crosshairs just inside the plate mark's corners
+      and a tick on each end of the TODAY rule: register marks, the first
+      plate's and the second's. At the size they print they read as stray
+      "+" glyphs in the corners, which is a bug to anyone who has not read
+      this comment. The legend on the heading's line replaced them; it is
+      the one thing a first-time reader of the plate actually lacked.
+
+   5. A project is a milestone, and a milestone on a timeline is a diamond.
+      The marks were squares, and the same squares in the legend and beside
+      SHIPPED / ONGOING / RESEARCH on the work list read as checkboxes: a
+      hollow square next to a word is a form control before it is anything
+      else. A diamond is never a form control, and it is the shape a Gantt
+      chart has always used for exactly this: an event on a span.
    ═══════════════════════════════════════════════════════════════════════ */
 
 const DAY = 86_400_000;
@@ -318,8 +327,11 @@ const lanes: Lane[] = (() => {
 
 /* ── The domain ───────────────────────────────────────────────────────────
    Start: the first day of the quarter holding the earliest thing on the
-   chart. End: the first day of the year after the latest, so TODAY is a rule
-   inside the plate rather than a line on its edge. Both derived, so the
+   chart. End: six weeks past the latest thing on it, which is TODAY, so the
+   rule sits just inside the plate's edge with room for its flag and nothing
+   after it. It used to run to the next 1 January, which in September left a
+   quarter of a year of empty lanes to the right of TODAY: a chart whose last
+   eighth was a void, labelled with nothing. Both ends are derived, so the
    chart re-scales itself when the content moves. ──────────────────────── */
 const earliest = Math.min(
   ...lanes.flatMap((lane) => [
@@ -339,7 +351,7 @@ const domainStart = (() => {
   const d = new Date(earliest);
   return Date.UTC(d.getUTCFullYear(), Math.floor(d.getUTCMonth() / 3) * 3, 1);
 })();
-const domainEnd = Date.UTC(new Date(latest).getUTCFullYear() + 1, 0, 1);
+const domainEnd = latest + 45 * DAY;
 const span = domainEnd - domainStart;
 
 /** An instant as a percentage across the domain, ready for a custom property. */
@@ -358,7 +370,29 @@ for (
   yearRules.push({ year, at: at(Date.UTC(year, 0, 1)) });
 }
 
-const firstYear = new Date(domainStart).getUTCFullYear();
+/**
+ * The axis names each year in the MIDDLE of the stretch of it the plate
+ * shows, the way a Gantt chart's timescale does, and the hairlines are the
+ * boundaries between them. The labels used to sit on the left of each rule,
+ * with the first on the plate's left edge: but that edge is a quarter, not a
+ * 1 January, so "2024" named July while "2025" and "2026" named January, and
+ * the three read as an axis with uneven steps. A year the plate shows less
+ * than a quarter of (the six weeks past TODAY, in a December deploy) is too
+ * narrow to name and is left to its rule.
+ */
+const YEAR = 365.25 * DAY;
+const yearLabels: { year: number; at: string }[] = [];
+for (
+  let year = new Date(domainStart).getUTCFullYear();
+  Date.UTC(year, 0, 1) < domainEnd;
+  year += 1
+) {
+  const from = Math.max(Date.UTC(year, 0, 1), domainStart);
+  const to = Math.min(Date.UTC(year + 1, 0, 1), domainEnd);
+  if (to - from < YEAR / 4) continue;
+  yearLabels.push({ year, at: at((from + to) / 2) });
+}
+
 const todayAt = at(NOW);
 
 /** Spelled out: these are counts inside a sentence, not figures on a plate. */
@@ -400,7 +434,7 @@ type ConstellationProps = {
    * `record` (/about §02) — the plate, its caption, the numbered key, and the
    * record: six lanes with their roles, datelines and every bullet verbatim.
    *
-   * `chart` (/ §02) — the plate and its caption, full-bleed, and nothing else.
+   * `chart` (/ §02) — the plate and its legend, and nothing else.
    * The key and the record are what you read AFTER the ten-second scan, and
    * they live on /about; on the home page the chart IS the scan, and the last
    * thing before the close. Two views of one dataset, not one section twice.
@@ -418,9 +452,9 @@ type ConstellationProps = {
 
 /**
  * The work constellation. The section head is written by hand rather than
- * taken from <Section> because the plate has to run the full column width (and
- * on the home page, wider than it) where the Section body grammar reserves
- * four columns for a rail.
+ * taken from <Section> because the plate has to run the full column width,
+ * where the Section body grammar reserves four columns for a rail, and
+ * because the head carries the legend on its right.
  */
 export function Constellation({
   variant = "record",
@@ -438,23 +472,41 @@ export function Constellation({
       aria-labelledby={headingId}
       data-section-index={index}
       data-section-title={readout ?? title}
-      /* Full-bleed is the absence of `shell`, never a viewport width: `100vw`
-         includes the scrollbar and would overflow the page by its width. The
-         head and the caption carry their own `shell` instead, so the section
-         rule and the caption's left edge land exactly where every other
-         section's do — a rule painted on `.shell` itself would span its
-         PADDING box and run 2 × --shell-pad wider than all of them. */
-      className={cn("section section-y", bleed ? "cn-bleed-section" : "shell")}
+      /* On the page column like every other section, on / as on /about. The
+         home chart used to drop `shell` and run to within --shell-pad of the
+         trim, 60px wider than every rule and heading around it on each side,
+         which broke the one alignment grid the page has. The plate mark is
+         drawn OUTSIDE the plot, so the plot is inset by exactly that much
+         (constellation.css) and the mark's outer edge lands on the column. */
+      className="section section-y shell cn-section"
     >
-      <div className={bleed ? "shell" : undefined}>
-        <div className="section-head">
-          <h2
-            id={headingId}
-            className="text-display-m font-medium text-balance text-ink"
-          >
-            {title}
-          </h2>
-        </div>
+      {/* The key sits on the heading's line, where a chart's legend goes: the
+          shapes are read once, here, before the eye reaches the plate. It is
+          the same three marks the work list above uses, so the page teaches
+          them once and uses them twice. */}
+      <div className="section-head section-head-split">
+        <h2
+          id={headingId}
+          className="text-display-m font-medium text-balance text-ink"
+        >
+          {title}
+        </h2>
+        <ul className="cn-legend meta" aria-label="Key">
+          <li>
+            <span className="cn-legend-band" aria-hidden="true" />
+            Employed
+          </li>
+          {(["shipped", "ongoing", "research"] as const).map((status) => (
+            <li key={status}>
+              <span
+                className="cn-glyph"
+                data-glyph={GLYPH[status]}
+                aria-hidden="true"
+              />
+              {statusLabel[status]}
+            </li>
+          ))}
+        </ul>
       </div>
 
       <figure className={cn("cn", bleed && "cn-full")}>
@@ -463,7 +515,10 @@ export function Constellation({
             className="cn-plot plate-mark"
             style={{ "--lanes": lanes.length } as CSSProperties}
           >
-            {/* The rules layer spans every lane and sits under the marks. */}
+            {/* The rules layer spans every lane and sits under the marks.
+                TODAY is a flag on a pole: its label rides in the band above
+                the lanes (on a phone, in the axis gutter beside the rule),
+                so it never competes with the year labels on the axis. */}
             <div className="cn-grid" aria-hidden="true">
               {yearRules.map((rule) => (
                 <span
@@ -472,29 +527,27 @@ export function Constellation({
                   style={{ "--t": rule.at } as CSSProperties}
                 />
               ))}
-              {/* `data-sun` is the second plate. The rule and its two end ticks
-              are one element, so the ticks register with it. */}
+              {/* `data-sun` is the second plate: the rule and its label
+                  register together, a beat after the black. */}
               <span
                 className="cn-today"
                 data-sun=""
                 style={{ "--t": todayAt } as CSSProperties}
               />
-            </div>
-
-            {/* The first plate's register marks: four crosshairs just inside
-            the corners of the plate mark, where a printer lays them so a
-            second plate can be squared onto the first. Absolutely
-            positioned, so the grid never counts them as a cell. */}
-            <div className="cn-register" aria-hidden="true">
-              <span className="cn-reg" data-corner="tl" />
-              <span className="cn-reg" data-corner="tr" />
-              <span className="cn-reg" data-corner="bl" />
-              <span className="cn-reg" data-corner="br" />
+              <span
+                className="cn-today-label meta"
+                data-sun=""
+                style={{ "--t": todayAt } as CSSProperties}
+              >
+                Today
+              </span>
             </div>
 
             {lanes.map((lane, i) => {
+              /* `--row` counts from 2 at ≥ 48rem, where row 1 is the band
+                 that carries the TODAY flag. */
               const place = {
-                "--row": i + 1,
+                "--row": i + 2,
                 "--col": i + 2,
               } as CSSProperties;
               return (
@@ -559,27 +612,15 @@ export function Constellation({
             })}
 
             <div className="cn-axis" aria-hidden="true">
-              <span
-                className="cn-tick data"
-                style={{ "--t": "0%" } as CSSProperties}
-              >
-                {firstYear}
-              </span>
-              {yearRules.map((rule) => (
+              {yearLabels.map((label) => (
                 <span
-                  key={rule.year}
+                  key={label.year}
                   className="cn-tick data"
-                  style={{ "--t": rule.at } as CSSProperties}
+                  style={{ "--t": label.at } as CSSProperties}
                 >
-                  {rule.year}
+                  {label.year}
                 </span>
               ))}
-              <span
-                className="cn-today-label meta"
-                style={{ "--t": todayAt } as CSSProperties}
-              >
-                Today
-              </span>
             </div>
           </div>
         </div>

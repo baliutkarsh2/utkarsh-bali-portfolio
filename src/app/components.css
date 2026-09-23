@@ -71,9 +71,8 @@
      paints it above the section ground but below the row's own hairline, so
      hairlines are never swallowed by the fill.
 
-     Columns: gutter (index + LED) · main · trailing (numeral, 12rem) · arrow.
-     Below 48rem the trailing slot drops under the title, left-aligned, and the
-     arrow is hidden; the whole row is still the link.
+     Columns: gutter (index or year) · main · arrow. Below 48rem the arrow is
+     hidden; the whole row is still the link.
      ───────────────────────────────────────────────────────────────────────── */
   .row {
     --row-bleed: var(--shell-pad);
@@ -89,11 +88,10 @@
     color: var(--ink);
   }
 
-  /* The trailing slot (a numeral) drops under the title on narrow screens. */
-  .row[data-trailing] {
-    grid-template-areas:
-      "gutter main"
-      "gutter trailing";
+  /* Nothing in the gutter, no gutter: the title sits on the column edge. */
+  .row:not([data-gutter]) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "main";
   }
 
   /* Close a list of rows with a bottom hairline on the container:
@@ -127,6 +125,19 @@
     opacity: 1;
   }
 
+  /* The whole row is the target, so the focus ring is the edge of the row's
+     own wash rather than a box around the title's text, which drew a ring
+     round the one word of a four-line target. Inset, so it stays inside the
+     shell padding the wash already bleeds into. */
+  .row-link:focus-visible {
+    outline: none;
+  }
+
+  .row:has(.row-link:focus-visible)::before {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+  }
+
   .row-gutter {
     grid-area: gutter;
     display: flex;
@@ -155,30 +166,50 @@
     text-decoration: none;
   }
 
-  .row-trailing {
-    grid-area: trailing;
-    min-width: 0;
-  }
-
-  /* The arrow is an icon, not a word: it may move 2 px (§7.3). */
-  .row-arrow {
+  /* The arrow is an icon, not a word: it may move (§7.3). It sits on the
+     title's line, and on hover the row says what it opens beside it. */
+  .row-end {
     grid-area: arrow;
     display: none;
     align-self: start;
     justify-self: end;
-    width: 1rem;
-    height: 1rem;
-    margin-top: 0.35em;
+    align-items: center;
+    gap: 0.625rem;
+    /* Centred on the first line of a display-s title. */
+    height: calc(var(--text-display-s) * var(--text-display-s--line-height));
     color: var(--ink-3);
+    transition: color var(--dur-2) var(--ease-snap);
+  }
+
+  .row-arrow {
+    flex: none;
+    width: 1.125rem;
+    height: 1.125rem;
+    transition: transform var(--dur-2) var(--ease-snap);
+  }
+
+  .row-cta {
+    opacity: 0;
+    translate: 4px 0;
     transition:
-      transform var(--dur-2) var(--ease-snap),
-      color var(--dur-2) var(--ease-snap);
+      opacity var(--dur-2) var(--ease-snap),
+      translate var(--dur-2) var(--ease-snap);
+  }
+
+  .row[data-link]:hover .row-end,
+  .row:has(.row-link:focus-visible) .row-end {
+    color: var(--ink);
   }
 
   .row[data-link]:hover .row-arrow,
   .row:has(.row-link:focus-visible) .row-arrow {
-    color: var(--ink);
-    transform: translate(2px, 0);
+    transform: translate(3px, 0);
+  }
+
+  .row[data-link]:hover .row-cta,
+  .row:has(.row-link:focus-visible) .row-cta {
+    opacity: 1;
+    translate: 0 0;
   }
 
   .row[data-external]:hover .row-arrow,
@@ -188,42 +219,119 @@
 
   @media (width >= 48rem) {
     .row {
-      grid-template-columns: 3rem minmax(0, 1fr) 1.5rem;
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
       grid-template-areas: "gutter main arrow";
       column-gap: 1.5rem;
       padding-block: 1.75rem;
     }
-    /* The trailing column holds the longest metric, "Top 10%", at size m:
-       Doto advances 0.6em, so seven glyphs are 210px at the 5px pitch and
-       252px at 6px. 14rem and 16rem hold it without wrapping or overflow. */
-    .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 14rem 1.5rem;
-      grid-template-areas: "gutter main trailing arrow";
+    .row:not([data-gutter]) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "main arrow";
     }
-    .row-trailing {
-      text-align: right;
-      justify-self: end;
-    }
-    .row-arrow {
-      display: block;
+    .row-end {
+      display: inline-flex;
     }
   }
-  @media (width >= 80rem) {
-    .row[data-trailing] {
-      grid-template-columns: 3rem minmax(0, 1fr) 16rem 1.5rem;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .row::before,
     .row-gutter,
-    .row-arrow {
+    .row-end,
+    .row-arrow,
+    .row-cta {
       transition: none;
     }
   }
   :root[data-motion="reduce"] .row::before,
   :root[data-motion="reduce"] .row-gutter,
-  :root[data-motion="reduce"] .row-arrow {
+  :root[data-motion="reduce"] .row-end,
+  :root[data-motion="reduce"] .row-arrow,
+  :root[data-motion="reduce"] .row-cta {
+    transition: none;
+  }
+
+  /* ═══ Selected work (home) ══════════════════════════════════════════════════
+     The row's gutter becomes the page's 12rem margin (with the 1.5rem column
+     gap), carrying the year over the status mark; the titles then start on
+     the same x as the chart's plot below. On a phone the margin folds into
+     one line above the title. */
+  .work-rows .row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "gutter"
+      "main";
+    row-gap: 0.625rem;
+  }
+
+  .work-rows .row-gutter {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 1rem;
+  }
+
+  .work-year {
+    color: var(--ink-2);
+  }
+
+  /* The status is the chart's own milestone mark at the size of the plate's
+     key, so the list teaches the three shapes the plate below uses. */
+  .work-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .work-status .cn-glyph {
+    --cn-mark-size: 7px;
+  }
+
+  .work-rows .row-subtitle {
+    max-width: 44rem;
+    text-wrap: pretty;
+  }
+
+  .work-more {
+    margin-top: var(--space-5);
+  }
+
+  .work-more .btn {
+    gap: 0.625rem;
+  }
+
+  .work-more-arrow {
+    width: 1rem;
+    height: 1rem;
+    transition: transform var(--dur-2) var(--ease-snap);
+  }
+
+  .work-more .btn:hover .work-more-arrow {
+    transform: translateX(3px);
+  }
+
+  @media (width >= 48rem) {
+    .work-rows .row {
+      grid-template-columns: 10.5rem minmax(0, 1fr) auto;
+      grid-template-areas: "gutter main arrow";
+      row-gap: 0.75rem;
+      padding-block: 2rem;
+    }
+
+    .work-rows .row-gutter {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.625rem;
+    }
+
+    .work-more {
+      padding-left: 12rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .work-more-arrow {
+      transition: none;
+    }
+  }
+  :root[data-motion="reduce"] .work-more-arrow {
     transition: none;
   }
 
@@ -574,17 +682,18 @@
      assistive tech hears it change. The label is the only thing that
      changes, and it is information, so it changes with no transition. */
   .copy-email {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    column-gap: var(--space-3);
-    row-gap: 0.5rem;
-    width: 100%;
+    max-width: 100%;
     color: var(--ink);
   }
 
+  /* One control: the address and its chip, wrapping the chip under the
+     address when the line is too short for both (a phone). */
   .copy-email-button {
-    display: block;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 1.125rem;
+    row-gap: 0.75rem;
     min-width: 0;
     max-width: 100%;
     margin: 0;
@@ -604,34 +713,112 @@
     overflow-wrap: anywhere;
     user-select: text;
     -webkit-user-select: text;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+    transition: text-decoration-color var(--dur-2) var(--ease-snap);
   }
 
+  /* The close's address: the loudest line of the band. Bodoni, sized between
+     display-m and display-l, never under the 21px floor (28px at its
+     smallest). Set here rather than with a display utility because a
+     utility's size would outrank this layer. */
+  .copy-email[data-size="large"] .copy-email-address {
+    font-family: var(--font-display);
+    font-optical-sizing: none;
+    font-variation-settings: "opsz" 30;
+    font-size: clamp(1.75rem, 3.4vw + 0.25rem, 3.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.008em;
+  }
+
+  .copy-email-button:hover .copy-email-address {
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /* The chip. It is as wide as "Copied" with its tick, the longest thing it
+     says on success, so it does not change width when it answers, and the
+     icon and word are centred in it: set flush left they left an empty
+     quarter of a button trailing after "Copy". */
   .copy-email-label {
+    position: relative;
+    display: inline-flex;
     flex: none;
-    color: var(--ink-3);
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 5.75rem;
+    height: 1.875rem;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-2);
+    transition:
+      border-color var(--dur-1) var(--ease-snap),
+      background-color var(--dur-2) var(--ease-snap),
+      color var(--dur-1) var(--ease-snap);
   }
 
-  /* The footer's copy line: the same control, at the footer's own size. */
-  .copy-email[data-size="small"] {
-    column-gap: var(--space-2);
+  .copy-email-word {
+    white-space: nowrap;
   }
 
-  /* "Click" is wrong on a finger. One hint per pointer, chosen in CSS so
-     nothing depends on state or hydration. */
-  .copy-hint-coarse {
-    display: none;
+  .copy-email-icon {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
   }
 
-  @media (pointer: coarse) {
-    .copy-hint-fine {
-      display: none;
-    }
-    .copy-hint-coarse {
-      display: inline;
-    }
-  }
-  .copy-email[data-state="copied"] .copy-email-label {
+  .copy-email-button:hover .copy-email-label,
+  .copy-email-button:focus-visible .copy-email-label {
+    border-color: var(--ink-2);
     color: var(--ink);
+  }
+
+  .copy-email-button:active .copy-email-label {
+    background: var(--ground-3);
+  }
+
+  .copy-email[data-state="copied"] .copy-email-label {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--ground);
+  }
+
+  /* The ring belongs on the chip, which is what looks pressable. */
+  .copy-email-button:focus-visible {
+    outline: none;
+  }
+  .copy-email-button:focus-visible .copy-email-label {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+  }
+
+  /* The footer's line: the same control at reading size. */
+  .copy-email[data-size="small"] .copy-email-button {
+    column-gap: 0.875rem;
+  }
+  .copy-email[data-size="small"] .copy-email-label {
+    height: 1.625rem;
+  }
+
+  /* The chop hangs off the chip's right edge, out of flow. */
+  .copy-email-label > .chop {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 0.75rem);
+    translate: 0 -50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .copy-email-address,
+    .copy-email-label {
+      transition: none;
+    }
+  }
+  :root[data-motion="reduce"] .copy-email-address,
+  :root[data-motion="reduce"] .copy-email-label {
+    transition: none;
   }
 
   /* ── The chop (src/components/interactive/copy-email.tsx) ────────────────
@@ -1145,73 +1332,160 @@
    Contact (the close of every page) and the Toolkit table. Endgame pass.
    ═══════════════════════════════════════════════════════════════════════════ */
 @layer components {
-  /* ── Contact: head and body on the copy columns, the afterimage on the rail
-        spanning both rows, so the ghost sits beside the title and the address
-        lines up with its bottom edge. The hairline is the grid's first row (a
-        pseudo-element spanning every column) rather than a border on the
-        section, whose border would run through the shell padding. Below
-        64rem there is no rail and no board. ── */
-  /* ── The close, as a tinted panel ──────────────────────────────────────
-     Every page was one ground from the masthead to the footer: paper, with
-     black on it, and the only tonal events were the plate marks. A printed
-     sheet does not work that way -- it carries panels of tint, and the last
-     block before the trim is exactly where one belongs. The band bleeds by
-     the ABSENCE of `shell`, the same way the constellation does, rather than
-     by 100vw, which would count the scrollbar and open a horizontal scroll.
-     --ground-2 is the wash already used behind every plate, so this is the
-     palette's own second ground rather than a new value. */
-  /* The footer carries the address because every interior route ends there
-     and has no close of its own. The home page has both, 350px apart, so the
-     email and its copy control were printed twice on one screen. Where the
-     close exists, the footer's copy stands down. */
-  body:has(.contact-band) .footer-address {
-    display: none;
-  }
-
+  /* ── The close, as a tinted band ────────────────────────────────────────
+     The last block before the trim carries a panel of tint, as a printed
+     sheet does; --ground-2 is the wash already behind every plate. It bleeds
+     by the ABSENCE of `shell`, never 100vw (which counts the scrollbar). The
+     footer shares the tint, so the close and the colophon are one back cover
+     with one hairline between them. The band's edge is its own divider: no
+     border, no inner rule. It used to draw two hairlines 36px apart at its
+     top, and the footer's rule landed exactly on its bottom edge. */
   .contact-band {
+    /* Clear of the chart's plate, which is the same tint: two panels of one
+       wash need real ground between them or they read as one smudge. The
+       section's own padding plus this is the same boundary every other
+       section on the page has, at every width. */
+    margin-top: var(--section-y);
+    padding-block: var(--space-8);
     background: var(--ground-2);
-    border-top: 1px solid var(--line);
   }
 
+  /* A phone reads it in order: the title and the address, the index, the
+     postscript. */
   .contact {
     display: grid;
-    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    column-gap: var(--gutter);
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-5);
   }
 
-  .contact::before {
-    content: "";
-    grid-column: 1 / -1;
-    height: 1px;
-    background: var(--line);
-  }
-
-  .contact > .section-head {
-    border-top: 0;
-  }
-
-  .contact-head,
-  .contact-body {
-    grid-column: 1 / -1;
+  .contact-main {
     min-width: 0;
   }
 
-  .contact-body {
-    margin-top: var(--section-gap);
+  .contact-address {
+    margin-top: var(--space-5);
   }
 
-  /* The close used to reserve columns 6-12 for a ghost: a near-invisible dot
-     afterimage of the portrait, at about 6% ink, in the corner of the band.
-     It was the last survivor of a direction where the portrait was a dot
-     field, and beside a photograph it is simply a smudge. With it gone the
-     copy takes the whole band rather than a narrow column with a third of a
-     tinted panel empty beside it, and `align-self: start` is no longer
-     holding anything open. */
+  /* Wide enough for the sentence to set on one line beside the index at a
+     desktop width, instead of breaking two words ("and Infinity.") onto a
+     second. */
+  .contact-essay {
+    max-width: 46rem;
+    text-wrap: pretty;
+  }
 
-  /* `.colophon-note` was styled here as well as in case.css, left over from a
-     home-page colophon that no longer exists. It set a different family, a
-     different size and `text-align: justify` with `hyphens: auto`, which on a
-     two-line note at this measure gives visibly uneven word spacing. case.css
-     owns the class now: body font, ragged right, like every other paragraph on
-     the sheet. */
+  /* From 64rem the index stands beside the address on the right quarter of
+     the page, top aligned with the title, and the postscript returns to the
+     left column under the address. The second row takes any height the index
+     has over the title and the address, so the postscript always sits one
+     step under the address rather than being pushed down by the column
+     beside it. Both rows are explicit, so `span 2` is a real span. */
+  @media (width >= 64rem) {
+    .contact {
+      grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+      grid-template-rows: auto 1fr;
+      column-gap: var(--space-10);
+      align-items: start;
+    }
+
+    .contact-main {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .contact-aside {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+
+    .contact-essay {
+      grid-column: 1;
+      grid-row: 2;
+    }
+  }
+
+  /* ── The profiles index (the close and the footer) ─────────────────────── */
+  .contact-links {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .contact-links > li {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .contact-link {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 1rem;
+    align-items: center;
+    column-gap: 1rem;
+    min-height: 3rem;
+    padding-block: 0.625rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* The hover wash reaches a little past the text on both sides, like a
+     row's, and sits under it. */
+  .contact-link::before {
+    content: "";
+    position: absolute;
+    inset: 0 -0.75rem;
+    z-index: -1;
+    background: var(--ground-3);
+    opacity: 0;
+    transition: opacity var(--dur-2) var(--ease-snap);
+  }
+
+  .contact-link-handle {
+    color: var(--ink-3);
+    transition: color var(--dur-1) var(--ease-snap);
+  }
+
+  .contact-link-arrow {
+    width: 1rem;
+    height: 1rem;
+    color: var(--ink-3);
+    transition:
+      color var(--dur-1) var(--ease-snap),
+      transform var(--dur-2) var(--ease-snap);
+  }
+
+  .contact-link:hover::before,
+  .contact-link:focus-visible::before {
+    opacity: 1;
+  }
+
+  .contact-link:hover .contact-link-handle,
+  .contact-link:focus-visible .contact-link-handle,
+  .contact-link:hover .contact-link-arrow,
+  .contact-link:focus-visible .contact-link-arrow {
+    color: var(--ink);
+  }
+
+  .contact-link:hover .contact-link-arrow,
+  .contact-link:focus-visible .contact-link-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* The list is a stacking context, so the wash sits over the band's tint
+     and under the text. */
+  .contact-links {
+    position: relative;
+    z-index: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-link::before,
+    .contact-link-arrow {
+      transition: none;
+    }
+  }
+  :root[data-motion="reduce"] .contact-link::before,
+  :root[data-motion="reduce"] .contact-link-arrow {
+    transition: none;
+  }
 }

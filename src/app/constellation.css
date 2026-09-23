@@ -23,55 +23,106 @@
    label, status by the shape of a mark. The one --sun element is `.cn-today`,
    this chart's single licence for the second ink.
 
-   Two things print rather than animate, and both are things a PRESS does:
-
-   THE PULL. An etching press does not show you a print all at once — the bed
-   travels under the roller and the sheet emerges edge first. So on the one
-   frame the plate enters view, a hard edge crosses it at about 1500 CSS px/s
-   and everything behind that edge is simply THERE: hairlines, bands, marks,
-   year rules, the plate mark itself. Nothing fades, nothing slides, nothing
-   staggers. It is one `clip-path` and it runs once. Because the chart
-   transposes below 48rem the pull transposes with it: down the block axis on
-   a phone, across the inline axis above it.
-
-   THE REGISTER. Four crosshairs just inside the plate mark's corners are the
-   marks a printer lays so a second plate can be laid onto the first, and the
-   vermilion TODAY rule terminates in a tick at each end — those are the
-   SECOND plate's marks. The site's four-place licence for the second ink is
-   an argument about two-colour printing, and this is where it is drawn
-   instead of asserted.
+   Nothing on the plate moves or arrives: it is present at first paint, and an
+   idle page costs zero frames. The only motion is a mark growing under the
+   pointer or the focus ring.
    ───────────────────────────────────────────────────────────────────────── */
 
 @layer components {
+  /* ═══ The section ══════════════════════════════════════════════════════════
+     The dot band is declared here rather than on the plot so the legend in
+     the heading can print a swatch of exactly the same material. Three rows of
+     dots at the page pitch, which is what the portrait is made of — an
+     employment interval is ink laid down at the page's own resolution, not a
+     solid bar borrowed from a Gantt chart. The tile is a hard-stop radial
+     gradient so the dot stays a dot at any width. */
+  .cn-section {
+    --cn-dot-r: 1.1px;
+    --cn-band: calc(3 * var(--pitch));
+    --cn-dots: radial-gradient(
+      circle at 50% 50%,
+      var(--ink) var(--cn-dot-r),
+      transparent calc(var(--cn-dot-r) + 0.5px)
+    );
+  }
+
+  /* ═══ The head and its legend ══════════════════════════════════════════════
+     Title on the left, key on the right, on one baseline; below 48rem the key
+     wraps under the title. Meta type: the key is a machine label. */
+  .section-head-split {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    column-gap: var(--space-4);
+    row-gap: var(--space-2);
+  }
+
+  /* Two by two on a phone: four items in a wrapping row left RESEARCH alone
+     on a second line, a key with an orphan. One row from 48rem, where it
+     shares the heading's line. */
+  .cn-legend {
+    display: grid;
+    grid-template-columns: repeat(2, max-content);
+    align-items: center;
+    gap: 0.625rem 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-3);
+  }
+
+  @media (width >= 48rem) {
+    .cn-legend {
+      display: flex;
+      gap: 0.5rem 1.5rem;
+    }
+  }
+
+  /* Each key is a slot the width of the band swatch, then the word, so on a
+     phone the two words in each column of the 2 x 2 start on one edge
+     whether the swatch before them is four dots wide or one diamond. */
+  .cn-legend > li {
+    display: grid;
+    grid-template-columns: calc(4 * var(--pitch)) max-content;
+    align-items: center;
+    justify-items: center;
+    column-gap: 0.625rem;
+    white-space: nowrap;
+  }
+
+  @media (width >= 48rem) {
+    .cn-legend > li {
+      display: inline-flex;
+      column-gap: 0.625rem;
+    }
+  }
+
+  .cn-legend .cn-glyph {
+    --cn-mark-size: 7px;
+  }
+
+  /* A swatch of the band itself: three rows by four dots. */
+  .cn-legend-band {
+    display: block;
+    width: calc(4 * var(--pitch));
+    height: var(--cn-band);
+    background-image: var(--cn-dots);
+    background-size: var(--pitch) var(--pitch);
+  }
+
   /* ═══ The figure ═══════════════════════════════════════════════════════════ */
   .cn {
-    margin: var(--section-gap) 0 0;
+    margin: 0;
   }
 
   .cn-frame {
     min-width: 0;
   }
 
-  /* ═══ Full bleed (the home page's closing composition) ══════════════════════
-     The section drops `shell`, so it is as wide as <main>; the head and the
-     caption take their own `shell` back and the plate keeps the rest. No `vw`
-     anywhere: `100vw` counts the scrollbar and would push the page sideways by
-     its width, and `overflow: hidden` to hide that would eat the plate mark.
-
-     The plate keeps --shell-pad of ground on each side, because the plate mark
-     is drawn at a NEGATIVE inset and a bleed that reaches the trim would cut
-     it off — an intaglio plate mark that runs off the sheet is a crop, not an
-     impression. Capped at 110rem so an ultrawide gets a wider chart and not a
-     ruled field: past that the months stop being read and start being scanned.
-     ─────────────────────────────────────────────────────────────────────── */
-  .cn-full .cn-frame {
-    max-width: 110rem;
-    margin-inline: auto;
-    padding-inline: var(--shell-pad);
-  }
-
-  /* No key below it, so the key numbers have nothing to point at. The shape is
-     the message here; the name of a mark is in the mark, which is a link. */
+  /* No key below it on /, so the key numbers have nothing to point at. The
+     shape is the message there; the name of a mark is in the mark, which is a
+     link. */
   .cn-full .cn-num {
     display: none;
   }
@@ -81,43 +132,26 @@
      vertical labels and a tall track under it. The track height is a constant,
      so a month is always the same number of pixels and the marks never crowd. */
   .cn-plot {
-    /* The dot band. Three rows of dots at the page pitch, which is the same
-       material the portrait is made of — an employment interval is ink laid
-       down at the page's own resolution, not a solid bar borrowed from a
-       Gantt chart. The tile is a hard-stop radial gradient so the dot stays a
-       dot at any width, and every lane's band starts at the same edge of the
-       track, so the lattice is in phase from lane to lane. */
-    --cn-dot-r: 1.1px;
-    --cn-band: calc(3 * var(--pitch));
-    --cn-dots: radial-gradient(
-      circle at 50% 50%,
-      var(--ink) var(--cn-dot-r),
-      transparent calc(var(--cn-dot-r) + 0.5px)
-    );
-
+    /* Every lane's band starts at the same edge of the track, so the dot
+       lattice (declared on .cn-section) is in phase from lane to lane. */
     --cn-axis-w: 3.25rem;
     --cn-head-h: 7rem;
     --cn-track-h: 40rem;
-    --cn-mark-size: 10px;
+    --cn-mark-size: 8px;
 
     /* Tighter than the default 18 px: the plate runs the full column and the
        shell only has 1.25rem of padding on a phone. */
     --plate-inset: 12px;
 
-    /* The roller's clip box. It bleeds past the plate mark — `--plate-inset`
-       plus that mark's own 1 px border, plus a pixel of slack — so the mark
-       is printed by the same pass rather than sitting outside it, and so the
-       last frame of the pull clips nothing that the settled plate shows. */
-    --cn-bleed: calc(-1 * (var(--plate-inset) + 3px));
-    /* Duration is distance ÷ 1500 CSS px/s, stepped by breakpoint because CSS
-       cannot divide a length by a speed. Here the pull runs down the block
-       axis over the header band plus the track: 7rem + 40rem ≈ 750 px. */
-    --cn-pull-dur: 500ms;
-
     display: grid;
     grid-template-columns: var(--cn-axis-w) repeat(var(--lanes), minmax(0, 1fr));
     grid-template-rows: var(--cn-head-h) var(--cn-track-h);
-    margin-top: var(--space-4);
+    /* The plate mark is drawn --plate-inset OUTSIDE this box. Inset by the
+       same amount on every side, so the mark's outer edge is the page column
+       (flush with every heading and rule), and it sits --section-gap under
+       the heading like every other section body. */
+    margin: calc(var(--section-gap) + var(--plate-inset)) var(--plate-inset)
+      var(--plate-inset);
   }
 
   /* ═══ Rules ════════════════════════════════════════════════════════════════
@@ -140,7 +174,11 @@
     height: 1px;
   }
 
+  /* A year boundary runs across the lanes and on through the axis line into
+     the label gutter, as a tick: the timescale's divisions are the plate's
+     own hairlines, and each year's name sits between two of them. */
   .cn-rule {
+    left: -0.5rem;
     background: var(--line);
   }
 
@@ -151,93 +189,22 @@
      obey. */
   .cn-today {
     height: 2px;
+    margin-top: -0.5px;
     background: var(--sun);
   }
 
-  /* The second plate's register marks. The four black crosshairs below are
-     the first plate's; a printer lays a matching pair on the second so the
-     two impressions land on top of each other. The vermilion rule terminates
-     in one at each end, which is what makes the four-place licence for this
-     ink legible as a fact about two-colour printing rather than a house rule.
-     5 px, perpendicular, centred on the rule it belongs to. */
-  .cn-today::before,
-  .cn-today::after {
-    content: "";
+  /* The flag. On a phone time runs down the page, so the label sits in the
+     axis gutter just above its rule, where the year labels sit beside
+     theirs. It is a child of the rules layer, so `right: 100%` is the
+     gutter. */
+  .cn-today-label {
     position: absolute;
-    left: 0;
-    top: -1.5px;
-    width: 1px;
-    height: 5px;
-    background: var(--sun);
-  }
-
-  .cn-today::after {
-    left: auto;
-    right: 0;
-  }
-
-  /* ═══ The first plate's register marks ═════════════════════════════════════
-     Four crosshairs just inside the corners of the plate mark, each two 1 px
-     `--line` rules — the same hairline the year rules are drawn in, because
-     they are the same plate. Out of flow, so the grid never sees them; they
-     are inside the roller's clip box, so they print with the pass. */
-  .cn-register {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  .cn-reg {
-    /* Half the length of each arm, and how far inside the plate mark's own
-       corner the crosshair's centre sits. */
-    --cn-reg-arm: 5px;
-    --cn-reg-in: 8px;
-    --cn-reg-o: calc(var(--cn-reg-in) - var(--plate-inset) - var(--cn-reg-arm));
-
-    position: absolute;
-    width: calc(2 * var(--cn-reg-arm) + 1px);
-    height: calc(2 * var(--cn-reg-arm) + 1px);
-  }
-
-  .cn-reg::before,
-  .cn-reg::after {
-    content: "";
-    position: absolute;
-    background: var(--line);
-  }
-
-  .cn-reg::before {
-    left: 0;
-    right: 0;
-    top: var(--cn-reg-arm);
-    height: 1px;
-  }
-
-  .cn-reg::after {
-    top: 0;
-    bottom: 0;
-    left: var(--cn-reg-arm);
-    width: 1px;
-  }
-
-  .cn-reg[data-corner="tl"],
-  .cn-reg[data-corner="tr"] {
-    top: var(--cn-reg-o);
-  }
-
-  .cn-reg[data-corner="bl"],
-  .cn-reg[data-corner="br"] {
-    bottom: var(--cn-reg-o);
-  }
-
-  .cn-reg[data-corner="tl"],
-  .cn-reg[data-corner="bl"] {
-    left: var(--cn-reg-o);
-  }
-
-  .cn-reg[data-corner="tr"],
-  .cn-reg[data-corner="br"] {
-    right: var(--cn-reg-o);
+    top: var(--t);
+    right: 100%;
+    padding: 0 0.5rem 0.3rem 0;
+    transform: translateY(-100%);
+    color: var(--sun);
+    white-space: nowrap;
   }
 
   /* ═══ Lane labels ══════════════════════════════════════════════════════════
@@ -346,14 +313,22 @@
     bottom: 0;
   }
 
-  /* Status is the shape, never the colour. A square, because the only circles
-     left on this site are dots in a picture. */
+  /* Status is the shape, never the colour: a milestone diamond, solid for
+     shipped, inked on its left half for ongoing, open for research. Not a
+     circle, because the only circles on this site are dots in a picture, and
+     no longer a square, because a hollow square beside a word is a checkbox.
+     `--cn-mark-size` is the side of the square before it is turned, so the
+     diamond stands about 1.4 times that tall. The half fill runs corner to
+     corner, which the turn sets upright. `rotate`, not `transform`, so a
+     hover's scale composes with it instead of replacing it. */
   .cn-glyph {
     display: block;
-    width: var(--cn-mark-size, 10px);
-    height: var(--cn-mark-size, 10px);
+    flex: none;
+    width: var(--cn-mark-size, 8px);
+    height: var(--cn-mark-size, 8px);
     border: 1px solid var(--ink);
     background: transparent;
+    rotate: 45deg;
   }
 
   .cn-glyph[data-glyph="filled"] {
@@ -361,17 +336,18 @@
   }
 
   .cn-glyph[data-glyph="half"] {
-    background: linear-gradient(90deg, var(--ink) 50%, transparent 50%);
+    background: linear-gradient(to top right, var(--ink) 50%, transparent 50%);
   }
 
-  /* A 2 px knockout in the ground, so a mark that lands inside an employment
-     band is still a mark and not one more dot in the lattice. An outline, not
-     a shadow: this site has no shadows, and an outline costs no layout. */
+  /* A 2 px knockout in the plate's own tone, so a mark that lands inside an
+     employment band is still a mark and not one more dot in the lattice, and
+     one that lands on bare plate shows no ring at all. An outline, not a
+     shadow: this site has no shadows, and an outline costs no layout. */
   .cn-mark .cn-glyph {
     position: absolute;
     left: calc(50% - var(--cn-mark-size) / 2);
     top: calc(50% - var(--cn-mark-size) / 2);
-    outline: 2px solid var(--ground);
+    outline: 2px solid var(--ground-2);
     transition: transform var(--dur-2) var(--ease-snap);
   }
 
@@ -412,22 +388,15 @@
     position: relative;
   }
 
+  /* A year's name, centred on the middle of the stretch of it the plate
+     shows (constellation.tsx places it). On a phone that is the gutter, clear
+     of the boundary ticks at its right edge. */
   .cn-tick {
     position: absolute;
-    right: 0.5rem;
+    right: 0.875rem;
     top: var(--t);
-    padding-top: 0.25rem;
+    translate: 0 -50%;
     color: var(--ink-3);
-    white-space: nowrap;
-  }
-
-  .cn-today-label {
-    position: absolute;
-    right: 0.5rem;
-    top: var(--t);
-    transform: translateY(-100%);
-    padding-bottom: 0.25rem;
-    color: var(--sun);
     white-space: nowrap;
   }
 
@@ -583,24 +552,28 @@
      ═════════════════════════════════════════════════════════════════════════ */
   @media (width >= 48rem) {
     .cn-plot {
-      --cn-label-w: 12rem;
+      /* The plot area starts 12rem into the page column, the same x as the
+         titles in the work list above and the type column of the record
+         below: one margin grammar for the whole page. The label column is
+         12rem less the plate inset, because the plot itself is inset. */
+      --plate-inset: 20px;
+      --cn-label-w: calc(12rem - var(--plate-inset));
+      --cn-flag-h: 2rem;
       --cn-lane-h: 4.25rem;
       --cn-axis-h: 2.5rem;
-      --plate-inset: 20px;
-      /* The pull runs across now, over a plate about 700 px wide at this
-         width. The two steps below carry it out to 1440. */
-      --cn-pull-dur: 480ms;
 
       grid-template-columns: var(--cn-label-w) minmax(0, 1fr);
-      grid-template-rows: repeat(var(--lanes), var(--cn-lane-h)) var(
-          --cn-axis-h
-        );
-      margin-top: var(--space-5);
+      /* Row 1 is the band the TODAY flag flies in; the lanes follow from row
+         2 (constellation.tsx writes `--row` from 2); the axis is last. */
+      grid-template-rows:
+        var(--cn-flag-h)
+        repeat(var(--lanes), var(--cn-lane-h))
+        var(--cn-axis-h);
     }
 
     .cn-grid {
       grid-column: 2;
-      grid-row: 1 / -2;
+      grid-row: 2 / -2;
       border-left: 0;
       border-bottom: 1px solid var(--line);
     }
@@ -615,25 +588,28 @@
       height: auto;
     }
 
+    .cn-rule {
+      bottom: -0.5rem;
+    }
+
+    /* The pole rises a little into the flag band, so the label and the rule
+       read as one mark. */
     .cn-today {
+      top: -0.5rem;
       width: 2px;
+      margin-top: 0;
+      margin-left: -0.5px;
     }
 
-    /* The rule lies down, so its register ticks do too: the ends are now the
-       top and the bottom of the plate. */
-    .cn-today::before,
-    .cn-today::after {
-      top: 0;
-      bottom: auto;
-      left: -1.5px;
-      right: auto;
-      width: 5px;
-      height: 1px;
-    }
-
-    .cn-today::after {
+    /* Centred over its rule in the band above the lanes, and kept inside the
+       plot when TODAY is near either end of the domain. */
+    .cn-today-label {
       top: auto;
-      bottom: 0;
+      right: auto;
+      bottom: calc(100% + 0.625rem);
+      left: clamp(1.5rem, var(--t), calc(100% - 1.5rem));
+      padding: 0;
+      transform: translateX(-50%);
     }
 
     .cn-lane-label {
@@ -727,22 +703,17 @@
     .cn-tick {
       left: var(--t);
       right: auto;
-      top: 0.55rem;
-      padding-top: 0;
-      padding-left: 0.375rem;
+      top: 0.75rem;
+      translate: -50% 0;
     }
 
-    .cn-today-label {
-      left: var(--t);
-      right: auto;
-      top: 0.55rem;
-      transform: translateX(-100%);
-      padding-bottom: 0;
-      padding-right: 0.5rem;
-    }
-
+    /* The names start 12rem into the column, the x of the plot above and of
+       the record's type column below, with the number and the mark in the
+       margin, as the work list on / hangs its year and status. */
     .cn-index-link {
-      grid-template-columns: 3.5rem minmax(0, 1fr) 22rem;
+      grid-template-columns:
+        calc(12rem - var(--gutter)) minmax(0, 1fr)
+        22rem;
       column-gap: var(--gutter);
     }
 
@@ -780,7 +751,7 @@
     }
 
     .cn-glyph[data-glyph="half"] {
-      background: linear-gradient(90deg, CanvasText 50%, Canvas 50%);
+      background: linear-gradient(to top right, CanvasText 50%, Canvas 50%);
     }
 
     .cn-lane[data-bar]::before,
@@ -788,15 +759,6 @@
       forced-color-adjust: none;
       background: CanvasText;
       background-image: none;
-    }
-
-    /* The TODAY rule's own register ticks. They carry no information the rule
-       does not, but a rule that loses its terminals in High Contrast reads as
-       a stray hairline rather than as a mark. */
-    .cn-today::before,
-    .cn-today::after {
-      forced-color-adjust: none;
-      background: CanvasText;
     }
 
     .cn-lane[data-bar]::before {
@@ -810,10 +772,6 @@
      1.5 rem the chart puts between its lane labels and the plot, so the two
      type columns share one left edge. */
   @media (width >= 64rem) {
-    .cn-plot {
-      --cn-pull-dur: 640ms; /* ≈ 960 px of plate */
-    }
-
     .cn-record-entry {
       grid-template-columns: var(--cn-margin) minmax(0, 1fr);
       row-gap: 0;
@@ -829,23 +787,6 @@
       padding-right: var(--space-3);
     }
   }
-
-  @media (width >= 80rem) {
-    .cn-plot {
-      /* Measured: 1406 px of clip box at 1440 wide, which is 1562 px/s. */
-      --cn-pull-dur: 900ms;
-    }
-  }
-
-  /* The chart used to arrive: a roller pull that clipped the plate in from one
-     edge over half a second when it scrolled into view, and then the vermilion
-     TODAY rule registering onto it 760 ms later, as a second ink laid on a
-     sheet already printed. It was gated on `:root.js` and on both motion
-     switches, so it was never what a visitor without JavaScript saw.
-
-     Everything on the page is present at first paint now, so that is what
-     everyone gets. The keyframes it used (cn-pull-y, cn-pull-x) went with it.
-     Idle still costs zero frames, and now so does arrival. */
 
   /* This site prints. Browsers drop background images on paper by default,
      which would print the plate as six empty lanes — the one place the chart
@@ -867,11 +808,3 @@
     }
   }
 }
-
-/* One pass of the roller, on whichever axis the chart is drawn on. The edge
-   is hard because a roller's is: nothing behind it fades in, nothing slides,
-   and there is no stagger — the marks are simply already printed when the
-   edge has gone past them. Both end on the bleed rather than on zero, so the
-   plate mark comes through with the impression instead of being cropped off
-   it. Unlayered on purpose: @keyframes are not affected by @layer, and every
-   other keyframe on this site is declared the same way. */

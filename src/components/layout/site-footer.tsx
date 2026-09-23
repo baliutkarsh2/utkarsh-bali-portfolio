@@ -1,82 +1,88 @@
 import Link from "next/link";
 import { CopyEmail } from "@/components/interactive/copy-email";
-import { profile, socials } from "@/content";
+import { ContactLinks } from "@/components/ui/contact-links";
+import { NineDotMark } from "@/components/ui/nine-dot-mark";
+import { profile } from "@/content";
+
+/** The build year. Pages are static, so this is the year of the deploy. */
+const YEAR = new Date().getFullYear();
+
+/** The routes, in the header's order, plus the one the header does not carry. */
+const ROUTES = [
+  { label: "About", href: "/about" },
+  { label: "Work", href: "/projects" },
+  { label: "Writing", href: "/writing" },
+];
 
 /**
- * Server component. Two rows on the shell under a top hairline: the last line
- * with the identity right-aligned, then the links.
+ * The back cover of every page: one tinted panel that runs to the trim.
  *
- * Two things have been cut from here for the same reason: a printer's imprint
- * in roman numerals, and a "Connecting the dots" line that drew itself as the
- * footer scrolled in. Both were true to the site's own metaphor and neither was
- * for the reader. A visitor wants to know who this is, what he built and how to
- * reach him.
+ * On / it follows the close, which has the same tint, so the two read as one
+ * cover and the footer is only its last line. Every other route has no close
+ * of its own, so the footer carries a compact one first: the address as the
+ * same click-to-copy control, and the same index of profiles and the résumé
+ * the close uses. Nothing is listed twice on any page: the footer's contact
+ * block stands down wherever the close exists (`.footer-contact` in
+ * chrome.css), and the résumé lives in that index rather than among the
+ * routes.
+ *
+ * The last line is a colophon: the mark and the name, where he is, and the
+ * routes in the header's order, with Writing, which the header leaves out.
+ * On a phone the three facts stack flush under the name instead of wrapping
+ * with a separator dangling at the end of each line.
  */
 export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="shell">
-        <div className="footer-top">
-          <div className="footer-identity text-small text-ink-2">
-            <p>{profile.name}</p>
-            <p>{profile.education}</p>
-            <p>{profile.location}</p>
+        <div className="footer-contact">
+          <div className="footer-contact-main">
+            <h2 className="footer-kicker text-display-s font-medium text-ink">
+              Get in touch
+            </h2>
+            <div className="footer-address">
+              <CopyEmail email={profile.email} size="small" />
+            </div>
           </div>
+          <ContactLinks className="footer-links-index" />
         </div>
 
-        {/* The close lives once, on the home page. Every other route ends
-            here, so the address has to be reachable from the footer. */}
-        <div className="footer-address">
-          <CopyEmail email={profile.email} size="small" />
-        </div>
+        <div className="footer-bar">
+          <div className="footer-colophon text-small">
+            <Link
+              href="/"
+              className="footer-mark"
+              aria-label={`${profile.name}, home`}
+            >
+              <NineDotMark />
+            </Link>
+            <p className="footer-facts">
+              <span className="text-ink">
+                © {YEAR} {profile.name}
+              </span>
+              <span className="footer-sep" aria-hidden="true" />
+              <span>{profile.education}</span>
+              <span className="footer-sep" aria-hidden="true" />
+              <span>{profile.location}</span>
+            </p>
+          </div>
 
-        <nav aria-label="Footer" className="footer-links">
-          <ul className="footer-links-list text-small">
-            {socials.map((social) => {
-              const external = social.kind !== "email";
-              return (
-                <li key={social.kind}>
-                  <a
-                    href={social.href}
-                    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="footer-link dot-underline tap"
-                  >
-                    {social.label}
-                    {external && <span className="sr-only"> (opens in a new tab)</span>}
-                  </a>
+          <nav aria-label="Footer" className="footer-nav">
+            <ul className="footer-nav-list text-small">
+              {/* No RSS link. The route still builds, so the day a post lives
+                  on this site rather than elsewhere the feed is already real
+                  and it comes back. Advertising a feed whose only item points
+                  at Medium promises something the site does not yet deliver. */}
+              {ROUTES.map((route) => (
+                <li key={route.href}>
+                  <Link href={route.href} className="footer-link">
+                    {route.label}
+                  </Link>
                 </li>
-              );
-            })}
-            <li>
-              <Link href="/projects" className="footer-link dot-underline tap">
-                All work
-              </Link>
-            </li>
-            <li>
-              <Link href="/writing" className="footer-link dot-underline tap">
-                Writing
-              </Link>
-            </li>
-            {/* No RSS link. The route still builds, so the day a post lives
-                on this site rather than elsewhere the feed is already real and
-                this comes back. Advertising a feed whose only item points at
-                Medium promises something the site does not yet deliver. */}
-            {profile.resume && (
-              <li>
-                <a
-                  href={profile.resume.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="footer-link dot-underline tap"
-                >
-                  Résumé
-                  <span className="sr-only"> (PDF, opens in a new tab)</span>
-                </a>
-              </li>
-            )}
-          </ul>
-        </nav>
-
+              ))}
+            </ul>
+          </nav>
+        </div>
       </div>
     </footer>
   );

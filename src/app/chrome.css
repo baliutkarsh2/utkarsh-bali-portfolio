@@ -172,24 +172,42 @@
   .site-tools {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
     justify-self: stretch;
     justify-content: flex-end;
     min-width: 0;
   }
 
-  /* The section readout. The SectionSpy sets its textContent; no transition
-     so the words never animate. Shown from lg, and only once it has text. A
-     long section title ("04 BUILDING SOMETHING? LET'S TALK.") clips with an
-     ellipsis rather than pushing the chip out of the bar. */
+  /* The section readout. The SectionSpy sets its textContent; words never
+     animate, so it simply changes. Shown from lg, and only once it has text.
+     It is "where you are", so it carries the same 4px register dot the
+     current nav item does, and a hairline divides it from the controls. It is
+     right-aligned against them, so a longer or shorter title only moves its
+     own left edge; nothing else in the bar ever shifts. */
+  /* The hairline stands midway between the last letter and the glyph: 1rem
+     of padding on its left, and 0.5rem of margin plus the toggle's own 8px
+     of box on its right. */
   .readout {
     display: none;
     min-width: 0;
     max-width: 18rem;
     overflow: hidden;
+    margin-right: 0.5rem;
+    padding-right: var(--space-2);
+    border-right: 1px solid var(--line);
     text-overflow: ellipsis;
     color: var(--ink-3);
     white-space: nowrap;
+  }
+
+  .readout::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    margin: 0 0.625rem 0 0;
+    border-radius: 50%;
+    background: var(--sun);
+    vertical-align: 0.2em;
   }
 
   @media (width >= 64rem) {
@@ -203,82 +221,120 @@
   }
 
   /* ── The theme control ─────────────────────────────────────────────────
-     A hairline chip carrying one mark, in the same grammar as the rest of the
-     header's data. The mark IS the state: filled is the plate, hollow is the
-     paper, half is "follow the machine" — the filled/hollow/half vocabulary
-     the constellation already uses, so it is not a new thing to learn. No sun
-     and no crescent: this direction has one radius and it belongs to the
-     plate mark, so the mark here is a square. */
+     A 36px target with no box at rest (a box around a glyph is what made the
+     old control read as a checkbox), a --ground-2 wash on hover like a row's,
+     and one 20px glyph for the state: sun, crescent, or half disc. All three
+     are in the SVG; the root's data-theme, set before first paint, decides
+     which one shows, so the glyph is right on frame one. */
   .theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
+    position: relative;
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
     padding: 0;
-    border: 1px solid var(--line);
+    border: 0;
     border-radius: var(--radius);
     background: transparent;
     color: var(--ink-2);
     cursor: pointer;
     transition:
-      border-color var(--dur-1) var(--ease-snap),
+      background-color var(--dur-2) var(--ease-snap),
       color var(--dur-1) var(--ease-snap);
   }
 
-  .theme-toggle:hover {
-    border-color: var(--rule-mid);
-    color: var(--ink);
+  @media (hover: hover) {
+    .theme-toggle:hover {
+      background: var(--ground-2);
+      color: var(--ink);
+    }
   }
 
-  /* Holds the width before the control mounts, so the header row never
-     reflows when it arrives. */
-  .theme-toggle-slot {
-    display: inline-block;
-    width: 1.75rem;
-    height: 1.75rem;
+  .theme-toggle:active {
+    background: var(--ground-3);
   }
 
-  .theme-mark {
-    width: 9px;
-    height: 9px;
-    border: 1px solid currentColor;
-    background: transparent;
+  .theme-glyphs {
+    display: block;
+    width: 20px;
+    height: 20px;
+    overflow: visible;
   }
 
-  /* Dark chosen: the plate, inked solid. */
-  .theme-toggle[data-choice="dark"] .theme-mark {
-    background: currentColor;
+  .tg-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.3;
   }
 
-  /* System: half the square, which is the chart's own "ongoing" mark. */
-  .theme-toggle[data-choice="system"] .theme-mark {
-    background: linear-gradient(
-      to right,
-      currentColor 0 50%,
-      transparent 50% 100%
-    );
+  .tg-ink {
+    fill: currentColor;
   }
 
-  /* A finger-sized target that is not a finger-sized box: the chip keeps its
-     28px so the header row does not grow, and the hit area is a pseudo. */
+  /* Every glyph rests turned away and shrunk; the current one is upright. A
+     switch therefore turns the old glyph out and the new one in at once. */
+  .theme-glyph {
+    opacity: 0;
+    transform-box: view-box;
+    transform-origin: 10px 10px;
+    transform: rotate(-60deg) scale(0.6);
+    transition:
+      opacity 160ms var(--ease-snap),
+      transform 360ms var(--ease-out);
+  }
+
+  :root[data-theme="light"] .theme-glyph[data-glyph="light"],
+  :root[data-theme="dark"] .theme-glyph[data-glyph="dark"],
+  :root:not([data-theme="light"]):not([data-theme="dark"])
+    .theme-glyph[data-glyph="system"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* A small answer to the pointer: the sun turns an eighth, which lands its
+     rays exactly where they were; the crescent tips. */
+  @media (hover: hover) {
+    :root[data-theme="light"]
+      .theme-toggle:hover
+      .theme-glyph[data-glyph="light"] {
+      transform: rotate(45deg);
+    }
+    :root[data-theme="dark"] .theme-toggle:hover .theme-glyph[data-glyph="dark"] {
+      transform: rotate(-14deg);
+    }
+  }
+
+  /* On a finger the target grows to 44px with no visible box. */
   @media (pointer: coarse) {
     .theme-toggle {
-      position: relative;
-    }
-    .theme-toggle::after {
-      content: "";
-      position: absolute;
-      inset: -0.5rem;
+      width: 2.75rem;
+      height: 2.75rem;
     }
   }
 
+  /* From 48rem the toggle is the last thing in the bar, and the glyph, not
+     its box, is what should land on the column's right edge, where every
+     rule on the page ends. The box overhangs into the shell's padding. */
+  @media (width >= 48rem) {
+    .site-header .theme-toggle {
+      margin-right: -0.5rem;
+    }
+  }
+
+  /* Menu and Close are one slot: the same width, the word set on its right
+     edge, which is the column's. "Close" is a letter longer than "Menu", so
+     sized by their words the toggle beside them jumped 8px every time the
+     sheet opened. The slot's left side is the gap to the toggle and is part
+     of the target. */
   .menu-button,
   .menu-close {
     display: inline-flex;
     align-items: center;
+    justify-content: flex-end;
+    min-width: 2.75rem;
     height: 2.75rem;
-    padding: 0 0.25rem;
+    padding: 0;
     border: 0;
     background: none;
     color: var(--ink-2);
@@ -322,6 +378,14 @@
       overlay var(--dur-2) allow-discrete;
   }
 
+  /* A column, so the foot can sit on the bottom of the screen. Only when
+     open: a closed <dialog> is display:none by the UA, and an author
+     display on the bare class would override that. */
+  .menu[open] {
+    display: flex;
+    flex-direction: column;
+  }
+
   .menu:not([open]) {
     opacity: 0;
   }
@@ -337,11 +401,22 @@
     display: none;
   }
 
+  /* The header bar, again: same height, same mark, same controls. */
   .menu-bar {
     display: flex;
+    flex: none;
     align-items: center;
     justify-content: space-between;
     height: 3.5rem;
+  }
+
+  .menu-bar .site-tools {
+    justify-self: auto;
+  }
+
+  .menu-nav {
+    flex: none;
+    padding-top: var(--space-4);
   }
 
   .menu-nav-list {
@@ -358,99 +433,234 @@
     border-bottom: 1px solid var(--line);
   }
 
-  /* display-l routes. Left padding reserves the LED gutter so the five
-     labels align whether or not one of them is current. */
+  /* display-l routes, flush on the column. The LED hangs in the margin. */
   .menu-route {
     position: relative;
-    display: block;
-    padding: var(--space-2) 0 var(--space-2) calc(4px + var(--space-2));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding-block: 1.125rem 1.25rem;
     color: var(--ink);
     text-decoration: none;
   }
 
   .menu-route .nav-led {
-    left: 0;
+    left: -0.75rem;
   }
 
-  .menu-socials {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-3);
-    margin: 0;
-    padding-block: var(--space-4);
-    list-style: none;
+  .menu-route-arrow {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--ink-3);
+    transition:
+      color var(--dur-1) var(--ease-snap),
+      transform var(--dur-2) var(--ease-snap);
+  }
+
+  .menu-route:hover .menu-route-arrow,
+  .menu-route:active .menu-route-arrow,
+  .menu-route[aria-current="page"] .menu-route-arrow {
+    color: var(--ink);
+  }
+
+  .menu-route:active .menu-route-arrow {
+    transform: translateX(4px);
+  }
+
+  /* The index that closes every page, under a meta label. Its rows are 48px,
+     a thumb's target, and the last one sits a safe-area clear of the edge. */
+  .menu-foot {
+    margin-top: auto;
+    padding-top: var(--space-6);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .menu-foot-label {
+    margin: 0 0 0.75rem;
     color: var(--ink-3);
   }
 
-  .menu-social {
-    color: var(--ink-2);
-    text-decoration: none;
-    transition: color var(--dur-1) var(--ease-snap);
-  }
+  /* A short phone (an SE, or any phone in a browser with its bars showing)
+     cannot hold three display routes and five index rows at full spacing:
+     at 667px the sheet overflowed by 36px and the résumé row sat under the
+     fold of a menu. The routes and the gaps give back the difference; the
+     type and the 48px rows keep their size. */
+  @media (height < 45rem) {
+    .menu-nav {
+      padding-top: var(--space-1);
+    }
 
-  .menu-social:hover {
-    color: var(--ink);
+    .menu-route {
+      padding-block: 0.75rem 0.875rem;
+    }
+
+    .menu-foot {
+      padding-top: var(--space-4);
+    }
   }
 
   /* ── Footer ───────────────────────────────────────────────── */
 
-  /* Positioned above the board like every `main > *`: the hero and 404
-     canvases are position: fixed at z 0 inside their section, and a short
-     page (404) can have the footer on screen while dots are still dispersing. */
+  /* The back cover: the same --ground-2 tint as the home page's close, to
+     the trim, so on / the two are one panel and everywhere else the page ends
+     on a definite edge instead of a loose block of links on paper.
+     Positioned above the board like every main > *: the hero and 404
+     canvases are position: fixed at z 0 inside their section. */
   .site-footer {
     position: relative;
     z-index: var(--z-content);
-    padding-block: 0 var(--space-4);
+    margin-top: var(--space-6);
+    background: var(--ground-2);
   }
 
-  /* The rule is on the content row, not the footer: every other hairline on
-     the site is inset to the page column, and a full-bleed rule under an
-     unfilled block reads as a stray. On .shell it would still be 40px wider
-     on each side than the section rules, since that box carries the padding. */
-  /* One block now that the mission line is gone. It used to be a
-     space-between pair with the identity right-aligned against it; with one
-     child, space-between put a right-aligned block at the left edge of the
-     row, which read as a bug. Left edge, left aligned, on the same column as
-     everything above it. */
-  .footer-top {
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--line);
+  /* Home has its own close directly above, in the same tint: the footer
+     starts where the band stops and is only the colophon. */
+  body:has(.contact-band) .site-footer {
+    margin-top: 0;
   }
 
-  .footer-identity p {
+  body:has(.contact-band) .footer-contact {
+    display: none;
+  }
+
+  /* Every other route: a compact close. Title and address on the left, the
+     profiles index on the right from 64rem, exactly as the home close sets
+     them, one size down. */
+  .footer-contact {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--space-5);
+    padding-block: var(--space-8) var(--space-6);
+  }
+
+  .footer-kicker {
     margin: 0;
   }
 
-  /* The close lives once, on the home page; every other route ends here, so
-     the address sits above the links as one small click-to-copy line. */
   .footer-address {
-    margin-top: var(--space-5);
+    margin-top: var(--space-3);
   }
 
-  .footer-links {
-    margin-top: var(--space-4);
+  @media (width >= 64rem) {
+    .footer-contact {
+      grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+      column-gap: var(--space-10);
+      align-items: start;
+    }
   }
 
-  .footer-links-list {
+  /* Below 64rem the index is the last thing in the block and runs the full
+     column, so its closing rule and the colophon's were two identical lines
+     48px apart. The index's rule is the colophon's rule there. Scoped away
+     from /, where this block is hidden but still the bar's sibling. */
+  @media (width < 64rem) {
+    body:not(:has(.contact-band)) .footer-contact {
+      padding-bottom: 0;
+    }
+
+    body:not(:has(.contact-band)) .footer-contact + .footer-bar {
+      border-top: 0;
+    }
+  }
+
+  /* The colophon line. The rule is on this content row, not on the footer:
+     every other hairline on the site is inset to the page column. */
+  .footer-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem var(--space-4);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--line);
+  }
+
+  /* The mark, then the facts. On a phone the facts are a column flush under
+     the name and the mark sits on the first line; from 48rem they are one
+     line, separated by the site's 3px dot. */
+  .footer-colophon {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    color: var(--ink-3);
+  }
+
+  .footer-mark {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 1lh;
+    color: var(--ink);
+  }
+
+  .footer-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    margin: 0;
+  }
+
+  /* A 3px ink dot between facts, the site's own separator. */
+  .footer-sep {
+    display: none;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+
+  @media (width >= 48rem) {
+    .footer-colophon {
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .footer-facts {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.25rem 0.75rem;
+    }
+
+    .footer-sep {
+      display: block;
+    }
+  }
+
+  .footer-nav-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem var(--space-3);
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  /* The dotted underline, and the colour transition that goes with it, come
-     from the dot-underline utility on the same element (utilities outrank
-     this layer, so a transition here would be dead). Only the colours live
-     here. */
   .footer-link {
     color: var(--ink-2);
-    text-decoration: none;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition:
+      color var(--dur-1) var(--ease-snap),
+      text-decoration-color var(--dur-2) var(--ease-snap);
   }
 
-  .footer-link:hover {
+  .footer-link:hover,
+  .footer-link:focus-visible {
     color: var(--ink);
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /* On a phone the colophon and the links stack. */
+  @media (width < 48rem) {
+    .footer-bar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 
   /* ── Nine-dot mark ────────────────────────────────────────── */

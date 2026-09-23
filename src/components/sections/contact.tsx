@@ -1,24 +1,28 @@
 import { ArrowUpRight } from "lucide-react";
 import { CopyEmail } from "@/components/interactive/copy-email";
-import { profile, socials } from "@/content";
+import { ContactLinks } from "@/components/ui/contact-links";
+import { profile } from "@/content";
 import { recentPosts } from "@/lib/writing";
 
 const TITLE = "Get in touch";
 
 /**
- * The close of every page: the title, the address as one click-to-copy
- * line, the three socials, and from 64rem the afterimage: the hero window at
- * half its size (a 48 x 60 box) drawn once at a third of its ink on the rail,
- * beside the title, with the address lining up on its bottom edge. Release:
- * the dots let go.
+ * The close of the home page: the title, the address as one click-to-copy
+ * control and the loudest line of the band, the index of everywhere else, and
+ * the essay as a postscript.
  *
- * Its own grid rather than <Section> (`.contact` in components.css): the
- * board spans the head row and the body row, which the primitive's
- * head-then-body stack cannot do, and a close must never leave a rail's
- * worth of empty ground under its title. Below 64rem the board is not
- * rendered. The figure is decorative (`alt=""` gives it aria-hidden) and
- * runs no loop.
+ * A tinted band that runs to the trim (the absence of `shell`, never 100vw,
+ * which would count the scrollbar). The footer shares its tint, so the close
+ * and the colophon read as one back cover separated by a single hairline.
+ * The band's edge is its own divider, so the section carries no hairline of
+ * its own.
  *
+ * Its own grid rather than <Section>: from 64rem the index stands in a right
+ * column beside the title, the address and the postscript, which the
+ * primitive's head-then-body stack cannot do. On a phone the three stack in
+ * reading order with the postscript AFTER the index: before it, the index's
+ * closing hairline landed 48px above the footer's, two rules with nothing
+ * between them.
  */
 export function Contact() {
   // One essay, published on Medium. One line, not a section of its own.
@@ -30,62 +34,46 @@ export function Contact() {
       aria-labelledby="contact-title"
       data-section-index=""
       data-section-title="Contact"
-      className="contact-band section-y"
+      className="contact-band"
     >
       <div className="contact shell">
-        <div className="section-head contact-head">
+        <div className="contact-main">
           <h2
             id="contact-title"
             className="text-display-m font-medium text-balance text-ink"
           >
             {TITLE}
           </h2>
+
+          <div className="contact-address">
+            <CopyEmail email={profile.email} />
+          </div>
         </div>
 
-        <div className="contact-body">
-          <CopyEmail email={profile.email} />
+        <ContactLinks className="contact-aside" />
 
-          <ul
-            className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-1 text-small"
-            aria-label="Elsewhere"
-          >
-            {socials
-              .filter((social) => social.kind !== "email")
-              .map((social) => (
-                <li key={social.kind}>
-                  <a
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="dot-underline tap text-ink-2 hover:text-ink"
-                  >
-                    {social.label}
-                    <span className="sr-only"> (opens in a new tab)</span>
-                  </a>
-                </li>
-              ))}
-          </ul>
-
-          {essay && (
-            <p className="mt-8 text-small text-ink-2">
-              Also{" "}
-              <a
-                href={essay.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="dot-underline tap text-ink"
-              >
-                an essay
-                <span className="sr-only"> (opens in a new tab)</span>
-              </a>
-              <ArrowUpRight
-                className="inline-block size-[0.9em] align-[-0.1em] text-ink-3"
-                aria-hidden="true"
-              />{" "}
-              on {essay.external?.publisher ?? "the web"}: {essay.title}.
-            </p>
-          )}
-        </div>
+        {/* An inline link in a sentence, so no `tap`: on a touch screen that
+            utility makes the anchor a 44px inline-flex box, which opened the
+            paragraph's lines to 34px apart around it. */}
+        {essay && (
+          <p className="contact-essay text-small text-ink-2">
+            Also{" "}
+            <a
+              href={essay.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dot-underline text-ink"
+            >
+              an essay
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+            <ArrowUpRight
+              className="inline-block size-[0.9em] align-[-0.1em] text-ink-3"
+              aria-hidden="true"
+            />{" "}
+            on {essay.external?.publisher ?? "the web"}: {essay.title}.
+          </p>
+        )}
       </div>
     </section>
   );
