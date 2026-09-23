@@ -181,7 +181,9 @@
   color: var(--ink);
   font-size: var(--text-small);
   line-height: var(--text-small--line-height);
-  text-wrap: pretty;
+  /* A fact is a line or two. `pretty` only stops a one-word orphan, and
+     STUDYING still ended on "psychology" alone. */
+  text-wrap: balance;
 }
 
 .about-links {
@@ -296,9 +298,13 @@
   max-width: 40rem;
 }
 
+/* The lede is two or three lines, well inside the six Chrome will balance,
+   and it ended "under it." on a line of its own. The bullets under it are
+   longer and stay on `pretty`. */
 .record-lede {
   margin: 0;
   color: var(--ink);
+  text-wrap: balance;
 }
 
 .record-points {
@@ -666,13 +672,16 @@
   }
 }
 
+/* Balanced: a deck is two or three lines, and `pretty` let two of the
+   eight trail off on a two-word stub ("a user.", "in it."). Two even lines
+   also leave more air beside the device. */
 .toc-standfirst {
   margin-block-start: 0.625rem;
   max-width: 44rem;
   color: var(--ink-2);
   font-size: var(--text-body);
   line-height: 1.55;
-  text-wrap: pretty;
+  text-wrap: balance;
 }
 
 @media (width >= 80rem) {
