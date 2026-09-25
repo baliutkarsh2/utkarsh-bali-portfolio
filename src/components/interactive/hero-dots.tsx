@@ -51,13 +51,22 @@ const gridSrc = (phone: boolean, dark: boolean) =>
   `/portrait/hero-grid${phone ? "-sm" : ""}${dark ? "-dark" : ""}.webp`;
 
 /** One grid, read once: every dot placed and sized in design px, by ink. */
-type Grid = {
+export type Grid = {
   designW: number;
   /** In draw order. `dots` is x, y, radius per dot, in design px. */
   inks: { style: string; dots: Float32Array }[];
 };
 
 const cache = new Map<string, Promise<Grid>>();
+
+/**
+ * The grid on screen, for the sunglasses (hero-shades.tsx): the frame's
+ * shadow on his face is his own dots, printed a little heavier under it.
+ */
+let shown: Grid | null = null;
+export function portraitDots(): Grid | null {
+  return shown;
+}
 /** The grids already read, by src: a switch to one of these draws in the
  *  same frame as the ground flips, with no promise tick in between. */
 const ready = new Map<string, Grid>();
@@ -220,6 +229,7 @@ export function HeroDots({
         }
         c.fill();
       }
+      shown = grid;
       box.dataset.state = "static";
       prefetch();
     };

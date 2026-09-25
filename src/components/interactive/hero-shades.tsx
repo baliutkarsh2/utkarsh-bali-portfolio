@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { motionAllowed, onMotionChange } from "@/lib/motion";
 import { GROUND, onThemeChange, resolvedTheme } from "@/lib/theme";
+import { portraitDots } from "./hero-dots";
 
 /**
  * Sunglasses, put on by the scroll.
@@ -43,12 +44,17 @@ import { GROUND, onThemeChange, resolvedTheme } from "@/lib/theme";
  *
  * THE FIT. His head's pose is solved from landmarks on the print by
  * scripts/fit-shades.py (turned 51 degrees to his right, tilted up 17), and
- * the glasses take it, with 8 degrees of pantoscopic tilt: the near lens the
- * wider, the far one foreshortened and out a little past his profile, as in
- * any three-quarter view, turned 5 degrees clockwise on the page so the front
- * runs with his eye line, the near arm back to the root of his ear and gone
- * behind it, the far arm behind his head -- hidden by an ellipsoid standing
- * in for it. Where they sit is set by eye (SEAT).
+ * the glasses take it, with 8 degrees of pantoscopic tilt, turned 5 degrees
+ * clockwise on the page so the front runs with his eye line. They are seated
+ * by the nose: the arch of the keyhole bridge (1.3 cm deep, as a wayfarer's)
+ * rests on the bridge of his nose, where it meets the brow, traced from the
+ * photograph. From there the near lens covers his near eye, the far lens
+ * reaches out past his profile, as in any three-quarter view, and his nose --
+ * the ridge traced from its rim light, down to the tip -- stands in front of
+ * the far lens's inner edge. The near arm runs back to the root of his ear
+ * and goes behind it; the far arm goes behind his head (an ellipsoid stands
+ * in for it). As they seat, the frame's shadow falls on his face just under
+ * and beside it: his own dots under it print heavier, in his own screen.
  *
  * Reduced motion: they fade in where they are worn, over the same stretch,
  * without moving. Without JavaScript, in forced colours and in print there
@@ -166,7 +172,18 @@ const HEAD = { yaw: -50.8, pitch: -16.8, roll: -1.4, s: 21.77, tx: 111.1, ty: 25
  * forward and 20 px high, off his eyes: his eyes sit further forward of the
  * bridge of his nose than a generic head's.
  */
-const SEAT = { x: 126, y: 274, tilt: 8, size: 0.94, turn: 5 };
+const SEAT = { x: 113.2, y: 280.2, tilt: 8, size: 0.94, turn: 5 };
+/**
+ * His nose, on the print (design px), traced from the photograph: the ridge,
+ * rim-lit, from just under the bridge of his nose down to the tip, closed off
+ * to the right over the side of his nose. Seated, the glasses' bridge rests on
+ * the top of it, and it stands in front of the far lens: the far lens's inner
+ * edge goes behind it, as a far lens does in three-quarter view.
+ */
+const NOSE: [number, number][] = [
+  [105, 262], [101, 272], [96, 283], [90, 294], [84, 303], [77, 314], [71, 325], [66, 335],
+  [63, 344], [62, 350], [66, 356], [74, 361], [150, 361], [150, 262],
+];
 /** His head, for hiding the far arm: an ellipsoid in worn-glasses cm. */
 const SKULL = { c: [0, -2.2, -9.2] as V3, r: [6.35, 9.0, 10.0] as V3 };
 
@@ -195,12 +212,14 @@ const RIM = { top: 0.6, side: 0.34, bottom: 0.35 };
  * thickness, how far along it bends down over the ear and by how much, its
  * droop and splay (degrees), and where it goes behind his ear when worn.
  */
-const ARM = { len: 13.2, h0: 0.95, h1: 0.44, taper: 5, th: 0.3, bend: 10.4, bendBy: 28, droop: T("droop", -14.5), splay: 3, ear: T("ear", 8.4) };
+const ARM = { len: 13.2, h0: 0.95, h1: 0.44, taper: 5, th: 0.3, bend: 10.4, bendBy: 28, droop: T("droop", -1), splay: 3, ear: T("ear", 8.4) };
 /** The lens's base curve, as a radius (cm). */
 const CURVE = 8.7;
 
 /** Toward the sky (the walls' light) and toward the sun (the lenses' glint), in camera space. */
 const SKY: V3 = unit([-0.3, 0.85, 0.45]);
+/** The low sun behind him on the left, rim-lighting his profile: walls facing it catch a warm edge. */
+const RIM_LIGHT: V3 = unit([-0.92, 0.25, -0.3]);
 const SUN: V3 = unit([T("sunx", -0.42), T("suny", 0.5), T("sunz", 0.76)]);
 
 /** Dot pitch, design px, and the largest dot in pitches, as the portrait's. */
@@ -236,7 +255,7 @@ function normals(p: P2[]): P2[] {
 
 /** The lens outline, v up, counter-clockwise. */
 const LENS_UV: P2[] = (() => {
-  const p = chaikin(LENS.map(([u, v]) => [u, -v] as P2), 3);
+  const p = chaikin(LENS.map(([u, v]) => [u, -v] as P2), 2);
   let a = 0;
   for (let i = 0; i < p.length; i++) {
     const [x0, y0] = p[i], [x1, y1] = p[(i + 1) % p.length];
@@ -282,7 +301,8 @@ type Look = {
   ground: string;
   dark: boolean;
   acetate: [Ink, number];
-  wall: (b: number) => [Ink, number];
+  /** A wall lit `b` by the sky and `r` by the low sun behind him on the left. */
+  wall: (b: number, r: number) => [Ink, number];
   lensTop: [Ink, number];
   lensBottom: [Ink, number];
   sky: [Ink, number, number]; // ink, strength at the horizon, above it
@@ -291,6 +311,8 @@ type Look = {
   glintCut: number;
   bevel: [Ink, number];
   rivet: [Ink, number];
+  /** The warm edge the low sun lays along the far lens's outer rim. */
+  rim: [Ink, number];
 };
 const BLACK: Ink = [17, 16, 14];
 const BONE: Ink = [239, 233, 220];
@@ -298,9 +320,10 @@ const PAPER: Look = {
   ground: GROUND.light,
   dark: false,
   acetate: [BLACK, 0.96],
-  wall: (b) => {
+  wall: (b, r) => {
     const k = Math.pow(b, 1.6) * 0.75;
-    return [[mix(17, 124, k), mix(16, 121, k), mix(14, 116, k)], 0.95];
+    const w = Math.min(1, r * 0.8);
+    return [[mix(mix(17, 124, k), 196, w), mix(mix(16, 121, k), 132, w), mix(mix(14, 116, k), 98, w)], 0.95 - 0.2 * w];
   },
   lensTop: [[24, 30, 27], 0.93],
   lensBottom: [[42, 49, 45], 0.84],
@@ -310,20 +333,27 @@ const PAPER: Look = {
   glintCut: 0.95,
   bevel: [[104, 102, 98], 0.9],
   rivet: [[196, 193, 186], 0.95],
+  rim: [[150, 86, 58], 0.85],
 };
 const PLATE: Look = {
   ground: GROUND.dark,
   dark: true,
-  acetate: [BONE, 0],
-  wall: (b) => [BONE, 0.09 + 0.62 * b * b],
+  // the acetate prints as the darkest hair does, small dim umber dots, so it
+  // is part of the print rather than a hole cut in it
+  acetate: [[78, 68, 58], 0.2],
+  wall: (b, r) => {
+    const w = Math.min(1, r);
+    return [[mix(150, 238, w), mix(134, 170, w), mix(118, 128, w)], 0.2 + 0.28 * b * b + 0.5 * w];
+  },
   lensTop: [[120, 128, 124], 0.12],
   lensBottom: [[134, 142, 138], 0.22],
   sky: [[206, 214, 224], 0.5, 0.12],
   skyCut: 0,
   glint: [BONE, 0.95],
   glintCut: 0,
-  bevel: [BONE, 0.5],
-  rivet: [BONE, 0.85],
+  bevel: [[214, 190, 168], 0.42],
+  rivet: [[226, 206, 186], 0.7],
+  rim: [[240, 168, 120], 0.8],
 };
 const rgba = ([r, g, b]: Ink, a: number) => `rgba(${r}, ${g}, ${b}, ${a})`;
 
@@ -369,7 +399,8 @@ const WORN_VIS: Record<number, number[]> = (() => {
       const t = -dot(q, d);
       const miss = t > 0 ? Math.sqrt(Math.max(0, dot(q, q) - t * t)) : Math.hypot(q[0], q[1], q[2]);
       void miss;
-      vis.push(h > 0 ? 1 - smooth(ARM.ear, ARM.ear + 1.0, sLen) : 1);
+      // tapering away into the hair in front of his ear, not stopping at it
+      vis.push(h > 0 ? 1 - smooth(ARM.ear - 0.7, ARM.ear + 0.8, sLen) : 1);
     }
     out[h] = vis;
   }
@@ -432,6 +463,10 @@ type State = {
   hide: number;
   /** Overall strength (the reduced-motion fade). */
   alpha: number;
+  /** How far his nose stands in front of the far lens: 1 once they are on. */
+  nose: number;
+  /** How much of their shadow falls on his face: 1 once they are on. */
+  shadow: number;
 };
 
 type Draw = (c: CanvasRenderingContext2D, path: Path2D) => void;
@@ -443,8 +478,10 @@ type Face = {
   vis: number;
   /** Erase what is under it before drawing (an opaque face). */
   solid: boolean;
+  /** On the far half, which his nose stands in front of once they are on. */
+  far: boolean;
 };
-type Scratch = { cov: HTMLCanvasElement; occ: HTMLCanvasElement };
+type Scratch = { cov: HTMLCanvasElement; occ: HTMLCanvasElement; shd: HTMLCanvasElement };
 
 function polyPath(pts: P2[]) {
   const p = new Path2D();
@@ -483,11 +520,16 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
     if (normal && ap(R, normal)[2] <= 0.01) return;
     const cc = corners.map(cam);
     const z = cc.reduce((a, c) => a + c[2], 0) / cc.length + bias;
-    faces.push({ pts: cc.map(px), z, draw, vis, solid });
+    faces.push({ pts: cc.map(px), z, draw, vis, solid, far: half < 0 });
   };
-  const shade = (N: V3, k = 1) => look.wall(Math.max(0, dot(ap(R, N), SKY)) * k);
+  let half = 0;
+  const shade = (N: V3, k = 1) => {
+    const c = ap(R, N);
+    return look.wall(Math.max(0, dot(c, SKY)) * k, Math.pow(Math.max(0, dot(c, RIM_LIGHT)), 2) * k);
+  };
 
   for (const h of [-1, 1]) {
+    half = h;
     // walls round the outside of the frame
     const n = FRAME_UV.length;
     for (let i = 0; i < n; i++) {
@@ -524,6 +566,17 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
       }
     });
     const bev = [...bevel, ...bevelIn.reverse()].map(at);
+    // the far half's outer edge, toward the low sun behind him: a warm rim
+    const rimOut: V3[] = [];
+    const rimIn: V3[] = [];
+    if (h < 0)
+      FRAME_UV.forEach(([u, v], i) => {
+        if (FRAME_N[i][0] > 0.35 || (FRAME_N[i][1] > 0.6 && u > 0.5)) {
+          rimOut.push(onHalf(h, u, v, 0));
+          rimIn.push(onHalf(h, u - FRAME_N[i][0] * 0.13, v - FRAME_N[i][1] * 0.13, 0));
+        }
+      });
+    const rim = [...rimOut, ...rimIn.reverse()].map(at);
     const rivets = [
       [U_OUT - 0.62, TOP_OUT - 0.34],
       [U_OUT - 1.0, TOP_OUT - 0.36],
@@ -548,6 +601,7 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
       c.globalCompositeOperation = "source-over";
       flat(...look.acetate)(c, ring);
       if (bev.length > 3) lift(c, polyPath(bev), 0.3, look.bevel);
+      if (rim.length > 3 && look.rim[1] > 0) lift(c, polyPath(rim), 0.4, look.rim);
       for (const r of rivets) lift(c, polyPath(r), 0.5, look.rivet);
       c.restore();
     }, 0.1, 1, false);
@@ -586,7 +640,9 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
         [[P(sa, ha, true, true), P(sb, hb, true, true), P(sb, hb, true, false), P(sa, ha, true, false)], up],
         [[P(sa, ha, false, true), P(sb, hb, false, true), P(sb, hb, false, false), P(sa, ha, false, false)], scl(up, -1)],
       ];
-      for (const [c4, N] of quads) face(c4, N, flat(...shade(N)), 0, v);
+      // the light on it dies toward the ear, into the shade of his hair
+      const dim = 1 - 0.85 * smooth(ARM.ear - 3, ARM.ear, sa);
+      for (const [c4, N] of quads) face(c4, N, flat(...shade(N, dim)), 0, v);
     }
     for (const sl of [0.9, 1.3]) {
       const ring: V3[] = [];
@@ -597,16 +653,17 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
       face(ring, scl(side, h), flat(...look.rivet), 0.01, vis[2]);
     }
   }
+  half = 0;
   // the bridge, a keyhole across the top
   {
     const xr = LENS_X + U_IN + 0.28;
-    const top = TOP_IN - 0.04, low = TOP_IN - 0.85;
+    const top = TOP_IN - 0.04, low = TOP_IN - 1.35;
     const K = 12;
     const upper: V3[] = [], lower: V3[] = [];
     for (let k = 0; k <= K; k++) {
       const x = mix(-xr, xr, k / K);
       upper.push(wrapped([x, top, 0]));
-      lower.push(wrapped([x, low + 0.26 * (1 - (x / xr) ** 2), 0]));
+      lower.push(wrapped([x, low + 0.3 * (1 - (x / xr) ** 2), 0]));
     }
     face([...upper, ...[...lower].reverse()], [0, 0, 1], flat(...look.acetate), 0.08);
     for (let k = 0; k < K; k++) {
@@ -651,7 +708,7 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
     g.clearRect(0, 0, scratch.cov.width, scratch.cov.height);
     g.setTransform(RS, 0, 0, RS, -x0 * RS, -y0 * RS);
   }
-  for (const f of faces) {
+  const drawFace = (f: Face) => {
     const path = polyPath(f.pts);
     cc.globalAlpha = f.vis;
     if (f.solid) {
@@ -662,11 +719,33 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
     }
     f.draw(cc, path);
     cc.globalAlpha = 1;
-    oc.globalAlpha = f.vis;
+    // where a face is going behind him, the ground under it goes first: a
+    // half-strength ground over his hair printed as a pale cap on the arm
+    oc.globalAlpha = f.vis ** 4;
     oc.fillStyle = look.ground;
     oc.fill(path);
     oc.globalAlpha = 1;
-  }
+  };
+  if (st.nose > 0) {
+    // His nose stands in front of the far half once they are on (and only
+    // then is the far half surely the far one): it is drawn first, his nose
+    // is cut out of it, and the rest goes over.
+    for (const f of faces) if (f.far) drawFace(f);
+    // the cut, and a second a px further out at half strength: a soft edge
+    const nose = polyPath(NOSE);
+    const soft = polyPath(NOSE.map(([x, y]) => [x - 1, y] as P2));
+    for (const g of [cc, oc]) {
+      g.globalCompositeOperation = "destination-out";
+      g.fillStyle = "#000";
+      g.globalAlpha = st.nose * 0.5;
+      g.fill(soft);
+      g.globalAlpha = st.nose;
+      g.fill(nose);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = "source-over";
+    }
+    for (const f of faces) if (!f.far) drawFace(f);
+  } else for (const f of faces) drawFace(f);
   // printing in out of the bottom of the print, as his shoulder prints out
   const fade = (y: number) =>
     st.alpha * Math.pow(smooth(0, 1, (DESIGN_H - y) / 95), 1.2) * smooth(0, 26, DESIGN_H - y);
@@ -678,10 +757,135 @@ function paint(ctx: CanvasRenderingContext2D, scale: number, look: Look, st: Sta
   oc.fillRect(0, 0, W, H);
   oc.globalCompositeOperation = "source-over";
 
-  // the ground under them, then the dots
+  // their shadow on his face, then the ground under them, then the dots
+  ctx.setTransform(scale, 0, 0, scale, OVER * scale, 0);
+  if (st.shadow > 0.01) contact(ctx, scale, look, st, scratch, W, H, x0, y0, RS);
   ctx.setTransform(scale, 0, 0, scale, OVER * scale, 0);
   ctx.drawImage(scratch.occ, 0, 0, W, H, x0, y0, x1 - x0, y1 - y0);
   screen(ctx, scale, cc, W, H, x0, y0, RS, st, look.dark, fade);
+}
+
+/**
+ * Their shadow on his face: where the frame keeps the light off him, just
+ * under and beside it, his own dots print a little heavier (on paper bigger
+ * and darker, on the plate smaller and dimmer), in his own screen, so it is
+ * part of the print and not a grey laid over it. The silhouette, moved a
+ * little down and right, softened by drawing it nine times round a ring.
+ */
+const SHADOW = { dx: 1.5, dy: 3, soft: 1.4, depth: 0.5 };
+function contact(
+  ctx: CanvasRenderingContext2D,
+  scale: number,
+  look: Look,
+  st: State,
+  scratch: Scratch,
+  W: number,
+  H: number,
+  x0: number,
+  y0: number,
+  RS: number,
+) {
+  const grid = portraitDots();
+  if (!grid) return;
+  // soft, so a design px per pixel is plenty
+  const sw = Math.ceil(W / RS), shh = Math.ceil(H / RS);
+  const sh = scratch.shd;
+  if (sh.width < sw || sh.height < shh) {
+    sh.width = Math.max(sh.width, sw);
+    sh.height = Math.max(sh.height, shh);
+  }
+  const g = sh.getContext("2d", { willReadFrequently: true })!;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, sh.width, sh.height);
+  g.globalAlpha = 1 / 5;
+  for (let i = -1; i <= 1; i++)
+    for (let j = -1; j <= 1; j++)
+      g.drawImage(scratch.occ, 0, 0, W, H, SHADOW.dx + i * SHADOW.soft, SHADOW.dy + j * SHADOW.soft, sw, shh);
+  g.globalAlpha = 1;
+  const data = g.getImageData(0, 0, sw, shh).data;
+  const at = (X: number, Y: number) => {
+    const i = Math.round(X - x0), j = Math.round(Y - y0);
+    if (i < 0 || j < 0 || i >= sw || j >= shh) return 0;
+    return Math.min(1, data[(j * sw + i) * 4 + 3] / 255);
+  };
+  const k = st.shadow * T("shd", SHADOW.depth);
+  const x1 = x0 + W / RS, y1 = y0 + H / RS;
+  const idx = bins(grid);
+  const hit = new Map<number, number[]>();
+  const c0 = Math.max(0, Math.floor(x0 / BIN)), c1 = Math.min(idx.cols - 1, Math.floor(x1 / BIN));
+  const r0 = Math.max(0, Math.floor(y0 / BIN)), r1 = Math.min(idx.rows - 1, Math.floor(y1 / BIN));
+  for (let r = r0; r <= r1; r++)
+    for (let c = c0; c <= c1; c++)
+      for (const [ink, list] of idx.cells[r * idx.cols + c]) {
+        for (let n = 0; n < list.length; n += 3) {
+          const a = at(list[n], list[n + 1]) * k;
+          if (a <= 0.02) continue;
+          let out = hit.get(ink);
+          if (!out) hit.set(ink, (out = []));
+          out.push(list[n], list[n + 1], list[n + 2], a);
+        }
+      }
+  const grow = 0.045 / scale;
+  // out with the dots as printed, then in with them heavier, in print order
+  ctx.fillStyle = look.ground;
+  ctx.beginPath();
+  for (const dots of hit.values())
+    for (let n = 0; n < dots.length; n += 4) {
+      const r = dots[n + 2] + grow + 0.05;
+      ctx.moveTo(dots[n] + r, dots[n + 1]);
+      ctx.arc(dots[n], dots[n + 1], r, 0, TAU);
+    }
+  ctx.fill();
+  // in the portrait's own draw order, one path per ink and step of shade
+  for (const [key, dots] of [...hit.entries()].sort((a, b) => a[0] - b[0])) {
+    const ink = idx.inks[key];
+    const steps: number[][] = [[], [], [], [], [], []];
+    for (let n = 0; n < dots.length; n += 4) steps[Math.min(5, Math.floor(dots[n + 3] * 10))].push(n);
+    steps.forEach((ns, q) => {
+      if (!ns.length) return;
+      const a = (q + 0.5) / 10;
+      const g = look.dark ? Math.sqrt(1 - 0.6 * a) : Math.sqrt(1 + 0.8 * a);
+      const d = 1 - 0.3 * a;
+      ctx.fillStyle = `rgb(${Math.round(ink[0] * d)}, ${Math.round(ink[1] * d)}, ${Math.round(ink[2] * d)})`;
+      ctx.beginPath();
+      for (const n of ns) {
+        const r = dots[n + 2] * g + grow;
+        ctx.moveTo(dots[n] + r, dots[n + 1]);
+        ctx.arc(dots[n], dots[n + 1], r, 0, TAU);
+      }
+      ctx.fill();
+    });
+  }
+}
+
+/**
+ * The portrait's dots in 24 design-px cells, built once per grid, so a frame
+ * reads only the cells under the glasses, not all 12,000 dots.
+ */
+const BIN = 24;
+type Bins = { cols: number; rows: number; inks: Ink[]; cells: [number, number[]][][] };
+const BINS = new WeakMap<object, Bins>();
+function bins(grid: NonNullable<ReturnType<typeof portraitDots>>): Bins {
+  const hit = BINS.get(grid);
+  if (hit) return hit;
+  const cols = Math.ceil(DESIGN_W / BIN) + 1, rows = Math.ceil(DESIGN_H / BIN) + 1;
+  const cells: Map<number, number[]>[] = Array.from({ length: cols * rows }, () => new Map());
+  const inks: Ink[] = [];
+  grid.inks.forEach(({ style, dots }, i) => {
+    const m = style.match(/\d+/g) ?? ["0", "0", "0"];
+    inks.push([Number(m[0]), Number(m[1]), Number(m[2])]);
+    for (let n = 0; n < dots.length; n += 3) {
+      const c = Math.min(cols - 1, Math.max(0, Math.floor(dots[n] / BIN)));
+      const r = Math.min(rows - 1, Math.max(0, Math.floor(dots[n + 1] / BIN)));
+      const cell = cells[r * cols + c];
+      let list = cell.get(i);
+      if (!list) cell.set(i, (list = []));
+      list.push(dots[n], dots[n + 1], dots[n + 2]);
+    }
+  });
+  const out = { cols, rows, inks, cells: cells.map((m) => [...m.entries()]) };
+  BINS.set(grid, out);
+  return out;
 }
 
 /** The lens: its tint, darker at the top; the sky above the horizon; the sun. */
@@ -765,15 +969,20 @@ const D_OF_C = (() => {
       }
     tab.push(hit / (n * n));
   }
-  return (c: number) => {
-    if (c <= 0) return 0;
+  // tabulated once over 256 steps of coverage
+  const lut = new Float32Array(257);
+  for (let q = 0; q <= 256; q++) {
+    const c = q / 256;
+    let d = DMAX;
     for (let k = 1; k < tab.length; k++)
       if (tab[k] >= c) {
         const f = (c - tab[k - 1]) / Math.max(tab[k] - tab[k - 1], 1e-9);
-        return ds[k - 1] + (ds[k] - ds[k - 1]) * f;
+        d = ds[k - 1] + (ds[k] - ds[k - 1]) * f;
+        break;
       }
-    return DMAX;
-  };
+    lut[q] = c <= 0 ? 0 : d;
+  }
+  return (c: number) => lut[Math.max(0, Math.min(256, Math.round(c * 256)))];
 })();
 
 function screen(
@@ -831,7 +1040,7 @@ function screen(
       if (a < 0.03) continue;
       const cov = (a / 5) * fade(Y);
       if (cov < 0.012) continue;
-      const key = (Math.round(r / a / 8) << 10) | (Math.round(g / a / 8) << 5) | Math.round(b / a / 8);
+      const key = (Math.round(r / a / 12) << 10) | (Math.round(g / a / 12) << 5) | Math.round(b / a / 12);
       let list = byInk.get(key);
       if (!list) byInk.set(key, (list = []));
       list.push(X, Y, (D_OF_C(cov) * PITCH) / 2);
@@ -843,7 +1052,7 @@ function screen(
   ctx.setTransform(scale, 0, 0, scale, OVER * scale, 0);
   for (const k of keys) {
     const dots = byInk.get(k)!;
-    ctx.fillStyle = `rgb(${Math.min(255, (k >> 10) * 8)}, ${Math.min(255, ((k >> 5) & 31) * 8)}, ${Math.min(255, (k & 31) * 8)})`;
+    ctx.fillStyle = `rgb(${Math.min(255, (k >> 10) * 12)}, ${Math.min(255, ((k >> 5) & 31) * 12)}, ${Math.min(255, (k & 31) * 12)})`;
     ctx.beginPath();
     for (let n = 0; n < dots.length; n += 3) {
       const r = dots[n + 2] + grow;
@@ -936,12 +1145,14 @@ function placed(p: number, phone: boolean): State {
     fold: [clamp01(f0), clamp01(f1)],
     hide: smooth(0.6, 0.8, p),
     alpha: clamp01(ink),
+    nose: smooth(0.69, 0.73, p),
+    shadow: smooth(0.7, 0.84, p),
   };
 }
 
 /** Reduced motion: worn, fading in over the stretch. */
 function still(p: number): State {
-  return { R: WORN_R, s: WORN_S, x: WORN_AT.x, y: WORN_AT.y, fold: [0, 0], hide: 1, alpha: smooth(0.45, 0.95, p) };
+  return { R: WORN_R, s: WORN_S, x: WORN_AT.x, y: WORN_AT.y, fold: [0, 0], hide: 1, alpha: smooth(0.45, 0.95, p), nose: 1, shadow: smooth(0.45, 0.95, p) };
 }
 
 /* ── the scroll ───────────────────────────────────────────────────────── */
@@ -982,7 +1193,11 @@ export function HeroShades() {
 
     const held = "shades" in TUNE ? clamp01(TUNE.shades) : null;
     const phone = window.matchMedia("(width < 48rem)");
-    const scratch: Scratch = { cov: document.createElement("canvas"), occ: document.createElement("canvas") };
+    const scratch: Scratch = {
+      cov: document.createElement("canvas"),
+      occ: document.createElement("canvas"),
+      shd: document.createElement("canvas"),
+    };
     let end = 1;
     let raf = 0;
     let last = -1;
@@ -1012,6 +1227,12 @@ export function HeroShades() {
       }
       const st = moving ? placed(p, phone.matches) : still(p);
       if (st.alpha <= 0.001) return;
+      // the shadow's index, if the idle time for it has not come, now
+      // rather than on the frame the shadow first falls
+      if (p > 0.45) {
+        const g = portraitDots();
+        if (g) bins(g);
+      }
       paint(ctx, w / (DESIGN_W + OVER), resolvedTheme() === "dark" ? PLATE : PAPER, st, scratch);
     };
     const frame = () => {
@@ -1028,8 +1249,31 @@ export function HeroShades() {
 
     const ro = new ResizeObserver(relayout);
     ro.observe(box);
-    // the portrait draws itself asynchronously; the glasses wait for it
-    const mo = new MutationObserver(redraw);
+    // the portrait draws itself asynchronously; the glasses wait for it, and
+    // index its dots for their shadow while the page is idle, not mid-scroll
+    const index = () => {
+      const g = portraitDots();
+      if (!g || box.dataset.state !== "static") return;
+      const go = () => {
+        bins(g);
+        // and the shadow's scratch, sized and read once: the first read of a
+        // new canvas is the slow one
+        const sh = scratch.shd;
+        if (sh.width < 480) {
+          sh.width = 480;
+          sh.height = 240;
+        }
+        const c = sh.getContext("2d", { willReadFrequently: true });
+        c?.drawImage(scratch.occ, 0, 0);
+        c?.getImageData(0, 0, 1, 1);
+      };
+      if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(go, { timeout: 2000 });
+      else window.setTimeout(go, 300);
+    };
+    const mo = new MutationObserver(() => {
+      index();
+      redraw();
+    });
     mo.observe(box, { attributes: true, attributeFilter: ["data-state"] });
     window.addEventListener("scroll", frame, { passive: true });
     window.addEventListener("resize", relayout);
@@ -1039,6 +1283,7 @@ export function HeroShades() {
       redraw();
     });
     relayout();
+    index();
 
     return () => {
       cancelAnimationFrame(raf);
