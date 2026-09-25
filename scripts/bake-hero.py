@@ -59,15 +59,20 @@ into rim light and sky between the hair strands into grey-blue patches:
     back its hue. It was once squeezed to one pale grey so as never to
     compete with the face, and on the page he wore a blank white shirt.
 
-THE SUN. The low sun that lights his profile is printed too, where he is
-looking: up and to the left, half behind his hair, on the same screen. A
-disc graded from a gold centre to a vermilion limb (the page's own --sun),
-a glow of thinning dots round it that is gone well inside the box, and a
-hair's gap wherever it meets his silhouette. On the plate its centre is
-held down, so his eye stays the brightest thing in the frame. It is its own layer. It takes only the cells where the photograph
-prints nothing (its alpha under the silhouette's edge), with its own inks
-and coverage, set directly rather than solved, and quantised apart; every
-dot of him is exactly what it would be without it.
+THE SUN. A low sun is printed too, on the same screen, high in the sky
+behind him at the top right: a disc graded from a gold centre to a
+vermilion limb (the page's own --sun) whose edge dissolves into a glow of
+thinning dots, so it reads as light rather than as an object. It keeps
+well clear of him (a sun's width of air at least) and of the box: tucked
+against his hair where he looks, it read as a bump on his head, and any
+hard-edged disc read as a planet. On the plate its centre is held down,
+so his eye stays the brightest thing in the frame. It is its own layer,
+taking only the cells where he prints nothing (the photograph's alpha
+under the silhouette's edge, or a dissolve that has taken him away), with
+its own inks and coverage, set directly rather than solved, and quantised
+apart; the photograph's dissolves are his edges, not the sky's, so it
+fades only by its own. Every dot of him is exactly what it would be
+without it.
 
 THE INK. For every dot the ink's lightness comes from the target's; the
 coverage is then solved so ink over the ground averages to the target's
@@ -364,10 +369,10 @@ P = dict(
     # the horizon it rises from (design px, or None), its own inks, and on
     # each ground the coverage and the ink (L*, C*, hue) at its centre and at
     # its limb
-    sun=dict(centre=(112.0, 110.0), r=72.0, soft=0.04, glow=(0.12, 0.3, 1.35), gap=(1.0, 8.0),
-             edge=(18.0, 44.0), horizon=None, inks=20,
+    sun=dict(centre=(530.0, 88.0), r=44.0, soft=0.18, glow=(0.16, 0.5, 1.9), gap=(30.0, 60.0),
+             edge=(12.0, 32.0), horizon=None, inks=20,
              paper=dict(cov=(0.30, 0.70), ink=((80.0, 62.0, 82.0), (44.0, 64.0, 42.0))),
-             plate=dict(cov=(0.58, 0.44), ink=((79.0, 50.0, 72.0), (58.0, 65.0, 46.0)))),
+             plate=dict(cov=(0.48, 0.34), ink=((76.0, 50.0, 70.0), (58.0, 65.0, 46.0)))),
     palette=160,
     ss=4,
     # the phone band: a coarser screen relative to the box, so the dots stay
@@ -439,6 +444,19 @@ def poly_mask(shape, origin, pts, feather):
     ImageDraw.Draw(im).polygon([(x - origin[0], y - origin[1]) for x, y in pts], fill=255)
     m = np.asarray(im, float) / 255
     return ndi.gaussian_filter(m, feather) if feather else m
+
+
+def outside(p, a, box):
+    """How far each pixel lies outside him as he prints (cut-out px): the
+    matte, less what the dissolves take away, so his arm, which reaches out of
+    the frame and does not print, is sky here."""
+    x0, y0, w = p["crop"]
+    s = p["design_w"] / w
+    H, W = a.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    X, Y = (xx + box[0] - x0) * s, (yy + box[1] - y0) * s
+    fade = weights(p, X.ravel(), Y.ravel(), a.ravel())[1].reshape(H, W)
+    return ndi.distance_transform_edt(~((a > 0.5) & (fade > 0.05)))
 
 
 def target(p):
@@ -585,7 +603,7 @@ def target(p):
 
     out = np.stack([np.clip(Lc, 0, 100), ab[..., 0], ab[..., 1]], -1)
     masks = dict(shirt=shirt, skin=skin * (1 - rim_c), hair=hz, far=far * (1 - 0.7 * skin), rim=rim_c,
-                 sun=sun, inside=inside, outside=ndi.distance_transform_edt(a < 0.5))
+                 sun=sun, inside=inside, outside=outside(p, a, box))
     return out, a, box[:2], masks
 
 
@@ -1189,13 +1207,11 @@ def separate(p, b, look, dark):
     Gp = np.array(look["ground"], float) @ LUMA / 255
     d[(Ip < Gp + 0.035) if dark else (Ip > Gp - 0.035)] = 0
     if p.get("sun"):
-        # the sun, in the cells the photograph leaves empty, thinned in the
-        # dissolve as he is
-        cs, Is = sun_dots(p, b, dark)
-        cov = cs * b["fade"]
-        cov = np.where(keep, np.minimum(cs, cov / np.maximum(q, 1e-3) ** gma), 0)
+        # the sun, in the cells where he prints nothing: the photograph's
+        # dissolves are his edges, not the sky's, so it keeps only its own
+        cov, Is = sun_dots(p, b, dark)
         ds = coverage_to_d(cov, p["dmax"])
-        take = (b["edge"] <= 0) & (cov >= 0.006)
+        take = (b["w"] <= 0.02) & (cov >= 0.006)
         Is = palette(Is, take, p["sun"]["inks"])
         ink = np.where(take[:, None], Is, ink)
         d = np.where(take, ds, d)
