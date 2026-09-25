@@ -190,6 +190,12 @@ EAR = (1100, 560, 75, 120)
 TEETH = [(591, 750), (600, 746), (620, 744), (640, 743), (660, 743), (680, 741), (690, 740),
          (698, 745), (692, 751), (680, 752), (671, 754), (663, 757), (655, 761), (647, 766),
          (638, 769), (627, 768), (617, 764), (608, 758), (598, 754)]
+# And his front tooth, by the profile, which the low sun lights (L* 98 at
+# hue 106 in the photograph, where his lit skin is hue 47 to 58): a lasso
+# round it, taken where the photograph is that bright. The sun rule took it
+# for the rim -- any bright pixel on the sun side is -- and capped it to the
+# rim's vermilion, a patch of orange dots at the corner of his smile.
+TOOTH_LASSO = [(598, 752), (622, 752), (626, 770), (622, 790), (598, 791), (596, 770)]
 # The whole shirt, the far shoulder out past the photograph's own edge (x 1564)
 # and the chest down past the crop: any of it left out prints as hair.
 SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1700, 700), (1700, 1900), (420, 1900),
@@ -260,6 +266,8 @@ P = dict(
     lips=(652, 770, 60, 26, 2.5, 40.0),
     # the teeth's ink: C* and hue (see TEETH), and their feather (cut-out px)
     teeth_ink=(6.0, 82.0, 1.5),
+    # the front tooth: the photograph's L* over which the lasso takes it
+    tooth_L=(62.0, 76.0),
     # the teeth's own inks (see palette)
     teeth_inks=6,
     chroma_gain=2.0,
@@ -469,6 +477,10 @@ def target(p):
 
     # ── where things are ──
     face = np.maximum(poly_mask((H, W), box, FACE, 6), ell(*EAR, 0.25))
+    tc, th_, tf = p["teeth_ink"]
+    t0, t1 = p["tooth_L"]
+    front = poly_mask((H, W), box, TOOTH_LASSO, 0) * smoothstep(t0, t1, ndi.gaussian_filter(L0, 1.0))
+    teeth = np.maximum(poly_mask((H, W), box, TEETH, tf), ndi.gaussian_filter(front, tf))
     shirt = np.clip(poly_mask((H, W), box, SHIRT, 6) * (1 - 0.9 * face), 0, 1)
     hairz = np.clip((1 - face) * (1 - shirt), 0, 1) * smoothstep(0.05, 0.5, a)
     # and the hair gives way faster across the ear's soft edge, so its ink
@@ -526,7 +538,8 @@ def target(p):
     # and down to the neckline's V: below it the sun catches the shirt's edge
     # and his arm, and rim-lit they printed as an orange tail off the throat
     sun = sun * (1 - smoothstep(*p["rim_bottom"], Y))
-    rim = smoothstep(rl - 6, rl + 6, ndi.gaussian_filter(L0, 1.5)) * a * sun
+    # (never the teeth: a sunlit tooth is a tooth, not rim)
+    rim = smoothstep(rl - 6, rl + 6, ndi.gaussian_filter(L0, 1.5)) * a * sun * (1 - teeth)
     inside = ndi.distance_transform_edt(a > 0.5)
     band = (1 - smoothstep(4, p["rim_band"], inside)) * sun
     # the far side: hair against sky, and the sky between the strands takes the
@@ -534,7 +547,7 @@ def target(p):
     far = smoothstep(*p["rim_side"], X) * (1 - shirt)
     shade = ndi.gaussian_filter((1 - smoothstep(4, 22, inside)) * far * (1 - skin), 2)
     Lc = Lc * (1 - shade) + np.minimum(Lc, p["fringe_cap"]) * shade
-    rim_c = np.maximum(rim, p["band_amt"] * band * smoothstep(20, 40, ndi.gaussian_filter(L0, 2)))
+    rim_c = np.maximum(rim, p["band_amt"] * band * smoothstep(20, 40, ndi.gaussian_filter(L0, 2))) * (1 - teeth)
     rim = ndi.gaussian_filter(rim, 1.5)
     rim_c = ndi.gaussian_filter(rim_c, 1.5)
     Lc = Lc * (1 - rim) + np.minimum(Lc, rcap) * rim
@@ -563,8 +576,6 @@ def target(p):
     Cs = C_s * smoothstep(15, 55, Lc) * (1 - 0.4 * smoothstep(82, 96, Lc))
     set_chroma(ab, skin, Cs, h_s + (h_l - h_s) * smoothstep(30, 70, Lc))
     lx, ly, lrx, lry, ldc, lh = p["lips"]
-    tc, th_, tf = p["teeth_ink"]
-    teeth = poly_mask((H, W), box, TEETH, tf)
     lip = ell(lx, ly, lrx, lry, 0.5) * (1 - np.clip(tm * 3, 0, 1)) * skin * (1 - teeth)
     set_chroma(ab, lip, np.hypot(ab[..., 0], ab[..., 1]) + ldc, lh)
     # the teeth: ivory, not skin
@@ -1257,7 +1268,8 @@ def build(p, phone=False):
     for (cx, cy, rx, ry) in (q["lips"][:4], q["teeth"][:4], q["catchlight"]):
         r = np.hypot((sx - cx) / rx, (sy - cy) / ry)
         spare = np.maximum(spare, 1 - smoothstep(0.75, 1.25, r))
-    mk["spare"] = spare
+    # and the teeth, all of them: the plate's caps on sunlit skin are not theirs
+    mk["spare"] = np.maximum(spare, mk["teeth"])
     w, fade = weights(q, X, Y, a)
     return dict(X=X, Y=Y, colour=colour, w=w, fade=fade, edge=smoothstep(0.12, 0.95, a),
                 masks=mk, meta=meta, q=q)
