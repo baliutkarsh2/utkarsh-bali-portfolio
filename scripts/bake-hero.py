@@ -59,21 +59,6 @@ into rim light and sky between the hair strands into grey-blue patches:
     back its hue. It was once squeezed to one pale grey so as never to
     compete with the face, and on the page he wore a blank white shirt.
 
-THE SUN. A low sun is printed too, on the same screen, high in the sky
-behind him at the top right: a disc graded from a gold centre to a
-vermilion limb (the page's own --sun) whose edge dissolves into a glow of
-thinning dots, so it reads as light rather than as an object. It keeps
-well clear of him (a sun's width of air at least) and of the box: tucked
-against his hair where he looks, it read as a bump on his head, and any
-hard-edged disc read as a planet. On the plate its centre is held down,
-so his eye stays the brightest thing in the frame. It is its own layer,
-taking only the cells where he prints nothing (the photograph's alpha
-under the silhouette's edge, or a dissolve that has taken him away), with
-its own inks and coverage, set directly rather than solved, and quantised
-apart; the photograph's dissolves are his edges, not the sky's, so it
-fades only by its own. Every dot of him is exactly what it would be
-without it.
-
 THE INK. For every dot the ink's lightness comes from the target's; the
 coverage is then solved so ink over the ground averages to the target's
 luminance in the gamma-encoded space a canvas blends in, and the ink's colour
@@ -362,17 +347,6 @@ P = dict(
     shirt_inks=40,
     # the extra power of the dissolve on the shirt's coverage (see separate)
     shirt_edge=1.0,
-    # the sun (see THE SUN): its centre and radius (design px), the limb's
-    # softness (radii), the glow's coverage at the limb, its fall and where it
-    # ends (radii), the gap it keeps from his silhouette (cut-out px, from
-    # none to all of it), how far inside the box it fades out (design px),
-    # the horizon it rises from (design px, or None), its own inks, and on
-    # each ground the coverage and the ink (L*, C*, hue) at its centre and at
-    # its limb
-    sun=dict(centre=(530.0, 88.0), r=44.0, soft=0.18, glow=(0.16, 0.5, 1.9), gap=(30.0, 60.0),
-             edge=(12.0, 32.0), horizon=None, inks=20,
-             paper=dict(cov=(0.30, 0.70), ink=((80.0, 62.0, 82.0), (44.0, 64.0, 42.0))),
-             plate=dict(cov=(0.48, 0.34), ink=((76.0, 50.0, 70.0), (58.0, 65.0, 46.0)))),
     palette=160,
     ss=4,
     # the phone band: a coarser screen relative to the box, so the dots stay
@@ -444,19 +418,6 @@ def poly_mask(shape, origin, pts, feather):
     ImageDraw.Draw(im).polygon([(x - origin[0], y - origin[1]) for x, y in pts], fill=255)
     m = np.asarray(im, float) / 255
     return ndi.gaussian_filter(m, feather) if feather else m
-
-
-def outside(p, a, box):
-    """How far each pixel lies outside him as he prints (cut-out px): the
-    matte, less what the dissolves take away, so his arm, which reaches out of
-    the frame and does not print, is sky here."""
-    x0, y0, w = p["crop"]
-    s = p["design_w"] / w
-    H, W = a.shape
-    yy, xx = np.mgrid[0:H, 0:W].astype(float)
-    X, Y = (xx + box[0] - x0) * s, (yy + box[1] - y0) * s
-    fade = weights(p, X.ravel(), Y.ravel(), a.ravel())[1].reshape(H, W)
-    return ndi.distance_transform_edt(~((a > 0.5) & (fade > 0.05)))
 
 
 def target(p):
@@ -603,7 +564,7 @@ def target(p):
 
     out = np.stack([np.clip(Lc, 0, 100), ab[..., 0], ab[..., 1]], -1)
     masks = dict(shirt=shirt, skin=skin * (1 - rim_c), hair=hz, far=far * (1 - 0.7 * skin), rim=rim_c,
-                 sun=sun, inside=inside, outside=outside(p, a, box))
+                 sun=sun, inside=inside)
     return out, a, box[:2], masks
 
 
@@ -696,7 +657,6 @@ def sample(p, lab, alpha, origin, masks, X, Y, pitch):
     mk = {n: np.clip(v[:, 4 + i], 0, 1) for i, n in enumerate(MASKS)}
     # the distance inside the matte is read at the dot's centre, unblurred
     mk["inside"] = ndi.map_coordinates(masks["inside"], [cy, cx], order=1, mode="nearest")
-    mk["outside"] = ndi.map_coordinates(masks["outside"], [cy, cx], order=1, mode="nearest")
     return colour, a, mk
 
 
@@ -1206,46 +1166,7 @@ def separate(p, b, look, dark):
     # darker than it is a hole, on paper one lighter than it is nothing
     Gp = np.array(look["ground"], float) @ LUMA / 255
     d[(Ip < Gp + 0.035) if dark else (Ip > Gp - 0.035)] = 0
-    if p.get("sun"):
-        # the sun, in the cells where he prints nothing: the photograph's
-        # dissolves are his edges, not the sky's, so it keeps only its own
-        cov, Is = sun_dots(p, b, dark)
-        ds = coverage_to_d(cov, p["dmax"])
-        take = (b["w"] <= 0.02) & (cov >= 0.006)
-        Is = palette(Is, take, p["sun"]["inks"])
-        ink = np.where(take[:, None], Is, ink)
-        d = np.where(take, ds, d)
     return dict(ink=ink, d=d, ground=look["ground"], masks=mk)
-
-
-def sun_dots(p, b, dark):
-    """The sun's coverage, before the vignette, and its ink at every dot:
-    the disc graded from its centre to its limb, the glow round it in the
-    limb's ink, nothing below the horizon, and a gap round his silhouette."""
-    s = p["sun"]
-    (cx, cy), R = s["centre"], s["r"]
-    r = np.hypot(b["X"] - cx, b["Y"] - cy) / R
-    disc = 1 - smoothstep(1 - s["soft"], 1 + s["soft"], r)
-    g0, gw, gr = s["glow"]
-    glow = g0 * np.exp(-np.maximum(r - 1, 0) / gw) * (1 - smoothstep(gr - 0.25, gr, r)) * (1 - disc)
-    lk = s["plate" if dark else "paper"]
-    c0, c1 = lk["cov"]
-    t = np.clip(r, 0, 1) ** 2
-    cov = disc * (c0 + (c1 - c0) * t) + glow
-    if s.get("horizon") is not None:
-        cov = cov * (1 - smoothstep(s["horizon"] - 1.5, s["horizon"] + 1.5, b["Y"]))
-    g0, g1 = s["gap"]
-    cov = cov * smoothstep(g0, g1, b["masks"]["outside"])
-    # and it is gone well inside the box: its glow run into the feather
-    # showed the box's own square corner
-    e0, e1 = s["edge"]
-    W, H = p["design_w"], frame_h(p)
-    cov = cov * smoothstep(e0, e1, np.minimum.reduce([b["X"], b["Y"], W - b["X"], H - b["Y"]]))
-    t = np.where(disc > 0.5, t, 1.0)
-    (L0, C0, h0), (L1, C1, h1) = lk["ink"]
-    L, C, h = L0 + (L1 - L0) * t, C0 + (C1 - C0) * t, np.radians(h0 + (h1 - h0) * t)
-    lab = np.stack([L, C * np.cos(h), C * np.sin(h)], 1)
-    return cov, gamut(to_srgb(np.clip(lab2lin(lab), 0, 1)))
 
 
 # ── the rasteriser: what the canvas does ─────────────────────────────────

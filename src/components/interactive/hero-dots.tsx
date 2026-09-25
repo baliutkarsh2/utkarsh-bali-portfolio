@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { onThemeChange, resolvedTheme } from "@/lib/theme";
 import { DESK, SM, type Lattice } from "./hero-lattice";
 
@@ -134,7 +134,19 @@ function loadGrid(phone: boolean, dark: boolean): Promise<Grid> {
   return p;
 }
 
-export function HeroDots({ alt, className }: { alt: string; className?: string }) {
+/**
+ * `children` go inside the box, over the print and pinned with it: the
+ * sunglasses (hero-shades.tsx).
+ */
+export function HeroDots({
+  alt,
+  className,
+  children,
+}: {
+  alt: string;
+  className?: string;
+  children?: ReactNode;
+}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -340,6 +352,7 @@ export function HeroDots({ alt, className }: { alt: string; className?: string }
       aria-label={alt}
     >
       <canvas ref={canvasRef} aria-hidden className="portrait-canvas" />
+      {children}
       {image}
       <noscript>{image}</noscript>
     </div>

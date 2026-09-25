@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { HeroDots } from "@/components/interactive/hero-dots";
+import { HeroShades } from "@/components/interactive/hero-shades";
 import { Button } from "@/components/ui/button";
 import { Story } from "@/components/sections/story";
 import { profile } from "@/content";
@@ -59,7 +60,10 @@ export function Hero() {
           The box holds the field's own 4:5 ratio from CSS alone, so nothing
           shifts when the canvas draws. No caption: it is a picture of a
           person. */}
-      <HeroDots alt={portrait.alt} className="hero-board" />
+      <HeroDots alt={portrait.alt} className="hero-board">
+        {/* Hooked on his collar at the top; on by the time he leaves. */}
+        <HeroShades />
+      </HeroDots>
 
       <div className="hero-copy board-above">
         {/* One line under the name, and it is the whole introduction.
