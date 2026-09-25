@@ -25,7 +25,7 @@ export type Lattice = {
 
 export const DESK: Lattice = {
   cols: 93,
-  rows: 248,
+  rows: 226,
   designW: 620,
   dmax: 1.5,
   cx: -517.634077,
@@ -34,12 +34,12 @@ export const DESK: Lattice = {
   u0: 6.5562584438,
   v0: 0,
   a0: -57,
-  b0: -123,
+  b0: -101,
 };
 
 export const SM: Lattice = {
-  cols: 80,
-  rows: 215,
+  cols: 81,
+  rows: 196,
   designW: 620,
   dmax: 1.5,
   cx: -517.634077,
@@ -47,6 +47,6 @@ export const SM: Lattice = {
   k: 0.0043915676,
   u0: 6.5562584438,
   v0: 0,
-  a0: -49,
-  b0: -107,
+  a0: -48,
+  b0: -88,
 };

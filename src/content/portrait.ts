@@ -15,7 +15,7 @@ export { portraitOg } from "./portrait-og";
 
 export const portrait = {
   alt:
-    "Utkarsh Bali in a striped T-shirt, smiling and looking up toward a low " +
-    "sun that rises behind his hair and catches the edge of his face, " +
-    "printed as a halftone of colored dots",
+    "Utkarsh Bali in a striped T-shirt, smiling and looking off past the " +
+    "camera, with the low sun catching the edge of his face and glowing in " +
+    "the sky behind him, printed as a halftone of colored dots",
 } as const;
