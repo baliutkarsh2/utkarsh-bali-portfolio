@@ -47,6 +47,9 @@ into rim light and sky between the hair strands into grey-blue patches:
 
   · skin: a living warm brown, C* 25, hue 57 in the light and 42 in the shade,
     with the lips a touch rosier;
+  · the teeth: ivory, near neutral, on a hand-traced outline. Taken as skin
+    they had the skin's peach, and every dot on them printed in it: orange
+    specks on the paper teeth, peach discs on the plate;
   · hair: one warm near-black family, hue 58, its sheen capped to a slightly
     lighter brown. Nothing on his head is blue or green, as a hard clamp;
   · the low sun: vermilion-gold on the profile and a thin band inside the
@@ -181,6 +184,12 @@ FACE = [(505, 440), (560, 425), (620, 412), (680, 398), (740, 384), (800, 374), 
 # this and the face, in the hair, and on the plate it printed in the hair's
 # grey-taupe ink, a grey patch with a hard seam against the peach helix.
 EAR = (1100, 560, 75, 120)
+# The teeth, the band of them his smile shows, traced on the graded target
+# (cut-out px): from the corner by his profile along under the upper lip, and
+# back along the top of the lower one.
+TEETH = [(591, 750), (600, 746), (620, 744), (640, 743), (660, 743), (680, 741), (690, 740),
+         (698, 745), (692, 751), (680, 752), (671, 754), (663, 757), (655, 761), (647, 766),
+         (638, 769), (627, 768), (617, 764), (608, 758), (598, 754)]
 # The whole shirt, the far shoulder out past the photograph's own edge (x 1564)
 # and the chest down past the crop: any of it left out prints as hair.
 SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1700, 700), (1700, 1900), (420, 1900),
@@ -249,6 +258,10 @@ P = dict(
     skin=(25.0, 57.0, 42.0),
     # the lips: (cx, cy, rx, ry, extra C*, hue)
     lips=(652, 770, 60, 26, 2.5, 40.0),
+    # the teeth's ink: C* and hue (see TEETH), and their feather (cut-out px)
+    teeth_ink=(6.0, 82.0, 1.5),
+    # the teeth's own inks (see palette)
+    teeth_inks=6,
     chroma_gain=2.0,
     chroma_cap=26.0,
     # hair: hue, C* at the darkest, C* at the cap, then the sheen's knee (L*),
@@ -264,6 +277,9 @@ P = dict(
     fringe_cap=30.0,
     # separation: ink lightness = clip(a * L_target + b, lo, hi)
     paper=dict(ground=(250, 248, 244), ink=(0.45, 11.0, 15.0, 54.0), cmax=0.94,
+               # the teeth's ink no darker than this L*: their shading prints
+               # as soft ivory dots, not as sparse dark specks (grubby teeth)
+               teeth_L=74.0,
                # the shirt as the target has it, a little lighter in the dots
                shirt=dict(chroma=1.0, cmax=26.0), shirt_fade=0.1),
     plate=dict(ground=(22, 20, 15), ink=(0.55, 53.0, 56.0, 92.0), cmax=0.74, floor=0.10,
@@ -547,8 +563,12 @@ def target(p):
     Cs = C_s * smoothstep(15, 55, Lc) * (1 - 0.4 * smoothstep(82, 96, Lc))
     set_chroma(ab, skin, Cs, h_s + (h_l - h_s) * smoothstep(30, 70, Lc))
     lx, ly, lrx, lry, ldc, lh = p["lips"]
-    lip = ell(lx, ly, lrx, lry, 0.5) * (1 - np.clip(tm * 3, 0, 1)) * skin
+    tc, th_, tf = p["teeth_ink"]
+    teeth = poly_mask((H, W), box, TEETH, tf)
+    lip = ell(lx, ly, lrx, lry, 0.5) * (1 - np.clip(tm * 3, 0, 1)) * skin * (1 - teeth)
     set_chroma(ab, lip, np.hypot(ab[..., 0], ab[..., 1]) + ldc, lh)
+    # the teeth: ivory, not skin
+    set_chroma(ab, teeth, tc, th_)
     # hair and the deep shadows: warm near-black, never navy
     dark = (1 - smoothstep(18, 32, ndi.gaussian_filter(L0, 2))) * (1 - shirt)
     hair = np.maximum(hz, np.maximum(dark, np.clip(shade * 1.5, 0, 1)))
@@ -564,7 +584,7 @@ def target(p):
 
     out = np.stack([np.clip(Lc, 0, 100), ab[..., 0], ab[..., 1]], -1)
     masks = dict(shirt=shirt, skin=skin * (1 - rim_c), hair=hz, far=far * (1 - 0.7 * skin), rim=rim_c,
-                 sun=sun, inside=inside)
+                 sun=sun, teeth=teeth, inside=inside)
     return out, a, box[:2], masks
 
 
@@ -625,7 +645,7 @@ def screen(p):
 
 
 # ── sampling ─────────────────────────────────────────────────────────────
-MASKS = ("shirt", "skin", "hair", "far", "rim", "sun")
+MASKS = ("shirt", "skin", "hair", "far", "rim", "sun", "teeth")
 
 
 def sample(p, lab, alpha, origin, masks, X, Y, pitch):
@@ -790,6 +810,8 @@ def grade(p, look, colour_lin, mk, meta):
         C_s, h_l, h_s = look["skin"]
         set_chroma(ab, mk["skin"], C_s * smoothstep(6, 42, L) * (1 - 0.35 * smoothstep(78, 94, L)),
                    h_s + (h_l - h_s) * smoothstep(22, 58, L))
+    # the teeth stay ivory on both grounds: the plate's amber skin is not theirs
+    set_chroma(ab, mk["teeth"], p["teeth_ink"][0], p["teeth_ink"][1])
     if "rim_cap" in look:
         # The sun side's edge, on the plate. The photograph's backlit rim is
         # the lightest skin on him, and on a dark ground lightest means the
@@ -889,6 +911,9 @@ def solve_ink(look, dark, T, Lt, mk=None):
     a_, b_, lo, hi = look["ink"]
     Li = np.clip(a_ * Lt + b_, lo, hi)
     Li = np.maximum(Li, Lt) if dark else np.minimum(Li, Lt)
+    if mk is not None and "teeth_L" in look:
+        tw = mk["teeth"]
+        Li = Li * (1 - tw) + np.minimum(np.maximum(Li, look["teeth_L"]), Lt - 1.0) * tw
     c = coverage(look, dark, T, to_srgb(Y_of_L(Li)))
     I = (T - (1 - c)[:, None] * G) / np.maximum(c, 0.02)[:, None]
     if "natural" in look:
@@ -1136,6 +1161,8 @@ def separate(p, b, look, dark):
     # the shirt's colours are a family of their own: shared, they took inks
     # from the face
     groups.append((mk["shirt"] >= 0.5, None, p["shirt_inks"]))
+    # and the teeth's: shared, a pale tooth dot snapped to the nearest skin ink
+    groups.append((mk["teeth"] >= 0.5, None, p["teeth_inks"]))
     ink = palette(ink, live, p["palette"], groups=groups)
     # solve the coverage again against the ink each dot actually got
     Ip = ink @ LUMA
