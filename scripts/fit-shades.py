@@ -12,28 +12,27 @@ off the baked print (design px, the 620 x 775 box of scripts/bake-hero.py's
 crop), against a generic head, and prints the numbers the component's HEAD
 holds. Move the crop and these move with it: read the landmarks again.
 
-THE TURN IS HELD, not solved. Free, the generic head settles at 43 degrees,
-which put the far lens standing well off his profile and the near lens left
-of his eye: his far eye sits almost on the silhouette, so the head is turned
-further than a generic nose and ear say. At 50 the lenses sit over both eyes.
-The glasses' own seat on that head (their offset from the bridge, their tilt
-and their size) is in the component as WORN, set by eye on renders with the
-landmarks marked.
+The glasses take this pose (with their own pantoscopic tilt, and turned 5
+degrees on the page so their front runs with his eye line). Where they sit is
+set by eye in the component (SEAT), with his eyes and the root of his ear
+marked: seated on the generic head's own nose they landed 40 px forward and
+20 px high, off his eyes, because his eyes sit further forward of the bridge
+of his nose than a generic head's.
 """
 import numpy as np
 from scipy.optimize import least_squares
 
 # (on the head, cm), (on the print, design px), weight: the glasses hang on
-# the eyes, the brow and the ear, so those count most
+# the eyes, so those count most
 LANDMARKS = {
-    "near eye": ((3.1, -0.2, -0.8), (180, 258), 2.0),
-    "far eye": ((-3.1, -0.2, -0.8), (84, 287), 1.0),
-    "near brow": ((3.2, 1.2, 0.0), (175, 228), 0.7),
-    "tragus": ((7.3, -2.5, -8.7), (342, 310), 1.0),
-    "top of the ear": ((7.0, 0.0, -8.0), (348, 248), 0.6),
-    "tip of the nose": ((0.0, -4.4, 2.2), (72, 338), 0.4),
+    "near eye": ((3.2, -0.4, -1.3), (179, 257), 2.0),
+    "far eye": ((-3.2, -0.4, -1.3), (88, 286), 2.0),
+    "tip of the nose": ((0.0, -4.4, 2.1), (60, 340), 1.0),
+    "near brow": ((3.3, 1.2, -0.3), (180, 224), 1.0),
+    "root of the ear": ((6.9, 0.3, -7.6), (335, 240), 1.2),
+    "tragus": ((6.6, -2.6, -7.8), (318, 318), 0.8),
+    "chin": ((0.0, -11.2, -0.3), (105, 488), 0.7),
 }
-YAW = -50.0
 
 
 def rotation(yaw, pitch, roll):
@@ -56,13 +55,14 @@ def main():
     w = np.array([v[2] for v in LANDMARKS.values()])
 
     def residual(q):
-        return ((project(YAW, *q, X) - U) * w[:, None]).ravel()
+        return ((project(*q, X) - U) * w[:, None]).ravel()
 
-    q = least_squares(residual, [-15.0, 0.0, 20.0, 120.0, 260.0]).x
-    pitch, roll, s, tx, ty = q
-    print(f"HEAD = {{ yaw: {YAW:g}, pitch: {pitch:.1f}, roll: {roll:.1f}, s: {s:.2f}, "
+    q = min((least_squares(residual, [y0, p0, 0.0, 20.0, 110.0, 260.0]) for y0 in (-40, -55, -70)
+             for p0 in (-10, -25)), key=lambda r: r.cost).x
+    yaw, pitch, roll, s, tx, ty = q
+    print(f"HEAD = {{ yaw: {yaw:.1f}, pitch: {pitch:.1f}, roll: {roll:.1f}, s: {s:.2f}, "
           f"tx: {tx:.1f}, ty: {ty:.1f} }}")
-    for (name, (_, u, _)), p in zip(LANDMARKS.items(), project(YAW, *q, X)):
+    for (name, (_, u, _)), p in zip(LANDMARKS.items(), project(*q, X)):
         print(f"  {name:16s} at {u}, fits ({p[0]:.0f}, {p[1]:.0f}), off by {np.hypot(*(p - u)):.0f} px")
 
 
