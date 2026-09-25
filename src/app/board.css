@@ -178,13 +178,16 @@ noscript .board-fallback {
 }
 
 /* The sunglasses the scroll puts on him (hero-shades.tsx): over the print,
-   the same box. Only with the canvas: gone with it in forced colours, in
-   print, and when the still has taken over. */
+   the same box and 20% (124 of its 620 design px, OVER there) out to the left
+   into the empty column gap, so held out in front of his face they are not
+   cut off by its edge. Only with the canvas: gone with it in forced colours,
+   in print, and when the still has taken over. */
 .portrait-shades {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: -20%;
   display: block;
-  width: 100%;
+  width: 120%;
   height: 100%;
   pointer-events: none;
 }
