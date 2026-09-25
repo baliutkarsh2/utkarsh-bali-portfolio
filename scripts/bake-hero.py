@@ -59,17 +59,15 @@ into rim light and sky between the hair strands into grey-blue patches:
     back its hue. It was once squeezed to one pale grey so as never to
     compete with the face, and on the page he wore a blank white shirt.
 
-THE PROP: sunglasses, hooked into the collar by one temple and hanging on
-the chest. They are drawn into the photograph before anything else (see
-glasses), so the screen prints them the way it prints him: black acetate,
-dark lenses graded lighter toward the bottom, the sky caught across them
-as diagonal glare, one thin warm streak of the sunset on the far lens, and
-a soft shadow on the shirt.
-The hooked temple is clipped at the collar line, so it goes in under the
-collar. They hang inside the solid chest, clear of every dissolve (asserted
-below), and their tone is their own: they print as the darkest thing on the
-shirt: on paper big dark dots, on the plate a black frame round lenses of
-dim smoky dots, the glare over them.
+THE SUN. The low sun that lights his profile is printed too, where he is
+looking: up and to the left, half behind his hair, on the same screen. A
+disc graded from a gold centre to a vermilion limb (the page's own --sun),
+a glow of thinning dots round it that is gone well inside the box, and a
+hair's gap wherever it meets his silhouette. On the plate its centre is
+held down, so his eye stays the brightest thing in the frame. It is its own layer. It takes only the cells where the photograph
+prints nothing (its alpha under the silhouette's edge), with its own inks
+and coverage, set directly rather than solved, and quantised apart; every
+dot of him is exactly what it would be without it.
 
 THE INK. For every dot the ink's lightness comes from the target's; the
 coverage is then solved so ink over the ground averages to the target's
@@ -197,11 +195,6 @@ EAR = (1100, 560, 75, 120)
 # and the chest down past the crop: any of it left out prints as hair.
 SHIRT = [(1135, 755), (1205, 712), (1450, 700), (1700, 700), (1700, 1900), (420, 1900),
          (420, 1110), (860, 1110)] + COLLAR[::-1]
-# The sunglasses' right lens, cm, its outer side +x and y down: a wayfarer,
-# wider at the top with the outer top corner swept up. The left lens is its
-# mirror. Smoothed by corner cutting (chaikin).
-LENS = [(-2.30, -1.72), (0.3, -1.95), (2.62, -2.18), (2.52, -0.9), (2.22, 0.55), (1.75, 1.55),
-        (0.4, 1.92), (-1.45, 1.80), (-2.12, 1.05), (-2.30, -0.2)]
 
 P = dict(
     # crop in cut-out px: left, top, width (height = width * 5/4). At 1100
@@ -347,11 +340,7 @@ P = dict(
                # well under the lit skin, the navy a speck over the plate
                shirt=dict(curve=((0, 0), (30, 16), (40, 22), (52, 30), (67, 38), (85, 46),
                                  (92, 50), (100, 54)), chroma=1.0, cmax=15.0),
-               shirt_fade=0.25,
-               # the glasses, from the target's L*: the frame (under 8) stays
-               # the plate, a black line round the lenses, and the lenses print
-               # dim smoky dots with the glare over them, not more hole
-               prop=((0, 0), (8, 1), (12, 13), (25, 19), (50, 32), (100, 56))),
+               shirt_fade=0.25),
     # the shirt's own tone, photograph L* to target L*: the navy stripe (L* 5)
     # to 30, the heather (35) to 52, the white in the sky's shade (50 to 70)
     # to 67 to 85. The navy at 20 was the heaviest thing in the frame, and in
@@ -368,11 +357,17 @@ P = dict(
     shirt_inks=40,
     # the extra power of the dissolve on the shirt's coverage (see separate)
     shirt_edge=1.0,
-    # the sunglasses: the hooked hinge (cut-out px), the turn (degrees,
-    # clockwise), the squash across for the chest's turn, px per cm, and
-    # their shadow on the shirt (dx, dy, blur in px, strength)
-    prop=dict(hinge=(946.0, 1064.0), angle=14.0, squash=0.8, ppcm=31.0, shadow=(6.0, 9.0, 6.0, 0.35),
-              cmax=40.0),
+    # the sun (see THE SUN): its centre and radius (design px), the limb's
+    # softness (radii), the glow's coverage at the limb, its fall and where it
+    # ends (radii), the gap it keeps from his silhouette (cut-out px, from
+    # none to all of it), how far inside the box it fades out (design px),
+    # the horizon it rises from (design px, or None), its own inks, and on
+    # each ground the coverage and the ink (L*, C*, hue) at its centre and at
+    # its limb
+    sun=dict(centre=(112.0, 110.0), r=72.0, soft=0.04, glow=(0.12, 0.3, 1.35), gap=(1.0, 8.0),
+             edge=(18.0, 44.0), horizon=None, inks=20,
+             paper=dict(cov=(0.30, 0.70), ink=((80.0, 62.0, 82.0), (44.0, 64.0, 42.0))),
+             plate=dict(cov=(0.58, 0.44), ink=((79.0, 50.0, 72.0), (58.0, 65.0, 46.0)))),
     palette=160,
     ss=4,
     # the phone band: a coarser screen relative to the box, so the dots stay
@@ -446,108 +441,6 @@ def poly_mask(shape, origin, pts, feather):
     return ndi.gaussian_filter(m, feather) if feather else m
 
 
-def chaikin(pts, n=5):
-    """A closed polygon's corners cut n times: a smooth outline."""
-    P = np.array(pts, float)
-    for _ in range(n):
-        Q = np.roll(P, -1, 0)
-        P = np.stack([0.75 * P + 0.25 * Q, 0.25 * P + 0.75 * Q], 1).reshape(-1, 2)
-    return P
-
-
-def glasses(ppcm, ss=3):
-    """The sunglasses in their own plane, supersampled then box-filtered to
-    `ppcm`: linear RGB, alpha, and where the hooked hinge sits (px). Black
-    acetate, heavier along the top; dark lenses, graded lighter toward the
-    bottom, the sky caught across them as a soft band and a thin line, and
-    the sunset as one thin warm streak on the far lens, which is narrower,
-    turned away."""
-    k = ppcm * ss
-    ox, oy = 1.2, 1.6              # the hinge, cm from the canvas's corner
-    Wp, Hp = int(15.6 * k) // ss * ss, int(7.5 * k) // ss * ss
-    V, U = np.mgrid[0:Hp, 0:Wp].astype(float)
-    U, V = U / k - ox, V / k - oy
-    lw, lh, gap = 5.1, 4.1, 1.9
-    top, side = 0.62, 0.34         # the frame's width (cm) at the top and elsewhere
-    far = 0.92                     # the far lens, turned away, this much narrower
-    lcx, lcy = side + lw / 2 + 0.25, top + lh / 2
-    rcx = lcx + lw / 2 + gap + far * lw / 2
-    lens = np.zeros(U.shape, bool)
-    for cx, flip in ((lcx, -1), (rcx, far)):
-        P = chaikin(LENS) * [flip, 1] + [cx + ox, lcy + oy]
-        im = Image.new("L", (Wp, Hp), 0)
-        ImageDraw.Draw(im).polygon([(x * k, y * k) for x, y in P], fill=255)
-        lens |= np.asarray(im) > 127
-    d_out = ndi.distance_transform_edt(~lens) / k
-    rim = np.zeros(U.shape)
-    hl = np.zeros(U.shape)
-    for cx in (lcx, rcx):
-        near = np.abs(U - cx) < lw / 2 + gap / 2
-        s_, c_ = np.sin(np.arctan2(V - lcy, U - cx)), np.cos(np.arctan2(V - lcy, U - cx))
-        rim = np.where(near, side + (top - side) * smoothstep(0.2, -0.9, s_), rim)
-        hl = np.where(near, smoothstep(0.1, -0.8, s_) * smoothstep(0.6, -0.4, c_), hl)
-    frame = (d_out > 0) & (d_out < rim)
-    # the bridge, a bar between the frames' inner tops, bowed a little
-    bx0, bx1 = lcx + lw / 2 - 0.1, rcx - far * lw / 2 + 0.1
-    bow = 0.15 * np.sin(np.clip((U - bx0) / (bx1 - bx0), 0, 1) * math.pi)
-    bridge = (U > bx0) & (U < bx1) & (np.abs(V - (lcy - lh / 2 + 0.55) + bow) < 0.3)
-    # the hooked temple, up from the hinge toward the collar (clipped there)
-    ta = math.radians(-100)
-    s = U * math.cos(ta) + V * math.sin(ta)
-    temple = (s > -0.3) & (s < 1.4) & (np.abs(U * math.sin(ta) - V * math.cos(ta)) < 0.31 + 0.02 * s)
-    hinge = np.hypot(U - 0.05, V - 0.25) < 0.5
-    solid = frame | bridge | temple | hinge
-    ly = np.clip((V - (lcy - lh / 2)) / lh, 0, 1)[..., None]
-    col = np.array([0.016, 0.020, 0.017]) * (1 - ly) + np.array([0.052, 0.058, 0.052]) * ly
-    # the sky as diagonal glare, a soft band and a thin line, dimmer on the
-    # far lens; the sun as one thin warm streak on the far lens only. A warm
-    # spot in the same corner of both lenses read as a pair of eyes on his
-    # chest
-    for cx, w, streak in ((lcx, 1.0, 0.0), (rcx, far, 1.0)):
-        du, dv = (U - cx) / w, V - lcy
-        m = (np.abs(U - cx) < (lw + gap) / 2)[..., None]
-        diag = du * 0.55 + dv * 0.85
-        sky = (np.exp(-((diag + 0.35) / 0.30) ** 2) * 0.50 + np.exp(-((diag - 0.75) / 0.12) ** 2) * 0.28) * (0.2 + 0.8 * w)
-        sun = np.exp(-((diag + 1.2) / 0.10) ** 2) * smoothstep(-0.6, 0.0, du) * (1 - smoothstep(0.6, 1.5, du)) * streak
-        col = col + m * (sky[..., None] * [0.55, 0.62, 0.75] + sun[..., None] * [0.85, 0.50, 0.22])
-    edge = np.clip(1 - np.abs(d_out - rim * 0.35) / (rim * 0.28 + 1e-6), 0, 1) * hl * 0.7
-    black, shine = np.array([0.005, 0.005, 0.005]), np.array([0.55, 0.52, 0.48])
-    col = np.where(solid[..., None], black + (shine - black) * edge[..., None], col)
-    a = np.where(solid, 1.0, np.where(lens, 0.97, 0.0))
-    rgba = np.dstack([col * a[..., None], a])
-    # box filter down from the supersample; colour is premultiplied here
-    rgba = rgba.reshape(Hp // ss, ss, Wp // ss, ss, 4).mean((1, 3))
-    return rgba, (ox * ppcm, oy * ppcm)
-
-
-def with_prop(p, col, a, box):
-    """The sunglasses laid into the photograph's linear colour over `box`, the
-    hooked temple clipped at the collar, and their soft shadow on the shirt.
-    Returns (colour, alpha, the glasses' own mask)."""
-    q = p["prop"]
-    g, (ox, oy) = glasses(q["ppcm"])
-    H, W = a.shape
-    th = math.radians(q["angle"])
-    # cut-out px = hinge + R(th) S (u - o), u in the glasses' px
-    A = np.array([[math.cos(th) * q["squash"], -math.sin(th)], [math.sin(th) * q["squash"], math.cos(th)]])
-    Ai = np.linalg.inv(A)
-    yy, xx = np.mgrid[0:H, 0:W].astype(float)
-    dx, dy = xx + box[0] - q["hinge"][0], yy + box[1] - q["hinge"][1]
-    u = Ai[0, 0] * dx + Ai[0, 1] * dy + ox
-    v = Ai[1, 0] * dx + Ai[1, 1] * dy + oy
-    layer = np.stack([ndi.map_coordinates(g[..., c], [v, u], order=1, mode="constant", cval=0.0)
-                      for c in range(4)], -1)
-    # in under the collar: nothing of them past the shirt's own line
-    clip = ndi.gaussian_filter(poly_mask((H, W), box, SHIRT, 0), 1.2)
-    layer *= clip[..., None]
-    ga = np.clip(layer[..., 3], 0, 1)
-    sx, sy, blur, amt = q["shadow"]
-    sh = ndi.gaussian_filter(ndi.shift(ga, (sy, sx), order=1), blur) * amt * a
-    col = col * (1 - sh)[..., None]
-    col = col * (1 - ga)[..., None] + layer[..., :3]
-    return col, np.maximum(a, ga), ga
-
-
 def target(p):
     """The graded target in Lab over the region the crop needs, its alpha, and
     the region masks the two grounds grade separately. Returns
@@ -559,7 +452,6 @@ def target(p):
     box = (max(0, int(x0 - m)), max(0, int(y0 - m)), min(FRAME[0], int(x0 + w + m)), min(FRAME[1], int(y0 + h + m)))
     im = np.asarray(Image.open(SRC).convert("RGBA").crop(box), float) / 255
     col, a = to_linear(im[..., :3]), im[..., 3]
-    col, a, prop = with_prop(p, col, a, box)
     # push colour outward past the silhouette so blurs don't pull in matte black
     num = np.stack([ndi.gaussian_filter(col[..., c] * a, 6) for c in range(3)], -1)
     fill = num / np.maximum(ndi.gaussian_filter(a, 6), 1e-4)[..., None]
@@ -625,13 +517,10 @@ def target(p):
         Lc = Lc * (1 - e) + np.maximum(Lc, fl) * e
 
     # the shirt on its own curve: the one above opens the face's shadows, and
-    # on the shirt it took the navy stripe to a mid grey. The glasses keep
-    # their own tone, the darkest thing on the shirt
+    # on the shirt it took the navy stripe to a mid grey
     kx, ky = np.array(p["shirt_tone"], float).T
     Ls = PchipInterpolator(kx, ky)(np.clip(Ld, 0, 100))
     Lc = Lc * (1 - shirt) + Ls * shirt
-    prop = ndi.gaussian_filter(prop, 1.5)
-    Lc = Lc * (1 - prop) + Ld * prop
 
     skin = ndi.gaussian_filter(face * smoothstep(8, 16, L0), 3) * (1 - shirt)
 
@@ -672,11 +561,6 @@ def target(p):
     abs_ *= np.minimum(1, (cs + (cw - cs) * smoothstep(w0, w1, Ls)) / np.maximum(cg, 1e-6))[..., None]
     nh, nc, (n0, n1) = p["shirt_navy"]
     set_chroma(abs_, 1 - smoothstep(n0, n1, Ls), nc, nh)
-    # the glasses' own, sharper: the glint is a small thing
-    abp = np.stack([ndi.gaussian_filter(lab[..., 1], 1.5), ndi.gaussian_filter(lab[..., 2], 1.5)], -1)
-    cg = np.hypot(abp[..., 0], abp[..., 1])
-    abp *= np.minimum(1, p["prop"]["cmax"] / np.maximum(cg, 1e-6))[..., None]
-    abs_ = abs_ * (1 - prop)[..., None] + abp * prop[..., None]
     ab *= p["chroma_gain"]
     cg = np.hypot(ab[..., 0], ab[..., 1])
     ab *= np.minimum(1, p["chroma_cap"] / np.maximum(cg, 1e-6))[..., None]
@@ -701,7 +585,7 @@ def target(p):
 
     out = np.stack([np.clip(Lc, 0, 100), ab[..., 0], ab[..., 1]], -1)
     masks = dict(shirt=shirt, skin=skin * (1 - rim_c), hair=hz, far=far * (1 - 0.7 * skin), rim=rim_c,
-                 sun=sun, prop=prop, inside=inside)
+                 sun=sun, inside=inside, outside=ndi.distance_transform_edt(a < 0.5))
     return out, a, box[:2], masks
 
 
@@ -762,7 +646,7 @@ def screen(p):
 
 
 # ── sampling ─────────────────────────────────────────────────────────────
-MASKS = ("shirt", "skin", "hair", "far", "rim", "sun", "prop")
+MASKS = ("shirt", "skin", "hair", "far", "rim", "sun")
 
 
 def sample(p, lab, alpha, origin, masks, X, Y, pitch):
@@ -794,6 +678,7 @@ def sample(p, lab, alpha, origin, masks, X, Y, pitch):
     mk = {n: np.clip(v[:, 4 + i], 0, 1) for i, n in enumerate(MASKS)}
     # the distance inside the matte is read at the dot's centre, unblurred
     mk["inside"] = ndi.map_coordinates(masks["inside"], [cy, cx], order=1, mode="nearest")
+    mk["outside"] = ndi.map_coordinates(masks["outside"], [cy, cx], order=1, mode="nearest")
     return colour, a, mk
 
 
@@ -964,9 +849,6 @@ def grade(p, look, colour_lin, mk, meta):
     C0 = np.maximum(np.hypot(ab0[:, 0], ab0[:, 1]), 1e-6)
     abs_ = ab0 * (np.minimum(C0 * shl["chroma"], shl["cmax"]) / C0)[:, None]
     ab = ab * (1 - sh)[:, None] + abs_ * sh[:, None]
-    if "prop" in look:
-        pm = mk["prop"]
-        L = L * (1 - pm) + PchipInterpolator(*np.array(look["prop"], float).T)(np.clip(L0, 0, 100)) * pm
     if "hair_light" in look:
         # THE HAIR ON THE PLATE, printed by its light. On a dark ground dark
         # hair is mostly ground: every way of lifting its shadows off the
@@ -1306,7 +1188,48 @@ def separate(p, b, look, dark):
     # darker than it is a hole, on paper one lighter than it is nothing
     Gp = np.array(look["ground"], float) @ LUMA / 255
     d[(Ip < Gp + 0.035) if dark else (Ip > Gp - 0.035)] = 0
+    if p.get("sun"):
+        # the sun, in the cells the photograph leaves empty, thinned in the
+        # dissolve as he is
+        cs, Is = sun_dots(p, b, dark)
+        cov = cs * b["fade"]
+        cov = np.where(keep, np.minimum(cs, cov / np.maximum(q, 1e-3) ** gma), 0)
+        ds = coverage_to_d(cov, p["dmax"])
+        take = (b["edge"] <= 0) & (cov >= 0.006)
+        Is = palette(Is, take, p["sun"]["inks"])
+        ink = np.where(take[:, None], Is, ink)
+        d = np.where(take, ds, d)
     return dict(ink=ink, d=d, ground=look["ground"], masks=mk)
+
+
+def sun_dots(p, b, dark):
+    """The sun's coverage, before the vignette, and its ink at every dot:
+    the disc graded from its centre to its limb, the glow round it in the
+    limb's ink, nothing below the horizon, and a gap round his silhouette."""
+    s = p["sun"]
+    (cx, cy), R = s["centre"], s["r"]
+    r = np.hypot(b["X"] - cx, b["Y"] - cy) / R
+    disc = 1 - smoothstep(1 - s["soft"], 1 + s["soft"], r)
+    g0, gw, gr = s["glow"]
+    glow = g0 * np.exp(-np.maximum(r - 1, 0) / gw) * (1 - smoothstep(gr - 0.25, gr, r)) * (1 - disc)
+    lk = s["plate" if dark else "paper"]
+    c0, c1 = lk["cov"]
+    t = np.clip(r, 0, 1) ** 2
+    cov = disc * (c0 + (c1 - c0) * t) + glow
+    if s.get("horizon") is not None:
+        cov = cov * (1 - smoothstep(s["horizon"] - 1.5, s["horizon"] + 1.5, b["Y"]))
+    g0, g1 = s["gap"]
+    cov = cov * smoothstep(g0, g1, b["masks"]["outside"])
+    # and it is gone well inside the box: its glow run into the feather
+    # showed the box's own square corner
+    e0, e1 = s["edge"]
+    W, H = p["design_w"], frame_h(p)
+    cov = cov * smoothstep(e0, e1, np.minimum.reduce([b["X"], b["Y"], W - b["X"], H - b["Y"]]))
+    t = np.where(disc > 0.5, t, 1.0)
+    (L0, C0, h0), (L1, C1, h1) = lk["ink"]
+    L, C, h = L0 + (L1 - L0) * t, C0 + (C1 - C0) * t, np.radians(h0 + (h1 - h0) * t)
+    lab = np.stack([L, C * np.cos(h), C * np.sin(h)], 1)
+    return cov, gamut(to_srgb(np.clip(lab2lin(lab), 0, 1)))
 
 
 # ── the rasteriser: what the canvas does ─────────────────────────────────
@@ -1529,10 +1452,6 @@ def main():
             drawn[(band, name)] = (X, Y, R, ink, lk["ground"], name == "dark")
         if not phone:
             report["face_dots"] = face_count(p, b, looks["light"]["d"])
-        # the glasses print whole: no dot of them in any dissolve
-        on = b["masks"]["prop"] > 0.5
-        assert on.sum() > 100 and b["fade"][on].min() > 0.98, (
-            f"the glasses reach a dissolve (fade {b['fade'][on].min():.2f})")
     if not args.dry:
         write_lattice(lattice)
     # the stills, from the encoded grids, as the canvas draws them
