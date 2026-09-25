@@ -38,7 +38,7 @@ export const DESK: Lattice = {
 };
 
 export const SM: Lattice = {
-  cols: 81,
+  cols: 80,
   rows: 196,
   designW: 620,
   dmax: 1.5,
